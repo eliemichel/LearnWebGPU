@@ -4,6 +4,7 @@ Learn WebGPU
 <div align="center">
 
 ![Learn WebGPU Dark Mode Logo](images/webgpu-dark.svg#gh-dark-mode-only | width=100)
+
 ![Learn WebGPU Light Mode Logo](images/webgpu-light.svg#gh-light-mode-only | width=100)
 
 </div>
