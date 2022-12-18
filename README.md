@@ -2,14 +2,14 @@
 	<picture>
 		<source media="(prefers-color-scheme: dark)" srcset="images/webgpu-dark.svg">
 		<source media="(prefers-color-scheme: light)" srcset="images/webgpu-dark.svg">
-		<img alt="Learn WebGPU Logo" src="images/webgpu-dark.svg" width="150">
+		<img alt="Learn WebGPU Logo" src="images/webgpu-dark.svg" width="200">
 	</picture>
 </div>
 
 Learn WebGPU
 ============
 
-This is the source files of the website learnwgpu.com.
+This is the source files of the website [https://eliemichel.github.io/LearnWebGPU](https://eliemichel.github.io/LearnWebGPU).
 
 Building
 --------
