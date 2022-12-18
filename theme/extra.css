@@ -1,0 +1,9 @@
+ul.simple,
+ol.simple {
+	padding-left: 1.6rem;
+}
+
+ul.simple li:not(:last-child),
+ol.simple li:not(:last-child) { 
+	margin-bottom: 0.5rem;
+}

@@ -1,0 +1,11 @@
+from sphinx.highlighting import lexers
+from pygments.filters import VisibleWhitespaceFilter
+from pygments.lexers.compiled import CppLexer
+
+def setup(app):
+    """Replace tabs with 4 spaces"""
+    lexers['C++'] = CppLexer()
+
+    ws_filter = VisibleWhitespaceFilter(tabs=' ', tabsize=4)
+    for lx in lexers.values():
+        lx.add_filter(ws_filter)
