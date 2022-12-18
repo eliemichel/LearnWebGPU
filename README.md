@@ -1,8 +1,13 @@
 Learn WebGPU
 ============
 
-![Fancy logo](images/webgpu-dark.svg#gh-dark-mode-only)
-![Fancy logo](images/webgpu-light.svg#gh-light-mode-only)
+<p align="center">
+
+![Fancy logo](images/webgpu-dark.svg#gh-dark-mode-only | width=100)
+![Fancy logo](images/webgpu-light.svg#gh-light-mode-only | width=100)
+
+</p>
+
 
 This is the source files of the website learnwgpu.com.
 
