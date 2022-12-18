@@ -1,11 +1,13 @@
+<div align="center">
+	<picture>
+		<source media="(prefers-color-scheme: dark)" srcset="images/webgpu-dark.svg">
+		<source media="(prefers-color-scheme: light)" srcset="images/webgpu-dark.svg">
+		<img alt="Learn WebGPU Logo" src="images/webgpu-dark.svg" width="150">
+	</picture>
+</div>
+
 Learn WebGPU
 ============
-
-<picture align="center">
-	<source media="(prefers-color-scheme: dark)" srcset="images/webgpu-dark.svg">
-	<source media="(prefers-color-scheme: light)" srcset="images/webgpu-dark.svg">
-	<img alt="Learn WebGPU Logo" src="images/webgpu-dark.svg" width="100">
-</picture>
 
 This is the source files of the website learnwgpu.com.
 
