@@ -156,6 +156,8 @@ The actual implementation use a little trickery so that enum names are scoped, b
 Library
 -------
 
-The library providing these C++ idioms is [`wgpucpp.h`](#TODO). It is made of a single header file, which you just have to copy in your source tree.
+The library providing these C++ idioms is [`webgpu.hpp`](../data/webgpu.hpp). It is made of a single header file, which you just have to copy in your source tree. Exactly one of your source file must `#define WEBGPU_CPP_IMPLEMENTATION` before `#include "webgpu.hpp"`.
+
+More information can be found in [the webgpu-cpp repository](https://github.com/eliemichel/WebGPU-Cpp).
 
 *Resulting code:* [`step025`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step025)

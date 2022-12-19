@@ -1,7 +1,7 @@
 <div align="center">
 	<picture>
 		<source media="(prefers-color-scheme: dark)" srcset="images/webgpu-dark.svg">
-		<source media="(prefers-color-scheme: light)" srcset="images/webgpu-dark.svg">
+		<source media="(prefers-color-scheme: light)" srcset="images/webgpu-light.svg">
 		<img alt="Learn WebGPU Logo" src="images/webgpu-dark.svg" width="200">
 	</picture>
 </div>
