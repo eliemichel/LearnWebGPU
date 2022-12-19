@@ -80,8 +80,8 @@ html_theme_options = {
         },
     ],
     "source_repository": "https://github.com/eliemichel/LearnWebGPU/",
-    "source_branch": "master",
-    "source_directory": "doc/sphinx",
+    "source_branch": "main",
+    "source_directory": ".",
 }
 
 # Add any paths that contain custom static files (such as style sheets) here,
