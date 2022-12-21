@@ -91,7 +91,7 @@ The Swap Chain is something that is not exposed in the JavaScript version of the
 Texture View
 ------------
 
-Let's move on to the main loop. As explained above, the swap chain provides us with the texture where to draw the next frame. It is as simple as this:
+Let's move on to the main loop and see how to use the swap chain. As explained above, the swap chain provides us with the texture where to draw the next frame. It is as simple as this:
 
 ```C++
 // In the main loop
@@ -125,26 +125,83 @@ WGPUTextureView nextTexture = wgpuSwapChainGetCurrentTextureView(swapChain);
 wgpuTextureViewDrop(nextTexture); // non-standard but required by wgpu-native
 ```
 
+At the end of the main loop, once the texture is filled in and dropped, we can tell the swap chain to present the next texture (which depends on the `presentMode` of the swap chain):
+
+```C++
+wgpuSwapChainPresent(swapChain);
+```
+
 Render Pass
 -----------
+
+### Render pass encoder
+
+We know hold the texture where to draw to display something in our window. Like any GPU-side operation, we trigger it from the command queue, using a command encoder as described in [the previous chapter](the-command-queue.md). Build a `WGPUCommandEncoder` called `encoder`, then submit it to the queue. In between we will add a command that clear the screen with a uniform color.
+
+If you look in `webgpu.h` at the methods of the encoder (the procedures starting with `wgpuCommandEncoder`), most of them are related to copying buffers and textures around. Except two special ones: `wgpuCommandEncoderBeginComputePass` and `wgpuCommandEncoderBeginRenderPass`. These return specialized encoder objects, namely `WGPUComputePassEncoder` and `WGPURenderPassEncoder`, that give access to commands dedicated to respectively computing and 3D rendering.
+
+In our case, we use a render pass:
+
+```C++
+WGPURenderPassDescriptor renderPassDesc = {};
+// [...] set up descriptor
+WGPURenderPassEncoder renderPass = wgpuCommandEncoderBeginRenderPass(encoder, &renderPassDesc);
+wgpuRenderPassEncoderEnd(renderPass);
+```
+
+Note that we directly end the pass without issuing any other command. This is because the render pass has a built in mechanism for clearing the screen when it begins, which we'll set up through the descriptor.
+
+### Color attachment
+
+A render pass leverages the 3D rendering circuits of the GPU to draw content into one or multiple textures. So one important thing to set up is to tell which textures are the target of this process. These are the **attachments** of the render pass.
+
+The number of attachment is variable, so the descriptor gets it through two fields: the number `colorAttachmentCount` of attachments and the address `colorAttachments` of the color attachment array. Since we only use one, the address of the array is just the address of a single `WGPURenderPassColorAttachment` variable.
+
+```C++
+WGPURenderPassColorAttachment renderPassColorAttachment = {};
+// [...] Set up the attachment
+
+renderPassDesc.colorAttachmentCount = 1;
+renderPassDesc.colorAttachments = &renderPassColorAttachment;
+```
+
+The first important setting of the attachment is the texture view it must draw in. In our case, the view returned by the swap chain because we directly want to draw on screen, but in a advanced pipelines it is very common to draw on intermediate textures, which are then fed to e.g., post-process passes.
+
+```C++
+renderPassColorAttachment.view = nextTexture;
+```
+
+There is a second target texture view called `resolveTarget`, but it is not relevant here because we do not use *multi-sampling* (more on this later).
+
+```C++
+renderPassColorAttachment.resolveTarget = nullptr;
+```
+
+The `loadOp` setting indicates the load operation to perform on view prior to executing the render pass. It can be either read from the view or set to a default uniform color, namely the clear value. When it does not matter, use `WGPULoadOp_Clear` as it is likely more efficient.
+
+The `storeOp` indicates the operation to perform on view after executing the render pass. It can be either stored or discarded (which only makes sense if the render pass has side-effects).
+
+And the `clearValue` is the value to clear the screen with, put anything you want in here! The 4 values are the red, green, blue and alpha channels, on a scale from 0.0 to 1.0.
+
+```C++
+renderPassColorAttachment.loadOp = WGPULoadOp_Clear;
+renderPassColorAttachment.storeOp = WGPUStoreOp_Store;
+renderPassColorAttachment.clearValue = WGPUColor{ 0.9, 0.1, 0.2, 1.0 };
+```
+
+There is also one special type of attachment, namely the *depth* and *stencil* attachment (it is a single attachment potentially containing two channels). We'll come back on this later on, for now we do not use it so we set it to null:
+
+```C++
+renderPassDesc.depthStencilAttachment = nullptr;
+```
+
+### Misc
 
 TODO
 
 ```C++
-WGPURenderPassDescriptor renderPassDesc = {};
 renderPassDesc.nextInChain = nullptr;
-renderPassDesc.colorAttachmentCount = 1;
-WGPURenderPassColorAttachment renderPassColorAttachment = {};
-renderPassColorAttachment.view = nextTexture;
-renderPassColorAttachment.resolveTarget = 0;
-renderPassColorAttachment.loadOp = WGPULoadOp_Clear;
-renderPassColorAttachment.storeOp = WGPUStoreOp_Store;
-renderPassColorAttachment.clearValue = WGPUColor{ 0.9, 0.1, 0.2, 1.0 };
-renderPassDesc.colorAttachments = &renderPassColorAttachment;
-renderPassDesc.depthStencilAttachment = nullptr;
 renderPassDesc.timestampWriteCount = 0;
-WGPURenderPassEncoder renderPass = wgpuCommandEncoderBeginRenderPass(encoder, &renderPassDesc);
-wgpuRenderPassEncoderEnd(renderPass);
 ```
 
 Conclusion

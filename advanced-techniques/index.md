@@ -6,4 +6,6 @@ Contents
 
 ```{toctree}
 :titlesonly:
+
+multi-sampling.md
 ```
