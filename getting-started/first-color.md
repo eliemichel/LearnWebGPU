@@ -189,24 +189,38 @@ renderPassColorAttachment.storeOp = WGPUStoreOp_Store;
 renderPassColorAttachment.clearValue = WGPUColor{ 0.9, 0.1, 0.2, 1.0 };
 ```
 
+### Misc
+
 There is also one special type of attachment, namely the *depth* and *stencil* attachment (it is a single attachment potentially containing two channels). We'll come back on this later on, for now we do not use it so we set it to null:
 
 ```C++
 renderPassDesc.depthStencilAttachment = nullptr;
 ```
 
-### Misc
+When measuring the performance of a render pass, it is not possible to use CPU-side timing functions, since the commands are not executed synchronously. Instead, the render pass can receive a set of timestamp queries. We do not use it in this example.
 
-TODO
+```C++
+renderPassDesc.timestampWriteCount = 0;
+renderPassDesc.timestampWrites = nullptr;
+```
+
+Lastly, we set `nextInChain` to a null pointer (remember this pointer is an extension mechanism that the standard WebGPU API does not use).
 
 ```C++
 renderPassDesc.nextInChain = nullptr;
-renderPassDesc.timestampWriteCount = 0;
 ```
 
 Conclusion
 ----------
 
+At this stage you should be able to get a colored window. This seems simple, but it made us meet a lot of important concepts.
+
+ * Instead of directly drawing to the window's surface, we draw to an off-screen texture and the **swap chain** is responsible for managing the texture turn over.
+ * The 3D rendering pipeline of the GPU is leveraged through the **render pass**, which is a special scope of commands accessible through the command encoder.
+ * The render pass draws to one or multiple **attachments**, which are texture views.
+
 ![First colored window](/images/first-color.png)
+
+We are now ready with the basic WebGPU setup, and can dive more deeply in the 3D rendering pipeline.
 
 *Resulting code:* [`step020`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step020)
