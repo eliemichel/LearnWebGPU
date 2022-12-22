@@ -43,7 +43,7 @@ swapChainDesc.height = 480;
 ```
 
 ```{warning}
-As you can guess, we will have to take care of creating a new swap chain when the window is resized. In the meantime, do not try to resize it.
+As you can guess, we will have to take care of creating a new swap chain when the window is resized. In the meantime, do not try to resize it. You may add `glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);` before creating the window to instruct GLFW to disable resizing.
 ```
 
 For the swap chain to allocate textures, we also need to specify their *format*. The format is a combination of a number of channels (a subset of red, green, blue, alpha), a size per channel (8, 16 or 32 bits) and a channel type (float, integer, signed or not), a compression scheme, a normalization mode, etc.

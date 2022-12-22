@@ -841,6 +841,7 @@ HANDLE(CommandEncoder)
 END
 
 HANDLE(ComputePassEncoder)
+	void end();
 	void insertDebugMarker(char const * markerLabel);
 	void popDebugGroup();
 	void pushDebugGroup(char const * groupLabel);
@@ -859,8 +860,10 @@ HANDLE(Device)
 	BindGroupLayout createBindGroupLayout(const BindGroupLayoutDescriptor& descriptor);
 	Buffer createBuffer(const BufferDescriptor& descriptor);
 	CommandEncoder createCommandEncoder(const CommandEncoderDescriptor& descriptor);
+	ComputePipeline createComputePipeline(const ComputePipelineDescriptor& descriptor);
 	PipelineLayout createPipelineLayout(const PipelineLayoutDescriptor& descriptor);
 	RenderBundleEncoder createRenderBundleEncoder(const RenderBundleEncoderDescriptor& descriptor);
+	RenderPipeline createRenderPipeline(const RenderPipelineDescriptor& descriptor);
 	Sampler createSampler(const SamplerDescriptor& descriptor);
 	ShaderModule createShaderModule(const ShaderModuleDescriptor& descriptor);
 	SwapChain createSwapChain(Surface surface, const SwapChainDescriptor& descriptor);
@@ -919,6 +922,7 @@ HANDLE(RenderPassEncoder)
 	void drawIndexed(uint32_t indexCount, uint32_t instanceCount, uint32_t firstIndex, int32_t baseVertex, uint32_t firstInstance);
 	void drawIndexedIndirect(Buffer indirectBuffer, uint64_t indirectOffset);
 	void drawIndirect(Buffer indirectBuffer, uint64_t indirectOffset);
+	void end();
 	void executeBundles(uint32_t bundlesCount, RenderBundle const * bundles);
 	void executeBundles(const std::vector<WGPURenderBundle>& bundles);
 	void executeBundles(const WGPURenderBundle& bundles);
@@ -1059,6 +1063,9 @@ void CommandEncoder::pushDebugGroup(char const * groupLabel) {
 
 
 // Methods of ComputePassEncoder
+void ComputePassEncoder::end() {
+	return wgpuComputePassEncoderEnd(m_raw);
+}
 void ComputePassEncoder::insertDebugMarker(char const * markerLabel) {
 	return wgpuComputePassEncoderInsertDebugMarker(m_raw, markerLabel);
 }
@@ -1101,11 +1108,17 @@ Buffer Device::createBuffer(const BufferDescriptor& descriptor) {
 CommandEncoder Device::createCommandEncoder(const CommandEncoderDescriptor& descriptor) {
 	return wgpuDeviceCreateCommandEncoder(m_raw, &descriptor);
 }
+ComputePipeline Device::createComputePipeline(const ComputePipelineDescriptor& descriptor) {
+	return wgpuDeviceCreateComputePipeline(m_raw, &descriptor);
+}
 PipelineLayout Device::createPipelineLayout(const PipelineLayoutDescriptor& descriptor) {
 	return wgpuDeviceCreatePipelineLayout(m_raw, &descriptor);
 }
 RenderBundleEncoder Device::createRenderBundleEncoder(const RenderBundleEncoderDescriptor& descriptor) {
 	return wgpuDeviceCreateRenderBundleEncoder(m_raw, &descriptor);
+}
+RenderPipeline Device::createRenderPipeline(const RenderPipelineDescriptor& descriptor) {
+	return wgpuDeviceCreateRenderPipeline(m_raw, &descriptor);
 }
 Sampler Device::createSampler(const SamplerDescriptor& descriptor) {
 	return wgpuDeviceCreateSampler(m_raw, &descriptor);
@@ -1247,6 +1260,9 @@ void RenderPassEncoder::drawIndexedIndirect(Buffer indirectBuffer, uint64_t indi
 }
 void RenderPassEncoder::drawIndirect(Buffer indirectBuffer, uint64_t indirectOffset) {
 	return wgpuRenderPassEncoderDrawIndirect(m_raw, indirectBuffer, indirectOffset);
+}
+void RenderPassEncoder::end() {
+	return wgpuRenderPassEncoderEnd(m_raw);
 }
 void RenderPassEncoder::executeBundles(uint32_t bundlesCount, RenderBundle const * bundles) {
 	return wgpuRenderPassEncoderExecuteBundles(m_raw, bundlesCount, reinterpret_cast<WGPURenderBundle const *>(bundles));
