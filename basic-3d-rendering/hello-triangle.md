@@ -3,19 +3,25 @@ Hello Triangle
 
 *Resulting code:* [`step030`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step030)
 
-In its overall outline, drawing a triangle is as simple as this;
+In its overall outline, drawing a triangle is as simple as this:
 
 ```C++
+// Configure the render pipeline
 renderPass.setPipeline(pipeline);
-renderPass.draw(3 /* vertex count */, 1 /* instance count */, 0, 0);
+// Draw 1 instance of a 3-vertices shape
+renderPass.draw(3, 1, 0, 0);
 ```
 
-What is a bit verbose is the configuration of the pipeline.
+What is a bit verbose is the configuration of the pipeline, and the creation of *shaders*.
 
 Render Pipeline
 ---------------
 
 TODO *Fixed pipeline* Configured through states and shaders
+
+This is the *Render Pipeline* abstraction used by WebGPU:
+
+![The Render Pipeline abstraction used by WebGPU](/images/render-pipeline.png)
 
 ```C++
 RenderPipelineDescriptor pipelineDesc{};
@@ -36,16 +42,29 @@ PipelineLayout layout = device.createPipelineLayout(layoutDesc);
 pipelineDesc.layout = layout;
 ```
 
+### Vertex pipeline state
+
+TODO **Fetch**
+
+```C++
+pipelineDesc.vertex.bufferCount = 0;
+pipelineDesc.vertex.buffers = nullptr;
+```
+
+TODO **Shader**
+
 ```C++
 pipelineDesc.vertex.module = shaderModule;
 pipelineDesc.vertex.entryPoint = "vs_main";
 pipelineDesc.vertex.constantCount = 0;
 pipelineDesc.vertex.constants = nullptr;
-pipelineDesc.vertex.bufferCount = 0;
-pipelineDesc.vertex.buffers = nullptr;
 ```
 
 The `shaderModule` will be defined in the next section.
+
+### Primitive pipeline state
+
+TODO assembly and rasterization
 
 ```C++
 pipelineDesc.primitive.topology = PrimitiveTopology::TriangleList;
@@ -57,6 +76,26 @@ pipelineDesc.primitive.cullMode = CullMode::None;
 ```{note}
 Usually we set the cull mode to `Front` to avoid wasting resources in rendering the inside of objects. But for beginners it can be very frustrating to see nothing on screen for hours only to discover that the triangle was just facing in the wrong direction, so I advise you to set it to `None` when developing.
 ```
+
+### Fragment shader
+
+```C++
+FragmentState fragmentState{};
+fragmentState.module = shaderModule;
+fragmentState.entryPoint = "fs_main";
+fragmentState.constantCount = 0;
+fragmentState.constants = nullptr;
+
+pipelineDesc.fragment = &fragmentState;
+```
+
+### Stencil/Depth state
+
+```C++
+pipelineDesc.depthStencil = nullptr;
+```
+
+### Blending
 
 ```C++
 BlendState blendState{};
@@ -70,21 +109,9 @@ ColorTargetState colorTarget{};
 colorTarget.format = swapChainFormat;
 colorTarget.blend = &blendState;
 colorTarget.writeMask = ColorWriteMask::All;
-```
 
-```C++
-FragmentState fragmentState{};
-fragmentState.module = shaderModule;
-fragmentState.entryPoint = "fs_main";
-fragmentState.constantCount = 0;
-fragmentState.constants = nullptr;
 fragmentState.targetCount = 1;
 fragmentState.targets = &colorTarget;
-pipelineDesc.fragment = &fragmentState;
-```
-
-```C++
-pipelineDesc.depthStencil = nullptr;
 ```
 
 ```C++
