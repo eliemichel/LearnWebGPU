@@ -4,3 +4,4 @@ furo
 sphinx-copybutton
 sphinxext-opengraph
 sphinx-favicon
+sphinx-inline-tabs

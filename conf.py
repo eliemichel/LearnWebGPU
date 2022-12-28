@@ -32,6 +32,7 @@ extensions = [
     "sphinxext.opengraph",
     "sphinx_copybutton",
     "sphinx-favicon",
+    "sphinx_inline_tabs",
     "style",
 ]
 
@@ -44,6 +45,11 @@ templates_path = ['_templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', 'README.md', 'venv', 'tmp']
 
 myst_heading_anchors = 3
+
+myst_enable_extensions = [
+    "amsmath",
+    "dollarmath",
+]
 
 # -- Options for HTML output -------------------------------------------------
 
