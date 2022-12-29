@@ -8,6 +8,7 @@ Contents
 :titlesonly:
 
 hello-triangle
+shader-uniforms
 input-geometry
 texturing
 ```

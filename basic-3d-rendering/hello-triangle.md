@@ -337,18 +337,24 @@ float my_addition(float x, float y) {
 
 Notice how the types are specified *after* instead of *before* the argument names. The type of `z` is automatically inferred, though we could have forced it using `let z: f32 = ...`. The return type is specified after the arguments, using the arrow `->`.
 
+```{note}
+The keyword `let` defines a constant, i.e. a variable that cannot be reassigned. A regular variable is defined using the `var` keyword.
+```
+
 Now here is the shader for our triangle:
 
 ```rust
 @vertex
 fn vs_main(@builtin(vertex_index) in_vertex_index: u32) -> @builtin(position) vec4<f32> {
+	var p = vec2<f32>(0.0, 0.0);
 	if (in_vertex_index == 0u) {
-		return vec4<f32>(-0.5, -0.5, 0.0, 1.0);
+		p = vec2<f32>(-0.5, -0.5);
 	} else if (in_vertex_index == 1u) {
-		return vec4<f32>(0.5, -0.5, 0.0, 1.0);
+		p = vec2<f32>(0.5, -0.5);
 	} else {
-		return vec4<f32>(0.0, 0.5, 0.0, 1.0);
+		p = vec2<f32>(0.0, 0.5);
 	}
+	return vec4<f32>(p, 0.0, 1.0);
 }
 
 @fragment
