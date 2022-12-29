@@ -23,9 +23,9 @@ renderPass.draw(3, 1, 0, 0);
 ````{tab} Vanilla webgpu.h
 ```C++
 // Select which render pipeline to use
-wgpuRenderPassSetPipeline(renderPass, pipeline);
+wgpuRenderPassEncoderSetPipeline(renderPass, pipeline);
 // Draw 1 instance of a 3-vertices shape
-wgpuRenderPassDraw(renderPass, 3, 1, 0, 0);
+wgpuRenderPassEncoderDraw(renderPass, 3, 1, 0, 0);
 ```
 ````
 
