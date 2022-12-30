@@ -9,7 +9,7 @@ Shader Uniforms
 *Resulting code:* [`step035-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step035-vanilla)
 ````
 
-TODO Let's animate our triangle.
+TODO Let's animate our triangle!
 
 Layout
 ------
@@ -18,31 +18,53 @@ Layout
 
 TODO
 
+````{tab} With webgpu.hpp
 ```C++
 // Create bind group layout
-BindGroupLayoutEntry bindGroupLayoutEntry;
+BindGroupLayoutEntry bindGroupLayoutEntry = Default;
 bindGroupLayoutEntry.binding = 0;
-
-bindGroupLayoutEntry.buffer.nextInChain = nullptr;
-bindGroupLayoutEntry.buffer.type = BufferBindingType::Uniform;
-bindGroupLayoutEntry.buffer.hasDynamicOffset = false;
-bindGroupLayoutEntry.buffer.minBindingSize = 4; // 1 f32 = 4 bytes
-
-bindGroupLayoutEntry.sampler.nextInChain = nullptr;
-bindGroupLayoutEntry.sampler.type = SamplerBindingType::Undefined;
-
-bindGroupLayoutEntry.storageTexture.nextInChain = nullptr;
-bindGroupLayoutEntry.storageTexture.access = StorageTextureAccess::Undefined;
-bindGroupLayoutEntry.storageTexture.format = TextureFormat::Undefined;
-bindGroupLayoutEntry.storageTexture.viewDimension = TextureViewDimension::Undefined;
-
-bindGroupLayoutEntry.texture.nextInChain = nullptr;
-bindGroupLayoutEntry.texture.multisampled = false;
-bindGroupLayoutEntry.texture.sampleType = TextureSampleType::Undefined;
-bindGroupLayoutEntry.texture.viewDimension = TextureViewDimension::Undefined;
-
 bindGroupLayoutEntry.visibility = ShaderStage::Vertex;
+bindGroupLayoutEntry.buffer.type = BufferBindingType::Uniform;
+bindGroupLayoutEntry.buffer.minBindingSize = 4; // 1 f32 = 4 bytes
+```
+````
 
+````{tab} Vanilla webgpu.h
+```C++
+// If you do not use webgpu.hpp, I suggest you create a function to init the
+// bindGroup layout entry somewhere.
+void initBindGroupLayoutEntry(WGPUBindGroupLayoutEntry &bindGroupLayoutEntry) {
+	bindGroupLayoutEntry.buffer.nextInChain = nullptr;
+	bindGroupLayoutEntry.buffer.type = WGPUBufferBindingType_Undefined;
+	bindGroupLayoutEntry.buffer.hasDynamicOffset = false;
+
+	bindGroupLayoutEntry.sampler.nextInChain = nullptr;
+	bindGroupLayoutEntry.sampler.type = WGPUSamplerBindingType_Undefined;
+
+	bindGroupLayoutEntry.storageTexture.nextInChain = nullptr;
+	bindGroupLayoutEntry.storageTexture.access = WGPUStorageTextureAccess_Undefined;
+	bindGroupLayoutEntry.storageTexture.format = WGPUTextureFormat_Undefined;
+	bindGroupLayoutEntry.storageTexture.viewDimension = WGPUTextureViewDimension_Undefined;
+
+	bindGroupLayoutEntry.texture.nextInChain = nullptr;
+	bindGroupLayoutEntry.texture.multisampled = false;
+	bindGroupLayoutEntry.texture.sampleType = WGPUTextureSampleType_Undefined;
+	bindGroupLayoutEntry.texture.viewDimension = WGPUTextureViewDimension_Undefined;
+}
+
+// [...]
+
+// Create bind group layout
+WGPUBindGroupLayoutEntry bindGroupLayoutEntry{};
+initBindGroupLayoutEntry(bindGroupLayoutEntry);
+bindGroupLayoutEntry.binding = 0;
+bindGroupLayoutEntry.visibility = ShaderStage::Vertex;
+bindGroupLayoutEntry.buffer.type = WGPUBufferBindingType_Uniform;
+bindGroupLayoutEntry.buffer.minBindingSize = 4; // 1 f32 = 4 bytes
+```
+````
+
+```C++
 BindGroupLayoutDescriptor bindGroupLayoutDesc{};
 bindGroupLayoutDesc.entryCount = 1;
 bindGroupLayoutDesc.entries = &bindGroupLayoutEntry;
@@ -54,6 +76,11 @@ layoutDesc.bindGroupLayouts = &(WGPUBindGroupLayout)bindGroupLayout;
 PipelineLayout layout = device.createPipelineLayout(layoutDesc);
 pipelineDesc.layout = layout;
 ```
+
+Device capabilities
+-------------------
+
+TODO
 
 Bind Group
 ----------
