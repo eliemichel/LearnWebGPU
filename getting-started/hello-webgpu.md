@@ -15,10 +15,10 @@ There exists mostly two implementations of the WebGPU native header:
 
 I tested both, and settled on the Firefox one for this documentation because its resulting binaries are much more lightweight than with Dawn. In both cases, the build process is a bit too heavy to be included in our CMakeLists so I provide pre-compiled builds:
 
- - [wgpu-native for linux](../data/wgpu-native-for-linux.zip)
+ - [wgpu-native for Linux](../data/wgpu-native-for-linux.zip)
  - [wgpu-native for Windows](../data/wgpu-native-for-windows.zip)
- - [wgpu-native for macOS](#) (TODO, help wanted cause I don't have a mac!)
- - [wgpu-native for any plateform](../data/wgpu-native-for-any.zip) (a bit heavier as it's a merge of all the above basically) (macOS not included yet)
+ - [wgpu-native for MacOS](../data/wgpu-native-for-macos.zip)
+ - [wgpu-native for any plateform](../data/wgpu-native-for-any.zip) (a bit heavier as it's a merge of all the above basically)
 
 Compared to the build provided by [the wgpu-native repository](https://github.com/gfx-rs/wgpu-native), I have added a simple `CMakeLists.txt` to make it as easy to integrate in our project as GLFW:
 

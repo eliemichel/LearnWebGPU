@@ -953,22 +953,18 @@ HANDLE(Adapter)
 END
 
 HANDLE(BindGroup)
-	void setLabel(char const * label);
 END
 
 HANDLE(BindGroupLayout)
-	void setLabel(char const * label);
 END
 
 HANDLE(Buffer)
 	void destroy();
 	void mapAsync(MapModeFlags mode, size_t offset, size_t size, BufferMapCallback&& callback);
-	void setLabel(char const * label);
 	void unmap();
 END
 
 HANDLE(CommandBuffer)
-	void setLabel(char const * label);
 END
 
 HANDLE(CommandEncoder)
@@ -983,7 +979,6 @@ HANDLE(CommandEncoder)
 	void insertDebugMarker(char const * markerLabel);
 	void popDebugGroup();
 	void pushDebugGroup(char const * groupLabel);
-	void setLabel(char const * label);
 END
 
 HANDLE(ComputePassEncoder)
@@ -996,7 +991,6 @@ HANDLE(ComputePassEncoder)
 	void setBindGroup(uint32_t groupIndex, BindGroup group, uint32_t dynamicOffsetCount, uint32_t const * dynamicOffsets);
 	void setBindGroup(uint32_t groupIndex, BindGroup group, const std::vector<uint32_t>& dynamicOffsets);
 	void setBindGroup(uint32_t groupIndex, BindGroup group, const uint32_t& dynamicOffsets);
-	void setLabel(char const * label);
 	void setPipeline(ComputePipeline pipeline);
 END
 
@@ -1023,7 +1017,6 @@ HANDLE(Device)
 	Queue getQueue();
 	bool hasFeature(FeatureName feature);
 	void setDeviceLostCallback(DeviceLostCallback&& callback);
-	void setLabel(char const * label);
 	void setUncapturedErrorCallback(ErrorCallback&& callback);
 END
 
@@ -1034,15 +1027,12 @@ HANDLE(Instance)
 END
 
 HANDLE(PipelineLayout)
-	void setLabel(char const * label);
 END
 
 HANDLE(QuerySet)
-	void setLabel(char const * label);
 END
 
 HANDLE(Queue)
-	void setLabel(char const * label);
 	void submit(uint32_t commandCount, CommandBuffer const * commands);
 	void submit(const std::vector<WGPUCommandBuffer>& commands);
 	void submit(const WGPUCommandBuffer& commands);
@@ -1066,7 +1056,6 @@ HANDLE(RenderBundleEncoder)
 	void setBindGroup(uint32_t groupIndex, BindGroup group, const std::vector<uint32_t>& dynamicOffsets);
 	void setBindGroup(uint32_t groupIndex, BindGroup group, const uint32_t& dynamicOffsets);
 	void setIndexBuffer(Buffer buffer, IndexFormat format, uint64_t offset, uint64_t size);
-	void setLabel(char const * label);
 	void setPipeline(RenderPipeline pipeline);
 	void setVertexBuffer(uint32_t slot, Buffer buffer, uint64_t offset, uint64_t size);
 END
@@ -1088,7 +1077,6 @@ HANDLE(RenderPassEncoder)
 	void setBindGroup(uint32_t groupIndex, BindGroup group, const uint32_t& dynamicOffsets);
 	void setBlendConstant(const Color& color);
 	void setIndexBuffer(Buffer buffer, IndexFormat format, uint64_t offset, uint64_t size);
-	void setLabel(char const * label);
 	void setPipeline(RenderPipeline pipeline);
 	void setScissorRect(uint32_t x, uint32_t y, uint32_t width, uint32_t height);
 	void setStencilReference(uint32_t reference);
@@ -1101,7 +1089,6 @@ HANDLE(RenderPipeline)
 END
 
 HANDLE(Sampler)
-	void setLabel(char const * label);
 END
 
 HANDLE(ShaderModule)
@@ -1119,11 +1106,9 @@ END
 HANDLE(Texture)
 	TextureView createView(const TextureViewDescriptor& descriptor);
 	void destroy();
-	void setLabel(char const * label);
 END
 
 HANDLE(TextureView)
-	void setLabel(char const * label);
 END
 
 
@@ -1532,15 +1517,9 @@ void Adapter::requestDevice(const DeviceDescriptor& descriptor, RequestDeviceCal
 
 
 // Methods of BindGroup
-void BindGroup::setLabel(char const * label) {
-	return wgpuBindGroupSetLabel(m_raw, label);
-}
 
 
 // Methods of BindGroupLayout
-void BindGroupLayout::setLabel(char const * label) {
-	return wgpuBindGroupLayoutSetLabel(m_raw, label);
-}
 
 
 // Methods of Buffer
@@ -1554,18 +1533,12 @@ void Buffer::mapAsync(MapModeFlags mode, size_t offset, size_t size, BufferMapCa
 	};
 	return wgpuBufferMapAsync(m_raw, static_cast<WGPUMapModeFlags>(mode), offset, size, cCallback, reinterpret_cast<void*>(&callback));
 }
-void Buffer::setLabel(char const * label) {
-	return wgpuBufferSetLabel(m_raw, label);
-}
 void Buffer::unmap() {
 	return wgpuBufferUnmap(m_raw);
 }
 
 
 // Methods of CommandBuffer
-void CommandBuffer::setLabel(char const * label) {
-	return wgpuCommandBufferSetLabel(m_raw, label);
-}
 
 
 // Methods of CommandEncoder
@@ -1602,9 +1575,6 @@ void CommandEncoder::popDebugGroup() {
 void CommandEncoder::pushDebugGroup(char const * groupLabel) {
 	return wgpuCommandEncoderPushDebugGroup(m_raw, groupLabel);
 }
-void CommandEncoder::setLabel(char const * label) {
-	return wgpuCommandEncoderSetLabel(m_raw, label);
-}
 
 
 // Methods of ComputePassEncoder
@@ -1634,9 +1604,6 @@ void ComputePassEncoder::setBindGroup(uint32_t groupIndex, BindGroup group, cons
 }
 void ComputePassEncoder::setBindGroup(uint32_t groupIndex, BindGroup group, const uint32_t& dynamicOffsets) {
 	return wgpuComputePassEncoderSetBindGroup(m_raw, groupIndex, group, 1, &dynamicOffsets);
-}
-void ComputePassEncoder::setLabel(char const * label) {
-	return wgpuComputePassEncoderSetLabel(m_raw, label);
 }
 void ComputePassEncoder::setPipeline(ComputePipeline pipeline) {
 	return wgpuComputePassEncoderSetPipeline(m_raw, pipeline);
@@ -1708,9 +1675,6 @@ void Device::setDeviceLostCallback(DeviceLostCallback&& callback) {
 	};
 	return wgpuDeviceSetDeviceLostCallback(m_raw, cCallback, reinterpret_cast<void*>(&callback));
 }
-void Device::setLabel(char const * label) {
-	return wgpuDeviceSetLabel(m_raw, label);
-}
 void Device::setUncapturedErrorCallback(ErrorCallback&& callback) {
 	static auto cCallback = [](WGPUErrorType type, char const * message, void * userdata) -> void {
 		ErrorCallback& callback = *reinterpret_cast<ErrorCallback*>(userdata);
@@ -1734,21 +1698,12 @@ void Instance::requestAdapter(const RequestAdapterOptions& options, RequestAdapt
 
 
 // Methods of PipelineLayout
-void PipelineLayout::setLabel(char const * label) {
-	return wgpuPipelineLayoutSetLabel(m_raw, label);
-}
 
 
 // Methods of QuerySet
-void QuerySet::setLabel(char const * label) {
-	return wgpuQuerySetSetLabel(m_raw, label);
-}
 
 
 // Methods of Queue
-void Queue::setLabel(char const * label) {
-	return wgpuQueueSetLabel(m_raw, label);
-}
 void Queue::submit(uint32_t commandCount, CommandBuffer const * commands) {
 	return wgpuQueueSubmit(m_raw, commandCount, reinterpret_cast<WGPUCommandBuffer const *>(commands));
 }
@@ -1805,9 +1760,6 @@ void RenderBundleEncoder::setBindGroup(uint32_t groupIndex, BindGroup group, con
 }
 void RenderBundleEncoder::setIndexBuffer(Buffer buffer, IndexFormat format, uint64_t offset, uint64_t size) {
 	return wgpuRenderBundleEncoderSetIndexBuffer(m_raw, buffer, static_cast<WGPUIndexFormat>(format), offset, size);
-}
-void RenderBundleEncoder::setLabel(char const * label) {
-	return wgpuRenderBundleEncoderSetLabel(m_raw, label);
 }
 void RenderBundleEncoder::setPipeline(RenderPipeline pipeline) {
 	return wgpuRenderBundleEncoderSetPipeline(m_raw, pipeline);
@@ -1866,9 +1818,6 @@ void RenderPassEncoder::setBlendConstant(const Color& color) {
 void RenderPassEncoder::setIndexBuffer(Buffer buffer, IndexFormat format, uint64_t offset, uint64_t size) {
 	return wgpuRenderPassEncoderSetIndexBuffer(m_raw, buffer, static_cast<WGPUIndexFormat>(format), offset, size);
 }
-void RenderPassEncoder::setLabel(char const * label) {
-	return wgpuRenderPassEncoderSetLabel(m_raw, label);
-}
 void RenderPassEncoder::setPipeline(RenderPipeline pipeline) {
 	return wgpuRenderPassEncoderSetPipeline(m_raw, pipeline);
 }
@@ -1893,9 +1842,6 @@ BindGroupLayout RenderPipeline::getBindGroupLayout(uint32_t groupIndex) {
 
 
 // Methods of Sampler
-void Sampler::setLabel(char const * label) {
-	return wgpuSamplerSetLabel(m_raw, label);
-}
 
 
 // Methods of ShaderModule
@@ -1923,15 +1869,9 @@ TextureView Texture::createView(const TextureViewDescriptor& descriptor) {
 void Texture::destroy() {
 	return wgpuTextureDestroy(m_raw);
 }
-void Texture::setLabel(char const * label) {
-	return wgpuTextureSetLabel(m_raw, label);
-}
 
 
 // Methods of TextureView
-void TextureView::setLabel(char const * label) {
-	return wgpuTextureViewSetLabel(m_raw, label);
-}
 
 
 

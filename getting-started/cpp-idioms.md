@@ -9,6 +9,10 @@ So far we have used the raw WebGPU API, which is a C API, and this prevented us 
 All the changes presented here only affect the coding time, but our shallow C++ wrapper leads to the very same runtime binaries.
 ```
 
+```{caution}
+This chapter is not as up to date as [the readme of WebGPU-C++](https://github.com/eliemichel/WebGPU-Cpp). I recommend you read that instead for now.
+```
+
 Default descriptor values
 -------------------------
 

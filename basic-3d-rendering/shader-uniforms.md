@@ -82,6 +82,18 @@ Device capabilities
 
 TODO
 
+```C++
+RequiredLimits requiredLimits = Default;
+requiredLimits.limits.maxBindGroups = 1;
+
+DeviceDescriptor deviceDesc{};
+deviceDesc.label = "My Device";
+deviceDesc.requiredFeaturesCount = 0;
+deviceDesc.requiredLimits = &requiredLimits;
+deviceDesc.defaultQueue.label = "The default queue";
+Device device = adapter.requestDevice(deviceDesc);
+```
+
 Bind Group
 ----------
 
