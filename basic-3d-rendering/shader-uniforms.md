@@ -2,11 +2,11 @@ Shader Uniforms
 ===============
 
 ````{tab} With webgpu.hpp
-*Resulting code:* [`step036`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step036)
+*Resulting code:* [`step037`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step037)
 ````
 
 ````{tab} Vanilla webgpu.h
-*Resulting code:* [`step036-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step036-vanilla)
+*Resulting code:* [`step037-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step037-vanilla)
 ````
 
 Let us now animate our triangle! For this, we use a **uniform** variable in the shader.
@@ -410,6 +410,10 @@ RequiredLimits requiredLimits = Default;
 
 // We use at most 1 bind group for now
 requiredLimits.limits.maxBindGroups = 1;
+// We use at most 1 uniform buffer per stage
+requiredLimits.limits.maxUniformBuffersPerShaderStage = 1;
+// Uniform structs have a size of maximum 16 float
+requiredLimits.limits.maxUniformBufferBindingSize = 16 * 4;
 
 DeviceDescriptor deviceDesc{};
 // [...]
@@ -438,6 +442,10 @@ setDefault(requiredLimits.limits);
 
 // We use at most 1 bind group for now
 requiredLimits.limits.maxBindGroups = 1;
+// We use at most 1 uniform buffer per stage
+requiredLimits.limits.maxUniformBuffersPerShaderStage = 1;
+// Uniform structs have a size of maximum 16 float
+requiredLimits.limits.maxUniformBufferBindingSize = 16 * 4;
 
 DeviceDescriptor deviceDesc{};
 // [...]
@@ -478,163 +486,259 @@ More uniforms
 
 In order to illustrate the flexibility of the uniform binding process, let us add a second uniform variable, this time controlling the color of the triangle.
 
+There are multiple ways to add a second uniform:
+
+ - In a different bind group.
+ - In the same bind group but different binding.
+ - In the same binding, by replacing the type of the uniform with a custom struct.
+
+The interest of using different bindings is to set a different `visibility` depending on the binding. In our case, the time is only used in the Vertex shader, while the color is only needed by the Fragment shader, so this could be beneficial. However, we may decide to use the time in the Fragment shader eventually, so we'll use the same binding.
+
+```{note}
+Another reason is that different bindings should either point to different buffers, or point in the same buffer at **an offset that is at least** `deviceLimits.minUniformBufferOffsetAlignment`. By default, this value is set to 256 bytes for me, and the minimum supported by my adapter is 64. This would be a bit of a waste to add that much padding.
+```
+
 ### Shader side
 
-Let us add a new uniform, this time of type `vec4<f32>` (red, green, blue, alpha) and with a different binding index. We will use the same bind group though:
+Let us replace the `f32` uniform with a struct:
 
 ```rust
-@group(0) @binding(1) var<uniform> uColor: vec4<f32>;
+/**
+ * A structure holding the value of our uniforms
+ */
+struct MyUniforms {
+	time: f32,
+	color: vec4<f32>,
+};
 
-// [...]
+// Instead of the simple uTime variable, our uniform variable is a struct
+@group(0) @binding(0) var<uniform> uMyUniforms: MyUniforms;
+
+@vertex
+// [...] (Replace uTime with uMyUniforms.time in here)
 
 @fragment
 fn fs_main() -> @location(0) vec4<f32> {
 	// Return this uniform instead of the color that was previously hard-coded
-    return uColor;
+	return uMyUniforms.color;
 }
 ```
 
+Of course depending on your use case you will find a name more relevant than "MyUniforms", but let's stick to this for now.
+
 ### Buffer
 
-TODO
+On the CPU side, we define the very same struct:
 
 ```C++
 /**
- * A structure holding the value of our uniforms
+ * The same structure as in the shader, replicated in C++
  */
-struct UniformBufferData {
+struct MyUniforms {
 	float time;
 	Color color; // We use the color type provided by WebGPU
 };
 ```
 
-Replace `sizeof(float)` by `sizeof(UniformBufferData)`.
+The initial buffer upload thus becomes:
 
 ```C++
-// Upload the initial value of the uniform
-UniformBufferData uniforms = {
-	1.0f,
-	{ 0.0f, 1.0f, 0.4f, 1.0f }
-};
-queue.writeBuffer(uniformBuffer, 0, &uniforms, sizeof(UniformBufferData));
+// Upload the initial value of the uniforms
+MyUniforms uniforms;
+uniforms.time = 1.0f;
+uniforms.color = { 0.0f, 1.0f, 0.4f, 1.0f };
+queue.writeBuffer(uniformBuffer, 0, &uniforms, sizeof(MyUniforms));
 ```
+
+More generally, you should replace all instances of `sizeof(float)` by `sizeof(MyUniforms)`.
+
+Updating the value of the buffer now looks like this:
 
 ```C++
 // Update uniform buffer
 uniforms.time = static_cast<float>(glfwGetTime());
-queue.writeBuffer(uniformBuffer, 0, &uniforms, sizeof(UniformBufferData));
+queue.writeBuffer(uniformBuffer, 0, &uniforms, sizeof(MyUniforms));
 ```
 
-Actually we can be more subtle:
+And actually we can be more subtle:
 
 ```C++
 // Only update the 1-st float of the buffer
 queue.writeBuffer(uniformBuffer, 0, &uniforms, sizeof(float));
 ```
 
-Update the color
+Similarly we can update only the color bytes:
 
 ```C++
 // Update uniform buffer
 uniforms.color = { 1.0f, 0.5f, 0.0f, 1.0f };
-queue.writeBuffer(uniformBuffer, sizeof(float), &uniforms, sizeof(Color));
+queue.writeBuffer(uniformBuffer, sizeof(float), &uniforms.color, sizeof(Color));
 //                               ^^^^^^^^^^^^^ offset of `color` in the uniform struct
 ```
 
-If we forget the offset, or want to be flexible to the addition of new fields, we can use the `offsetof` macro:
+Better yet, if we forget the offset, or want to be flexible to the addition of new fields, we can use the `offsetof` macro:
 
 ```C++
-queue.writeBuffer(uniformBuffer, offsetof(UniformBufferData, color), &uniforms, sizeof(UniformBufferData::color));
+// Upload only the time, whichever its order in the struct
+queue.writeBuffer(uniformBuffer, offsetof(MyUniforms, time), &uniforms.time, sizeof(MyUniforms::time));
+// Upload only the color, whichever its order in the struct
+queue.writeBuffer(uniformBuffer, offsetof(MyUniforms, color), &uniforms.color, sizeof(MyUniforms::color));
 ```
-
-WARNING: queue.writeBuffer should not be called during a renderPass
 
 ### Binding layout
 
+The only thing to change in the binding layout is the visibility:
+
+```C++
+bindingLayout.visibility = ShaderStage::Vertex | ShaderStage::Fragment;
+```
+
+### Memory Layout Constraints
+
+#### Alignment
+
+There is one thing I have omitted until now: the architecture of the GPU imposes some constraints on the way we can organize fields in a uniform buffer.
+
+If we look at [the uniform layout constraints](https://gpuweb.github.io/gpuweb/wgsl/#address-space-layout-constraints), we can see that **the offset** (as returned by `offsetof`) of a field of type `vec4<f32>` **must be a multiple** of the size of `vec4<f32>`, namely 16 bytes. We say that the field is **aligned** to 16 bytes.
+
+In our current `MyUniforms` struct, this property is **not verified** because `color` as an offset of 4 bytes (`sizeof(float)`), which is obviously not a multiple of 16 bytes! An easy fix is simply to swap the `color` and `time` fields:
+
+```C++
+// Don't
+struct MyUniforms {
+	// offset = 0 * sizeof(f32) -> OK
+	float time;
+
+	// offset = 4 -> WRONG, not a multiple of sizeof(vec4<f32>)
+	std::array<float,4> color;
+};
+
+// Do
+struct MyUniforms {
+	// offset = 0 * sizeof(vec4<f32>) -> OK
+	std::array<float,4> color;
+
+	// offset = 16 = 4 * sizeof(f32) -> OK
+	float time;
+};
+```
+
+And **don't forget** to apply the same change to the struct defined in the shader code!
+
+#### Padding
+
+Another constraint on uniform types is that they must be [host-shareable](https://gpuweb.github.io/gpuweb/wgsl/#host-shareable), which comes with [a constraint on the total structure size](https://gpuweb.github.io/gpuweb/wgsl/#alignment-and-size).
+
+Basically, the total size must be **a multiple of the alignment size of its largest field**. In our case, this means it must be a multiple of 16 bytes (the size of `vec4<f32>`).
+
+Thus we add **padding** to our structure, namely an unused attribute at the end that fills in extra bytes:
+
+```C++
+struct MyUniforms {
+	std::array<float,4> color;
+	float time;
+	float _pad[3];
+};
+// Have the compiler check byte alignment
+static_assert(sizeof(MyUniforms) % 16 == 0);
+```
+
+Okey, the result is not so impressive but we now are more familiar with uniforms:
+
+![Orange triangle](/images/orange-triangle.png)
+
+Dynamic uniforms
+----------------
+
+Imagine we want to issue two calls to the `draw` method of our render pipeline with different values of the uniforms, in order to draw two triangles with different colors. Naively we could try this:
+
+```C++
+// THIS WON'T WORK!
+
+// A first color
+uniforms.color = { 1.0f, 0.5f, 0.0f, 1.0f };
+queue.writeBuffer(uniformBuffer, offsetof(MyUniforms, color), &uniforms.color, sizeof(MyUniforms::color));
+
+// First draw call
+renderPass.draw(3, 1, 0, 0);
+
+// Different location and different color for another draw call
+uniforms.time += 1.0;
+uniforms.color = { 1.0f, 0.5f, 0.0f, 1.0f };
+queue.writeBuffer(uniformBuffer, 0, &uniforms, sizeof(MyUniforms));
+
+// Second draw call
+renderPass.draw(3, 1, 0, 0);
+```
+
+It is legal, but will not do what you expect. Remember that commands are executed **asynchronously**! When we call methods of the `renderPass` object, we do not really trigger operations, we rather build a command buffer, that is sent all at once at the end. So the calls to `writeBuffer` **do not** get interleaved between the draw calls as we would like.
+
+Instead, we need to use **dynamic uniform buffers**.
+
+TODO
+
+```C++
+// Extra limit requirement
+requiredLimits.limits.maxDynamicUniformBuffersPerPipelineLayout = 1;
+```
+
 ```C++
 // Create binding layouts
-std::vector<BindGroupLayoutEntry> bindingLayouts(2);
-
-// A first binding for the time
-bindingLayouts[0] = Default;
-bindingLayouts[0].binding = 0;
-bindingLayouts[0].visibility = ShaderStage::Vertex;
-bindingLayouts[0].buffer.type = BufferBindingType::Uniform;
-bindingLayouts[0].buffer.minBindingSize = sizeof(float);
-
-// Another binding for the color
-bindingLayouts[1] = Default;
-bindingLayouts[1].binding = 1;
-// We use this one in the fragment shader:
-bindingLayouts[1].visibility = ShaderStage::Fragment;
-bindingLayouts[1].buffer.type = BufferBindingType::Uniform;
-bindingLayouts[1].buffer.minBindingSize = sizeof(Color);
-
-// Create a bind group layout
-BindGroupLayoutDescriptor bindGroupLayoutDesc{};
-bindGroupLayoutDesc.entryCount = static_cast<uint32_t>(bindingLayouts.size());
-bindGroupLayoutDesc.entries = bindingLayouts.data();
-BindGroupLayout bindGroupLayout = device.createBindGroupLayout(bindGroupLayoutDesc);
+BindGroupLayoutEntry bindingLayout = Default;
+// [...]
+// Make this binding dynamic so we can offset it between draw calls
+bindingLayout.buffer.hasDynamicOffset = true;
 ```
 
-### Bindings
-
 ```C++
-// Create bindings
-std::vector<BindGroupEntry> bindings(2);
+// Subtility
+uint32_t uniformStride = std::max(
+	(uint32_t)sizeof(MyUniforms),
+	(uint32_t)deviceLimits.minStorageBufferOffsetAlignment
+);
+// The buffer will contain 2 values for the uniforms
+bufferDesc.size = 2 * uniformStride;
 
-// First binding, for the time
-bindings[0].binding = 0;
-bindings[0].buffer = uniformBuffer;
-bindings[0].offset = offsetof(UniformBufferData, time);
-bindings[0].size = sizeof(UniformBufferData::time);
+// [...]
 
-// Second binding, for the color
-bindings[1].binding = 1;
-bindings[1].buffer = uniformBuffer; // We use the same buffer
-bindings[1].offset = offsetof(UniformBufferData, color); // But at a different offset
-bindings[1].size = sizeof(UniformBufferData::color);
+MyUniforms uniforms;
 
-// A bind group contains one or multiple bindings
-BindGroupDescriptor bindGroupDesc{};
-bindGroupDesc.layout = bindGroupLayout;
-// There must be as many bindings as declared in the layout!
-bindGroupDesc.entryCount = bindGroupLayoutDesc.entryCount;
-bindGroupDesc.entries = bindings.data();
-BindGroup bindGroup = device.createBindGroup(bindGroupDesc);
+// Upload first value
+uniforms.time = 1.0f;
+uniforms.color = { 0.0f, 1.0f, 0.4f, 1.0f };
+queue.writeBuffer(uniformBuffer, 0, &uniforms, sizeof(MyUniforms));
+
+// Upload second value
+uniforms.time = -1.0f;
+uniforms.color = { 1.0f, 0.5f, 0.0f, 0.7f };
+queue.writeBuffer(uniformBuffer, uniformStride, &uniforms, sizeof(MyUniforms));
+//                               ^^^^^^^^^^^^^ beware of the non-null offset!
 ```
 
-### Alignment
-
 ```C++
-std::cout << "device.minUniformBufferOffsetAlignment: " << supportedLimits.limits.minUniformBufferOffsetAlignment << std::endl;
-// Personally I get:
-//   adapter.minUniformBufferOffsetAlignment: 64
-//   device.minUniformBufferOffsetAlignment: 256
-```
+renderPass.setPipeline(pipeline);
 
-So let's add:
+uint32_t dynamicOffset = 0;
 
-```C++
-requiredLimits.limits.minUniformBufferOffsetAlignment = 64;
-```
+// Set binding group
+dynamicOffset = 0 * uniformStride;
+renderPass.setBindGroup(0, bindGroup, 1, &dynamicOffset);
+renderPass.draw(3, 1, 0, 0);
 
-And add **padding** to our structure.
+// Set binding group with a different uniform offset
+dynamicOffset = 1 * uniformStride;
+renderPass.setBindGroup(0, bindGroup, 1, &dynamicOffset);
+renderPass.draw(3, 1, 0, 0);
 
-```C++
-struct UniformBufferData {
-	float time;
-	float _pad[63];
-	Color color;
-};
+renderPass.end();
 ```
 
 Conclusion
 ----------
 
-TODO
+TODO This was quite of a chapter.
 
-![Animated triangle](/images/shader-uniforms.png)
+![Two triangles](/images/two-triangles-uniforms.png)
 
 ````{tab} With webgpu.hpp
 *Resulting code:* [`step036`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step036)
