@@ -9,7 +9,12 @@ Input Geometry
 *Resulting code:* [`step040-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step040-vanilla)
 ````
 
+Vertex Attribute Buffers
+------------------------
+
 Instead of hard-coding the position of vertices in the shader, we fetch them from a buffer.
+
+TODO
 
 ```C++
 std::vector<VertexAttribute> vertexAttribs(1);
@@ -77,6 +82,11 @@ std::vector<float> vertexData = {
 	-0.55f, +0.5
 };
 ```
+
+Loading from file
+-----------------
+
+TODO
 
 Conclusion
 ----------
