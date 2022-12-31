@@ -1,4 +1,4 @@
-Lighting and Material
+Lighting and Material (WIP)
 =====================
 
 ````{tab} With webgpu.hpp

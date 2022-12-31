@@ -1,4 +1,4 @@
-Texturing
+Texturing (WIP)
 =========
 
 ````{tab} With webgpu.hpp
