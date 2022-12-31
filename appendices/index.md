@@ -10,6 +10,7 @@ Contents
 
 teaching-native-graphics-in-2023
 debugging
+memory-model
 references
 tmp
 ```
