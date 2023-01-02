@@ -1,4 +1,4 @@
-Shader Uniforms
+Shader Uniforms (WIP)
 ===============
 
 ````{tab} With webgpu.hpp
@@ -474,11 +474,11 @@ I recommend you have a look at all the fields of the `WGPUlimits` structure in `
 Before going further, you can check the code of this first part against this branch:
 
 ````{tab} With webgpu.hpp
-*Intermediate resulting code:* [`step035`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step035)
+*Intermediate code:* [`step035`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step035)
 ````
 
 ````{tab} Vanilla webgpu.h
-*Intermediate resulting code:* [`step035-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step035-vanilla)
+*Intermediate code:* [`step035-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step035-vanilla)
 ````
 
 More uniforms

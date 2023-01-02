@@ -8,7 +8,7 @@ Contents
 :titlesonly:
 
 hello-triangle
-input-geometry
+input-geometry/index
 shader-uniforms
 3d-meshes
 camera
