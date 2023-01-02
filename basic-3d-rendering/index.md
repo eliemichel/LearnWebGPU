@@ -8,9 +8,10 @@ Contents
 :titlesonly:
 
 hello-triangle
-shader-uniforms
 input-geometry
-texturing
+shader-uniforms
 3d-meshes
+camera
+texturing
 lighting-and-material
 ```

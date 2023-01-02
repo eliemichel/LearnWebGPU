@@ -468,9 +468,26 @@ pipelineDesc.layout = layout;
 Conclusion
 ----------
 
-TODO
+This chapter introduced the core skeleton for rendering triangle-based shapes on the GPU. For now these are 2D graphics, but once everything will be in place, switching to 3D will be straightforward. We have seen two very important concepts:
 
-![First rendered triangle](/images/hello-triangle.png)
+ - The **render pipeline**, which is based on the way the hardware actually works, with some parts fixed, for the sake of efficiency, and some parts are programmable.
+ - The **shaders**, which are the GPU-side programs driving the programmable stages of the pipeline.
+
+```{figure} /images/hello-triangle.png
+:align: center
+:class: with-shadow
+Our first triangle rendered using WebGPU.
+```
+
+### What's next?
+
+The key algorithms and techniques of computer graphics used for 3D rendering are for a large part implemented in the shaders code. What we still miss at this point though is ways to **communicate** between the C++ code (CPU) and the shaders (GPU).
+
+The next two chapters focus on two ways to **feed input** to this render pipeline: **vertex** attributes, where there is one value per vertex, and **uniforms**, which define variable that are common to all vertices and fragments for a given call.
+
+We then take a break away from pipeline things with the switch to **3D meshes**, which is in the end less about code and more about math. We also introduce a bit of **interaction** with a basic **camera controller**. We then introduce a 3rd way to feed input data, namely **textures**, and how to map them onto meshes.
+
+Storage textures, which are used the other way around, to get data out of the render pipeline, will be presented only in advanced chapters. Instead, the last page of this chapter is fully dedicated to the computer graphics matter of **lighting** and **material modeling**.
 
 ````{tab} With webgpu.hpp
 *Resulting code:* [`step030`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step030)
