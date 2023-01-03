@@ -19,6 +19,7 @@ I tested both, and settled on the Firefox one for this documentation because its
  - [wgpu-native for Windows](../data/wgpu-native-for-windows.zip)
  - [wgpu-native for MacOS](../data/wgpu-native-for-macos.zip)
  - [wgpu-native for any plateform](../data/wgpu-native-for-any.zip) (a bit heavier as it's a merge of all the above basically)
+ - [GitHub repository](https://github.com/eliemichel/WebGPU-binaries)
 
 Compared to the build provided by [the wgpu-native repository](https://github.com/gfx-rs/wgpu-native), I have added a simple `CMakeLists.txt` to make it as easy to integrate in our project as GLFW:
 

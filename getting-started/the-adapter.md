@@ -122,22 +122,21 @@ adapterOpts.compatibleSurface = surface;
 WGPUAdapter adapter = requestAdapter(instance, &adapterOpts);
 ```
 
-How do we get the surface? This depends on the OS, and GLFW does not handle this for us, for it does not know WebGPU (yet?). So I provide you this function, in a little extension to GLFW3 called `glfw3webgpu`.
+How do we get the surface? This depends on the OS, and GLFW does not handle this for us, for it does not know WebGPU (yet?). So I provide you this function, in a little extension to GLFW3 called [`glfw3webgpu`](https://github.com/eliemichel/glfw3webgpu).
 
 ### GLFW3 WebGPU Extension
 
-Download and unzip [glfw3webgpu.zip](../data/glfw3webgpu.zip) in your project's directory. There should be two new files sitting next to your `main.cpp`, which we add to our application's source list:
+Download and unzip [glfw3webgpu.zip](https://github.com/eliemichel/glfw3webgpu/releases/download/v1.0.0/glfw3webgpu-v1.0.0.zip) in your project's directory. There should now be a directory `glfw3webgpu` sitting next to your `main.cpp`. Like we have done before, we can add this directory and link the target it creates to our App:
 
 ```CMake
-add_executable(App
-	main.cpp
-	# We directly add the glfw3webgpu source files to our project
-	glfw3webgpu.h
-	glfw3webgpu.c
-)
+add_subdirectory(glfw3webgpu)
+
+# [...]
+
+target_link_libraries(App PRIVATE glfw webgpu glfw3webgpu)
 ```
 
-You can now `#include "glfw3webgpu.h"` at the beginning of your `main.cpp` and get the surface by simply doing:
+You can now `#include <glfw3webgpu.h>` at the beginning of your `main.cpp` and get the surface by simply doing:
 
 ```C++
 WGPUSurface surface = glfwGetWGPUSurface(instance, window);
@@ -149,6 +148,10 @@ One last thing: we can tell GLFW not to care about the graphics API setup, as it
 glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API); // NEW
 GLFWwindow* window = glfwCreateWindow(640, 480, "Learn WebGPU", NULL, NULL);
 // [...]
+```
+
+```{note}
+The `glfw3webgpu` library is very simple, it is only made of 2 files so we could have almost included them directly in our project's source tree. However, it requires some special compilation flags in macOS that we would have had to deal with (you can see them in the `CMakeLists.txt`).
 ```
 
 Inspecting the adapter
