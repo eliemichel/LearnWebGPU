@@ -9,7 +9,12 @@ Loading from file (WIP)
 *Resulting code:* [`step037-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step037-vanilla)
 ````
 
-TODO
+Now that we are familiar with the representation of geometric data that the GPU expect, we can load it from a file instead of hard-coding it in the source code. This is the occasion to introduce some basic **resource management**.
+
+File format
+-----------
+
+The file format I introduce here is not standard, but it is simple enough to parse. Here is the content of `webgpu.txt`, which I put in a `data/` directory:
 
 ```C++
 [points]
@@ -43,13 +48,21 @@ TODO
 12 13 14
 ```
 
+It is basically the content of the `pointData` and `indexData` defined previously as C++ vectors, introduced by a line of the form `[section name]`, and lines that are empty or starting with a `#` are ignored.
+
+Parser
+------
+
+I am not going to detail the parser. I believe it is rather simple to understand, and it is not the core topic of this lecture.
+
+Plus once we start using 3D data we will switch to a more standard format anyways.
+
 ```C++
 #include <filesystem>
 #include <fstream>
 #include <sstream>
 #include <string>
 
-using namespace wgpu;
 namespace fs = std::filesystem;
 
 bool loadGeometry(const fs::path& path, std::vector<float>& pointData, std::vector<uint16_t>& indexData) {
@@ -103,8 +116,18 @@ bool loadGeometry(const fs::path& path, std::vector<float>& pointData, std::vect
 }
 ```
 
+Usage
+-----
+
+### Loading
+
+TODO
+
 ```C++
 #define DATA_DIR "../data"
+
+std::vector<float> pointData;
+std::vector<uint16_t> indexData;
 
 bool success = loadGeometry(DATA_DIR "/webgpu.txt", pointData, indexData);
 if (!success) {
@@ -113,15 +136,41 @@ if (!success) {
 }
 ```
 
+### Alignment
+
 TODO
 
-![The WebGPU Logo](/images/loaded-webgpu-logo-colorspace-issue.png)
+```C++
+indexData.resize((size_t)ceil(indexData.size() / (float)4) * 4);
+```
+
+### Transform
+
+```rust
+let offset = vec2<f32>(0.6875, 0.463);
+out.position = vec4<f32>(in.position.x - offset.x, (in.position.y - offset.y) * ratio, 0.0, 1.0);
+```
+
+```{figure} /images/loaded-webgpu-logo-colorspace-issue.png)
+:align: center
+:class: with-shadow
+The WebGPU Logo loaded from the file, with wrong colors.
+```
+
+Color space
+-----------
+
+TODO Just a bit of foreshadowing.
 
 ```rust
 return vec4<f32>(pow(in.color, vec3<f32>(2.2)), 1.0);
 ```
 
-![The WebGPU Logo](/images/loaded-webgpu-logo.png)
+```{figure} /images/loaded-webgpu-logo.png)
+:align: center
+:class: with-shadow
+The WebGPU Logo with gamma-corrected colors.
+```
 
 Conclusion
 ----------
