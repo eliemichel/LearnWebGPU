@@ -1,9 +1,11 @@
 <div align="center">
-	<picture>
-		<source media="(prefers-color-scheme: dark)" srcset="images/webgpu-dark.svg">
-		<source media="(prefers-color-scheme: light)" srcset="images/webgpu-light.svg">
-		<img alt="Learn WebGPU Logo" src="images/webgpu-dark.svg" width="200">
-	</picture>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/eliemichel/LearnWebGPU/main/images/webgpu-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/eliemichel/LearnWebGPU/main/images/webgpu-light.svg">
+    <img alt="Learn WebGPU Logo" src="images/webgpu-dark.svg" width="200">
+  </picture>
+
+  <a href="https://github.com/eliemichel/LearnWebGPU">LearnWebGPU</a> &nbsp;|&nbsp; <a href="https://github.com/eliemichel/WebGPU-Cpp">WebGPU-C++</a> &nbsp;|&nbsp; <a href="https://github.com/eliemichel/glfw3webgpu">glfw3webgpu</a>
 </div>
 
 Learn WebGPU
