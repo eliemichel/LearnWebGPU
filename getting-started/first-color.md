@@ -219,7 +219,12 @@ At this stage you should be able to get a colored window. This seems simple, but
  * The 3D rendering pipeline of the GPU is leveraged through the **render pass**, which is a special scope of commands accessible through the command encoder.
  * The render pass draws to one or multiple **attachments**, which are texture views.
 
-![First colored window](/images/first-color.png)
+
+```{figure} /images/first-color.png)
+:align: center
+:class: with-shadow
+Our first color!
+```
 
 We are now ready with the basic WebGPU setup, and can dive more deeply in the 3D rendering pipeline.
 

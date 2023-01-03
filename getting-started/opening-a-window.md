@@ -94,6 +94,10 @@ while (!glfwWindowShouldClose(window)) {
 This main loop is where most of the application's logic occurs. We will repeatedly clear and redraw the whole image, and check for new user input.
 ```
 
-![GLFW Boilerplate](/images/glfw-boilerplate.png)
+```{figure} /images/glfw-boilerplate.png)
+:align: center
+:class: with-shadow
+Our first window, using the GLFW library.
+```
 
 *Resulting code:* [`step001`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step001)
