@@ -220,7 +220,7 @@ At this stage you should be able to get a colored window. This seems simple, but
  * The render pass draws to one or multiple **attachments**, which are texture views.
 
 
-```{figure} /images/first-color.png)
+```{figure} /images/first-color.png
 :align: center
 :class: with-shadow
 Our first color!
