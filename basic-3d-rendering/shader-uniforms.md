@@ -11,6 +11,10 @@ Shader Uniforms (WIP)
 
 Let us now animate our triangle! For this, we use a **uniform** variable in the shader.
 
+```{warning}
+**WIP:** I initially wrote this chapter to be right after the hello-triangle one, so until I rework it there might be some repetitions with the input-geometry ones.
+```
+
 A first uniform
 ---------------
 
