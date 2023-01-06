@@ -3,7 +3,7 @@ Hello WebGPU
 
 *Resulting code:* [`step005`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step005)
 
-For your C++ code, WebGPU nothing more than a single header file listing all the available procedures and data structures: [`webgpu.h`](https://github.com/webgpu-native/webgpu-headers/blob/main/webgpu.h). When building the program though, your compiler must now in the end (at the final *linking* step) where to find the actual implementation of these functions.
+For your C++ code, WebGPU is nothing more than a single header file listing all the available procedures and data structures: [`webgpu.h`](https://github.com/webgpu-native/webgpu-headers/blob/main/webgpu.h). When building the program though, your compiler must know in the end (at the final *linking* step) where to find the actual implementation of these functions.
 
 Installing WebGPU
 -----------------
@@ -34,10 +34,29 @@ Compared to the build provided by [the wgpu-native repository](https://github.co
 
 One additional step though: call the function `target_copy_webgpu_binaries(App)` at the end of `CMakeLists.txt`, this makes sure that the .dll/.so file that your binary depends on at runtime is copied next to it. Whenever you distribute your application, make sure to also distribute this dynamic library file as well.
 
+```CMake
+# [...]
+
+# Include webgpu directory, to define the 'webgpu' target
+add_subdirectory(webgpu)
+
+add_executable(App main.cpp)
+
+# Add the 'webgpu' target as a dependency of our App
+target_link_libraries(App PRIVATE glfw webgpu)
+
+# The application's binary must find wgpu.dll or libwgpu.so at runtime,
+# so we automatically copy it (it's called WGPU_RUNTIME_LIB in general)
+# next to the binary.
+target_copy_webgpu_binaries(App)
+
+# [...]
+```
+
 Testing the installation
 ------------------------
 
-To test the setup, we call the `wgpuCreateInstance` function at the beginning of our main function. Like many WebGPU functions meant to *create* an entity, it takes as argument a *descriptor*, which we could use to specify options regarding how to set up this object.
+To test the setup, we call the `wgpuCreateInstance` function at the beginning of our main function. Like many WebGPU functions meant to **create** an entity, it takes as argument a **descriptor**, which we can use to specify options regarding how to set up this object.
 
 And once again we meet a WebGPU idiom in the `WGPUInstanceDescriptor` structure. Its first field is a pointer called `nextInChain`. This is a generic way for the API to enable custom extensions to be added in the future, or to return multiple entries of data. In a lot of cases, we set it to `nullptr`.
 

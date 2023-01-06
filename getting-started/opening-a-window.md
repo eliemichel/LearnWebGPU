@@ -3,7 +3,9 @@ Opening a window
 
 *Resulting code:* [`step001`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step001)
 
-Before being able to render anything on screen, we need to ask the Operating System to hand us some place where to draw things, something commonly known as a **window**. Unfortunately, the process to open a window the OS, so we use a little library called [GLFW](https://www.glfw.org/) which unifies the different window management APIs and enables our code to be **agnostic** in the OS.
+Before being able to render anything on screen, we need to ask the Operating System to hand us some place where to draw things, something commonly known as a **window**.
+
+Unfortunately, the process to open a window depends a lot on the OS, so we use a little library called [GLFW](https://www.glfw.org/) which unifies the different window management APIs and enables our code to be **agnostic** in the OS.
 
 ```{note}
 I try to use as little libraries as I can, but this one is required to make our code cross-platform, which feels even more important to me than writing code from scratch. It is furthermore a very common choice and quite minimal in its design.
@@ -94,7 +96,7 @@ while (!glfwWindowShouldClose(window)) {
 This main loop is where most of the application's logic occurs. We will repeatedly clear and redraw the whole image, and check for new user input.
 ```
 
-```{figure} /images/glfw-boilerplate.png)
+```{figure} /images/glfw-boilerplate.png
 :align: center
 :class: with-shadow
 Our first window, using the GLFW library.
