@@ -9,7 +9,7 @@ Contents
 
 hello-triangle
 input-geometry/index
-shader-uniforms
+shader-uniforms/index
 3d-meshes
 camera
 texturing

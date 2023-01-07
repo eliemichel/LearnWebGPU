@@ -89,6 +89,7 @@ Buffer creation
 
 Of course the index data must be stored in a GPU-side buffer. This buffer needs a usage of `BufferUsage::Index`.
 
+````{tab} With webgpu.hpp
 ```C++
 // Create index buffer
 // (we reuse the bufferDesc initialized for the vertexBuffer)
@@ -98,6 +99,19 @@ Buffer indexBuffer = device.createBuffer(bufferDesc);
 
 queue.writeBuffer(indexBuffer, 0, indexData.data(), bufferDesc.size);
 ```
+````
+
+````{tab} Vanilla webgpu.h
+```C++
+// Create index buffer
+// (we reuse the bufferDesc initialized for the vertexBuffer)
+bufferDesc.size = indexData.size() * sizeof(uint16_t);
+bufferDesc.usage = BufferUsage::CopyDst | BufferUsage::Index;
+WGPUBuffer indexBuffer = wgpuDeviceCreateBuffer(device, bufferDesc);
+
+wgpuQueueWriteBuffer(queue, indexBuffer, 0, indexData.data(), bufferDesc.size);
+```
+````
 
 Render pass
 -----------
@@ -107,6 +121,7 @@ To draw with an index buffer, there are two changes in the render pass encoding:
  1. Set the active index buffer with `renderPass.setIndexBuffer`.
  2. Replace `draw()` with `drawIndexed()`.
 
+````{tab} With webgpu.hpp
 ```C++
 // Set both vertex and index buffers
 renderPass.setVertexBuffer(0, vertexBuffer, 0, pointData.size() * sizeof(float));
@@ -118,6 +133,21 @@ renderPass.setIndexBuffer(indexBuffer, IndexFormat::Uint16, 0, indexData.size() 
 // The extra argument is an offset within the index buffer.
 renderPass.drawIndexed(indexCount, 1, 0, 0, 0);
 ```
+````
+
+````{tab} Vanilla webgpu.h
+```C++
+// Set both vertex and index buffers
+wgpuRenderPassEncoderSetVertexBuffer(renderPass, 0, vertexBuffer, 0, pointData.size() * sizeof(float));
+// The second argument must correspond to the choice of uint16_t or uint32_t
+// we've done when creating the index buffer.
+wgpuRenderPassEncoderSetIndexBuffer(renderPass, indexBuffer, IndexFormat::Uint16, 0, indexData.size() * sizeof(uint16_t));
+
+// Replace `draw()` with `drawIndexed()` and `vertexCount` with `indexCount`
+// The extra argument is an offset within the index buffer.
+wgpuRenderPassEncoderDrawIndexed(renderPass, indexCount, 1, 0, 0, 0);
+```
+````
 
 ```{figure} /images/deformed-quad.png
 :align: center

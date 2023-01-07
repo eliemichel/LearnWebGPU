@@ -231,6 +231,7 @@ When using some CMake generators, like the Visual Studio one, this is ignored be
 
 Now that we have a basic resource path resolution mechanism, I strongly suggest we use to load our shader code, instead of hard-coding it in the C++ source as we have been doing from the beginning. We can even include the whole shader module creation call:
 
+````{tab} With webgpu.hpp
 ```C++
 ShaderModule loadShaderModule(const fs::path& path, Device device) {
 	std::ifstream file(path);
@@ -254,6 +255,34 @@ ShaderModule loadShaderModule(const fs::path& path, Device device) {
 	return device.createShaderModule(shaderDesc);
 }
 ```
+````
+
+````{tab} Vanilla webgpu.h
+```C++
+WGPUShaderModule loadShaderModule(const fs::path& path, WGPUDevice device) {
+	std::ifstream file(path);
+	if (!file.is_open()) {
+		return nullptr;
+	}
+	file.seekg(0, std::ios::end);
+	size_t size = file.tellg();
+	std::string shaderSource(size, ' ');
+	file.seekg(0);
+	file.read(shaderSource.data(), size);
+
+	WGPUShaderModuleWGSLDescriptor shaderCodeDesc{};
+	shaderCodeDesc.chain.next = nullptr;
+	shaderCodeDesc.chain.sType = WGPUSType_ShaderModuleWGSLDescriptor;
+	shaderCodeDesc.code = shaderSource.c_str();
+	ShaderModuleDescriptor shaderDesc{};
+	shaderDesc.nextInChain = nullptr;
+	shaderDesc.hintCount = 0;
+	shaderDesc.hints = nullptr;
+	shaderDesc.nextInChain = &shaderCodeDesc.chain;
+	return wgpuDeviceCreateShaderModule(device, shaderDesc);
+}
+```
+````
 
 Move the original content of the shaderSource variable into `resources/shader.wsl` and replace the module creation step by:
 
@@ -441,11 +470,14 @@ There is more generally a lot to get lost about with color spaces, don't try to 
 Conclusion
 ----------
 
-TODO
+Loading geometric data from a file was an apparently simple change, but it was actually a good way to introduce multiple concerns that can easily become a nightmare if we don't pay attention to them:
 
- - File format.
- - Basic resource management.
- - Some foreshadowing: Intro to alignment, to transforms, to color spaces.
+ - Resource path resolution
+ - File format
+ - Color space and more generally data encoding
+ - Transform (ratio, position)
+
+We are going to come back on these from time to time to refine them. We are now ready to move on to a way to avoid hard-coded values in the shader and add a lot of flexibility, namely **uniforms**.
 
 ````{tab} With webgpu.hpp
 *Resulting code:* [`step037`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step037)
