@@ -9,6 +9,10 @@ Loading from file
 *Resulting code:* [`step037-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step037-vanilla)
 ````
 
+````{tab} With Dawn
+*Resulting code:* [`step037-dawn`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step037-dawn)
+````
+
 Now that we are familiar with the representation of geometric data that the GPU expect, we can load it from a file instead of hard-coding it in the source code. This is the occasion to introduce some basic **resource management** to our project (althrough this is not specific to WebGPU).
 
 File format
@@ -449,4 +453,8 @@ TODO
 
 ````{tab} Vanilla webgpu.h
 *Resulting code:* [`step037-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step037-vanilla)
+````
+
+````{tab} With Dawn
+*Resulting code:* [`step037-dawn`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step037-dawn)
 ````
