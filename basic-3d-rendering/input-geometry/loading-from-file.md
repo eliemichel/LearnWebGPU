@@ -316,7 +316,7 @@ Nice try, but nope. To convince you let's take a look at the color of the first 
 These are *red*, *green* and *blue* values expressed in the range $(0,1)$ but let's **remap** them to the integer range $[0,255]$ (8-bit per channel) which is what your screen most likely displays (and hence what usual image file format store):
 
 ```
-0 90 157
+0 90 156
 ```
 
 Now we can check on a screen capture the color of the big triangle:
@@ -329,11 +329,15 @@ Color picking the big triangle in a screenshot of our windows shows a color of $
 
 Oh oh, it does not match.
 
-TODO Just a bit of foreshadowing.
+TODO This related to `swapChainFormat`
+
+```{admonition} Dawn
+Since the Dawn implementation only supports the format `BGRA8Unorm` for the surface, you should directly see correct colors in that case.
+```
 
 ```rust
 // We apply a gamma-correction to the color
-vec3<f32> corrected_color = pow(in.color, vec3<f32>(2.2));
+let corrected_color = pow(in.color, vec3<f32>(2.2));
 return vec4<f32>(corrected_color, 1.0);
 ```
 

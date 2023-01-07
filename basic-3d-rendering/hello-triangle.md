@@ -438,6 +438,10 @@ Finally we can setup the actual payload of the shader code descriptor:
 shaderCodeDesc.code = shaderSource;
 ```
 
+```{admonition} Dawn
+The Dawn implementation of WebGPU does not fully handle this pipeline. First, it does not include the `hints`/`hintCount` in the shader module descriptor. Secondly, it renamed `shaderCodeDesc.code` into `shaderCodeDesc.source`.
+```
+
 ### Pipeline layout
 
 One last thing before we can run our code: the shaders might need to **access input and output resources** (buffers and/or textures). These resources are made available to the pipeline by configuring a memory **layout**. Our first example does not use any resource:

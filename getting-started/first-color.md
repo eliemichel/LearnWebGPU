@@ -55,6 +55,10 @@ WGPUTextureFormat swapChainFormat = wgpuSurfaceGetPreferredFormat(surface, adapt
 swapChainDesc.format = swapChainFormat;
 ```
 
+```{admonition} Dawn
+When using the Dawn implementation of WebGPU, `wgpuSurfaceGetPreferredFormat` is not implemented yet. Actually, the only texture format it supports is `WGPUTextureFormat_BGRA8Unorm`.
+```
+
 Like buffers, textures are allocated for a specific usage. In our case, we will use them as the target of a Render Pass so it needs to be created with the `RenderAttachment` usage flag:
 
 ```C++
@@ -187,6 +191,10 @@ And the `clearValue` is the value to clear the screen with, put anything you wan
 renderPassColorAttachment.loadOp = WGPULoadOp_Clear;
 renderPassColorAttachment.storeOp = WGPUStoreOp_Store;
 renderPassColorAttachment.clearValue = WGPUColor{ 0.9, 0.1, 0.2, 1.0 };
+```
+
+```{admonition} Dawn
+Unfortunately the `clearValue` field is not taken into account by Dawn.
 ```
 
 ### Misc
