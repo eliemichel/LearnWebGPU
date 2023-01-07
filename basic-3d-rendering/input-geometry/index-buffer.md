@@ -11,12 +11,12 @@ Index Buffer
 
 The index buffer is used to separate the list of vertex attributes from the actual order in which they are connected. To illustrate its interest, let us draw a square, which is made of 2 triangles.
 
-```{image} /images/quad-light.svg
+```{image} /images/quad-light.plain.svg
 :align: center
 :class: only-light
 ```
 
-```{image} /images/quad-dark.svg
+```{image} /images/quad-dark.plain.svg
 :align: center
 :class: only-dark
 ```
