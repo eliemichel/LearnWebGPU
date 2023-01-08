@@ -1,4 +1,4 @@
-Basic Compute (WIP)
+Basic Compute
 =============
 
 Contents

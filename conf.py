@@ -18,7 +18,7 @@ sys.path.append(abspath(join(dirname(__file__), '_extensions')))
 # -- Project information -----------------------------------------------------
 
 project = 'Learn WebGPU for C++'
-copyright = '2022, Élie Michel and contributors'
+copyright = '2022-2023, Élie Michel and contributors'
 author = 'Élie Michel'
 
 

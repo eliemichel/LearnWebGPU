@@ -391,7 +391,7 @@ wgpuQueueWriteBuffer(queue, uniformBuffer, 0, &t, sizeof(float));
 
 <figure class="align-center">
 	<video autoplay loop muted inline nocontrols style="width:100%;height:auto;max-width:642px">
-	    <source src="../../_static/turning-webgpu-logo.mp4" type="video/mp4">
+		<source src="../../_static/turning-webgpu-logo.mp4" type="video/mp4">
 	</video>
 	<figcaption>
 		<p><span class="caption-text">Our first dynamic scene!</span></p>

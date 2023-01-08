@@ -1,5 +1,5 @@
-3D Meshes (WIP)
-=========
+A simple example (WIP)
+================
 
 ````{tab} With webgpu.hpp
 *Resulting code:* [`step050`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step050)
@@ -15,10 +15,8 @@ Let's dive into what you are quite likely here for: rendering **3D shapes**!
 I rolled back the part of the code about dynamic uniforms for now. I also set the `offset` to `vec2<f32>(0.0)`;
 ```
 
-A simple example
-----------------
-
-### Loading 3D data
+Switching to 3D data
+--------------------
 
 The first thing we need is a 3rd column in our point position!
 
@@ -103,7 +101,8 @@ Now it kinda works, we can guess a pyramid is here, but I wouldn't call it 3D ye
 The pyramid... seen from above, with no perspective.
 ```
 
-### Basic transform
+Basic transform
+---------------
 
 Before diving more properly into the *transform* process, let us convince ourselves that **we actually draw 3D data** with a simple rotation.
 
@@ -121,6 +120,15 @@ position.y = tmp.y;
 out.position = vec4<f32>(position.x, position.y * ratio, 0.0, 1.0);
 ```
 
+<figure class="align-center">
+	<video autoplay loop muted inline nocontrols style="width:100%;height:auto;max-width:642px">
+		<source src="../../_static/pyramid-rxy.mp4" type="video/mp4">
+	</video>
+	<figcaption>
+		<p><span class="caption-text">Rotation in the XY plane (the screen)</span></p>
+	</figcaption>
+</figure>
+
 ```{figure} /images/rotation.png
 :align: center
 :class: with-shadow
@@ -134,6 +142,15 @@ let tmp = mat2x2(c, s, -s, c) * position.yz;
 position.y = tmp.x;
 position.z = tmp.y;
 ```
+
+<figure class="align-center">
+	<video autoplay loop muted inline nocontrols style="width:100%;height:auto;max-width:642px">
+		<source src="../../_static/pyramid-ryz.mp4" type="video/mp4">
+	</video>
+	<figcaption>
+		<p><span class="caption-text">Rotation in the YZ plane</span></p>
+	</figcaption>
+</figure>
 
 ```{note}
 I intentionally set a different color for the tip of the pyramid so that we can see better. This will be better addressed when introducing a basic **shading**.
@@ -149,28 +166,14 @@ For some reason the developers of the WebGPU standard [deemed the assignments to
 There is something wrong with the depth.
 ```
 
+Conclusion
+----------
+
 We thus see the 3 important things to address to switch to 3D:
 
  - Depth fighting
  - Better transform
  - Shading
-
-Depth buffer
-------------
-
-Transformation matrices
------------------------
-
-Basic shading
--------------
-
-Loading from a file
--------------------
-
-Conclusion
-----------
-
-![A 3D mesh](/images/3d-mesh.png)
 
 ````{tab} With webgpu.hpp
 *Resulting code:* [`step050`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step050)
