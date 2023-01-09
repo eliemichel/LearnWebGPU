@@ -1,4 +1,4 @@
-A simple example (WIP)
+A simple example
 ================
 
 ````{tab} With webgpu.hpp
@@ -101,46 +101,79 @@ Now it kinda works, we can guess a pyramid is here, but I wouldn't call it 3D ye
 The pyramid... seen from above, with no perspective.
 ```
 
+```{note}
+I intentionally set a different color for the tip of the pyramid so that we can see better. This will be better addressed when introducing a basic **shading**.
+```
+
 Basic transform
 ---------------
 
-Before diving more properly into the *transform* process, let us convince ourselves that **we actually draw 3D data** with a simple rotation.
+*This is a gentle introduction to trigonometry. If you are familiar with the concept, you may jump ahead.*
 
-TODO
-
-Rotation in the screen plane:
+Seen from above, this pyramid boringly looks like an square. Could we **rotate** this? A very basic way to change the view angle is to swap axes:
 
 ```rust
-var position = in.position;
-var c = cos(uMyUniforms.time);
-var s = sin(uMyUniforms.time);
-let tmp = mat2x2(c, s, -s, c) * position.xy;
-position.x = tmp.x;
-position.y = tmp.y;
+var position = vec3<f32>(
+	in.position.x,
+	in.position.z, // swap axis Y and Z
+	in.position.y,
+);
 out.position = vec4<f32>(position.x, position.y * ratio, 0.0, 1.0);
 ```
 
-<figure class="align-center">
-	<video autoplay loop muted inline nocontrols style="width:100%;height:auto;max-width:642px">
-		<source src="../../_static/pyramid-rxy.mp4" type="video/mp4">
-	</video>
-	<figcaption>
-		<p><span class="caption-text">Rotation in the XY plane (the screen)</span></p>
-	</figcaption>
-</figure>
-
-```{figure} /images/rotation.png
+```{figure} /images/pyramid-side.png
 :align: center
 :class: with-shadow
-Rotation & trigonometry
+The pyramid seen from the side (still no perspective).
 ```
 
-Now let's rotate along a different axis, in the YZ plane instead of the XY:
+What about in-between rotations? The idea is to **mix axes**, adding a little bit of z in the y coordinates and a little bit of y in the z coordinates.
 
 ```rust
-let tmp = mat2x2(c, s, -s, c) * position.yz;
-position.y = tmp.x;
-position.z = tmp.y;
+var position = vec3<f32>(
+	in.position.x,
+	in.position.y + 0.5 * in.position.z, // add a bit of Z in Y...
+	in.position.z + 0.5 * in.position.y, // ...and a bit of Y in Z.
+);
+out.position = vec4<f32>(position.x, position.y * ratio, 0.0, 1.0);
+```
+
+```{figure} /images/pyramid-tilted.png
+:align: center
+:class: with-shadow
+The pyramid from a tilted view angle.
+```
+
+Of course at some point we have to remove some of `in.position.y` from Y so that after a quarter of turn we reach `Y = 0.0 * in.position.y + 1.0 * in.position.z`, as in the example above. So more generally our transform writes like this, where `alpha` and `beta` depend on the rotation angle:
+
+```rust
+let angle = uMyUniforms.time; // you can multiply it go rotate faster
+let alpha: f32 = /* ??? */;
+let beta: f32 = /* ??? */;
+var position = vec3<f32>(
+	in.position.x,
+	alpha * in.position.y + beta * in.position.z,
+	alpha * in.position.z - beta * in.position.y,
+);
+out.position = vec4<f32>(position.x, position.y * ratio, 0.0, 1.0);
+```
+
+```{note}
+If you payed close attention to the snippet above, you should have noticed a minus sign `-` before the second `beta`. It is not visible on our pyramid because it is symmetrical but swapping axes also flips the object. To counter-balance this, we can change the sign of one of the dimensions. Hence the Z coordinate after a quarter of turn must be `-in.position.y` instead of `in.position.y`.
+```
+
+It turns out that these weights `alpha` and `beta` are not easy to express in terms of basic operations with respect to the angle. So mathematicians came up with a dedicated name for them: **cosine** and **sine**! And the good news is that these are **built-in operations** in WGSL:
+
+```rust
+let angle = uMyUniforms.time; // you can multiply it go rotate faster
+let alpha = cos(angle);
+let beta = sin(angle);
+var position = vec3<f32>(
+	in.position.x,
+	alpha * in.position.y + beta * in.position.z,
+	alpha * in.position.z - beta * in.position.y,
+);
+out.position = vec4<f32>(position.x, position.y * ratio, 0.0, 1.0);
 ```
 
 <figure class="align-center">
@@ -152,28 +185,52 @@ position.z = tmp.y;
 	</figcaption>
 </figure>
 
-```{note}
-I intentionally set a different color for the tip of the pyramid so that we can see better. This will be better addressed when introducing a basic **shading**.
+```{image} /images/trigo-light.svg
+:align: center
+:class: only-light
 ```
 
-```{caution}
-For some reason the developers of the WebGPU standard [deemed the assignments to *swizzles* as "unnecessary"](https://github.com/gpuweb/gpuweb/issues/737), so we cannot compactly write `position.yz = ...`, we need to use this temporary `tmp` variable. I personally find this **very annoying**, and quite limiting for productivity, I hope they might change that eventually...
+```{image} /images/trigo-dark.svg
+:align: center
+:class: only-dark
 ```
+
+Congratulations, you have learnt most of what there is to know about trigonometry for computer graphics!
+
+```{hint}
+If you cannot remember which one is the $cos$ and which one is the $sin$ among `alpha` and `beta`, which happens all the time, just take an example of very simple rotation: `angle = 0`. In such a case, we need `alpha = 1` and `beta = 0`. If you look at a plot of the $sin$ and $cos$ functions you'll quickly see that $cos(0) = 1$ and $sin(0) = 0$
+```
+
+```{important}
+The argument of trigonometric functions is an angle, but be aware that it must be expressed in **radians**. There is a total of $2\pi$ radians for a full turn, which leads to the following elementary cross-multiplication rule:
+
+$$
+\frac{r \text{ radians}}{d \text{ degrees}} = \frac{2\pi \text{ radians}}{360 \text{ degrees}}
+$$
+
+So to convert an angle $d$ in degrees into its equivalent $r$ in radians, we simply do:
+
+$$
+r = d \times \frac{\pi}{180}
+$$
+```
+
+Conclusion
+----------
+
+We have a beginning of something. With this rotation, it starts looking like 3D, but there remains some important points to be concerned about:
+
+ - **Depth fighting** As highlighted in the image bellow, the triangles do not overlap in the correct order.
+ - **Transform** We have the basics, but it is a bit manual, and there is still **no perspective**!
+ - **Shading** The trick of setting the tip of the pyramid to a darker color was good for starting, but we can do much better.
+
+These points are, in this order, the topic of the next 3 chapters.
 
 ```{figure} /images/pyramid-zissue.png
 :align: center
 :class: with-shadow
 There is something wrong with the depth.
 ```
-
-Conclusion
-----------
-
-We thus see the 3 important things to address to switch to 3D:
-
- - Depth fighting
- - Better transform
- - Shading
 
 ````{tab} With webgpu.hpp
 *Resulting code:* [`step050`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step050)
