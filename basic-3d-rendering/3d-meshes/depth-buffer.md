@@ -49,6 +49,8 @@ depthStencilAttachment.stencilStoreOp = StoreOp::Store;
 Depth texture
 -------------
 
+I'm going to be quick on this part, as we'll come back on textures later on.
+
 ```C++
 TextureFormat depthTextureFormat = TextureFormat::Depth24Plus;
 TextureDescriptor depthTextureDesc;
