@@ -9,9 +9,9 @@ Transformation matrices (WIP)
 *Resulting code:* [`step054-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step054-vanilla)
 ````
 
-TODO
+Here comes a bit of theory. Don't worry if you don't like math so much: giving a practical meaning to the transformation that we manipulate actually help understanding why we need the math the way it is.
 
-A bit of theory here.
+Think of it as a way to learn math thanks to 3D and not the other way around!
 
 Linear algebra
 --------------
@@ -74,6 +74,10 @@ A matrix is a **double entry table** that describes a way to build a new vector 
 :class: only-dark
 ```
 
+<p class="align-center">
+	<span class="caption-text"><em>The coefficient <span class="math notranslate nohighlight">\(m_{xy}\)</span> is the influence factor of <span class="math notranslate nohighlight">\(y\)</span> on the new coordinate <span class="math notranslate nohighlight">\(x\)</span>.</em></span>
+</p>
+
 The $i$-th row describes the $i$-th output coordinate. And on each row, the $j$-th coefficient tells how much of the input's $j$-th coordinate we must mix.
 
 ```{note}
@@ -83,7 +87,7 @@ The term "linearly" just means that we can only scale and add input coordinates.
 Let us see a simple example first: **scaling** a vector consists in applying a diagonal matrix, because the $i$-th coordinate of the scaled vector only depends on the $i$-th coordinate of the input one:
 
 $$
-\left(
+M = \left(
 \begin{array}{ccc}
 1.0 & 0 & 0 \\
 0 & \text{ratio} & 0 \\
@@ -98,17 +102,26 @@ The application of the transform described by the matrix to a vector is denoted 
 // Option A
 position = position * vec3<f32>(1.0, ratio, 0.5);
 
-// Option B
-let M = mat3x3<f32>(
-	1.0,  0.0 , 0.0,
-	0.0, ratio, 0.0,
-	0.0,  0.0 , 0.5,
-);
+// Option B, which is equivalent
+let M = transpose(mat3x3<f32>(
+// in x    y    z
+	1.0,  0.0 , 0.0, // -> out x = 1.0 * x + 0.0 * y + 0.0 * z = x
+	0.0, ratio, 0.0, // -> out y = ratio * y
+	0.0,  0.0 , 0.5, // -> out z = 0.5 * z
+));
 position = M * position;
 ```
 
+```{important}
+WGSL (like GLSL and HLSL) expects the arguments of the `mat3x3` constructor to be given **column by column**, despite the fact that they **visually appear in rows** in our source code. Instead of always thinking in mirror, which is quite prone to error, I added a `transpose` operation after the creation of the matrix in order to **flip it along its diagonal**. It does not make a difference for a diagonal matrix like this one, but this is very important in general.
+```
+
 ```{note}
-This choice of notation results from the fact that this operation behaves in many ways like a multiplication between two numbers (more details later), but note already that it is not fully the same. In particular, we cannot swap the operand and write $x \times M$ (it is called *non-commutative*).
+This choice of notation results from the fact that this operation behaves in many ways **like a multiplication** between two numbers (more details later). But note however that it is **not fully the same**. In particular, we cannot swap the operand and write $x \times M$ (it is called *non-commutative*).
+```
+
+```{hint}
+The matrix with 1.0 on the diagonal and 0.0 anywhere else is called the **identity matrix** $I$ and has a very special property: it changes nothing ($Ix = x$ for any vector $x$).
 ```
 
 For a simple scale, this seems a bit overkill, but it becomes interesting when we want to encode a rotation:
@@ -126,22 +139,82 @@ position = vec3<f32>(
 );
 
 // Option B: Rotate the view point using a matrix
-let R = mat3x3<f32>(
+let R = transpose(mat3x3<f32>(
 // in x    y    z
-	1.0, 0.0, 0.0, // -> out x
-	0.0,   c,   s, // -> out y
-	0.0,  -s,   c, // -> out z
-);
+	1.0, 0.0, 0.0, // -> out x = 1.0 * x
+	0.0,   c,   s, // -> out y =  c * y + s * z
+	0.0,  -s,   c, // -> out z = -s * y + c * z
+));
 position = R * position;
 ```
 
+Perfect, this formalism enable us to represent both scaling and rotation!
+
 ### Homogeneous coordinates
 
-What about the translation? We add a special dimension!
+But what about the translation? There is **good and bad news**. The bad is that a $3 \times 3$ matrix **cannot encode a translation**. The good is that a $4 \times 4$ matrix can!
 
-TODO
+Let me explain, the matrix tells how to transform a vector by mixing its coordinate with each others. But it does **not allow to add** anything to the mix that is a **constant** value, which does not depend on a coordinate.
+
+```{note}
+A matrix represents what is known as a **linear transform**, which also gives its name to the whole field of **linear algebra** by the way. The combination of a linear transform with a translation is called an **affine transform**.
+```
+
+How do we address this? We add **an extra coordinate that is meant to always equal 1**. Adding a constant value $t$ now corresponds to adding $t$ times the 4th coordinate and is thus a "legal" mix:
+
+```rust
+// Option A
+position = position + vec3<f32>(tx, ty, tz);
+
+// Option B, which is equivalent (BUT won't work as-is, see bellow)
+let M = transpose(mat4x3<f32>(
+// in x    y    z   1.0
+	1.0,  0.0, 0.0,  tx, // -> out x = 1.0 * x + tx * 1.0
+	0.0,  1.0, 0.0,  ty, // -> out y = 1.0 * y + ty * 1.0
+	0.0,  0.0, 1.0,  tz, // -> out z = 1.0 * z + tz * 1.0
+));
+position = M * vec4<f32>(position, 1.0);
+```
+
+```{caution}
+Mathematically, the code above makes sense: we can have a non-square matrix that takes an input vector of size 4 and returns an output of size 3. However, **WGSL only supports square matrices** (and so do other shading languages).
+```
+
+There would anyway be only little use of non-square matrices, because this prevents us from **chaining transforms**. Instead of returning a vector $(x, y, z)$, we would rather return the vector $(x, y, z, 1.0)$ so that we may apply again another transform. This should be easy:
+
+```rust
+// Option A
+position = position + vec3<f32>(tx, ty, tz);
+
+// Option B, which is equivalent (and working, now)
+let M = transpose(mat4x4<f32>(
+// in x    y    z   1.0
+	1.0,  0.0, 0.0,  tx, // -> out x = 1.0 * x + tx * 1.0
+	0.0,  1.0, 0.0,  ty, // -> out y = 1.0 * y + ty * 1.0
+	0.0,  0.0, 1.0,  tz, // -> out z = 1.0 * z + tz * 1.0
+	0.0,  0.0, 0.0, 1.0, // -> out w = 1.0
+));
+position = (M * vec4<f32>(position, 1.0)).xyz;
+```
+
+```{note}
+Notice how the upper-left $3 \times 3$ quadrant is the identity matrix. This part of the $4 \times 4$ matrix corresponds to the scale and/or rotation (and/or skew).
+```
+
+It is important to note that this 4th coordinate is **not just a hack** for storing the translation on top of the linear transform. Everything behaves as if there was a 4th dimension, so all the nice **mathematical properties** about matrices **still hold**.
+
+As long as the last coordinate remains $1.0$, these vectors still represent 3D points. This is called the *homogeneous coordinate* of the point, and we'll understand why better when talking about perspective!
 
 ### Composition
+
+The power of matrices gets even crazier when we start to compose them.
+
+```rust
+// Object transform
+let objectScale = vec3<f32>(1.0, 1.0, 1.0);
+let objectTranslate = vec3<f32>(0.25, 0.0, 0.0);
+position = position * objectScale + objectTranslate;
+```
 
 TODO
 
