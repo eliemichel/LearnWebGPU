@@ -235,7 +235,7 @@ auto onBuffer2Mapped = [](WGPUBufferMapAsyncStatus status, void* pUserData) {
 	wgpuBufferUnmap(context->buffer);
 };
 
-Context context;
+Context context = { buffer2 };
 wgpuBufferMapAsync(buffer2, WGPUMapMode_Read, 0, 16, onBuffer2Mapped, (void*)&context);
 ```
 
