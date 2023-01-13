@@ -325,7 +325,7 @@ out.position = vec4<f32>(in.position.x + offset.x, (in.position.y + offset.y) * 
 ```
 
 ```{note}
-It is important to apply the scene transform **before** the viewport transform (the ratio). We will get back on this more in detail when adding the 3D to 2D projection transform needed for [drawing 3D meshes](/basic-3d-rendering/3d-meshes.md)!
+It is important to apply the scene transform **before** the viewport transform (the ratio). We will get back on this more in detail when adding the 3D to 2D projection transform needed for [drawing 3D meshes](/basic-3d-rendering/3d-meshes/index.md)!
 ```
 
 ```{figure} /images/loaded-webgpu-logo-colorspace-issue.png

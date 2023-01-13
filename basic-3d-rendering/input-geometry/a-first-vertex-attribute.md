@@ -186,7 +186,7 @@ std::vector<float> vertexData = {
 int vertexCount = static_cast<int>(vertexData.size() / 2);
 ```
 
-The GPU-side vertex buffer is created like any other buffer, as introduced in chapter [*The Command Queue*](/getting-started/the-command-queue.md). The main difference is that we must specify `BufferUsage::Vertex` in its `usage` field.
+The GPU-side vertex buffer is created like any other buffer, as introduced in [the chapter about buffers](/getting-started/buffers.md). The main difference is that we must specify `BufferUsage::Vertex` in its `usage` field.
 
 ````{tab} With webgpu.hpp
 ```C++

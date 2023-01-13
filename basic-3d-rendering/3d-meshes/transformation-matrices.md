@@ -11,7 +11,7 @@ Transformation matrices (WIP)
 
 Here comes a bit of theory. Don't worry if you don't like math so much: giving a practical meaning to the transformation that we manipulate actually help understanding why we need the math the way it is.
 
-Think of it as a way to learn math thanks to 3D and not the other way around!
+Think of it as a way to **learn math thanks to 3D** and not the other way around!
 
 Linear algebra
 --------------
@@ -166,7 +166,7 @@ How do we address this? We add **an extra coordinate that is meant to always equ
 // Option A
 position = position + vec3<f32>(tx, ty, tz);
 
-// Option B, which is equivalent (BUT won't work as-is, see bellow)
+// Option B, which is equivalent (BUT WON'T WORK as-is, see bellow)
 let M = transpose(mat4x3<f32>(
 // in x    y    z   1.0
 	1.0,  0.0, 0.0,  tx, // -> out x = 1.0 * x + tx * 1.0
@@ -207,27 +207,180 @@ As long as the last coordinate remains $1.0$, these vectors still represent 3D p
 
 ### Composition
 
-The power of matrices gets even crazier when we start to compose them.
+#### Product
+
+The power of matrices gets even crazier when we start **composing** them. For instance if we want to combine a scaling and a translation, we could manually coin a matrix that does both:
 
 ```rust
-// Object transform
-let objectScale = vec3<f32>(1.0, 1.0, 1.0);
+// Option A
+let objectScale = vec3<f32>(0.5, 0.5, 0.5);
 let objectTranslate = vec3<f32>(0.25, 0.0, 0.0);
 position = position * objectScale + objectTranslate;
+
+// Option B: A matrix that combines scaling THEN translation
+let M = transpose(mat4x4<f32>(
+// in x    y    z    1.0
+	0.5,  0.0, 0.0, 0.25, // -> out x = 0.5 * x + 0.25
+	0.0,  0.5, 0.0,  0.0, // -> out y = 0.5 * y
+	0.0,  0.0, 0.5,  0.0, // -> out z = 0.5 * z
+	0.0,  0.0, 0.0,  1.0, // -> out w = 1.0
+));
+position = (M * vec4<f32>(position, 1.0)).xyz;
 ```
 
+But we could also reuse our previous matrices and combine them together with a **matrix multiplication**:
+
+```rust
+// Option C: Matrix composition
+// Scaling matrix
+let S = transpose(mat4x4<f32>(
+// in x    y    z    1.0
+	0.5,  0.0, 0.0, 0.0, // -> out x = 0.5 * x
+	0.0,  0.5, 0.0, 0.0, // -> out y = 0.5 * y
+	0.0,  0.0, 0.5, 0.0, // -> out z = 0.5 * z
+	0.0,  0.0, 0.0, 1.0, // -> out w = 1.0
+));
+/// Translation matrix
+let T = transpose(mat4x4<f32>(
+// in x    y    z    1.0
+	1.0,  0.0, 0.0, 0.25, // -> out x = x + 0.25
+	0.0,  1.0, 0.0,  0.0, // -> out y = y
+	0.0,  0.0, 1.0,  0.0, // -> out z = z
+	0.0,  0.0, 0.0,  1.0, // -> out w = 1.0
+));
+// Composed matrix
+let M = T * S;
+position = (M * vec4<f32>(position, 1.0)).xyz;
+```
+
+Okey, there are a few **important** things to note here:
+
+ - `M` is `T * S` in **this order**, and this is different than `S * T`.
+ - This product must be **read backwards**: we apply `S` **then** `T`.
+ - The matrix-matrix product `T * S` is a matrix obtain by taking each column of `S` and transforming it with `T` as if it was a vector.
+
+**Why does this work?** We can decompose it:
+
+```rust
+let a = vec4<f32>(position, 1.0);
+let b = S * a; // We scale 'a'
+let c = T * b; // We translate 'b'
+position = c.xyz;
+```
+
+We can directly write `c = T * (S * a)`, and the math tells us that we can actually evaluate the products with a different precedence: `c = (T * S) * a`. This is why applying the transform `M = T * S` is equivalent to applying `S` **then** `T`.
+
+```{note}
+This change from `T * (S * a)` to `(T * S) * a` is called the **associativity**. It is a property that the matrix multiplication shares with the real multiplication, and thus one of the motivations for using the same notation. The matrix multiplication is however not *commutative*.
+```
+
+```{tip}
+In this case applying `T` before `S` would lead to an overall translation of only $0.125$ (half $0.25$) because the translation would be affected by the scaling.
+```
+
+#### Rotations
+
 TODO
+
+Let's compose 2 rotations:
+
+```rust
+// Rotate the model
+let angle1 = uMyUniforms.time;
+let c1 = cos(angle1);
+let s1 = sin(angle1);
+let R1 = transpose(mat3x3<f32>(
+	 c1,  s1, 0.0,
+	-s1,  c1, 0.0,
+	0.0, 0.0, 1.0,
+));
+
+// Tilt the view point
+let angle2 = 3.0 * pi / 4.0;
+let c2 = cos(angle2);
+let s2 = sin(angle2);
+let R2 = transpose(mat3x3<f32>(
+	1.0, 0.0, 0.0,
+	0.0,  c2,  s2,
+	0.0, -s2,  c2,
+));
+
+// Compose and apply rotations
+position = R2 * R1 * position;
+```
+
+<figure class="align-center">
+	<video autoplay loop muted inline nocontrols style="width:100%;height:auto;max-width:642px">
+		<source src="../../_static/pyramid-2r.mp4" type="video/mp4">
+	</video>
+	<figcaption>
+		<p><span class="caption-text">Composition of two rotations</span></p>
+	</figcaption>
+</figure>
+
+This example would have been tedious to create manually. Further more, we will see that it is very useful to keep the model transform separate from the view angle.
+
+#### More advanced example
+
+TODO
+
+```rust
+// Scale the object
+let S = transpose(mat4x4<f32>(
+	0.3,  0.0, 0.0, 0.0,
+	0.0,  0.3, 0.0, 0.0,
+	0.0,  0.0, 0.3, 0.0,
+	0.0,  0.0, 0.0, 1.0,
+));
+
+// Translate the object
+let T = transpose(mat4x4<f32>(
+	1.0,  0.0, 0.0, 0.5,
+	0.0,  1.0, 0.0, 0.0,
+	0.0,  0.0, 1.0, 0.0,
+	0.0,  0.0, 0.0, 1.0,
+));
+
+// [...] Define R1 and R2 as above BUT as mat4x4
+
+var position4 = vec4<f32>(position, 1.0);
+position = (R2 * R1 * T * S * position4).xyz;
+```
+
+<figure class="align-center">
+	<video autoplay loop muted inline nocontrols style="width:100%;height:auto;max-width:642px">
+		<source src="../../_static/pyramid-around.mp4" type="video/mp4">
+	</video>
+	<figcaption>
+		<p><span class="caption-text">A more advanced matrix-based transform</span></p>
+	</figcaption>
+</figure>
+
+Projection matrix
+-----------------
+
+TODO
+
+Let's focus on the viewport transform. SO far it looks like this:
+
+```rust
+out.position = vec4<f32>(position.x, position.y * ratio, position.z * 0.5 + 0.5, 1.0);
+```
+
+This is quite hacky.
 
 GLM
 ---
 
 TODO
 
+In practice we precompute transforms on CPU.
+
 The [GLM](https://github.com/g-truc/glm) library. Originally designed to be as close as possible to the GLSL syntax. It will look familiar compared to WGSL. Widely used, supported on multiple platforms, battlefield-tested, header-only (so easy to integrate). Stripped down version: [glm.zip](../../data/glm-0.9.9.8-light.zip) (392 KB, as opposed to the 5.5 MB of the official release), to be unzipped in your.
 
 ```C++
 #include <glm/glm.hpp> // all types inspired from GLSL
-#include <glm/ext/...> // utility extensions
+#include <glm/ext.hpp> // utility extensions
 ```
 
 ```CMake
