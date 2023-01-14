@@ -11,7 +11,7 @@ hello-triangle
 input-geometry/index
 shader-uniforms/index
 3d-meshes/index
-camera
 texturing
+camera
 lighting-and-material
 ```

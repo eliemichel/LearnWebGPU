@@ -9,7 +9,9 @@ Basic shading (WIP)
 *Resulting code:* [`step056-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step056-vanilla)
 ````
 
-TODO Here we get an intuition about how to shade a scene, but do not follow a physically based approach.
+TODO
+
+Here we get an intuition about how to shade a scene, but do not follow a physically based approach.
 
 To better see the impact of our shading, we give the same base color to the whole pyramid. In `pyramid.txt`, replace the color of the tip with the same white as other points (remember that the green color comes from the shader and its color uniform):
 
@@ -18,6 +20,9 @@ To better see the impact of our shading, we give the same base color to the whol
 +0.0 +0.0 +0.5    1.0 1.0 1.0
                   ^^^^^^^^^^^ This was 0.5
 ```
+
+Theory
+------
 
 Normal
 ------
@@ -31,7 +36,37 @@ We add a new attribute.
 
 # The base
 -0.5 -0.5 -0.3     0.0 -1.0 0.0    1.0 1.0 1.0
-[...]
++0.5 -0.5 -0.3     0.0 -1.0 0.0    1.0 1.0 1.0
++0.5 +0.5 -0.3     0.0 -1.0 0.0    1.0 1.0 1.0
+-0.5 +0.5 -0.3     0.0 -1.0 0.0    1.0 1.0 1.0
+
+# Face sides have their own copy of the vertices
+# because they have a different normal vector.
+-0.5 -0.5 -0.3  0.0 -0.848 0.53    1.0 1.0 1.0
++0.5 -0.5 -0.3  0.0 -0.848 0.53    1.0 1.0 1.0
++0.0 +0.0 +0.5  0.0 -0.848 0.53    1.0 1.0 1.0
+
++0.5 -0.5 -0.3   0.848 0.0 0.53    1.0 1.0 1.0
++0.5 +0.5 -0.3   0.848 0.0 0.53    1.0 1.0 1.0
++0.0 +0.0 +0.5   0.848 0.0 0.53    1.0 1.0 1.0
+
++0.5 +0.5 -0.3   0.0 0.848 0.53    1.0 1.0 1.0
+-0.5 +0.5 -0.3   0.0 0.848 0.53    1.0 1.0 1.0
++0.0 +0.0 +0.5   0.0 0.848 0.53    1.0 1.0 1.0
+
+-0.5 +0.5 -0.3  -0.848 0.0 0.53    1.0 1.0 1.0
+-0.5 -0.5 -0.3  -0.848 0.0 0.53    1.0 1.0 1.0
++0.0 +0.0 +0.5  -0.848 0.0 0.53    1.0 1.0 1.0
+
+[indices]
+# Base
+ 0  1  2
+ 0  2  3
+# Sides
+ 4  5  6
+ 7  8  9
+10 11 12
+13 14 15
 ```
 
 ```
@@ -123,40 +158,10 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
 }
 ```
 
-```{figure} /images/normal-px.png
+```{figure} /images/pyramid-axis-lights.png
 :align: center
 :class: with-shadow
-Normal +X
-```
-
-```{figure} /images/normal-nx.png
-:align: center
-:class: with-shadow
-Normal -X
-```
-
-```{figure} /images/normal-py.png
-:align: center
-:class: with-shadow
-Normal +Y
-```
-
-```{figure} /images/normal-ny.png
-:align: center
-:class: with-shadow
-Normal -Y
-```
-
-```{figure} /images/normal-pz.png
-:align: center
-:class: with-shadow
-Normal +Z
-```
-
-```{figure} /images/normal-nz.png
-:align: center
-:class: with-shadow
-Normal -Z
+Multiplying the color by the normal axes creates axis-aligned directional lights.
 ```
 
 To apply a lighting coming from an arbitrary direction, we again use a linear combination of the different axes:
@@ -167,6 +172,12 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
 	let color = in.color * shading;
 	// [...]
 }
+```
+
+```{figure} /images/pyramid-first-light.png
+:align: center
+:class: with-shadow
+Mixing multiple axes can create a directional light coming from any direction.
 ```
 
 The coefficient $(0.5, -0.9, 0.1)$ are in fact the **light direction** This combination is called a **dot product**:
@@ -183,15 +194,6 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
 ```{note}
 The term "direction" suggests that this is a **normalized** vector (i.e., a vector whose length is $1$. Here we actually encode the direction plus the **intensity** of the light, through the magnitude (i.e., length) of the vector.
 ```
-
-<figure class="align-center">
-	<video autoplay loop muted inline nocontrols style="width:100%;height:auto;max-width:642px">
-		<source src="../../_static/shading00.mp4" type="video/mp4">
-	</video>
-	<figcaption>
-		<p><span class="caption-text">Our first light.</span></p>
-	</figcaption>
-</figure>
 
 ### Multiple lights
 
