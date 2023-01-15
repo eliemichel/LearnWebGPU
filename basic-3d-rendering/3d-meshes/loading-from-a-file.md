@@ -2,11 +2,11 @@ Loading from a file (WIP)
 ===================
 
 ````{tab} With webgpu.hpp
-*Resulting code:* [`step056`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step056)
+*Resulting code:* [`step058`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step058)
 ````
 
 ````{tab} Vanilla webgpu.h
-*Resulting code:* [`step056-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step056-vanilla)
+*Resulting code:* [`step058-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step058-vanilla)
 ````
 
 This time, we are ready to load **an actual 3D file format**, so that you can play with any model you'd like.
@@ -169,10 +169,10 @@ Conclusion
  - OBJ is one format among others.
 
 ````{tab} With webgpu.hpp
-*Resulting code:* [`step056`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step056)
+*Resulting code:* [`step058`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step058)
 ````
 
 ````{tab} Vanilla webgpu.h
-*Resulting code:* [`step056-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step056-vanilla)
+*Resulting code:* [`step058-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step058-vanilla)
 ````
 

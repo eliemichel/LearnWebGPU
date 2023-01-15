@@ -10,6 +10,7 @@ Contents
 a-simple-example
 depth-buffer
 transformation-matrices
+projection-matrices
 basic-shading
 loading-from-a-file
 ```

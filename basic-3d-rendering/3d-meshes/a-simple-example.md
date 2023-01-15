@@ -224,7 +224,7 @@ We have a beginning of something. With this rotation, it starts looking like 3D,
  - **Transform** We have the basics, but it is a bit manual, and there is still **no perspective**!
  - **Shading** The trick of setting the tip of the pyramid to a darker color was good for starting, but we can do much better.
 
-These points are, in this order, the topic of the next 3 chapters.
+These points are, in this order, the topic of the next 4 chapters (transforms are split in 2 chapters).
 
 ```{figure} /images/pyramid-zissue.png
 :align: center

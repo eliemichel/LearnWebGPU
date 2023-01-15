@@ -1,4 +1,4 @@
-Transformation matrices (WIP)
+Transformation matrices
 =======================
 
 ````{tab} With webgpu.hpp
@@ -9,16 +9,14 @@ Transformation matrices (WIP)
 *Resulting code:* [`step054-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step054-vanilla)
 ````
 
-Here comes a bit of theory. Don't worry if you don't like math so much: giving a practical meaning to the transformation that we manipulate actually help understanding why we need the math the way it is.
+we have been manipulating **transforms** in our shader code at multiple occasions already: offset of the 2D scene, viewport ratio, rotation of the 3D object. This chapter presents **a proper and unified way** of handling these. This will lead us in the next part to the introduction of the **perspective** transform!
 
-Think of it as a way to **learn math thanks to 3D** and not the other way around!
+This chapter introduces mathematical concepts. I want to reassure the ones of you who do not feel comfortable with math: I try to introduce as smoothly as possible and to always justify its use. Think of it as a way to **learn math thanks to 3D** and not the other way around!
 
-Linear algebra
---------------
+A common formalism
+------------------
 
-### A common formalism
-
-Let's summarize the various cases of transforms that we have seen so far:
+Let us summarize the various cases of transforms that we have encountered in the previous chapters:
 
 ```rust
 var position = in.position;
@@ -38,7 +36,7 @@ out.position = vec4<f32>(position.x, position.y * ratio, position.z * 0.5 + 0.5,
 ```
 
 ```{note}
-There is not much difference between moving the object and moving the viewpoint. The line `position.x += 0.25` can be seen either as moving the object forward along the X axis or moving the viewpoint backwards along the X axis. But as soon as we have multiple objects, this distinction becomes relevant.
+There is not much difference between moving the object and moving the viewpoint. The line `position.x += 0.25` can be seen either as moving the object forward along the X axis or moving the viewpoint backwards along the X axis. But as soon as we have multiple objects and/or light sources, this distinction becomes relevant.
 ```
 
 We can actually unify these transforms under a **common formalism**. First of all, we can see both the object and screen projection as a scaling plus a translation:
@@ -58,9 +56,12 @@ let viewportTranslate = vec3<f32>(0.0, 0.0, 0.5);
 out.position = vec4<f32>(position * viewportScale + viewportTranslate, 1.0);
 ```
 
-What about the rotation? We need a bit more than a vector scaling for this, because me mix multiple axes. And this is exactly what a **matrix** is for!
+What about the **rotation**? We need a bit more than a vector scaling for this, because me **mix multiple axes**. And this is exactly what a **matrix** is for!
 
-### Matrices
+Matrices
+--------
+
+### Definition
 
 A matrix is a **double entry table** that describes a way to build a new vector by **linearly mixing** the coordinates of an input vector. **Each row** of the matrix lists the mixing coefficients to build one of the output coordinates.
 
@@ -84,6 +85,8 @@ The $i$-th row describes the $i$-th output coordinate. And on each row, the $j$-
 The term "linearly" just means that we can only scale and add input coordinates. We cannot for instance multiply $x$ by $y$. In general linear coordinate mixes have the form $\alpha x + \beta y + \gamma z$ where $\alpha$, $\beta$ and $\gamma$ are predefined factors (coefficients of the matrix).
 ```
 
+### Scaling matrix
+
 Let us see a simple example first: **scaling** a vector consists in applying a diagonal matrix, because the $i$-th coordinate of the scaled vector only depends on the $i$-th coordinate of the input one:
 
 $$
@@ -97,6 +100,10 @@ M = \left(
 $$
 
 The application of the transform described by the matrix to a vector is denoted as a **product**: $b = M \times a$ or just $b = Ma$, and `M * a` in code.
+
+```{note}
+This choice of notation results from the fact that this operation behaves in many ways **like a multiplication** between two numbers (more details later). But note however that it is **not fully the same**. In particular, we cannot swap the operand and write $x \times M$ (it is called *non-commutative*).
+```
 
 ```rust
 // Option A
@@ -116,15 +123,13 @@ position = M * position;
 WGSL (like GLSL and HLSL) expects the arguments of the `mat3x3` constructor to be given **column by column**, despite the fact that they **visually appear in rows** in our source code. Instead of always thinking in mirror, which is quite prone to error, I added a `transpose` operation after the creation of the matrix in order to **flip it along its diagonal**. It does not make a difference for a diagonal matrix like this one, but this is very important in general.
 ```
 
-```{note}
-This choice of notation results from the fact that this operation behaves in many ways **like a multiplication** between two numbers (more details later). But note however that it is **not fully the same**. In particular, we cannot swap the operand and write $x \times M$ (it is called *non-commutative*).
-```
-
 ```{hint}
 The matrix with 1.0 on the diagonal and 0.0 anywhere else is called the **identity matrix** $I$ and has a very special property: it changes nothing ($Ix = x$ for any vector $x$).
 ```
 
-For a simple scale, this seems a bit overkill, but it becomes interesting when we want to encode a rotation:
+### Rotation matrix
+
+For a simple scale, matrices seem a bit overkill, but it becomes interesting when we want to **encode a rotation**:
 
 ```rust
 let c = cos(angle);
@@ -148,13 +153,14 @@ let R = transpose(mat3x3<f32>(
 position = R * position;
 ```
 
-Perfect, this formalism enable us to represent both scaling and rotation!
+Perfect, this matrix-based formalism enable us to represent both scaling and rotation!
 
-### Homogeneous coordinates
+Homogeneous coordinates
+-----------------------
 
-But what about the translation? There is **good and bad news**. The bad is that a $3 \times 3$ matrix **cannot encode a translation**. The good is that a $4 \times 4$ matrix can!
+But what about the **translation**? There is **good and bad news**. The bad is that a $3 \times 3$ matrix **cannot encode a translation**. The good is that a $4 \times 4$ matrix can!
 
-Let me explain, the matrix tells how to transform a vector by mixing its coordinate with each others. But it does **not allow to add** anything to the mix that is a **constant** value, which does not depend on a coordinate.
+Let me explain, the matrix tells how to transform a vector by mixing its coordinate with each others. But it does **not allow to add** anything to the mix that is a **constant** value (i.e., something that does not depend on an input coordinate).
 
 ```{note}
 A matrix represents what is known as a **linear transform**, which also gives its name to the whole field of **linear algebra** by the way. The combination of a linear transform with a translation is called an **affine transform**.
@@ -177,7 +183,7 @@ position = M * vec4<f32>(position, 1.0);
 ```
 
 ```{caution}
-Mathematically, the code above makes sense: we can have a non-square matrix that takes an input vector of size 4 and returns an output of size 3. However, **WGSL only supports square matrices** (and so do other shading languages).
+Mathematically, the code above makes sense: a non-square 3x4 matrix takes an input vector of size 4 and returns an output of size 3. However, **WGSL only supports square matrices** (and so do other shading languages).
 ```
 
 There would anyway be only little use of non-square matrices, because this prevents us from **chaining transforms**. Instead of returning a vector $(x, y, z)$, we would rather return the vector $(x, y, z, 1.0)$ so that we may apply again another transform. This should be easy:
@@ -205,11 +211,14 @@ It is important to note that this 4th coordinate is **not just a hack** for stor
 
 As long as the last coordinate remains $1.0$, these vectors still represent 3D points. This is called the *homogeneous coordinate* of the point, and we'll understand why better when talking about perspective!
 
-### Composition
+Composition
+-----------
 
-#### Product
+Matrices provide a common way to represent rotation, scaling and translation. But the power of matrices gets even crazier when we start **composing** them!
 
-The power of matrices gets even crazier when we start **composing** them. For instance if we want to combine a scaling and a translation, we could manually coin a matrix that does both:
+### Product
+
+For instance if we want to combine a scaling and a translation, we can manually coin a matrix that does both:
 
 ```rust
 // Option A
@@ -229,7 +238,7 @@ let homogeneous_position = vec4<f32>(position, 1.0);
 position = (M * homogeneous_position).xyz;
 ```
 
-But we could also reuse our previous matrices and combine them together with a **matrix multiplication**:
+But this can be **tedious** when it comes to mixing rotations for instances. We can instead reuse our previous atomic matrices and combine them together with a **matrix multiplication**:
 
 ```rust
 // Option C: Matrix composition
@@ -241,7 +250,7 @@ let S = transpose(mat4x4<f32>(
 	0.0,  0.0, 0.5, 0.0, // -> out z = 0.5 * z
 	0.0,  0.0, 0.0, 1.0, // -> out w = 1.0
 ));
-/// Translation matrix
+// Translation matrix
 let T = transpose(mat4x4<f32>(
 // in x    y    z    1.0
 	1.0,  0.0, 0.0, 0.25, // -> out x = x + 0.25
@@ -255,11 +264,11 @@ let homogeneous_position = vec4<f32>(position, 1.0);
 position = (M * homogeneous_position).xyz;
 ```
 
-Okey, there are a few **important** things to note here:
+There are a few **important** things to note here:
 
- - `M` is `T * S` in **this order**, and this is different than `S * T`.
- - This product must be **read backwards**: we apply `S` **then** `T`.
- - The matrix-matrix product `T * S` is a matrix obtain by taking each column of `S` and transforming it with `T` as if it was a vector.
+ - `M` is `T * S` in **this order**, and this is different from `S * T`.
+ - This product **reads backwards**: we apply `S` **then** `T`.
+ - The matrix-matrix product `T * S` is a matrix obtained by taking each column of `S` and transforming it with `T` as if it was a vector.
 
 **Why does this work?** We can decompose it:
 
@@ -280,14 +289,28 @@ This change from `T * (S * a)` to `(T * S) * a` is called the **associativity**.
 In this case applying `T` before `S` would lead to an overall translation of only $0.125$ (half $0.25$) because the translation would be affected by the scaling.
 ```
 
-#### Rotations
+### Rotations
 
-TODO
+Equipped with this new multiplication tool, we can start experimenting with more complex transforms that were hard to define before. A good example is the **combination of 2 rotations along different axes**.
 
-Let's compose 2 rotations:
+```{image} /images/two-rotations-light.svg
+:align: center
+:class: only-light
+```
+
+```{image} /images/two-rotations-dark.svg
+:align: center
+:class: only-dark
+```
+
+<p class="align-center">
+	<span class="caption-text"><em>The first transform rotates the object in the XY plane, the second one rotates in the YZ plane..</em></span>
+</p>
+
+We can define these two transforms independently as matrices, then simply multiply them together:
 
 ```rust
-// Rotate the model
+// Rotate the model in the XY plane
 let angle1 = uMyUniforms.time;
 let c1 = cos(angle1);
 let s1 = sin(angle1);
@@ -297,7 +320,8 @@ let R1 = transpose(mat3x3<f32>(
 	0.0, 0.0, 1.0,
 ));
 
-// Tilt the view point
+// Tilt the view point in the YZ plane
+// by three 8th of turn (1 turn = 2 pi)
 let angle2 = 3.0 * pi / 4.0;
 let c2 = cos(angle2);
 let s2 = sin(angle2);
@@ -308,6 +332,7 @@ let R2 = transpose(mat3x3<f32>(
 ));
 
 // Compose and apply rotations
+// (R1 then R2, remember this reads backwards)
 position = R2 * R1 * position;
 ```
 
@@ -320,11 +345,45 @@ position = R2 * R1 * position;
 	</figcaption>
 </figure>
 
-This example would have been tedious to create manually. Further more, we will see that it is very useful to keep the model transform separate from the view angle.
+This example would have been quite hard to create manually. Furthermore, we will see that it is very useful to keep the model transform separate from the view angle.
 
-#### More advanced example
+````{note}
+The formula to directly create the matrix `R2 * R1` is:
 
-TODO
+```rust
+let R2_times_R1 = transpose(mat3x3<f32>(
+	   c1,       s1,    0.0,
+	-s1 * c2,  c1 * c2,  s2,
+	 s1 * s2, -s2 * c1,  c2,
+));
+```
+
+This is really not an intuitive result, which shows how helpful it is to see combined transforms as matrix multiplications.
+````
+
+### More advanced example
+
+We finish this chapter by a little exercise of matrix combination: could you **guess** how to obtain this following transform?
+
+```{hint}
+The view angle is that same as in the previous example.
+```
+
+<figure class="align-center">
+	<video autoplay loop muted inline nocontrols style="width:100%;height:auto;max-width:642px">
+		<source src="../../_static/pyramid-around.mp4" type="video/mp4">
+	</video>
+	<figcaption>
+		<p><span class="caption-text">A more advanced matrix-based transform</span></p>
+	</figcaption>
+</figure>
+
+**Answer** We obtain this by applying in this order:
+
+ 1. A scaling of factor $0.3$.
+ 2. A translation of $0.5$ along the $x$ axis.
+ 3. The animated rotation R1.
+ 4. The view angle rotation R2.
 
 ```rust
 // Scale the object
@@ -349,89 +408,16 @@ let homogeneous_position = vec4<f32>(position, 1.0);
 position = (R2 * R1 * T * S * homogeneous_position).xyz;
 ```
 
-<figure class="align-center">
-	<video autoplay loop muted inline nocontrols style="width:100%;height:auto;max-width:642px">
-		<source src="../../_static/pyramid-around.mp4" type="video/mp4">
-	</video>
-	<figcaption>
-		<p><span class="caption-text">A more advanced matrix-based transform</span></p>
-	</figcaption>
-</figure>
-
-Projection matrix
------------------
-
-### Normalized Device Coordinate
-
-TODO NDC
-
-### Orthographic projection
-
-TODO
-
-Let's focus on the viewport transform. SO far it looks like this:
-
-```rust
-out.position = vec4<f32>(position.x, position.y * ratio, position.z * 0.5 + 0.5, 1.0);
-```
-
-This can obviously be represented as a matrix:
-
-```rust
-let P = transpose(mat4x4<f32>(
-	1.0,  0.0,  0.0, 0.0,
-	0.0, ratio, 0.0, 0.0,
-	0.0,  0.0,  0.5, 0.5,
-	0.0,  0.0,  0.0, 1.0,
-));
-
-let homogeneous_position = vec4<f32>(position, 1.0);
-out.position = P * homogeneous_position;
-```
-
-This matrix represents a particular case of **orthographic projection**, namely a basic projection along the XY plane combined with a remapping of the Z coordinate in the range $(0,1)$.
-
 ```{note}
-The coefficients $0.5$ in the matrix above come from the fact that we want to remap Z coordinate from the $(-1,1)$ to the $(0,1)$ range. In general, if $Z$ coordinates are in range $(n,f)$, we get $z_{\text{out}} = (z - n) / (f - n) = z / (f - n) - n / (f - n)$ and so the coefficients become $p_{zz} = 1 / (f - n)$ and $p_{zw} = - n / (f - n)$.
-```
-
-```{caution}
-The expected range for the output Z coordinate differs with the graphics API. All modern APIs (DirectX 12, Metal, Vulkan, WebGPU) use $(0,1)$ but OpenGL and WebGL expect $(-1,1)$. The projection matrices have thus slightly different definitions.
-```
-
-### Perspective projection
-
-TODO
-
-GLM
----
-
-TODO
-
-In practice we precompute transforms on CPU.
-
-The [GLM](https://github.com/g-truc/glm) library. Originally designed to be as close as possible to the GLSL syntax. It will look familiar compared to WGSL. Widely used, supported on multiple platforms, battlefield-tested, header-only (so easy to integrate). Stripped down version: [glm.zip](../../data/glm-0.9.9.8-light.zip) (392 KB, as opposed to the 5.5 MB of the official release), to be unzipped in your.
-
-```C++
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE // configure depth range (0,1) instead of OpenGL default
-#include <glm/glm.hpp> // all types inspired from GLSL
-#include <glm/ext.hpp> // utility extensions
-```
-
-```CMake
-target_include_directories(App PRIVATE .)
-```
-
-```{seealso}
-The GLM library is focused on vector and matrices up to the 4th dimension. For linear algebra of higher dimensions, I usually turn to the [Eigen](https://eigen.tuxfamily.org) library instead, but we won't need it here.
-```
-
-```{caution}
-For some reason the developers of the WebGPU standard [deemed the assignments to *swizzles* as "unnecessary"](https://github.com/gpuweb/gpuweb/issues/737), so we cannot compactly write `position.yz = ...`, we need to use this temporary `tmp` variable. I personally find this **very annoying**, and quite limiting for productivity, I hope they might change that eventually...
+Rotations always occur **around the origin** point (the one of coordinates $(0,0,0)$). To rotate around a different point, combine a rotation with one translation before and one after.
 ```
 
 Conclusion
 ----------
+
+This was an important chapter, that justifies why matrices are so useful in the graphics pipeline, and explains why we manipulate 4x4 matrices even if we are only in 3D.
+
+The next chapter is still about matrices, but this time for the final perspective projection.
 
 ````{tab} With webgpu.hpp
 *Resulting code:* [`step054`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step054)
