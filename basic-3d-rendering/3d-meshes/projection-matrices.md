@@ -159,10 +159,10 @@ position.x /= 0.5 * position.z;
 position.y /= 0.5 * position.z;
 ```
 
-This corresponds to introducing the **focal length** in the formula:
+This corresponds to introducing the **focal length** $l$ in the formula:
 
 $$
-y_\text{out} = f\frac{y}{z}
+y_\text{out} = l\frac{y}{z}
 $$
 
 ```{note}
@@ -190,7 +190,7 @@ The focal length is an arbitrary parameter that corresponds to the **level of zo
 ```{figure} /images/pexels-alexandru-g-stavrica-2204008.jpg
 :align: center
 :class: with-shadow
-This lens ranges from focal length 18 mm to 55 mm, depending on how the zoom ring is turned.
+This lens ranges from focal length 18mm to 55mm, depending on how the zoom ring is turned.
 ```
 
 ```{note}
@@ -207,38 +207,234 @@ Unfortunately, a perspective projection is **not a linear transform**, because o
 
 How didn't we notice it yet? Because for more flexibility it does not divide by `out.position.z` but rather by `out.position.w`.
 
-```rust
-TODO
-```
-
-Thanks to this hard-coded division, our perspective projection **can be fully encoded as a matrix**!
+We want $w$ to be `position.z / focalLength`, so in the projection matrix `P` we set the coefficient $p_{wz}$ to `1.0 / focalLength`, and set the last diagonal coefficient $p_{ww}$ to $0$ instead of $1$.
 
 ```rust
-TODO
+let focalLength = 2.0;
+// We no longer divide here!
+//position.x /= position.z / focalLength;
+//position.y /= position.z / focalLength;
+
+let P = /* ... */;
+let homogeneous_position = vec4<f32>(position, 1.0);
+out.position = P * homogeneous_position;
+
+// We change w instead:
+out.position.w = position.z / focalLength;
 ```
+
+```{important}
+The $z$ coordinate itself is also divided by $w$.
+```
+
+```{figure} /images/divide-w.png
+:align: center
+:class: with-shadow
+The projection is the same, but since the $z$ coordinate is also divided by $w$, the depth information is messed up.
+```
+
+Before addressing this, we can notice that thanks to the hard-coded division, our perspective projection **can be fully encoded as a matrix**!
+
+```rust
+let focalLength = 2.0;
+let near = 0.0;
+let far = 100.0;
+// (no need for a scale parameter now that we have focalLength)
+let P = transpose(mat4x4<f32>(
+	1.0,  0.0,       0.0,          0.0,
+	0.0, ratio,      0.0,          0.0,
+	0.0,  0.0,       p_zz,         p_zw,
+	0.0,  0.0,  1.0 / focalLength, 0.0,
+));
+let homogeneous_position = vec4<f32>(position, 1.0);
+out.position = P * homogeneous_position;
+```
+
+The coefficients `p_zz` and `p_zw` used to be respectively `1.0 / (far - near)` and `-near / (far - near)` so that $z_\text{out}$ is in range $(0,1)$. Now we need it to be in range $(0, w_\text{out}) = (0, \frac{z_\text{in}}{l})$ so that after the normalization by $w$ it ends up in $(0,1)$:
+
+$$
+p_{zz} = \frac{f - l}{l(f - n)}
+p_{zw} = f \frac{l - n}{l(f - n)}
+$$
+
+```{topic} Proof
+$$
+p_{zz} n + p_{zw} = 0
+p_{zz} f + p_{zw} = \frac{f}{l}
+$$
+
+Subtract $L_2 - L_1$ and $f L_1 - n L_2$:
+
+$$
+p_{zz} f - p_{zz} n = \frac{f}{l}
+p_{zw} f - p_{zw} n = -\frac{fn}{l}
+$$
+
+Divide by $f - n$:
+
+$$
+p_{zz} = \frac{f}{l(f - n)}
+p_{zw} = -\frac{fn}{l(f - n)}
+$$
+```
+
+```{important}
+This proof only works if $n$ is **not null**. We must thus set `near` to a small but non-zero value.
+```
+
+```rust
+let focalLength = 2.0;
+let near = 0.01;
+let far = 100.0;
+let divides = 1.0 / (focalLength * (far - near));
+let P = transpose(mat4x4<f32>(
+	1.0,  0.0,        0.0,                  0.0,
+	0.0, ratio,       0.0,                  0.0,
+	0.0,  0.0,    far * divides,   -far * near * divides,
+	0.0,  0.0,  1.0 / focalLength,          0.0,
+));
+let homogeneous_position = vec4<f32>(position, 1.0);
+out.position = P * homogeneous_position;
+```
+
+```{figure} /images/focal0.5.PNG
+:align: center
+:class: with-shadow
+We are back to what we had with a manual division, only this time it's all matrices!
+```
+
+Our matrix `P` as defined in the last code block is a **perspective projection matrix**.
+
+The projection matrix is in general globally multiplied by `focalLength` compared to our last formula:
+
+```rust
+let P = transpose(mat4x4<f32>(
+	focalLength,         0.0,                0.0,                   0.0,
+	    0.0,     focalLength * ratio,        0.0,                   0.0,
+	    0.0,             0.0,         far / (far - near), -far * near / (far - near),
+	    0.0,             0.0,                1.0,                   0.0,
+));
+```
+
+This does not affect the end result because it also scales the $w$ coordinate. Similarly, multiplying `out.position` by any value does not change the end pixel of the vertex.
 
 ```{note}
-TODO Mathematically, this is also justified by the uses of a projective space, with homogeneous coordinates.
+The value `out.position / out.position.w` that is computed by the fixed pipeline is called the ***Normalized** Device Coordinate*. It is this NDC that must fall within the normalized clipping volume described above.
 ```
 
-GLM
----
+```{seealso}
+Mathematically, considering that two vectors are *equivalent* when they are a multiple of each others (like we do here with `out.position`) defines a [projective space](https://en.wikipedia.org/wiki/Projective_space), namely a space of directions. Its elements are represented by *homogeneous coordinates*, called so to remind one that they are not unique, so they do not form a regular (Euclidean) coordinate system.
+```
 
-TODO
+Matrix Uniforms
+---------------
 
-In practice we precompute transforms on CPU.
+Instead of building the same matrices for each vertex of each object of the scene, we build them once and store them in a **uniform buffer**.
 
-The [GLM](https://github.com/g-truc/glm) library. Originally designed to be as close as possible to the GLSL syntax. It will look familiar compared to WGSL. Widely used, supported on multiple platforms, battlefield-tested, header-only (so easy to integrate). Stripped down version: [glm.zip](../../data/glm-0.9.9.8-light.zip) (392 KB, as opposed to the 5.5 MB of the official release), to be unzipped in your.
+We can thus extend our uniform structure:
 
 ```C++
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE // configure depth range (0,1) instead of OpenGL default
-#include <glm/glm.hpp> // all types inspired from GLSL
-#include <glm/ext.hpp> // utility extensions
+// C++ side
+struct MyUniforms {
+	std::array<float, 16> projectionMatrix;
+	std::array<float, 16> viewMatrix;
+	std::array<float, 16> modelMatrix;
+	std::array<float, 4> color;
+	float time;
+	float _pad[3];
+};
 ```
+
+```rust
+// WGSL side
+struct MyUniforms {
+	projectionMatrix: mat4x4<f32>,
+	viewMatrix: mat4x4<f32>,
+	modelMatrix: mat4x4<f32>,
+	color: vec4<f32>,
+	time: f32,
+};
+```
+
+```{caution}
+Remember the **alignment** rules: put the matrices first as they are larger structures.
+```
+
+For now the content of the matrices is **precomputed on the CPU** and then uploaded, but this could also be done in a compute shader, as we will see in [the compute part](/basic-compute/index.md) of this documentation.
+
+Make sure to lift the device limit on the uniform buffer size, and define a value for the matrices:
+
+```C++
+requiredLimits.limits.maxUniformBufferBindingSize = 16 * 4 * sizeof(float);
+
+// Upload the initial value of the uniforms
+MyUniforms uniforms;
+uniforms.projectionMatrix = /* ... */;
+uniforms.viewMatrix = /* ... */;
+uniforms.modelMatrix = /* ... */;
+// [...]
+```
+
+```{warning}
+Remember that we added a `transpose` operation all the time. Make sure to flip the coefficient along the matrices compared to our definitions above.
+```
+
+> 😒 Ahem this is a bit annoying, couldn't we rather define this `transpose` operation? What about the matrix multiplication?
+
+Yes we could, or we could even reuse what has already been done! Which leads us to the GLM library.
+
+### GLM
+
+The [GLM](https://github.com/g-truc/glm) library reproduces the matrix/vector types and operations that are available in shaders, so that we can **easily port code** between C++ and shaders.
+
+It was originally designed to be as close as possible to the GLSL syntax, which is close in features to WGSL (although the types have slightly different names). It is widely used, supported on multiple platforms, battlefield-tested, header-only (so easy to integrate).
+
+Here is a tripped down version of GLM: [glm.zip](../../data/glm-0.9.9.8-light.zip) (392 KB, as opposed to the 5.5 MB of the official release). Unzip this directly into your source tree. You can include it as follows:
+
+```C++
+#include <glm/glm.hpp> // all types inspired from GLSL
+```
+
+````{note}
+Make sure to add the main source directory to the include path in your `CMakeLists.txt`, as some compiler require it to use the `<...>` brackets in include directives:
 
 ```CMake
 target_include_directories(App PRIVATE .)
 ```
+````
+
+TODO
+
+```C++
+using glm::mat4;
+
+struct MyUniforms {
+	mat4 projectionMatrix;
+	mat4 viewMatrix;
+	mat4 modelMatrix;
+	std::array<float, 4> color;
+	float time;
+	float _pad[3];
+};
+```
+
+```C++
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE // configure depth range (0,1) instead of OpenGL default
+#include <glm/ext.hpp> // utility extensions
+```
+
+The `GLM_FORCE_DEPTH_ZERO_TO_ONE` tells GLM that the clip volume's Z range is $(0,1)$. By default, it assumes that it is $(-1,1)$ because this is the convention that was used by OpenGL.
+
+TODO
+
+```C++
+float near = 0.001f;
+float far = 100.0f;
+float ratio = 640.0f / 480.0f;
+uniforms.projectionMatrix = glm::perspective(45.0f, ratio, near, far);
+```
+
+TODO
 
 ```{seealso}
 The GLM library is focused on vector and matrices up to the 4th dimension. For linear algebra of higher dimensions, I usually turn to the [Eigen](https://eigen.tuxfamily.org) library instead, but we won't need it here.
