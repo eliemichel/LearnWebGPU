@@ -78,6 +78,8 @@ let P = transpose(mat4x4<f32>(
 Perspective projection
 ----------------------
 
+### Focal point
+
 A perspective projection is (more or less) the projection that occurs in a camera or a human eye. Instead of projecting the scene onto a plane, it **projects onto a single point**, called the **focal point**.
 
 The pixels of the screen correspond to different **incoming directions** from which elements of geometry are projected.
@@ -92,7 +94,7 @@ The pixels of the screen correspond to different **incoming directions** from wh
 :class: only-dark
 ```
 
-Unfortunately, a perspective projection is **not a linear transform**: if we want to map the perspective view frustum to the normalized clip space described above, we **need to divide** the XY position by the $z$ coordinate:
+If we want to map the perspective view frustum to the normalized clip space described above, we **need to divide** the XY position by the $z$ coordinate:
 
 ```{image} /images/perspective2-light.svg
 :align: center
@@ -122,16 +124,17 @@ We can try this out:
 // We move the view point so that all Z coordinates are > 0
 // (this did not make a difference with the orthographic projection
 // but does now.)
-let z_eye = -2.0;
-position.z = position.z - z_eye;
+let focalPoint = vec3<f32>(0.0, 0.0, -2.0);
+position = position - focalPoint;
 
 // We divide by the Z coord
 position.x /= position.z;
 position.y /= position.z;
 
 // Apply the orthographic matrix for remapping Z and handling the ratio
-let near = -1.0 - z_eye;
-let far = 1.0 - z_eye;
+// near and far must be positive
+let near = 0.0;
+let far = 100.0;
 let P = /* ... */;
 out.position = P * vec4<f32>(position, 1.0);
 ```
@@ -145,13 +148,31 @@ out.position = P * vec4<f32>(position, 1.0);
 	</figcaption>
 </figure>
 
-This works, but we can make it cleaner.
+Ta-dam, it works!
 
-TODO
+### Focal length
+
+Dividing by the raw $z$ coordinate was a bit arbitrary, and the formula above is a bit suspicious because its terms are **not commensurable**: $y_\text{out}$ is a **length** (e.g., in meters or feet), but $y / z$ is a **ratio** (unit-less). We can in fact scale the division factor:
 
 ```rust
 position.x /= 0.5 * position.z;
 position.y /= 0.5 * position.z;
+```
+
+This corresponds to introducing the **focal length** in the formula:
+
+$$
+y_\text{out} = f\frac{y}{z}
+$$
+
+```{note}
+The focal length can be seen as the distance between the focal point and a virtual sensor corresponding to the output window (can be verified using Thales's theorem).
+```
+
+```rust
+let focalLength = 2.0;
+position.x /= position.z / focalLength;
+position.y /= position.z / focalLength;
 ```
 
 ```{image} /images/perspective3-light.svg
@@ -162,6 +183,42 @@ position.y /= 0.5 * position.z;
 ```{image} /images/perspective3-dark.svg
 :align: center
 :class: only-dark
+```
+
+The focal length is an arbitrary parameter that corresponds to the **level of zoom** of our virtual camera.
+
+```{figure} /images/pexels-alexandru-g-stavrica-2204008.jpg
+:align: center
+:class: with-shadow
+This lens ranges from focal length 18 mm to 55 mm, depending on how the zoom ring is turned.
+```
+
+```{note}
+The projection depends only on **the ratio** between the **sensor size** and the actual **focal length** (it is easy to see that if we multiply by 2 the size of the sensor and move it twice as far from the focal point, we get the same image).
+
+As a consequence, commercial focal lengths are generally expressed for a given **standard sensor size**, namely 35 mm along its diagonal (a size called "full frame").
+
+Since our clip space has a width of 2 units (from -1 to 1), if we want the visual look of a commercial 50 mm lens, we need to set our `focalLength` to `2 * 50 / 35 = 2.86`. And actually with the `640/480` ratio the diagonal of our clip space is `2.5` so the `focalLength` ends up being `3.57`.
+```
+
+### Perspective matrix
+
+Unfortunately, a perspective projection is **not a linear transform**, because of the division by $z$. However, since this division is that commonly used, it is embedded **in the fixed pipeline**!
+
+How didn't we notice it yet? Because for more flexibility it does not divide by `out.position.z` but rather by `out.position.w`.
+
+```rust
+TODO
+```
+
+Thanks to this hard-coded division, our perspective projection **can be fully encoded as a matrix**!
+
+```rust
+TODO
+```
+
+```{note}
+TODO Mathematically, this is also justified by the uses of a projective space, with homogeneous coordinates.
 ```
 
 GLM
