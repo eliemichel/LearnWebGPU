@@ -253,32 +253,41 @@ out.position = P * homogeneous_position;
 The coefficients `p_zz` and `p_zw` used to be respectively `1.0 / (far - near)` and `-near / (far - near)` so that $z_\text{out}$ is in range $(0,1)$. Now we need it to be in range $(0, w_\text{out}) = (0, \frac{z_\text{in}}{l})$ so that after the normalization by $w$ it ends up in $(0,1)$:
 
 $$
-p_{zz} = \frac{f - l}{l(f - n)}
-p_{zw} = f \frac{l - n}{l(f - n)}
+\left\{
+\begin{align}
+p_{zz} & = \frac{f}{l(f - n)} \\
+p_{zw} & = -\frac{fn}{l(f - n)}
+\end{align}
+\right.
 $$
 
 ```{topic} Proof
+For $z_\text{in} = n$, the result is $z_\text{out} = 0$, and for $z_\text{in} = f$, the result is $z_\text{out} = \frac{z_\text{in}}{l} = \frac{f}{l}$.
+
 $$
-p_{zz} n + p_{zw} = 0
-p_{zz} f + p_{zw} = \frac{f}{l}
+\left\{
+\begin{align}
+n p_{zz} + p_{zw} & = 0 \quad\quad (L_1)\\
+f p_{zz} + p_{zw} & = \frac{f}{l} \quad\quad (L_2)
+\end{align}
+\right.
 $$
 
 Subtract $L_2 - L_1$ and $f L_1 - n L_2$:
 
 $$
-p_{zz} f - p_{zz} n = \frac{f}{l}
-p_{zw} f - p_{zw} n = -\frac{fn}{l}
+\left\{
+\begin{align}
+f p_{zz} - n p_{zz} & = \frac{f}{l} \\
+f p_{zw} - n p_{zw} & = -\frac{fn}{l}
+\end{align}
+\right.
 $$
 
-Divide by $f - n$:
-
-$$
-p_{zz} = \frac{f}{l(f - n)}
-p_{zw} = -\frac{fn}{l(f - n)}
-$$
+Divide by $f - n$ and this lead to the result above.
 ```
 
-```{important}
+```{attention}
 This proof only works if $n$ is **not null**. We must thus set `near` to a small but non-zero value.
 ```
 
