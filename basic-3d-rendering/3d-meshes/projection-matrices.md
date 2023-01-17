@@ -250,7 +250,7 @@ let homogeneous_position = vec4<f32>(position, 1.0);
 out.position = P * homogeneous_position;
 ```
 
-The coefficients `p_zz` and `p_zw` used to be respectively `1.0 / (far - near)` and `-near / (far - near)` so that $z_\text{out}$ is in range $(0,1)$. Now we need it to be in range $(0, w_\text{out}) = (0, \frac{z_\text{in}}{l})$ so that after the normalization by $w$ it ends up in $(0,1)$:
+The coefficients `p_zz` and `p_zw` used to be respectively `1.0 / (far - near)` and `-near / (far - near)` so that $z_\text{out}$ is in range $(0,1)$. Now we need it to be in range $(0, w_\text{out}) = (0, \frac{z_\text{in}}{l})$ so that after the normalization by $w_\text{out}$ it ends up in $(0,1)$:
 
 $$
 \left\{
@@ -288,7 +288,7 @@ Divide by $f - n$ and this lead to the result above.
 ```
 
 ```{attention}
-This proof only works if $n$ is **not null**. We must thus set `near` to a small but non-zero value.
+(TODO: explain) This does not work if $n$ is **not null**. We must thus set `near` to a small but non-zero value.
 ```
 
 ```rust
@@ -338,6 +338,8 @@ Mathematically, considering that two vectors are *equivalent* when they are a mu
 Matrix Uniforms
 ---------------
 
+### Coordinate systems
+
 Instead of building the same matrices for each vertex of each object of the scene, we build them once and store them in a **uniform buffer**.
 
 We can thus extend our uniform structure:
@@ -369,6 +371,33 @@ struct MyUniforms {
 Remember the **alignment** rules: put the matrices first as they are larger structures.
 ```
 
+This is the occasion to more formally introduce **the typical way of splitting the transform**. We could just store one single matrix $M$ that would encode the whole transform from the input position to the output clip position, but instead we separate it into a product of a **model** matrix, then a **view** matrix, and then the **projection** matrix:
+
+```rust
+// Remember that this reads backwards
+mat4x4 M = projectionMatrix * viewMatrix * modelMatrix;
+```
+
+Changing the **projection** matrix corresponds to changing the virtual camera that captures the scene. It happens rarely (unless we create zoom in/out effects).
+
+Changing the **view** matrix corresponds to moving and turning the camera. It happens almost all the time, whenever the user interacts with your tool/game usually.
+
+Changing the **model** matrix corresponds to moving the object with respect to the global scene, which is often called the **world**.
+
+As a consequence, we give a name to the intermediate **coordinate systems** through which the position passes while being transformed:
+
+ - `in.position` is the **local** coordinates, or **model coordinates** of the object. It describes the geometry as if the object was alone and centered around the origin.
+ - `modelMatrix * in.position` gives the **world** coordinates of the points, telling where it is relatively to a global static frame.
+ - `viewMatrix * modelMatrix * in.position` gives the **camera** coordinates, or **view** coordinates. This is the coordinates of the point as seen from the camera. You can think of it as if instead of moving the eye, we actually move and rotate the whole scene in the opposite direction.
+ - And finally multiplying by `projectionMatrix` applies the projection, either orthographic or perspective, to give us **clip** coordinates.
+ - Afterwards, the fixed pipeline divides the clip coordinates by its $w$, which gives the **NDC** (normalized device coordinates).
+
+```{note}
+In order to alleviate notations I omitted above the fact that we actually use the homogeneous coordinates `vec3<f32>(in.position, 1.0)` as the input of the transform.
+```
+
+### Precomputing
+
 For now the content of the matrices is **precomputed on the CPU** and then uploaded, but this could also be done in a compute shader, as we will see in [the compute part](/basic-compute/index.md) of this documentation.
 
 Make sure to lift the device limit on the uniform buffer size, and define a value for the matrices:
@@ -396,9 +425,11 @@ Yes we could, or we could even reuse what has already been done! Which leads us 
 
 The [GLM](https://github.com/g-truc/glm) library reproduces the matrix/vector types and operations that are available in shaders, so that we can **easily port code** between C++ and shaders.
 
-It was originally designed to be as close as possible to the GLSL syntax, which is close in features to WGSL (although the types have slightly different names). It is widely used, supported on multiple platforms, battlefield-tested, header-only (so easy to integrate).
+It was originally designed to be as close as possible to the GLSL syntax, which is close in features to WGSL (although type names are slightly different). It is widely used, supported on multiple platforms, battlefield-tested, header-only (so easy to integrate).
 
-Here is a tripped down version of GLM: [glm.zip](../../data/glm-0.9.9.8-light.zip) (392 KB, as opposed to the 5.5 MB of the official release). Unzip this directly into your source tree. You can include it as follows:
+#### Integration
+
+Here is a stripped down version of GLM: [glm.zip](../../data/glm-0.9.9.8-light.zip) (392 KB, as opposed to the 5.5 MB of the official release). Unzip this directly into your source tree. You can include it as follows:
 
 ```C++
 #include <glm/glm.hpp> // all types inspired from GLSL
@@ -412,20 +443,111 @@ target_include_directories(App PRIVATE .)
 ```
 ````
 
-TODO
+#### Basic usage
+
+Everything GLM defines is contained in the `glm` namespace. You can either use it globally with a `using namespace glm;` or import individual types:
 
 ```C++
-using glm::mat4;
+using glm::mat4x4;
+using glm::vec4;
 
 struct MyUniforms {
-	mat4 projectionMatrix;
-	mat4 viewMatrix;
-	mat4 modelMatrix;
-	std::array<float, 4> color;
+	mat4x4 projectionMatrix;
+	mat4x4 viewMatrix;
+	mat4x4 modelMatrix;
+	vec4 color;
 	float time;
 	float _pad[3];
 };
 ```
+
+```{note}
+The `mat4x4` type of GLM corresponds to WGSL's `mat4x4<f32>`. The equivalent of `mat4x4<f64>` is `dmat4x4`, with the prefix `d` for `double`. It also has an alias called `mat4` to correspond to GLSL, which you might like as it is less characters to type. The same goes for vectors (`vec3` is `vec3<f32>`) for integers (`ivec2` is WGLS's `vec2<i32>`), etc.
+```
+
+It is thus easy to reproduce what we were doing in WGSL:
+
+```C++
+using glm::vec3;
+constexpr float PI = 3.14159265358979323846f;
+
+// [...]
+
+// Scale the object
+mat4x4 S = transpose(mat4x4(
+	0.3,  0.0, 0.0, 0.0,
+	0.0,  0.3, 0.0, 0.0,
+	0.0,  0.0, 0.3, 0.0,
+	0.0,  0.0, 0.0, 1.0
+));
+
+// Translate the object
+mat4x4 T1 = transpose(mat4x4(
+	1.0,  0.0, 0.0, 0.5,
+	0.0,  1.0, 0.0, 0.0,
+	0.0,  0.0, 1.0, 0.0,
+	0.0,  0.0, 0.0, 1.0
+));
+
+// Translate the view
+vec3 focalPoint(0.0, 0.0, -2.0);
+mat4x4 T2 = transpose(mat4x4(
+	1.0,  0.0, 0.0, focalPoint.x,
+	0.0,  1.0, 0.0, focalPoint.y,
+	0.0,  0.0, 1.0, focalPoint.z,
+	0.0,  0.0, 0.0,     1.0
+));
+
+// Rotate the object
+float angle1 = (float)glfwGetTime();
+float c1 = cos(angle1);
+float s1 = sin(angle1);
+mat4x4 R1 = transpose(mat4x4(
+	 c1,  s1, 0.0, 0.0,
+	-s1,  c1, 0.0, 0.0,
+	0.0, 0.0, 1.0, 0.0,
+	0.0, 0.0, 0.0, 1.0
+));
+
+// Rotate the view point
+float angle2 = 3.0 * PI / 4.0;
+float c2 = cos(angle2);
+float s2 = sin(angle2);
+mat4x4 R2 = transpose(mat4x4(
+	1.0, 0.0, 0.0, 0.0,
+	0.0,  c2,  s2, 0.0,
+	0.0, -s2,  c2, 0.0,
+	0.0, 0.0, 0.0, 1.0
+));
+
+uniforms.modelMatrix = R1 * T1 * S;
+uniforms.viewMatrix = R2;
+
+```
+
+and the vertex shader simply becomes:
+
+```rust
+fn vs_main(in: VertexInput) -> VertexOutput {
+	var out: VertexOutput;
+	out.position = uMyUniforms.projectionMatrix * uMyUniforms.viewMatrix * uMyUniforms.modelMatrix * vec4<f32>(in.position, 1.0);
+	out.color = in.color;
+	return out;
+}
+```
+
+````{seealso}
+There are [multiple ways](https://stackoverflow.com/questions/1727881/how-to-use-the-pi-constant-in-c) of getting a value of $\pi$ in C++, and their diversity is quite... representative of the C++ ecosystem (so are the funny comments throughout that stackoverflow post). A different solution for instance would be to define `_USE_MATH_DEFINES`
+
+target_compile_definitions(App PRIVATE _USE_MATH_DEFINES)
+#include <cmath>
+// use M_PI (you may have to manually cast it to (float) when all warnings are turned on)
+
+#include <numbers>
+std::numbers::pi_v<float>
+````
+
+#### Extensions
 
 ```C++
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE // configure depth range (0,1) instead of OpenGL default
@@ -437,6 +559,8 @@ The `GLM_FORCE_DEPTH_ZERO_TO_ONE` tells GLM that the clip volume's Z range is $(
 TODO
 
 ```C++
+mat4x4 rotate(identity(), 45_rad, vec3(0.0, 0.0, 1.0));
+
 float near = 0.001f;
 float far = 100.0f;
 float ratio = 640.0f / 480.0f;
