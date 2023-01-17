@@ -465,13 +465,10 @@ struct MyUniforms {
 The `mat4x4` type of GLM corresponds to WGSL's `mat4x4<f32>`. The equivalent of `mat4x4<f64>` is `dmat4x4`, with the prefix `d` for `double`. It also has an alias called `mat4` to correspond to GLSL, which you might like as it is less characters to type. The same goes for vectors (`vec3` is `vec3<f32>`) for integers (`ivec2` is WGLS's `vec2<i32>`), etc.
 ```
 
-It is thus easy to reproduce what we were doing in WGSL:
+It is thus easy to reproduce what we were doing in WGSL. Let's start with the **model** transform:
 
 ```C++
-using glm::vec3;
 constexpr float PI = 3.14159265358979323846f;
-
-// [...]
 
 // Scale the object
 mat4x4 S = transpose(mat4x4(
@@ -489,15 +486,6 @@ mat4x4 T1 = transpose(mat4x4(
 	0.0,  0.0, 0.0, 1.0
 ));
 
-// Translate the view
-vec3 focalPoint(0.0, 0.0, -2.0);
-mat4x4 T2 = transpose(mat4x4(
-	1.0,  0.0, 0.0, focalPoint.x,
-	0.0,  1.0, 0.0, focalPoint.y,
-	0.0,  0.0, 1.0, focalPoint.z,
-	0.0,  0.0, 0.0,     1.0
-));
-
 // Rotate the object
 float angle1 = (float)glfwGetTime();
 float c1 = cos(angle1);
@@ -507,6 +495,23 @@ mat4x4 R1 = transpose(mat4x4(
 	-s1,  c1, 0.0, 0.0,
 	0.0, 0.0, 1.0, 0.0,
 	0.0, 0.0, 0.0, 1.0
+));
+
+uniforms.modelMatrix = R1 * T1 * S;
+```
+
+Then comes the **view** transform. Do not forget to include the translation of the focal point (which we did not represent as a matrix product above but the conversion is straightforward):
+
+```C++
+using glm::vec3;
+
+// Translate the view
+vec3 focalPoint(0.0, 0.0, -2.0);
+mat4x4 T2 = transpose(mat4x4(
+	1.0,  0.0, 0.0, focalPoint.x,
+	0.0,  1.0, 0.0, focalPoint.y,
+	0.0,  0.0, 1.0, focalPoint.z,
+	0.0,  0.0, 0.0,     1.0
 ));
 
 // Rotate the view point
@@ -520,12 +525,26 @@ mat4x4 R2 = transpose(mat4x4(
 	0.0, 0.0, 0.0, 1.0
 ));
 
-uniforms.modelMatrix = R1 * T1 * S;
-uniforms.viewMatrix = R2;
-
+uniforms.viewMatrix = T2 * R2;
 ```
 
-and the vertex shader simply becomes:
+And finally the projection:
+
+```C++
+float ratio = 640.0f / 480.0f;
+float focalLength = 2.0;
+float near = 0.01f;
+float far = 100.0f;
+float divider = 1 / (focalLength * (far - near));
+uniforms.projectionMatrix = transpose(mat4x4(
+	1.0, 0.0, 0.0, 0.0,
+	0.0, ratio, 0.0, 0.0,
+	0.0, 0.0, far * divider, -far * near * divider,
+	0.0, 0.0, 1.0 / focalLength, 0.0
+));
+```
+
+The vertex shader simply becomes:
 
 ```rust
 fn vs_main(in: VertexInput) -> VertexOutput {
@@ -536,27 +555,35 @@ fn vs_main(in: VertexInput) -> VertexOutput {
 }
 ```
 
-````{seealso}
-There are [multiple ways](https://stackoverflow.com/questions/1727881/how-to-use-the-pi-constant-in-c) of getting a value of $\pi$ in C++, and their diversity is quite... representative of the C++ ecosystem (so are the funny comments throughout that stackoverflow post). A different solution for instance would be to define `_USE_MATH_DEFINES`
-
-target_compile_definitions(App PRIVATE _USE_MATH_DEFINES)
-#include <cmath>
-// use M_PI (you may have to manually cast it to (float) when all warnings are turned on)
-
-#include <numbers>
-std::numbers::pi_v<float>
-````
+I am not putting the image again, you should still obtain the same result. Only this time it is **much less energy consuming** since matrices are computed only once, instead of once per vertex and per frame (which can easily count in millions or more in a practical scenario).
 
 #### Extensions
 
+The construction of atomic matrices like translations, rotations, scaling or perspective is something that is very common, yet it is not part of the built-in functions of WGSL because as we just saw, we are not supposed to do it in the shader code.
+
+Since GLM intends to reproduce the types of the shader languages, it does not include those neither. At least not in the `glm/glm.hpp`. But it does in its **extensions**, which we can include like this:
+
 ```C++
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE // configure depth range (0,1) instead of OpenGL default
-#include <glm/ext.hpp> // utility extensions
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
+#include <glm/ext.hpp>
 ```
 
+```{important}
 The `GLM_FORCE_DEPTH_ZERO_TO_ONE` tells GLM that the clip volume's Z range is $(0,1)$. By default, it assumes that it is $(-1,1)$ because this is the convention that was used by OpenGL.
+```
 
 TODO
+
+```C++
+S = glm::scale(mat4x4(1.0), vec3(0.3f));
+T1 = glm::translate(mat4x4(1.0), vec3(0.5, 0.0, 0.0));
+R1 = glm::rotate(mat4x4(1.0), angle1, vec3(0.0, 0.0, 1.0));
+uniforms.viewMatrix = R1 * T1 * S;
+
+R2 = glm::rotate(mat4x4(1.0), -angle2, vec3(1.0, 0.0, 0.0));
+T2 = glm::translate(mat4x4(1.0), -focalPoint);
+uniforms.viewMatrix = T2 * R2;
+```
 
 ```C++
 mat4x4 rotate(identity(), 45_rad, vec3(0.0, 0.0, 1.0));
