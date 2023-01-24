@@ -559,42 +559,92 @@ I am not putting the image again, you should still obtain the same result. Only 
 
 #### Extensions
 
-The construction of atomic matrices like translations, rotations, scaling or perspective is something that is very common, yet it is not part of the built-in functions of WGSL because as we just saw, we are not supposed to do it in the shader code.
+The construction of **atomic matrices** like translations, rotations, scaling or perspective is something that is very common. Yet it is not part of the built-in functions of WGSL because, as we just saw, we are not supposed to do it in the shader code.
 
 Since GLM intends to reproduce the types of the shader languages, it does not include those neither. At least not in the `glm/glm.hpp`. But it does in its **extensions**, which we can include like this:
 
 ```C++
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/ext.hpp>
 ```
 
-```{important}
-The `GLM_FORCE_DEPTH_ZERO_TO_ONE` tells GLM that the clip volume's Z range is $(0,1)$. By default, it assumes that it is $(-1,1)$ because this is the convention that was used by OpenGL.
-```
-
-TODO
+The construction of the model and view matrices becomes as simple as this:
 
 ```C++
 S = glm::scale(mat4x4(1.0), vec3(0.3f));
 T1 = glm::translate(mat4x4(1.0), vec3(0.5, 0.0, 0.0));
 R1 = glm::rotate(mat4x4(1.0), angle1, vec3(0.0, 0.0, 1.0));
-uniforms.viewMatrix = R1 * T1 * S;
+uniforms.modelMatrix = R1 * T1 * S;
 
 R2 = glm::rotate(mat4x4(1.0), -angle2, vec3(1.0, 0.0, 0.0));
 T2 = glm::translate(mat4x4(1.0), -focalPoint);
 uniforms.viewMatrix = T2 * R2;
 ```
 
-```C++
-mat4x4 rotate(identity(), 45_rad, vec3(0.0, 0.0, 1.0));
+Note that transformation functions provided by GLM all take an input matrix to transform, in order to spare us a matrix multiplication. Here we always use the **identity** matrix `mat4x4(1.0)` to build atomic transforms, but the model matrix above could have also been built this way:
 
+```C++
+mat4x4 M(1.0);
+M = glm::rotate(M, angle1, vec3(0.0, 0.0, 1.0));
+M = glm::translate(M, vec3(0.5, 0.0, 0.0));
+M = glm::scale(M, vec3(0.3f));
+uniforms.modelMatrix = M;
+```
+
+I personally find it harder to read though, because we must apply the operations in reverse.
+
+```{note}
+The `rotate` function enables one to turn around any axis (the second argument) instead of being limited to the X, Y and Z axes like we did when manually building rotation matrices.
+```
+
+GLM extensions also provide a procedure for building **projection matrices**, and in particular a perspective projection:
+
+```C++
 float near = 0.001f;
 float far = 100.0f;
 float ratio = 640.0f / 480.0f;
-uniforms.projectionMatrix = glm::perspective(45.0f, ratio, near, far);
+float fov = ???;
+uniforms.projectionMatrix = glm::perspective(fov, ratio, near, far);
 ```
 
+It has almost the same parameters as we used, except that instead of a **focal length**, it uses a **field of view** argument, a.k.a. **fov**.
+
+````{important}
+There are actually two *hidden* settings that the `perspective` function depends on and which we **must take care of**. Both of these settings are enabled globally by defining preprocessor variables before including GLM:
+
+```C++
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
+#define GLM_FORCE_LEFT_HANDED
+#include <glm/ext.hpp>
+```
+
+The first one is `GLM_FORCE_DEPTH_ZERO_TO_ONE`, which tells GLM that the clip volume's Z range is $(0,1)$. By default, it assumes that it is $(-1,1)$ because this is the convention that was used by OpenGL, which is different from WebGPU.
+
+The second one is the `GLM_FORCE_LEFT_HANDED` to mean that our view space uses a **left-handed coordinate system**. This is the choice that we have implicitly adopted so far because the clip space is left-handed. Switching to a right-handed system is possible, in which case be aware that the camera looks in the direction -Z of the view space instead of +Z.
+````
+
+```{note}
+You may also define these settings globally in your `CMakeLists.txt` with `target_compile_definition` in order to ensure that they are consistent across all of your files.
+```
+
+Back to the field of view: it is directly related to the focal length:
+
+
+```{image} /images/fov-light.svg
+:align: center
+:class: only-light
+```
+
+```{image} /images/fov-dark.svg
+:align: center
+:class: only-dark
+```
+
+<p class="align-center">
+	<span class="caption-text"><em>The FoV $\alpha$ and focal length $l$ are related.</em></span>
+</p>
+
 TODO
+
 
 ```{seealso}
 The GLM library is focused on vector and matrices up to the 4th dimension. For linear algebra of higher dimensions, I usually turn to the [Eigen](https://eigen.tuxfamily.org) library instead, but we won't need it here.

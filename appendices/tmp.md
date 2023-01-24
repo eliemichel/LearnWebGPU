@@ -50,3 +50,8 @@ warning
 ```
 
 Streaming
+
+Known Limitations
+-----------------
+
+ - The window's ratio should be applied to the x coord instead of y to match the behavior of GLM from the very beginning of the lecture.
