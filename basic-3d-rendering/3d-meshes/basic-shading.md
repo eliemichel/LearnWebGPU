@@ -9,27 +9,54 @@ Basic shading (WIP)
 *Resulting code:* [`step056-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step056-vanilla)
 ````
 
-TODO
+From the beginning of this 3D mesh section, we have been cheating by darkening the color of the tip of the pyramid in order to get some sense of the geometry. But in reality, the strongest **visual clues** we get about the geometry of the objects that surround us come from the **lighting effects**, and in particular the **shading**.
 
-Here we get an intuition about how to shade a scene, but do not follow a physically based approach.
-
-To better see the impact of our shading, we give the same base color to the whole pyramid. In `pyramid.txt`, replace the color of the tip with the same white as other points (remember that the green color comes from the shader and its color uniform):
-
-```
-# And the tip of the pyramid
-+0.0 +0.0 +0.5    1.0 1.0 1.0
-                  ^^^^^^^^^^^ This was 0.5
-```
+In this chapter we get an intuition about how to shade a scene, but do not follow a very physically based approach (this will come later on).
 
 Theory
 ------
 
+Let's be quick with the theory, because we've had enough in the previous chapter. Simply look at this picture:
+
+```{figure} /images/pexels-hatice-nogman-7961716.jpg
+:align: center
+:class: with-shadow
+It is always a good idea to observe natural images.
+```
+
+The jar has a more or less uniform material. Yet, its different sides **look** different, the left-hand squared area is darker than the right-hand one.
+
+Why so? Because they have different **orientations**. One is oriented towards the light, whereas the other one faces a different direction.
+
+The direction of a face is expressed as **a vector that is perpendicular to the face**. This is called a **normal** vector, and it always has length 1 because all we care about is its direction (it is called a *normalized* vector, or a *unit* vector).
+
+```{image} /images/normal-light.svg
+:align: center
+:class: only-light
+```
+
+```{image} /images/normal-dark.svg
+:align: center
+:class: only-dark
+```
+
+<p class="align-center">
+	<span class="caption-text"><em>A normal vector is perpendicular to its face and has a length of $1$.</em></span>
+</p>
+
+```{note}
+There are two possible vectors that are perpendicular to the face and have a unit length: one and its opposite. By convention, we point the normal towards the output of the object, but this might not be well defined for meshes that are not closed. Whenever you encounter weird shading artifacts, always check your normals!
+```
+
 Normal
 ------
 
-We add a new attribute.
+The normals can be mathematically computed (using the cross product of two sides of the triangle), but it is common to **store them in the 3D file** format, because sometimes we use intentionally fake normals to give the feeling that triangles are slightly curved.
+
+We will add this normal information to our little file format and add a new vertex attribute:
 
 ```
+# pyramid.txt
 [points]
 # We add normal vector (nx, ny, nz)
 # x    y    z       nx   ny  nz     r   g   b
@@ -69,10 +96,22 @@ We add a new attribute.
 13 14 15
 ```
 
+```{caution}
+I had to duplicate some points, because although they have the same location, they have different normals depending on the face they belong to. Actually, vertices should be considered in general as **face corners** rather than 3D points.
+```
+
+```{note}
+To better see the impact of our shading, I gave the same base color to the whole pyramid this time.
+```
+
+We do not need to change our geometry loading procedure, only the number of float attributes per vertex:
+
 ```
 bool success = loadGeometry(RESOURCE_DIR "/pyramid.txt", pointData, indexData, 6);
                                                                                ^ This was a 3
 ```
+
+TODO
 
 ```C++
 /**

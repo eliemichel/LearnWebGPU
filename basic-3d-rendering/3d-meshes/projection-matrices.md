@@ -1,4 +1,4 @@
-Projection matrices (WIP)
+Projection matrices
 ===================
 
 ````{tab} With webgpu.hpp
@@ -628,7 +628,6 @@ You may also define these settings globally in your `CMakeLists.txt` with `targe
 
 Back to the field of view: it is directly related to the focal length:
 
-
 ```{image} /images/fov-light.svg
 :align: center
 :class: only-light
@@ -639,23 +638,51 @@ Back to the field of view: it is directly related to the focal length:
 :class: only-dark
 ```
 
-<p class="align-center">
-	<span class="caption-text"><em>The FoV $\alpha$ and focal length $l$ are related.</em></span>
-</p>
+We can see from this figure that $\tan\frac{\alpha}{2} = \frac{1}{l}$, which gives us the following **conversion rules** between focal length and field of view:
 
-TODO
+$$
+\begin{align}
+l & = \frac{1}{\tan(\alpha/2)} = \cot\frac{\alpha}{2} \\
+\alpha & = 2 \arctan\frac{1}{l}
+\end{align}
+$$
 
+Most probably you will use either fov or focal length and stick to it so there will be no need for conversion! We can still check that our formula gives again the same result:
+
+```C++
+float fov = 2 * glm::atan(1 / focalLength);
+uniforms.projectionMatrix = glm::perspective(fov, ratio, near, far);
+```
+
+```{caution}
+The field of view expected by `glm::perspective` must be expressed in **radians**. If you want to set it to $45\deg$ (which is a common value), you must set `fov = 45 * PI / 180`.
+```
+
+```{figure} /images/focal0.5.PNG
+:align: center
+:class: with-shadow
+Still looking the same... but we make our code base so much more robust!
+```
+
+<!--
+```{caution}
+For some reason the developers of the WebGPU standard [deemed the assignments to *swizzles* as "unnecessary"](https://github.com/gpuweb/gpuweb/issues/737), so we cannot compactly write `position.yz = ...`, we need to use this temporary `tmp` variable. I personally find this **very annoying**, and quite limiting for productivity, I hope they might change that eventually...
+```
+-->
+
+Conclusion
+----------
+
+In this quite mathematical chapter, we have seen fundamental points:
+
+ - **Projections** (either orthographic of perspective) can be **encoded as matrices** thanks to the coordinate normalization performed by the fixed pipeline (the division by $w$).
+ - A **perspective** projection is parameterized either by a **focal length** or a **field of view**.
+ - Transform matrices (mode, view, projection) should be computed once and stored in a **uniform buffer** to avoid unnecessary costly computation.
+ - The GLM library provides us with all we need to easily compute these matrices on the CPU side.
 
 ```{seealso}
 The GLM library is focused on vector and matrices up to the 4th dimension. For linear algebra of higher dimensions, I usually turn to the [Eigen](https://eigen.tuxfamily.org) library instead, but we won't need it here.
 ```
-
-```{caution}
-For some reason the developers of the WebGPU standard [deemed the assignments to *swizzles* as "unnecessary"](https://github.com/gpuweb/gpuweb/issues/737), so we cannot compactly write `position.yz = ...`, we need to use this temporary `tmp` variable. I personally find this **very annoying**, and quite limiting for productivity, I hope they might change that eventually...
-```
-
-Conclusion
-----------
 
 ````{tab} With webgpu.hpp
 *Resulting code:* [`step055`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step055)
