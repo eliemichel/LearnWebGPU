@@ -1,5 +1,5 @@
-Texturing (WIP)
-=========
+A first texture
+===============
 
 ````{tab} With webgpu.hpp
 *Resulting code:* [`step060`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step060)
@@ -208,6 +208,7 @@ Unfortunately, there is no quick way to copy a texture to the texture view `next
 
 This binding is close to the uniform buffer binding. We first need to add it to the bind group **layout**. We first slightly reorganize our code to handle multiple bindings:
 
+````{tab} With webgpu.hpp
 ```C++
 // Create binding layouts
 
@@ -231,9 +232,40 @@ bindGroupLayoutDesc.entryCount = (uint32_t)bindingLayoutEntries.size();
 bindGroupLayoutDesc.entries = bindingLayoutEntries.data();
 BindGroupLayout bindGroupLayout = device.createBindGroupLayout(bindGroupLayoutDesc);
 ```
+````
+
+````{tab} Vanilla webgpu.h
+```C++
+// Create binding layouts
+
+// Since we now have 2 bindings, we use a vector to store them
+std::vector<WGPUBindGroupLayoutEntry> bindingLayoutEntries(2);
+
+// The uniform buffer binding that we already had
+WGPUBindGroupLayoutEntry& bindingLayout = bindingLayoutEntries[0];
+setDefaults(bindingLayout);
+bindingLayout.binding = 0;
+bindingLayout.visibility = WGPUShaderStage_Vertex | WGPUShaderStage_Fragment;
+bindingLayout.buffer.type = WGPUBufferBindingType_Uniform;
+bindingLayout.buffer.minBindingSize = sizeof(MyUniforms);
+
+// The texture binding
+WGPUBindGroupLayoutEntry& textureBindingLayout = bindingLayoutEntries[1];
+setDefaults(textureBindingLayout);
+// [...] Setup texture binding
+
+// Create a bind group layout
+WGPUBindGroupLayoutDescriptor bindGroupLayoutDesc{};
+bindGroupLayoutDesc.nextInChain = nullptr;
+bindGroupLayoutDesc.entryCount = (uint32_t)bindingLayoutEntries.size();
+bindGroupLayoutDesc.entries = bindingLayoutEntries.data();
+WGPUBindGroupLayout bindGroupLayout = wgpuDeviceCreateBindGroupLayout(device, bindGroupLayoutDesc);
+```
+````
 
 We can now specifically setup our texture binding layout:
 
+````{tab} With webgpu.hpp
 ```C++
 // Setup texture binding
 textureBindingLayout.binding = 1;
@@ -241,6 +273,17 @@ textureBindingLayout.visibility = ShaderStage::Fragment;
 textureBindingLayout.texture.sampleType = TextureSampleType::Float;
 textureBindingLayout.texture.viewDimension = TextureViewDimension::_2D;
 ```
+````
+
+````{tab} Vanilla webgpu.h
+```C++
+// Setup texture binding
+textureBindingLayout.binding = 1;
+textureBindingLayout.visibility = WGPUShaderStage_Fragment;
+textureBindingLayout.texture.sampleType = WGPUTextureSampleType_Float;
+textureBindingLayout.texture.viewDimension = WGPUTextureViewDimension_2D;
+```
+````
 
 The visibility is set to the fragment shader only, we will not sample this texture in the vertex shader.
 
@@ -248,6 +291,7 @@ The texture sample type tells which variable type will be returned in the shader
 
 ### Binding
 
+````{tab} With webgpu.hpp
 ```C++
 // Create a binding
 std::vector<BindGroupEntry> bindings(2);
@@ -266,9 +310,33 @@ bindGroupDesc.entryCount = (uint32_t)bindings.size();
 bindGroupDesc.entries = bindings.data();
 BindGroup bindGroup = device.createBindGroup(bindGroupDesc);
 ```
+````
+
+````{tab} Vanilla webgpu.h
+```C++
+// Create a binding
+std::vector<WGPUBindGroupEntry> bindings(2);
+
+bindings[0].binding = 0;
+bindings[0].buffer = uniformBuffer;
+bindings[0].offset = 0;
+bindings[0].size = sizeof(MyUniforms);
+
+bindings[1].binding = 1;
+bindings[1].textureView = ???;
+
+WGPUBindGroupDescriptor bindGroupDesc{};
+bindGroupDesc.nextInChain = nullptr;
+bindGroupDesc.layout = bindGroupLayout;
+bindGroupDesc.entryCount = (uint32_t)bindings.size();
+bindGroupDesc.entries = bindings.data();
+WGPUBindGroup bindGroup = wgpuDeviceCreateBindGroup(device, bindGroupDesc);
+```
+````
 
 We create a texture view from our texture.
 
+````{tab} With webgpu.hpp
 ```C++
 TextureViewDescriptor textureViewDesc;
 textureViewDesc.aspect = TextureAspect::All;
@@ -280,6 +348,21 @@ textureViewDesc.dimension = TextureViewDimension::_2D;
 textureViewDesc.format = textureDesc.format;
 TextureView textureView = texture.createView(textureViewDesc);
 ```
+````
+
+````{tab} Vanilla webgpu.h
+```C++
+TextureViewDescriptor textureViewDesc;
+textureViewDesc.aspect = WGPUTextureAspect_All;
+textureViewDesc.baseArrayLayer = 0;
+textureViewDesc.arrayLayerCount = 1;
+textureViewDesc.baseMipLevel = 0;
+textureViewDesc.mipLevelCount = 1;
+textureViewDesc.dimension = WGPUTextureViewDimension_2D;
+textureViewDesc.format = textureDesc.format;
+TextureView textureView = texture.createView(textureViewDesc);
+```
+````
 
 ### Shader
 
@@ -294,7 +377,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
 }
 ```
 
-In order to better see the result, we make sure that there is a fragment for each pixel by drawing a plane that covers the whole screen. Load the file [plane.obj](../data/plane.obj) and set your matrices to:
+In order to better see the result, we make sure that there is a fragment for each pixel by drawing a plane that covers the whole screen. Load the file [plane.obj](../../data/plane.obj) and set your matrices to:
 
 ```C++
 bool success = loadGeometryFromObj(RESOURCE_DIR "/plane.obj", vertexData);
@@ -312,16 +395,32 @@ uniforms.projectionMatrix = glm::ortho(-1, 1, -1, 1, -1, 1);
 Our first texture displayed by drawing a full-screen quad.
 ```
 
-Loading an image in CPU memory
-------------------------------
+Feel free to play with other formulas to create the texture data:
 
-Texture Coordinates
--------------------
+```C++
+// Create image data
+std::vector<uint8_t> pixels(4 * textureDesc.size.width * textureDesc.size.height);
+for (uint32_t i = 0; i < textureDesc.size.width; ++i) {
+	for (uint32_t j = 0; j < textureDesc.size.height; ++j) {
+		uint8_t *p = &pixels[4 * (j * textureDesc.size.width + i)];
+		p[0] = (i / 16) % 2 == (j / 16) % 2 ? 255 : 0; // r
+		p[1] = ((i - j) / 16) % 2 == 0 ? 255 : 0; // g
+		p[2] = ((i + j) / 16) % 2 == 0 ? 255 : 0; // b
+		p[3] = 255; // a
+	}
+}
+```
+
+```{figure} /images/other-texture-window.png
+:align: center
+:class: with-shadow
+Changing the pixel array indeed changes the displayed image.
+```
 
 Conclusion
 ----------
 
-![A textured triangle](/images/textured-triangle.png)
+We have seen how to create a texture and how to access its pixels from a shader. In the next chapter we will see how to map a texture onto a 3D mesh. And we will realize that me miss a very important ingredient: to fully benefit from the power of a texture, it must be accessed through a **sampler**.
 
 ````{tab} With webgpu.hpp
 *Resulting code:* [`step060`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step060)

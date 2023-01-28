@@ -1,5 +1,5 @@
-Loading from a file
-===================
+Loading from file
+=================
 
 ````{tab} With webgpu.hpp
 *Resulting code:* [`step058`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step058)

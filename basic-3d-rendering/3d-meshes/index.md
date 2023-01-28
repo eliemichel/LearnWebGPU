@@ -12,5 +12,5 @@ depth-buffer
 transformation-matrices
 projection-matrices
 basic-shading
-loading-from-a-file
+loading-from-file
 ```
