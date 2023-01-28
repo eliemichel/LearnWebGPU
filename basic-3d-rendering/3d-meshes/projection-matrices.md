@@ -664,6 +664,30 @@ The field of view expected by `glm::perspective` must be expressed in **radians*
 Still looking the same... but we make our code base so much more robust!
 ```
 
+> 😟 Hey it's no longer turning around for me...
+
+You need to update the model matrix in the main loop!
+
+````{tab} With webgpu.hpp
+```C++
+// Update view matrix
+angle1 = uniforms.time;
+R1 = glm::rotate(mat4x4(1.0), angle1, vec3(0.0, 0.0, 1.0));
+uniforms.modelMatrix = R1 * T1 * S;
+queue.writeBuffer(uniformBuffer, offsetof(MyUniforms, modelMatrix), &uniforms.modelMatrix, sizeof(MyUniforms::modelMatrix));
+```
+````
+
+````{tab} Vanilla webgpu.h
+```C++
+// Update view matrix
+angle1 = uniforms.time;
+R1 = glm::rotate(mat4x4(1.0), angle1, vec3(0.0, 0.0, 1.0));
+uniforms.modelMatrix = R1 * T1 * S;
+wgpuQueueWriteBuffer(queue, uniformBuffer, offsetof(MyUniforms, modelMatrix), &uniforms.modelMatrix, sizeof(MyUniforms::modelMatrix));
+```
+````
+
 <!--
 ```{caution}
 For some reason the developers of the WebGPU standard [deemed the assignments to *swizzles* as "unnecessary"](https://github.com/gpuweb/gpuweb/issues/737), so we cannot compactly write `position.yz = ...`, we need to use this temporary `tmp` variable. I personally find this **very annoying**, and quite limiting for productivity, I hope they might change that eventually...

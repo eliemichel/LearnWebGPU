@@ -1,4 +1,4 @@
-Loading from a file (WIP)
+Loading from a file
 ===================
 
 ````{tab} With webgpu.hpp
@@ -11,7 +11,9 @@ Loading from a file (WIP)
 
 This time, we are ready to load **an actual 3D file format**, so that you can play with any model you'd like.
 
-In this chapter we load 3D models using the [OBJ](https://en.wikipedia.org/wiki/Wavefront_.obj_file) format. This is a very common format for storing 3D meshes with extra attributes (vertex colors, normals, but also texture coordinates and any other arbitrary data). You can for instance create an OBJ file by exporting it from [Blender]().
+In this chapter we load 3D models from the [OBJ](https://en.wikipedia.org/wiki/Wavefront_.obj_file) format. This is a very common format for storing 3D meshes with extra attributes (vertex colors, normals, but also texture coordinates and any other arbitrary data). You can for instance create an OBJ file by exporting it from [Blender](https://www.blender.org/).
+
+## TinyOBJLoader
 
 Instead of manually parsing OBJ files, we use the [TinyOBJLoader](https://github.com/tinyobjloader/tinyobjloader) library. The file format is not that complex, but parsing files is not the main point of this tutorial series, and this library has been intensively tested and has a very small footprint.
 
@@ -25,10 +27,10 @@ Similarly to [our `webgpu.hpp` wrapper](/getting-started/cpp-idioms.md), TinyOBJ
 We create a new loading function:
 
 ```C++
-bool loadGeometryFromObj(const fs::path& path, std::vector<float>& pointData, std::vector<uint16_t>& indexData);
+bool loadGeometryFromObj(const fs::path& path, std::vector<VertexAttributes>& vertexData);
 ```
 
-We can use [the example code](https://github.com/tinyobjloader/tinyobjloader#example-code-deprecated-api) from TinyOBJLoader's README as a base:
+We can use [the example code](https://github.com/tinyobjloader/tinyobjloader#example-code-deprecated-api) from TinyOBJLoader's README as a base, that shows how to call the `LoadObj` function it provides:
 
 ```C++
 bool loadGeometryFromObj(const fs::path& path, std::vector<VertexAttributes>& vertexData) {
@@ -59,9 +61,11 @@ bool loadGeometryFromObj(const fs::path& path, std::vector<VertexAttributes>& ve
 }
 ```
 
+Once the tinyobj-specific structures are filled in (`shape_t`, `attrib_t`), we can extract our vertex array data:
+
 ```C++
 // Filling in vertexData:
-const auto& shape = shapes[0]:
+const auto& shape = shapes[0]; // look at the first shape only
 
 vertexData.resize(shape.mesh.indices.size());
 for (int i = 0; i < vertexData.size(); ++i) {
@@ -101,9 +105,12 @@ for (const auto& shape : shapes) {
 }
 ```
 
+## Loading a first object
+
 We stop using indexed drawing but switch to a vector of `VertexAttributes` rather than a blind vector of `float` for the vertex buffer data:
 
 ```C++
+std::vector<VertexAttributes> vertexData;
 bool success = loadGeometryFromObj(RESOURCE_DIR "/pyramid.obj", vertexData);
 if (!success) {
 	std::cerr << "Could not load geometry!" << std::endl;
@@ -131,7 +138,11 @@ Test this with [pyramid.obj](../../data/pyramid.obj), which is the same pyramid 
 The 3D model is correctly loaded but not oriented as expected.
 ```
 
-**Vertical axis convention** There is no consensus among 3D modeling and 3D rendering tools, but file formats usually impose a convention. In the case of the OBJ format, it is specified that the Y axis represents the upward vertical direction. Since we have been implicitly following the convention that Z is the vertical, we need to either change our convention (by changing the view matrix) or convert upon loading.
+## Vertical axis convention
+
+There is **no consensus** among 3D modeling and 3D rendering tools, but file formats usually impose a convention. In the case of the OBJ format, it is specified that **the Y axis represents the upward vertical direction**.
+
+Since we have been implicitly following the convention that **Z is the vertical in our code**, we need to either change our convention (by changing the view matrix) or convert upon loading. I chose the latter:
 
 ```C++
 vertexData[i].position = {
@@ -154,6 +165,8 @@ vertexData[i].normal = {
 The loaded 3D model, correctly oriented.
 ```
 
+## Another example
+
 Want something a bit more interesting? Try [mammoth.obj](../../data/mammoth.obj)! And thank the Smithsonian for [sharing the model](https://sketchfab.com/3d-models/mammuthus-primigenius-blumbach-229976b3db4646b39c44e57a7e3d8744).
 
 ```{figure} /images/mammoth.png
@@ -165,8 +178,11 @@ A complex 3D model.
 Conclusion
 ----------
 
- - You can start loading your own models.
- - OBJ is one format among others.
+This chapter concludes this part about loading and rendering 3D meshes. It was quite of a part, congratulations for having followed so far!
+
+From now on we will see how to improve on top of this base, but feel free to take some time to **play around**.
+
+You can now load your own models (going through Blender to convert them if you get them in a different file format), animate the position of different objects, change the lighting (even animate it using uniforms), etc.
 
 ````{tab} With webgpu.hpp
 *Resulting code:* [`step058`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step058)

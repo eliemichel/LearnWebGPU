@@ -1,4 +1,4 @@
-Basic shading (WIP)
+Basic shading
 =============
 
 ````{tab} With webgpu.hpp
@@ -50,6 +50,8 @@ There are two possible vectors that are perpendicular to the face and have a uni
 
 Normal
 ------
+
+### Data
 
 The normals can be mathematically computed (using the cross product of two sides of the triangle), but it is common to **store them in the 3D file** format, because sometimes we use intentionally fake normals to give the feeling that triangles are slightly curved.
 
@@ -104,33 +106,46 @@ I had to duplicate some points, because although they have the same location, th
 To better see the impact of our shading, I gave the same base color to the whole pyramid this time.
 ```
 
+### Loading
+
 We do not need to change our geometry loading procedure, only the number of float attributes per vertex:
 
 ```
-bool success = loadGeometry(RESOURCE_DIR "/pyramid.txt", pointData, indexData, 6);
-                                                                               ^ This was a 3
+bool success = loadGeometry(RESOURCE_DIR "/pyramid.txt", vertexData, indexData, 6);
+//                                                                             ^ This was a 3
 ```
 
-TODO
+The `vertexData` array now contains 3 attributes per vertex. In order to **better manage** our vertex attributes, we can create a structure that we will use similarly to the `MyUniforms` struct:
 
 ```C++
+using glm::vec3;
+
 /**
  * A structure that describes the data layout in the vertex buffer
  * We do not instantiate it but use it in `sizeof` and `offsetof`
  */
 struct VertexAttributes {
-	std::array<float, 3> position;
-	std::array<float, 3> normal;
-	std::array<float, 3> color;
+	vec3 position;
+	vec3 normal;
+	vec3 color;
 };
+```
 
-// [...]
+This structure mirrors the VertexInput struct from the WGSL shader:
 
-requiredLimits.limits.maxVertexAttributes = 3;
-//                                          ^ This was a 2
+```rust
+struct VertexInput {
+	@location(0) position: vec3<f32>,
+	@location(1) normal: vec3<f32>, // new attribute
+	@location(2) color: vec3<f32>,
+};
+```
 
-// [...]
+The **order of the fields** does not need to be the same. The order of the fields in the C++ struct `VertexAttributes` is driven by the order in which the data is stored in the loaded file.
 
+The order in `VertexInput` does not matter, and the `@location` must match the attribute definition:
+
+```C++
 std::vector<VertexAttribute> vertexAttribs(3);
 //                                         ^ This was a 2
 
@@ -155,12 +170,11 @@ vertexBufferLayout.arrayStride = sizeof(VertexAttributes);
 //                               ^^^^^^^^^^^^^^^^^^^^^^^^ This was 6 * sizeof(float)
 ```
 
-```rust
-struct VertexInput {
-	@location(0) position: vec3<f32>,
-	@location(1) normal: vec3<f32>,
-	@location(2) color: vec3<f32>,
-};
+And do not forget to change the device limits:
+
+```C++
+requiredLimits.limits.maxVertexAttributes = 3;
+//                                          ^ This was a 2
 ```
 
 Shading
@@ -168,7 +182,7 @@ Shading
 
 ### Light direction
 
-Shading occurs in the **fragment shader**, so we need to forward the normal attribute:
+Now the normal data is loaded from the file, and accessible to the vertex shader. But shading occurs in the **fragment shader**, so we need to forward the normal attribute:
 
 ```rust
 struct VertexOutput {
@@ -188,7 +202,25 @@ fn vs_main(in: VertexInput) -> VertexOutput {
 }
 ```
 
-Let's do some experiments with this normal:
+In order to check that everything is piped up correctly, you can try to just use the coordinates of the normal vector as the output color. Since these coordinates are in the range $(-1,1)$, I usually add ` * 0.5 + 0.5` to remap them in the range $(0,1)$, which the color output expects:
+
+```rust
+fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
+	let color = in.normal * 0.5 + 0.5;
+	// [...]
+}
+```
+
+<figure class="align-center">
+	<video autoplay loop muted inline nocontrols style="width:100%;height:auto;max-width:642px">
+		<source src="../../_static/shading-fwd-normal.mp4" type="video/mp4">
+	</video>
+	<figcaption>
+		<p><span class="caption-text">These color are typical of the normal "palette".</span></p>
+	</figcaption>
+</figure>
+
+Let's now do some experiments with this normal:
 
 ```rust
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
