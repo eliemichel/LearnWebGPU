@@ -166,13 +166,15 @@ For the plane this should not change anything, but if you try with [cube.obj](..
 ```{figure} /images/textured-cube.png
 :align: center
 :class: with-shadow
-A textured cube, seen from location $(-2, -3, 2)$
+A textured cube, seen from location $(-2, -3, 2)$.
 ```
 
 Conclusion
 ----------
 
-We are now able to load textures coordinates to map textures onto 3D meshes, but as you might have noticed, there is a lot of aliasing in the way we are getting texel data in the fragment shader. The next chapter hence presents the proper way of sampling textures!
+We are now able to load textures coordinates to map textures onto 3D meshes, but as you might have noticed, there is **a lot of aliasing** in the way we are getting texel data in the fragment shader.
+
+The next chapter hence presents **the proper way of sampling** textures!
 
 ````{tab} With webgpu.hpp
 *Resulting code:* [`step065`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step065)
