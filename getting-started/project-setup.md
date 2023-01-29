@@ -8,7 +8,7 @@ In our running example, we use [CMake](https://cmake.org/) to organize the compi
 Requirements
 ------------
 
-All we need is CMake and a C++ compiler, instructions are detailed bellow per OS.
+All we need is CMake and a C++ compiler, instructions are detailed below per OS.
 
 ```{hint}
 After the installation, you can type `which cmake` (linux/macOS) or `where cmake` (Windows) to see whether your command line finds the full path to the `cmake` command. If not, make sure your `PATH` environment variable contains the directory where CMake is installed.
