@@ -120,14 +120,31 @@ vertexAttribs[3].format = VertexFormat::Float32x2;
 vertexAttribs[3].offset = offsetof(VertexAttributes, uv);
 
 // [...]
+```
 
+Note when loading UV coordinates from the file that we need to do a little conversion on the V axis.
 
+```{image} /images/uv-coords-light.svg
+:align: center
+:class: only-light
+```
+
+```{image} /images/uv-coords-dark.svg
+:align: center
+:class: only-dark
+```
+
+<p class="align-center">
+	<span class="caption-text"><em>Modern graphics APIs use a different UV coordinate system than the OBJ file format.</em></span>
+</p>
+
+```C++
 bool loadGeometryFromObj(const fs::path& path, std::vector<VertexAttributes>& vertexData) {
 	// [...]
 
 	vertexData[offset + i].uv = {
 		attrib.texcoords[2 * idx.texcoord_index + 0],
-		attrib.texcoords[2 * idx.texcoord_index + 1]
+		1 - attrib.texcoords[2 * idx.texcoord_index + 1]
 	};
 
 	// [...]
