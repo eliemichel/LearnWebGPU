@@ -85,7 +85,7 @@ We may now create the swap chain:
 
 ```C++
 WGPUSwapChain swapChain = wgpuDeviceCreateSwapChain(device, surface, &swapChainDesc);
-std::cout << "Swapchain: " << device << std::endl;
+std::cout << "Swapchain: " << swapChain << std::endl;
 ```
 
 ```{note}
