@@ -99,7 +99,9 @@ fn vs_main(@builtin(vertex_index) vertexIndex: u32) -> @builtin(position) vec4<f
 
 @fragment
 fn fs_main(@builtin(position) fragCoord: vec4<f32>) -> @location(0) vec4<f32> {
-	return textureLoad(texture, vec2<i32>(fragCoord.xy), 0);
+	let color = textureLoad(texture, vec2<i32>(fragCoord.xy), 0);
+	let corrected_color = pow(color.rgb, vec3<f32>(1.0/2.2));
+	return vec4<f32>(corrected_color, color.a);
 }
 )";
 	ShaderModuleDescriptor shaderDesc{};
@@ -246,7 +248,6 @@ bool FileRenderer::render(const std::filesystem::path path, wgpu::TextureView te
 			return;
 		}
 		unsigned char* pixelData = (unsigned char*)pixelBuffer.getMappedRange(0, pixelBufferDesc.size);
-
 		int bytesPerRow = 4 * width;
 		int success = stbi_write_png(path.string().c_str(), (int)width, (int)height, 4, pixelData, bytesPerRow);
 
