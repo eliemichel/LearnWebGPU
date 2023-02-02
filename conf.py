@@ -34,6 +34,7 @@ extensions = [
     "sphinx-favicon",
     "sphinx_inline_tabs",
     "style",
+    "sphinx_literate",
 ]
 
 # Add any paths that contain templates here, relative to this directory.

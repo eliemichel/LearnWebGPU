@@ -51,6 +51,22 @@ warning
 
 Streaming
 
+Literate
+--------
+
+```{lit}
+foo
+
+blup
+```
+
+```{lit}
+bar
+```
+
+```{tangle}
+```
+
 Known Limitations
 -----------------
 
