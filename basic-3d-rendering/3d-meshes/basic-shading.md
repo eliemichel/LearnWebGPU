@@ -277,8 +277,8 @@ let shading = max(0.0, dot(lightDirection, in.normal));
 
 ```rust
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
-	let lightDirection1 = vec3<f32>(0.5, 0.1, -0.9);
-	let lightDirection2 = vec3<f32>(-0.2, 0.3, 0.4);
+	let lightDirection1 = vec3<f32>(0.5, -0.9, 0.1);
+	let lightDirection2 = vec3<f32>(0.2, 0.4, 0.3);
 	let shading1 = max(0.0, dot(lightDirection1, in.normal));
 	let shading2 = max(0.0, dot(lightDirection2, in.normal));
 	let shading = shading1 + shading2;
@@ -314,7 +314,7 @@ In the previous part, the light direction changes with the object's orientation.
 
 ```rust
 // in Vertex shader
-out.normal = (modelMatrix * vec4<f32>(in.normal, 0.0)).xyz;
+out.normal = (uMyUniforms.modelMatrix * vec4<f32>(in.normal, 0.0)).xyz;
 
 // [...]
 
