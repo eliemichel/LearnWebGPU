@@ -2,11 +2,11 @@ Loading from file (WIP)
 =================
 
 ````{tab} With webgpu.hpp
-*Resulting code:* [`step075`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step075)
+*Resulting code:* [`step076`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step076)
 ````
 
 ````{tab} Vanilla webgpu.h
-*Resulting code:* [`step075-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step075-vanilla)
+*Resulting code:* [`step076-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step076-vanilla)
 ````
 
 TODO
@@ -68,6 +68,26 @@ Texture loadTexture(const fs::path& path, Device device) {
 ```
 
 ```C++
+Texture loadTexture(const fs::path& path, Device device, TextureView* textureView = nullptr) {
+	// [...]
+
+	if (textureView) {
+		TextureViewDescriptor textureViewDesc;
+		textureViewDesc.aspect = TextureAspect::All;
+		textureViewDesc.baseArrayLayer = 0;
+		textureViewDesc.arrayLayerCount = 1;
+		textureViewDesc.baseMipLevel = 0;
+		textureViewDesc.mipLevelCount = textureDesc.mipLevelCount;
+		textureViewDesc.dimension = TextureViewDimension::_2D;
+		textureViewDesc.format = textureDesc.format;
+		*textureView = texture.createView(textureViewDesc);
+	}
+
+	return texture;
+}
+```
+
+```C++
 // Fix the UV convention
 vertexData[offset + i].uv = {
 	attrib.texcoords[2 * idx.texcoord_index + 0],
@@ -80,7 +100,25 @@ Unzip [fourareen.zip](../../data/fourareen.zip) in your resource directory (spec
 ```C++
 bool success = loadGeometryFromObj(RESOURCE_DIR "/fourareen.obj", vertexData);
 // [...]
-Texture texture = loadTexture(RESOURCE_DIR "/fourareen2K_albedo.jpg", device);
+
+// Create a texture
+TextureView textureView = nullptr;
+Texture texture = loadTexture(RESOURCE_DIR "/fourareen2K_albedo.jpg", device, &textureView);
+if (!texture) {
+	std::cerr << "Could not load texture!" << std::endl;
+	return 1;
+}
+```
+
+```rust
+out.uv = in.uv;
+```
+
+```C++
+// Matrices
+uniforms.modelMatrix = mat4x4(1.0);
+uniforms.viewMatrix = glm::lookAt(vec3(-2.0f, -3.0f, 2.0f), vec3(0.0f), vec3(0, 0, 1));
+uniforms.projectionMatrix = glm::perspective(45 * PI / 180, 640.0f / 480.0f, 0.01f, 100.0f);
 ```
 
 ```{figure} /images/fourareen.png
@@ -93,9 +131,9 @@ Conclusion
 ----------
 
 ````{tab} With webgpu.hpp
-*Resulting code:* [`step075`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step075)
+*Resulting code:* [`step076`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step076)
 ````
 
 ````{tab} Vanilla webgpu.h
-*Resulting code:* [`step075-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step075-vanilla)
+*Resulting code:* [`step076-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step076-vanilla)
 ````
