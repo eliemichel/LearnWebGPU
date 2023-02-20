@@ -92,6 +92,10 @@ std::cout << "Swapchain: " << swapChain << std::endl;
 The Swap Chain is something that is not exposed in the JavaScript version of the API. Like the notion of *surface* that we have met already, by the way. The web browser takes care of it and does not offer any option.
 ```
 
+```{admonition} Troubleshooting
+If you get the error `Uncaptured device error: type 3 (Device(OutOfMemory))` when calling `wgpuDeviceCreateSwapChain`, check that you specified the `GLFW_NO_API` value to glfw when creating the window.
+```
+
 Texture View
 ------------
 

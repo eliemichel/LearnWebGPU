@@ -63,10 +63,13 @@ if (!glfwInit()) {
 Once the library has been initialized, we may create a window:
 
 ```C++
+glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 GLFWwindow* window = glfwCreateWindow(640, 480, "Learn WebGPU", NULL, NULL);
 // [...] Use the window
 glfwDestroyWindow(window);
 ```
+
+The `glfwWindowHint` function is a way to pass optional arguments to `glfwCreateWindow`. Here we tell it to initialize no particular graphics API by default, as we manage this ourselves.
 
 ```{tip}
 I invite you to look at the documentation of GLFW to know more about [`glfwCreateWindow`](https://www.glfw.org/docs/latest/group__window.html#ga3555a418df92ad53f917597fe2f64aeb) and other related functions.
