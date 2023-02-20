@@ -9,6 +9,10 @@ Simple GUI (WIP)
 *Resulting code:* [`step095-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step095-vanilla)
 ````
 
+````{tab} With Dawn
+*Resulting code:* [`step095-dawn`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step095-vanilla)
+````
+
 TODO
 
 Setting up ImGUI
@@ -187,4 +191,8 @@ A basic GUI with ImGUI
 
 ````{tab} Vanilla webgpu.h
 *Resulting code:* [`step095-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step095-vanilla)
+````
+
+````{tab} With Dawn
+*Resulting code:* [`step095-dawn`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step095-vanilla)
 ````
