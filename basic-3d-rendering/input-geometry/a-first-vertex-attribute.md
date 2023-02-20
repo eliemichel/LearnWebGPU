@@ -28,7 +28,7 @@ fn vs_main(@builtin(vertex_index) in_vertex_index: u32) -> /* [...] */ {
 This means that the argument `in_vertex_index` must be populated by the vertex fetch stage with the index of the current vertex.
 
 ```{note}
-Attributes that are built in can be found in [the WGSL documentation](https://gpuweb.github.io/gpuweb/wgsl/#builtin-values).
+Attributes that are built-in can be found in [the WGSL documentation](https://gpuweb.github.io/gpuweb/wgsl/#builtin-values).
 ```
 
 Instead of using a built-in input, we can create our own. For this we need to:

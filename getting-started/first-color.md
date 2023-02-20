@@ -153,7 +153,7 @@ WGPURenderPassEncoder renderPass = wgpuCommandEncoderBeginRenderPass(encoder, &r
 wgpuRenderPassEncoderEnd(renderPass);
 ```
 
-Note that we directly end the pass without issuing any other command. This is because the render pass has a built in mechanism for clearing the screen when it begins, which we'll set up through the descriptor.
+Note that we directly end the pass without issuing any other command. This is because the render pass has a built-in mechanism for clearing the screen when it begins, which we'll set up through the descriptor.
 
 ### Color attachment
 
