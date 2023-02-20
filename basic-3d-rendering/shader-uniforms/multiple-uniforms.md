@@ -154,17 +154,21 @@ wgpuQueueWriteBuffer(queue, uniformBuffer, sizeof(float), &uniforms.color, sizeo
 Better yet, if we forget the offset, or want to be flexible to the addition of new fields, we can use the built-in `offsetof` macro:
 
 ````{tab} With webgpu.hpp
+```C++
 // Upload only the time, whichever its order in the struct
 queue.writeBuffer(uniformBuffer, offsetof(MyUniforms, time), &uniforms.time, sizeof(MyUniforms::time));
 // Upload only the color, whichever its order in the struct
 queue.writeBuffer(uniformBuffer, offsetof(MyUniforms, color), &uniforms.color, sizeof(MyUniforms::color));
+```
 ````
 
 ````{tab} Vanilla webgpu.h
+```C++
 // Upload only the time, whichever its order in the struct
 wgpuQueueWriteBuffer(queue, uniformBuffer, offsetof(MyUniforms, time), &uniforms.time, sizeof(MyUniforms::time));
 // Upload only the color, whichever its order in the struct
 wgpuQueueWriteBuffer(queue, uniformBuffer, offsetof(MyUniforms, color), &uniforms.color, sizeof(MyUniforms::color));
+```
 ````
 
 Binding layout

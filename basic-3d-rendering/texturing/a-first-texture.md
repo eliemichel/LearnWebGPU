@@ -420,7 +420,7 @@ Changing the pixel array indeed changes the displayed image.
 Conclusion
 ----------
 
-We have seen how to create a texture and how to access its pixels from a shader. In the next chapter we will see how to map a texture onto a 3D mesh. And we will realize that me miss a very important ingredient: to fully benefit from the power of a texture, it must be accessed through a **sampler**.
+We have seen how to create a texture and how to access its pixels from a shader. In the next chapter we will see how to map a texture onto a 3D mesh. And we will realize that we miss a very important ingredient: to fully benefit from the power of a texture, it must be accessed through a **sampler**.
 
 ````{tab} With webgpu.hpp
 *Resulting code:* [`step060`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step060)

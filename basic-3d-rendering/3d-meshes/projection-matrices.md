@@ -699,7 +699,7 @@ Conclusion
 
 In this quite mathematical chapter, we have seen fundamental points:
 
- - **Projections** (either orthographic of perspective) can be **encoded as matrices** thanks to the coordinate normalization performed by the fixed pipeline (the division by $w$).
+ - **Projections** (either orthographic or perspective) can be **encoded as matrices** thanks to the coordinate normalization performed by the fixed pipeline (the division by $w$).
  - A **perspective** projection is parameterized either by a **focal length** or a **field of view**.
  - Transform matrices (mode, view, projection) should be computed once and stored in a **uniform buffer** to avoid unnecessary costly computation.
  - The GLM library provides us with all we need to easily compute these matrices on the CPU side.

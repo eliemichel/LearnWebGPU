@@ -13,7 +13,7 @@ Loading from file
 *Resulting code:* [`step037-dawn`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step037-dawn)
 ````
 
-Now that we are familiar with the representation of geometric data that the GPU expect, we can load it from a file instead of hard-coding it in the source code. This is the occasion to introduce some basic **resource management** to our project (althrough this is not specific to WebGPU).
+Now that we are familiar with the representation of geometric data that the GPU expect, we can load it from a file instead of hard-coding it in the source code. This is the occasion to introduce some basic **resource management** to our project (although this is not specific to WebGPU).
 
 File format
 -----------
@@ -180,7 +180,7 @@ target_compile_definitions(App PRIVATE
 )
 ```
 
-The expression `${CMAKE_CURRENT_SOURCE_DIR}` is replaced by the content of CMake's variable [`CMAKE_CURRENT_SOURCE_DIR`](https://cmake.org/cmake/help/latest/variable/CMAKE_CURRENT_SOURCE_DIR.html), which is a build in variable containing the full path to the `CMakeLists.txt` file that you are editing.
+The expression `${CMAKE_CURRENT_SOURCE_DIR}` is replaced by the content of CMake's variable [`CMAKE_CURRENT_SOURCE_DIR`](https://cmake.org/cmake/help/latest/variable/CMAKE_CURRENT_SOURCE_DIR.html), which is a built in variable containing the full path to the `CMakeLists.txt` file that you are editing.
 
 ```{note}```
 When writing a CMake *function*, the `CMAKE_CURRENT_SOURCE_DIR` variable contains the directory of the `CMakeLists.txt` that is currently calling the function. If you want to refer to the directory of the `CMakeLists.txt` that defines the function, use [`CMAKE_CURRENT_LIST_DIR`](https://cmake.org/cmake/help/latest/variable/CMAKE_CURRENT_LIST_DIR.html) instead.
@@ -192,7 +192,7 @@ When writing a CMake *function*, the `CMAKE_CURRENT_SOURCE_DIR` variable contain
 Yes indeed, but we can easily add an option to globally change the resource directory when building a release that we want to be able to distribute:
 
 ```CMake
-# We add an option to enable different settings when developping the app than
+# We add an option to enable different settings when developing the app than
 # when distributing it.
 option(DEV_MODE "Set up development helper settings" ON)
 
@@ -222,7 +222,7 @@ cmake -B build-release -DDEV_MOD=OFF -DCMAKE_BUILD_TYPE=Release
 The first one for comfort of development, the second one for the portability of a release.
 
 ```{tip}
-The `CMAKE_BUILD_TYPE` option is a built-in option of CMake that is very commonly used. Set it to `Debug` to be compile your program with **debugging symbols* (see [debugging](/appendices/debugging.md)), at the expense of a slower and heavier executable. Set it to `Release` to have a fast and lightweight executable with no debugging safe-guard.
+The `CMAKE_BUILD_TYPE` option is a built-in option of CMake that is very commonly used. Set it to `Debug` to compile your program with **debugging symbols* (see [debugging](/appendices/debugging.md)), at the expense of a slower and heavier executable. Set it to `Release` to have a fast and lightweight executable with no debugging safe-guard.
 
 When using some CMake generators, like the Visual Studio one, this is ignored because the generated solution can switch from Debug to Release mode directly in the IDE instead of asking CMake.
 ```

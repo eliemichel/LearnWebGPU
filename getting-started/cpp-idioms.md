@@ -3,7 +3,7 @@ C++ wrapper
 
 *Resulting code:* [`step025`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step025)
 
-So far we have used the raw WebGPU API, which is a C API, and this prevented us from using some nice productive features of C++. This chapter first give imaginary examples of how this could be improved, before linking to a little library that implement all this little features.
+So far we have used the raw WebGPU API, which is a C API, and this prevented us from using some nice productive features of C++. This chapter first gives imaginary examples of how this could be improved, before linking to a little library that implement all this little features.
 
 ```{important}
 All the changes presented here only affect the coding time, but our shallow C++ wrapper leads to the very same runtime binaries.
@@ -47,7 +47,7 @@ Instance instance = createInstance();
 Objects
 -------
 
-Beyond namespace, most functions are also previewed by the name of their first argument, e.g.:
+Beyond namespace, most functions are also prefixed by the name of their first argument, e.g.:
 
 ```C++
 WGPUBuffer wgpuDeviceCreateBuffer(WGPUDevice device, WGPUBufferDescriptor const * descriptor);
@@ -80,7 +80,7 @@ namespace wgpu {
 ```
 
 ```{note}
-The `const` qualifier is specified for some methods. This is an extra information provided by the wrapper to reduce the potential programming mistakes.
+The `const` qualifier is specified for some methods. This is extra information provided by the wrapper to reduce the potential programming mistakes.
 ```
 
 Capturing closures
@@ -160,7 +160,7 @@ The actual implementation use a little trickery so that enum names are scoped, b
 Library
 -------
 
-The library providing these C++ idioms is [`webgpu.hpp`](../data/webgpu.hpp). It is made of a single header file, which you just have to copy in your source tree. Exactly one of your source file must define `WEBGPU_CPP_IMPLEMENTATION` before `#include "webgpu.hpp"`:
+The library providing these C++ idioms is [`webgpu.hpp`](../data/webgpu.hpp). It is made of a single header file, which you just have to copy in your source tree. Exactly one of your source files must define `WEBGPU_CPP_IMPLEMENTATION` before `#include "webgpu.hpp"`:
 
 ```C++
 #define WEBGPU_CPP_IMPLEMENTATION

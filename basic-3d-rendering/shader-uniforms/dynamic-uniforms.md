@@ -119,7 +119,7 @@ device.getLimits(&supportedLimits);
 Limits deviceLimits = supportedLimits.limits;
 //[...]
 
-// Subtility
+// Subtlety
 uint32_t uniformStride = std::max(
 	(uint32_t)sizeof(MyUniforms),
 	(uint32_t)deviceLimits.minStorageBufferOffsetAlignment
@@ -134,7 +134,7 @@ wgpuDeviceGetLimits(device, &supportedLimits);
 WGPULimits deviceLimits = supportedLimits.limits;
 //[...]
 
-// Subtility
+// Subtlety
 uint32_t uniformStride = std::max(
 	(uint32_t)sizeof(MyUniforms),
 	(uint32_t)deviceLimits.minStorageBufferOffsetAlignment

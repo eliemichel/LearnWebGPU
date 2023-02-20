@@ -10,8 +10,8 @@ Installing WebGPU
 
 There exists mostly two implementations of the WebGPU native header:
 
- - [wgpu-native](https://github.com/gfx-rs/wgpu-native), exposing a native interface to the `wgpu` Rust library developped for Firefox.
- - Google's [Dawn](https://dawn.googlesource.com/dawn), developped for Chrome.
+ - [wgpu-native](https://github.com/gfx-rs/wgpu-native), exposing a native interface to the `wgpu` Rust library developed for Firefox.
+ - Google's [Dawn](https://dawn.googlesource.com/dawn), developed for Chrome.
 
 I tested both, and settled on the Firefox one for this documentation because its resulting binaries are much more lightweight than with Dawn. In both cases, the build process is a bit too heavy to be included in our CMakeLists so I provide pre-compiled builds:
 

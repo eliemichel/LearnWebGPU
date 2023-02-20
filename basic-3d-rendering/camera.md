@@ -32,7 +32,7 @@ public:
 	// A function called only once at the beginning. Returns false is init failed.
 	bool onInit();
 
-	// A function called at each frame, guarantied never to be called before `onInit`.
+	// A function called at each frame, guaranteed never to be called before `onInit`.
 	void onFrame();
 
 	// A function called only once at the very end.

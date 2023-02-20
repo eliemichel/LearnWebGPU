@@ -9,9 +9,9 @@ Transformation matrices
 *Resulting code:* [`step054-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step054-vanilla)
 ````
 
-we have been manipulating **transforms** in our shader code at multiple occasions already: offset of the 2D scene, viewport ratio, rotation of the 3D object. This chapter presents **a proper and unified way** of handling these. This will lead us in the next part to the introduction of the **perspective** transform!
+We have been manipulating **transforms** in our shader code at multiple occasions already: offset of the 2D scene, viewport ratio, rotation of the 3D object. This chapter presents **a proper and unified way** of handling these. This will lead us in the next part to the introduction of the **perspective** transform!
 
-This chapter introduces mathematical concepts. I want to reassure the ones of you who do not feel comfortable with math: I try to introduce as smoothly as possible and to always justify its use. Think of it as a way to **learn math thanks to 3D** and not the other way around!
+This chapter introduces mathematical concepts. I want to reassure those of you who do not feel comfortable with math: I try to introduce as smoothly as possible and to always justify its use. Think of it as a way to **learn math thanks to 3D** and not the other way around!
 
 A common formalism
 ------------------
