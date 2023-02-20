@@ -550,7 +550,7 @@ Conclusion
 
 We can now properly use textures in our scenes!
 
-We have seen how to fill in mip maps, which can be computed in any way you want. Even though they very often contain averages, filtering is a complex topic, and other operations can be used. For mip-mapping depth buffers, one would use a max (and the `compare` option that I did not detail). For normal and roughness data (which we'll discover in the [Lighting and Material](../lighting-and-material.md) chapter), other techniques must be found because an average is not physically correct.
+We have seen how to fill in mip maps, which can be computed in any way you want. Even though they very often contain averages, filtering is a complex topic, and other operations can be used. For mip-mapping depth buffers, one would use a max (and the `compare` option that I did not detail). For normal and roughness data (which we'll discover in the [Lighting and Material](../lighting-and-material/index.md) chapter), other techniques must be found because an average is not physically correct.
 
 ````{tab} With webgpu.hpp
 *Resulting code:* [`step070`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step070)

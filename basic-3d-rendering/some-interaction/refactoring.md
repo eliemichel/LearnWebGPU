@@ -1,4 +1,4 @@
-Refactoring (WIP)
+Refactoring
 ===========
 
 ````{tab} With webgpu.hpp
@@ -9,9 +9,7 @@ Refactoring (WIP)
 *Resulting code:* [`step080-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step080-vanilla)
 ````
 
-The goal of this chapter is to add some interactivity to our viewer, by enabling the user to turn around the object using the mouse.
-
-From a WebGPU standpoint, we know everything we need: this is only about **updating the view matrix**.
+The goal of this chapter is to add some interactivity to our viewer. From a WebGPU standpoint, we know everything we need. For instance enabling the user to turn around the object using the mouse is only about **updating the view matrix**.
 
 However, it is also the occasion to **organize a bit our code base**, which we have not been discussing much until now. It was not the primary topic, and the size of the code was still manageable as mostly a big main function, but this never holds for bigger applications.
 

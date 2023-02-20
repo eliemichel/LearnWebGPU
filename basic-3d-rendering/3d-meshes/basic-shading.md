@@ -335,7 +335,7 @@ let normal = normalize(in.normal);
 Conclusion
 ----------
 
-We will see a much more accurate material model in the [Lighting and material](/basic-3d-rendering/lighting-and-material.md) chapter.
+We will see a much more accurate material model in the [Lighting and material](/basic-3d-rendering/lighting-and-material/index.md) chapter.
 
 ````{tab} With webgpu.hpp
 *Resulting code:* [`step056`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step056)

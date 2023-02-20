@@ -7,8 +7,10 @@ Contents
 ```{toctree}
 :titlesonly:
 
-benchmarking.md
-multi-sampling.md
-scene-tree.md
-screen-capture.md
+benchmarking
+multi-sampling
+scene-tree
+screen-capture
+shadow-maps
+raytracing
 ```

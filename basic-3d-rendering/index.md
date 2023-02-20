@@ -12,6 +12,6 @@ input-geometry/index
 shader-uniforms/index
 3d-meshes/index
 texturing/index
-camera
-lighting-and-material
+some-interaction/index
+lighting-and-material/index
 ```
