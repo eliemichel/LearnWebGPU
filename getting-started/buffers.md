@@ -72,7 +72,7 @@ Reading from a buffer
 
 We cannot just use the command queue to read memory back from the GPU, because this is a "fire and forget" queue: functions do not return a value since they are run on a different timeline.
 
-Instead, we use an asynchronous (noun needed here), namely `wgpuBufferMapAsync`. This operation maps the GPU buffer into CPU memory, and then executes the callback function it was provided. This makes the programming workflow more complicated than synchronous operations, but once again it is important to minimize wasteful processor idling.
+Instead, we use an asynchronous operation, namely `wgpuBufferMapAsync`. This operation maps the GPU buffer into CPU memory, and then executes the callback function it was provided. This makes the programming workflow more complicated than synchronous operations, but once again it is important to minimize wasteful processor idling.
 
 Let us first change the `usage` of the second buffer by adding the `WGPUBufferUsage_MapRead` flag, so that the buffer can be mapped for reading:
 
