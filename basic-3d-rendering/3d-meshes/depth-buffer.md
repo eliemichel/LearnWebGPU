@@ -216,7 +216,7 @@ RenderPassDepthStencilAttachment depthStencilAttachment;
 depthStencilAttachment.view = depthTextureView;
 
 // The initial value of the depth buffer, meaning "far"
-depthStencilAttachment.depthClearValue = 100.0f;
+depthStencilAttachment.depthClearValue = 1.0f;
 // Operation settings comparable to the color attachment
 depthStencilAttachment.depthLoadOp = LoadOp::Clear;
 depthStencilAttachment.depthStoreOp = StoreOp::Store;
@@ -238,7 +238,7 @@ WGPURenderPassDepthStencilAttachment depthStencilAttachment;
 depthStencilAttachment.view = depthTextureView;
 
 // The initial value of the depth buffer, meaning "far"
-depthStencilAttachment.depthClearValue = 100.0f;
+depthStencilAttachment.depthClearValue = 1.0f;
 // Operation settings comparable to the color attachment
 depthStencilAttachment.depthLoadOp = WGPULoadOp_Clear;
 depthStencilAttachment.depthStoreOp = WGPUStoreOp_Store;
@@ -250,6 +250,17 @@ depthStencilAttachment.stencilClearValue = 0;
 depthStencilAttachment.stencilLoadOp = WGPULoadOp_Clear;
 depthStencilAttachment.stencilStoreOp = WGPUStoreOp_Store;
 depthStencilAttachment.stencilReadOnly = true;
+```
+````
+
+````{admonition} Dawn
+When using the Dawn implementation of WebGPU, `stencilLoadOp` and `stencilStoreOp` must be set to respectively `LoadOp::Undefined` and `StoreOp::Undefined` instead.
+
+Furthermore, a `clearDepth` attribute of `depthStencilAttachment` must be turned to NaN (it's a backward compatibility thing):
+
+```C++
+constexpr auto NaNf = std::numeric_limits<float>::quiet_NaN();
+depthStencilAttachment.clearDepth = NaNf;
 ```
 ````
 
