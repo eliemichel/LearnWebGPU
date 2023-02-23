@@ -195,7 +195,7 @@ out.position = vec4<f32>(position.x, position.y * ratio, 0.0, 1.0);
 :class: only-dark
 ```
 
-Congratulations, you have learnt most of what there is to know about trigonometry for computer graphics!
+Congratulations, you have learned most of what there is to know about trigonometry for computer graphics!
 
 ```{hint}
 If you cannot remember which one is the $cos$ and which one is the $sin$ among `alpha` and `beta`, which happens all the time, just take an example of very simple rotation: `angle = 0`. In such a case, we need `alpha = 1` and `beta = 0`. If you look at a plot of the $sin$ and $cos$ functions you'll quickly see that $cos(0) = 1$ and $sin(0) = 0$

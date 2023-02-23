@@ -107,7 +107,7 @@ WGPUTextureView nextTexture = wgpuSwapChainGetCurrentTextureView(swapChain);
 std::cout << "nextTexture: " << nextTexture << std::endl;
 ```
 
-Note that this returns a *Texture View*. This gives a restricted access to the actual texture object allocated by the swap chain, so that internally the swap chain can use whatever organization it wants while exposing a view that has the dimensions and format that we expect.
+Note that this returns a *Texture View*. This gives restricted access to the actual texture object allocated by the swap chain, so that internally the swap chain can use whatever organization it wants while exposing a view that has the dimensions and format that we expect.
 
 Getting the texture may fail, in particular if the window has been resized and thus the target surface changed, so don't forget to check that it is not null:
 
@@ -144,7 +144,7 @@ Render Pass
 
 ### Render pass encoder
 
-We know hold the texture where to draw to display something in our window. Like any GPU-side operation, we trigger it from the command queue, using a command encoder as described in [the previous chapter](the-command-queue.md). Build a `WGPUCommandEncoder` called `encoder`, then submit it to the queue. In between we will add a command that clear the screen with a uniform color.
+We now hold the texture where to draw to display something in our window. Like any GPU-side operation, we trigger it from the command queue, using a command encoder as described in [the previous chapter](the-command-queue.md). Build a `WGPUCommandEncoder` called `encoder`, then submit it to the queue. In between we will add a command that clears the screen with a uniform color.
 
 If you look in `webgpu.h` at the methods of the encoder (the procedures starting with `wgpuCommandEncoder`), most of them are related to copying buffers and textures around. Except two special ones: `wgpuCommandEncoderBeginComputePass` and `wgpuCommandEncoderBeginRenderPass`. These return specialized encoder objects, namely `WGPUComputePassEncoder` and `WGPURenderPassEncoder`, that give access to commands dedicated to respectively computing and 3D rendering.
 
@@ -157,7 +157,7 @@ WGPURenderPassEncoder renderPass = wgpuCommandEncoderBeginRenderPass(encoder, &r
 wgpuRenderPassEncoderEnd(renderPass);
 ```
 
-Note that we directly end the pass without issuing any other command. This is because the render pass has a built in mechanism for clearing the screen when it begins, which we'll set up through the descriptor.
+Note that we directly end the pass without issuing any other command. This is because the render pass has a built-in mechanism for clearing the screen when it begins, which we'll set up through the descriptor.
 
 ### Color attachment
 

@@ -169,7 +169,7 @@ Binding configuration
 There are two steps in the actual connection of the buffer to the uniform. One is to **declare in the pipeline** that we want a binding, and how exactly. This is the binding layout. And the second one is to create the bind group and enable it (see next section).
 
 ```{note}
-This follow the same spirit than the distinction between the *vertex buffer* and the *vertex buffer layout*.
+This follows the same spirit than the distinction between the *vertex buffer* and the *vertex buffer layout*.
 ```
 
 ### Pipeline layout
@@ -351,7 +351,7 @@ The fields `binding.sampler` and `binding.textureView` are only needed when the 
 
 ### Usage
 
-Okey we are now ready to connect the dots! It is as simple as setting the bind group to use before the draw call:
+Okay we are now ready to connect the dots! It is as simple as setting the bind group to use before the draw call:
 
 ````{tab} With webgpu.hpp
 ```C++

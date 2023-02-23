@@ -110,6 +110,6 @@ We have seen a few important notions in this chapter:
  - command queue
  - command encoder
 
-This was a bit abstract though, because we can queue operation but we did not see any yet. The next chapter shows how to use it to manipulate **buffers**, but you may also skip it to go right away to your [first color](/getting-started/first-color.md) and come back to it later on.
+This was a bit abstract though, because we can queue operations but we did not see any yet. The next chapter shows how to use it to manipulate **buffers**, but you may also skip it to go right away to your [first color](/getting-started/first-color.md) and come back to it later on.
 
 *Resulting code:* [`step017`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step017)

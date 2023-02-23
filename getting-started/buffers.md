@@ -9,10 +9,10 @@ This is the last off-screen chapter, where we introduce *buffers*. A buffer is "
 You can skip this chapter if you want to quickly get to the next section and start manipulating colors. We will not use buffers directly, but this helps understanding the mechanisms of the API.
 ```
 
-One notable difference is that we most state some hint about our use of this memory upon its creation. For instance, if we are going to use it only to write it from the CPU but never to read it back, we set its `CopyDst` flag on but not the `CopySrc` flag. This not fully agnostic memory management helps the device figuring out the best memory layout.
+One notable difference is that we must state some hint about our use of this memory upon its creation. For instance, if we are going to use it only to write it from the CPU but never to read it back, we set its `CopyDst` flag on but not the `CopySrc` flag. This not fully agnostic memory management helps the device figure out the best memory layout.
 
 ```{note}
-Note that textures are a so special kind of memory (because of the way we usually sample them) that they live in a different kind of object.
+Note that textures are a special kind of memory (because of the way we usually sample them) that they live in a different kind of object.
 ```
 
 Creating a buffer
@@ -70,9 +70,9 @@ Make sure that command encoding operations are called before `wgpuCommandEncoder
 Reading from a buffer
 ---------------------
 
-We cannot just use the command queue to read memory back from the GPU, because this is a "fire and forget" queue: functions do not return a value since they are ran on a different timeline.
+We cannot just use the command queue to read memory back from the GPU, because this is a "fire and forget" queue: functions do not return a value since they are run on a different timeline.
 
-Instead, we use an asynchronous, namely `wgpuBufferMapAsync`. This operation maps the GPU buffer into CPU memory, and then executes the callback function it was provided. This makes the programming workflow more complicated than synchronous operations, but once again it is important to minimize wasteful processor idling.
+Instead, we use an asynchronous (noun needed here), namely `wgpuBufferMapAsync`. This operation maps the GPU buffer into CPU memory, and then executes the callback function it was provided. This makes the programming workflow more complicated than synchronous operations, but once again it is important to minimize wasteful processor idling.
 
 Let us first change the `usage` of the second buffer by adding the `WGPUBufferUsage_MapRead` flag, so that the buffer can be mapped for reading:
 
@@ -81,7 +81,7 @@ bufferDesc2.usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_MapRead;
 ```
 
 ```{note}
-The `WGPUBufferUsage_MapRead` flag is not compatible with `WGPUBufferUsage_CopySrc` one, make sure not to have both at the same time.
+The `WGPUBufferUsage_MapRead` flag is not compatible with `WGPUBufferUsage_CopySrc` one, so make sure not to have both at the same time.
 ```
 
 We can now call the buffer mapping with a simple callback:
@@ -95,7 +95,7 @@ wgpuBufferMapAsync(buffer2, WGPUMapMode_Read, 0, 16, onBuffer2Mapped, nullptr /*
 
 ### Asynchronous polling
 
-If you run the program at this point, you might be surprised (and disappointed) to see that the callback is **never executed**! This is because there is no hidden process executed by the WebGPU library to check that the async operation is ready. Instead, the backend checks for ongoing async operations only when we call another operation, so we will add in the main loop a simple operation that does noting:
+If you run the program at this point, you might be surprised (and disappointed) to see that the callback is **never executed**! This is because there is no hidden process executed by the WebGPU library to check that the async operation is ready. Instead, the backend checks for ongoing async operations only when we call another operation, so we will add in the main loop a simple operation that does nothing:
 
 ```C++
 while (!glfwWindowShouldClose(window)) {

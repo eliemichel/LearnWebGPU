@@ -365,7 +365,7 @@ fn fs_main() -> @location(0) vec4<f32> {
 
 The function names `vs_main` (resp. `fs_main`) must have the very same name than what was specified as `entryPoint` in the vertex (resp. fragment) state.
 
-Tokens that start with an `@` are called **attributes** and decorate the object that comes afterward with various information. For instance, `@builtin(vertex_index)` tells that the argument `in_vertex_index`, which could have any name, will be populated by the built-in input vertex attribute that is the vertex index. We use it to set the output value of the shader, which is labelled with `@builtin(position)` as something that must be interpreted by the rasterizer as the vertex' position.
+Tokens that start with an `@` are called **attributes** and decorate the object that comes afterward with various information. For instance, `@builtin(vertex_index)` tells that the argument `in_vertex_index`, which could have any name, will be populated by the built-in input vertex attribute that is the vertex index. We use it to set the output value of the shader, which is labelled with `@builtin(position)` as something that must be interpreted by the rasterizer as the vertex position.
 
 For more flexibility, the shader code should be loaded from a file, but for now we simply store it in a multi-line string literal in our `main.cpp`:
 
@@ -404,7 +404,7 @@ shaderDesc.hints = nullptr;
 
 But this time, we do **not** set `nextInChain` to `nullptr`!
 
-The `nextInChain` pointer is the entry point of WebGPU's **extension mechanism**. It is either null, or pointing to a structure of type `WGPUChainedStruct`. This structure is very simple. First it may recursively have a `next` element (again, either null or pointing to some `WGPUChainedStruct`). Second, it has a *struct type* `sType`, which is an enum telling in which struct the chain element can be cast. Each struct whose definition starts with a field `WGPUChainedStruct chain` as an associated SType.
+The `nextInChain` pointer is the entry point of WebGPU's **extension mechanism**. It is either null, or pointing to a structure of type `WGPUChainedStruct`. This structure is very simple. First it may recursively have a `next` element (again, either null or pointing to some `WGPUChainedStruct`). Second, it has a *struct type* `sType`, which is an enum telling in which struct the chain element can be cast. Each struct whose definition starts with a field `WGPUChainedStruct chain` has an associated SType.
 
 To create a shader module from WGSL code, we use the `ShaderModuleWGSLDescriptor` SType. A SPIR-V shader can similarly be created using the `WGPUShaderModuleSPIRVDescriptor`.
 
