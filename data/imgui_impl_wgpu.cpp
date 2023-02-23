@@ -29,18 +29,17 @@
 #include "imgui.h"
 #include "imgui_impl_wgpu.h"
 #include <limits.h>
-#include <webgpu.h>
+#include <webgpu/webgpu.h>
 
 // These differences of implementation should vanish as soon as WebGPU gets in version 1.0 stable
 #if defined(WEBGPU_BACKEND_WGPU)
 #include <wgpu.h>
-#define WEBGPU_NONSTD_DESTROY(type, var) wgpu ## type ## Drop(res);
+#define WEBGPU_NONSTD_RELEASE(type, var) wgpu ## type ## Drop(var);
 #elif defined(WEBGPU_BACKEND_DAWN)
-// TODO
-#define WEBGPU_NONSTD_DESTROY(type, var) {}
-#else
-#define WEBGPU_NONSTD_DESTROY(type, var) {}
-#endif // WEBGPU_BACKEND_WGPU
+#define WEBGPU_NONSTD_RELEASE(type, var) wgpu ## type ## Release(var);
+#else // assuming WEBGPU_BACKEND_EMSCRIPTEN
+#define WEBGPU_NONSTD_RELEASE(type, var) wgpu ## type ## Release(var);
+#endif
 
 // Dear ImGui prototypes from imgui_internal.h
 extern ImGuiID ImHashData(const void* data_p, size_t data_size, ImU32 seed = 0);
@@ -81,6 +80,7 @@ static unsigned int     g_frameIndex = UINT_MAX;
 struct Uniforms
 {
     float MVP[4][4];
+    float gamma;
 };
 
 //-----------------------------------------------------------------------------
@@ -120,11 +120,14 @@ struct VertexOutput {
 };
 
 @group(0) @binding(1) var s: sampler;
+@group(0) @binding(2) var<uniform> gamma: f32;
 @group(1) @binding(0) var t: texture_2d<f32>;
 
 @fragment
 fn main(in: VertexOutput) -> @location(0) vec4<f32> {
-    return in.color * textureSample(t, s, in.uv);
+    let color = in.color * textureSample(t, s, in.uv);
+	let corrected_color = pow(color.rgb, vec3<f32>(gamma));
+	return vec4<f32>(corrected_color, color.a);
 }
 )";
 
@@ -143,13 +146,13 @@ static void SafeRelease(ImDrawVert*& res)
 static void SafeRelease(WGPUBindGroupLayout& res)
 {
     if (res)
-        WEBGPU_NONSTD_DESTROY(BindGroupLayout, res);
+        WEBGPU_NONSTD_RELEASE(BindGroupLayout, res);
     res = nullptr;
 }
 static void SafeRelease(WGPUBindGroup& res)
 {
     if (res)
-        WEBGPU_NONSTD_DESTROY(BindGroup, res);
+        WEBGPU_NONSTD_RELEASE(BindGroup, res);
     res = nullptr;
 }
 static void SafeRelease(WGPUBuffer& res)
@@ -161,25 +164,25 @@ static void SafeRelease(WGPUBuffer& res)
 static void SafeRelease(WGPURenderPipeline& res)
 {
     if (res)
-        WEBGPU_NONSTD_DESTROY(RenderPipeline, res);
+        WEBGPU_NONSTD_RELEASE(RenderPipeline, res);
     res = nullptr;
 }
 static void SafeRelease(WGPUSampler& res)
 {
     if (res)
-        WEBGPU_NONSTD_DESTROY(Sampler, res);
+        WEBGPU_NONSTD_RELEASE(Sampler, res);
     res = nullptr;
 }
 static void SafeRelease(WGPUShaderModule& res)
 {
     if (res)
-        WEBGPU_NONSTD_DESTROY(ShaderModule, res);
+        WEBGPU_NONSTD_RELEASE(ShaderModule, res);
     res = nullptr;
 }
 static void SafeRelease(WGPUTextureView& res)
 {
     if (res)
-        WEBGPU_NONSTD_DESTROY(TextureView, res);
+        WEBGPU_NONSTD_RELEASE(TextureView, res);
     res = nullptr;
 }
 static void SafeRelease(WGPUTexture& res)
@@ -212,7 +215,11 @@ static WGPUProgrammableStageDescriptor ImGui_ImplWGPU_CreateShaderModule(const c
 {
     WGPUShaderModuleWGSLDescriptor wgsl_desc = {};
     wgsl_desc.chain.sType = WGPUSType_ShaderModuleWGSLDescriptor;
+#if defined(WEBGPU_BACKEND_WGPU)
     wgsl_desc.code = wgsl_source;
+#else
+    wgsl_desc.source = wgsl_source;
+#endif
 
     WGPUShaderModuleDescriptor desc = {};
     desc.nextInChain = reinterpret_cast<WGPUChainedStruct*>(&wgsl_desc);
@@ -250,7 +257,37 @@ static void ImGui_ImplWGPU_SetupRenderState(ImDrawData* draw_data, WGPURenderPas
             { 0.0f,         0.0f,           0.5f,       0.0f },
             { (R+L)/(L-R),  (T+B)/(B-T),    0.5f,       1.0f },
         };
-        wgpuQueueWriteBuffer(g_defaultQueue, g_resources.Uniforms, 0, mvp, sizeof(mvp));
+        wgpuQueueWriteBuffer(g_defaultQueue, g_resources.Uniforms, offsetof(Uniforms, MVP), mvp, sizeof(Uniforms::MVP));
+        float gamma;
+        switch (g_renderTargetFormat) {
+        case WGPUTextureFormat_ASTC10x10UnormSrgb:
+        case WGPUTextureFormat_ASTC10x5UnormSrgb:
+        case WGPUTextureFormat_ASTC10x6UnormSrgb:
+        case WGPUTextureFormat_ASTC10x8UnormSrgb:
+        case WGPUTextureFormat_ASTC12x10UnormSrgb:
+        case WGPUTextureFormat_ASTC12x12UnormSrgb:
+        case WGPUTextureFormat_ASTC4x4UnormSrgb:
+        case WGPUTextureFormat_ASTC5x5UnormSrgb:
+        case WGPUTextureFormat_ASTC6x5UnormSrgb:
+        case WGPUTextureFormat_ASTC6x6UnormSrgb:
+        case WGPUTextureFormat_ASTC8x5UnormSrgb:
+        case WGPUTextureFormat_ASTC8x6UnormSrgb:
+        case WGPUTextureFormat_ASTC8x8UnormSrgb:
+        case WGPUTextureFormat_BC1RGBAUnormSrgb:
+        case WGPUTextureFormat_BC2RGBAUnormSrgb:
+        case WGPUTextureFormat_BC3RGBAUnormSrgb:
+        case WGPUTextureFormat_BC7RGBAUnormSrgb:
+        case WGPUTextureFormat_BGRA8UnormSrgb:
+        case WGPUTextureFormat_ETC2RGB8A1UnormSrgb:
+        case WGPUTextureFormat_ETC2RGB8UnormSrgb:
+        case WGPUTextureFormat_ETC2RGBA8UnormSrgb:
+        case WGPUTextureFormat_RGBA8UnormSrgb:
+            gamma = 2.2f;
+            break;
+        default:
+            gamma = 1.0f;
+        }
+        wgpuQueueWriteBuffer(g_defaultQueue, g_resources.Uniforms, offsetof(Uniforms, gamma), &gamma, sizeof(Uniforms::gamma));
     }
 
     // Setup viewport
@@ -309,6 +346,7 @@ void ImGui_ImplWGPU_RenderDrawData(ImDrawData* draw_data, WGPURenderPassEncoder 
         if (fr->IndexBuffer)
         {
             wgpuBufferDestroy(fr->IndexBuffer);
+            WEBGPU_NONSTD_RELEASE(Buffer, fr->IndexBuffer);
         }
         SafeRelease(fr->IndexBufferHost);
         fr->IndexBufferSize = draw_data->TotalIdxCount + 10000;
@@ -455,7 +493,11 @@ static void ImGui_ImplWGPU_CreateFontsTexture()
         WGPUSamplerDescriptor sampler_desc = {};
         sampler_desc.minFilter = WGPUFilterMode_Linear;
         sampler_desc.magFilter = WGPUFilterMode_Linear;
+#if defined(WEBGPU_BACKEND_WGPU)
         sampler_desc.mipmapFilter = WGPUMipmapFilterMode_Linear;
+#else
+        sampler_desc.mipmapFilter = WGPUFilterMode_Linear;
+#endif
         sampler_desc.addressModeU = WGPUAddressMode_Repeat;
         sampler_desc.addressModeV = WGPUAddressMode_Repeat;
         sampler_desc.addressModeW = WGPUAddressMode_Repeat;
@@ -499,13 +541,16 @@ bool ImGui_ImplWGPU_CreateDeviceObjects()
     graphics_pipeline_desc.multisample.alphaToCoverageEnabled = false;
 
     // Bind group layouts
-    WGPUBindGroupLayoutEntry common_bg_layout_entries[2] = {};
+    WGPUBindGroupLayoutEntry common_bg_layout_entries[3] = {};
     common_bg_layout_entries[0].binding = 0;
     common_bg_layout_entries[0].visibility = WGPUShaderStage_Vertex;
     common_bg_layout_entries[0].buffer.type = WGPUBufferBindingType_Uniform;
     common_bg_layout_entries[1].binding = 1;
     common_bg_layout_entries[1].visibility = WGPUShaderStage_Fragment;
     common_bg_layout_entries[1].sampler.type = WGPUSamplerBindingType_Filtering;
+    common_bg_layout_entries[2].binding = 2;
+    common_bg_layout_entries[2].visibility = WGPUShaderStage_Fragment;
+    common_bg_layout_entries[2].buffer.type = WGPUBufferBindingType_Uniform;
 
     WGPUBindGroupLayoutEntry image_bg_layout_entries[1] = {};
     image_bg_layout_entries[0].binding = 0;
@@ -514,7 +559,7 @@ bool ImGui_ImplWGPU_CreateDeviceObjects()
     image_bg_layout_entries[0].texture.viewDimension = WGPUTextureViewDimension_2D;
 
     WGPUBindGroupLayoutDescriptor common_bg_layout_desc = {};
-    common_bg_layout_desc.entryCount = 2;
+    common_bg_layout_desc.entryCount = 3;
     common_bg_layout_desc.entries = common_bg_layout_entries;
 
     WGPUBindGroupLayoutDescriptor image_bg_layout_desc = {};
@@ -596,8 +641,9 @@ bool ImGui_ImplWGPU_CreateDeviceObjects()
     // Create resource bind group
     WGPUBindGroupEntry common_bg_entries[] =
     {
-        { nullptr, 0, g_resources.Uniforms, 0, sizeof(Uniforms), 0, 0 },
+        { nullptr, 0, g_resources.Uniforms, offsetof(Uniforms, MVP), sizeof(Uniforms::MVP), 0, 0 },
         { nullptr, 1, 0, 0, 0, g_resources.Sampler, 0 },
+        { nullptr, 2, g_resources.Uniforms, offsetof(Uniforms, gamma), sizeof(Uniforms::gamma), 0, 0 },
     };
 
     WGPUBindGroupDescriptor common_bg_descriptor = {};
@@ -677,6 +723,9 @@ void ImGui_ImplWGPU_Shutdown()
     ImGui_ImplWGPU_InvalidateDeviceObjects();
     delete[] g_pFrameResources;
     g_pFrameResources = nullptr;
+#if !defined(WEBGPU_BACKEND_WGPU)
+    WEBGPU_NONSTD_RELEASE(Queue, g_defaultQueue);
+#endif
     g_wgpuDevice = nullptr;
     g_numFramesInFlight = 0;
     g_frameIndex = UINT_MAX;
