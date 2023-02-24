@@ -155,6 +155,9 @@ PipelineLayoutDescriptor pipelineLayoutDesc;
 pipelineLayoutDesc.bindGroupLayoutCount = 1;
 pipelineLayoutDesc.bindGroupLayouts = (WGPUBindGroupLayout*)&bindGroupLayout;
 PipelineLayout pipelineLayout = m_device.createPipelineLayout(pipelineLayoutDesc);
+
+// [...]
+computePipelineDesc.layout = pipelineLayout;
 ```
 
 ```C++
@@ -182,7 +185,7 @@ BindGroup bindGroup = m_device.createBindGroup(bindGroupDesc);
 // Use compute pass
 computePass.setPipeline(computePipeline);
 computePass.setBindGroup(0, bindGroup, {});
-computePass.dispatchWorkgroups(1, 0, 0);
+computePass.dispatchWorkgroups(1, 1, 1);
 ```
 
 To get the result back, we need to add an extra buffer. This is because the same buffer cannot be used both as a storage and for mapping.
@@ -204,7 +207,13 @@ encoder.copyBufferToBuffer(outputBuffer, 0, mapBuffer, 0, bufferDesc.size);
 bool done = false;
 auto handle = outputBuffer.mapAsync(MapMode::Read, 0, bufferDesc.size, [&](BufferMapAsyncStatus status) {
 	if (status == BufferMapAsyncStatus::Success) {
-		float* output = (float*)outputBuffer.getMappedRange(0, bufferDesc.size);
+		// Theory
+		//const float* output = (const float*)outputBuffer.getConstMappedRange(0, bufferDesc.size);
+		// wgpu-native
+		const float* output = (const float*)outputBuffer.getMappedRange(0, bufferDesc.size);
+		// Dawn
+		const float* output = (const float*)wgpuBufferGetConstMappedRange(mapBuffer, 0, bufferDesc.size);
+
 		for (int i = 0; i < input.size(); ++i) {
 			std::cout << "input " << input[i] << " became " << output[i] << std::endl;
 		}
@@ -220,7 +229,14 @@ while (!done) {
 ```
 
 ```rust
+@group(0) @binding(0) var<storage,read> inputBuffer: array<f32,32>;
+@group(0) @binding(1) var<storage,read_write> outputBuffer: array<f32,32>;
 
+@compute @workgroup_size(32)
+fn computeStuff(@builtin(global_invocation_id) id: vec3<u32>) {
+	// Compute stuff
+	outputBuffer[id.x] = 2.0 * inputBuffer[id.x] + 1.0;
+}
 ```
 
 When to use compute shaders?
