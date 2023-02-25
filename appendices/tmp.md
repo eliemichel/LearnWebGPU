@@ -54,17 +54,30 @@ Streaming
 Literate
 --------
 
-```{lit}
+This is a test for the literate programming sphinx extension developped for this guide.
+
+```{lit} C++, Base skeleton
+#include <iostream>
+int main(int, char**) {
+    {{Main content}}
+}
+```
+
+```{lit} Main content
+std::cout << "Hello world" << std::endl;
+```
+
+```{lit} test
 foo
 
 blup
 ```
 
-```{lit}
+```{lit} test2
 bar
 ```
 
-```{tangle}
+```{tangle} C++, Base skeleton
 ```
 
 Known Limitations

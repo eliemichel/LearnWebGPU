@@ -138,3 +138,8 @@ favicons = [
         "type": "image/png",
     },
 ]
+
+# -- Options for sphinx_literate -----------------------------------------
+
+lit_begin_ref = "{{"
+lit_end_ref = "}}"
