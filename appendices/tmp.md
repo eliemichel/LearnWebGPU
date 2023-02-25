@@ -56,28 +56,52 @@ Literate
 
 This is a test for the literate programming sphinx extension developped for this guide.
 
-```{lit} C++, Base skeleton
+```{lit} C++, file: src/main.cpp
 #include <iostream>
+{{Includes}}
+
 int main(int, char**) {
     {{Main content}}
 }
 ```
 
+Before anything, let's talk about the return value:
+
+```{lit} Main return
+return EXIT_SUCCESS;
+```
+
+Note that this requires to include the `cstdlib` header:
+
+```{lit} Includes
+#include <cstdlib>
+```
+
+Then we can focus on the core content:
+
 ```{lit} Main content
 std::cout << "Hello world" << std::endl;
+{{Main return}}
 ```
 
-```{lit} test
-foo
-
-blup
+```{lit} CMake, file: CMakeLists.txt
+project(Example)
+add_executable(
+    App
+    {{Source files}}
+)
 ```
 
-```{lit} test2
-bar
+```{lit} Source files
+src/main.cpp
 ```
 
-```{tangle} C++, Base skeleton
+### Tangled result:
+
+```{tangle} file: src/main.cpp
+```
+
+```{tangle} file: CMakeLists.txt
 ```
 
 Known Limitations
