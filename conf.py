@@ -98,6 +98,7 @@ html_static_path = ['images', 'data', 'theme', 'video']
 
 html_css_files = [
     'extra.css',
+    'sphinx_literate.css',
 ]
 
 # Syntax highlighting of code blocks

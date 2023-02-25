@@ -58,6 +58,7 @@ from typing import Any
 from copy import deepcopy
 import re
 import random
+import html
 
 #############################################################
 # Codeblock registry
@@ -179,6 +180,16 @@ class LiterateHighlighter:
         return highlighted
 
 class LiterateNode(nodes.General, nodes.Element):
+    def __init__(self, literal_node, lit, *args):
+        """
+        We wrap a literal node and insert links to references code blocks
+        """
+        self._literal_node = literal_node
+        self.hashcode_to_blockname = {}
+        self.hashcode_to_lit = {}
+        self.lit = lit
+        super().__init__(*args)
+
     @classmethod
     def build_translation_handlers(cls, app):
         """
@@ -240,9 +251,26 @@ class LiterateNode(nodes.General, nodes.Element):
             # Call inherited visitor
             try:
                 inherited_html_visit(self, node._literal_node)
-            finally:
-                # Restore highlighter
-                self.highlighter = original_highlighter
+                skip = False
+            except nodes.SkipNode:
+                skip = True
+            
+            # Restore highlighter
+            self.highlighter = original_highlighter
+
+            # Footer
+            self.body.append(
+                '<div class="lit-block-footer">' +
+                html.escape(app.config.lit_begin_ref) +
+                ' <span class="lit-name">' +
+                html.escape(node.lit.name) +
+                '</span> ' +
+                html.escape(app.config.lit_end_ref) +
+                '</div>'
+            )
+
+            if skip:
+                raise nodes.SkipNode
 
         def depart_html(self, node):
             inherited_html_depart(self, node._literal_node)
@@ -252,15 +280,6 @@ class LiterateNode(nodes.General, nodes.Element):
             depart_html,
         )
         return literal_block_handlers
-
-    def __init__(self, literal_node, *args):
-        """
-        We wrap a literal node and insert links to references code blocks
-        """
-        self._literal_node = literal_node
-        self.hashcode_to_blockname = {}
-        self.hashcode_to_lit = {}
-        super().__init__(*args)
 
 #############################################################
 # Tangle
@@ -352,31 +371,49 @@ class LiterateDirective(SphinxCodeBlock, DirectiveMixin):
         # Call parent for generating a regular code block
         self.content = StringList(self.parsed_source.split('\n'))
         self.arguments = [self.arg_lexer] if self.arg_lexer is not None else []
-        raw_literal_node = super().run()[0]
 
-        literate_node = LiterateNode(raw_literal_node)
-        literate_node.hashcode_to_blockname = self.hashcode_to_blockname
+        raw_block_node = super().run()[0]
 
-        print(targetnode)
-        return [targetnode, literate_node]
+        def postprocess_literal_node(raw_literal_node):
+            literate_node = LiterateNode(raw_literal_node, self.lit)
+            literate_node.hashcode_to_blockname = self.hashcode_to_blockname
+            return literate_node
+
+        if isinstance(raw_block_node, nodes.literal_block):
+            block_node = nodes.container(classes=['literal-block-wrapper'])
+            block_node += postprocess_literal_node(raw_block_node)
+        else:
+            new_children = []
+            for node in raw_block_node:
+                if isinstance(node, nodes.literal_block):
+                    node = postprocess_literal_node(node)
+                new_children.append(node)
+            block_node = raw_block_node
+            block_node.children = new_children
+
+        block_node['classes'].append("lit-block-wrapper")
+
+        return [targetnode, block_node]
 
     def register_lit(self, targetnode):
-        lit_codeblocks = CodeblockRegistry.from_env(self.env)
-
-        lit_codeblocks.add_codeblock(Codeblock(
+        self.lit = Codeblock(
             name=self.arg_name,
             docname=self.env.docname,
             lineno=self.lineno,
             content=self.content,
             target=targetnode,
             lexer=self.arg_lexer,
-        ))
+        )
+
+        lit_codeblocks = CodeblockRegistry.from_env(self.env)
+        lit_codeblocks.add_codeblock(self.lit)
 
     def parse_content(self):
         """
+        This reads the raw source code and extracts {{references}} to other blocks.
         Populate self.parsed_source and self.hashcode_to_blockname
         """
-        rawsource = f"// {self.arg_name}:\n" + '\n'.join(self.content)
+        rawsource = '\n'.join(self.content)
 
         # Pre-process: We replace all code refs with a random hash, not to
         # disturb the syntax highlighter.
@@ -474,8 +511,8 @@ def process_literate_nodes(app, doctree, fromdocname):
         tangle_node.replace_self([para, code_block])
 
 def setup(app):
-    app.add_config_value("lit_begin_ref", "<<", 'html', [str])
-    app.add_config_value("lit_end_ref", ">>", 'html', [str])
+    app.add_config_value("lit_begin_ref", "{{", 'html', [str])
+    app.add_config_value("lit_end_ref", "}}", 'html', [str])
 
     app.add_node(TangleNode)
     app.add_node(LiterateNode, **LiterateNode.build_translation_handlers(app))

@@ -67,7 +67,9 @@ int main(int, char**) {
 
 Before anything, let's talk about the return value:
 
-```{lit} Main return
+```{lit} C++, Main return
+:caption: Main return
+
 return EXIT_SUCCESS;
 ```
 
@@ -84,7 +86,8 @@ std::cout << "Hello world" << std::endl;
 {{Main return}}
 ```
 
-```{lit} CMake, file: CMakeLists.txt
+```{lit} cmake, file: CMakeLists.txt
+:emphasize-lines: 2, 3
 project(Example)
 add_executable(
     App
