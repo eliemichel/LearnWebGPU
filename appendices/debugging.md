@@ -27,11 +27,15 @@ This first example of debugging is inspired by a real bug encountered by a reade
 
 Clearly, something was wrong with the texture:
 
-![Something is wrong with the texture](debug-problem.png)
+```{figure} /images/debug-problem.png
+:align: center
+:class: with-shadow
+Something is wrong with the texture.
+```
 
 First reflex before touching at the code is to **diagnose** a little better the issue with RenderDoc. In the *Launch Application* tab of RenderDoc, browse to your application in *Executable Path*, maybe adapt the *Working Directory* if you load resources from relative paths, and you should see your program start with a **debug overlay** on the top:
 
-![The application launched from RenderDoc](debug-rd.png)
+![The application launched from RenderDoc](images/debug-rd.png)
 
 This overlay confirms that RenderDoc was able to inject itself between your program and the GPU, and as it suggests, press F12 to capture a frame. This records everything that transits to the GPU and creates a **Capture**.
 
@@ -41,7 +45,11 @@ You may then close your program, the capture contains everything it needs to rep
 
 Double click on the capture to open it. The *Event Browser* shows all the events (i.e., commands) that were intercepted by the debugger, and clicking on one goes to the state of the GPU as it was at that time. Locate for instance the main draw call:
 
-![The list of events in RenderDoc](debug-event.png)
+```{figure} /images/debug-event.png
+:align: center
+:class: with-shadow
+The list of events in RenderDoc.
+```
 
 You can use the *Outputs* tab of the *Texture Viewer* to help you navigate through the events.
 
@@ -51,11 +59,19 @@ The captured events do not exactly match the WebGPU commands, because RenderDoc 
 
 Since something seems wrong the input texture, let's go to the *Inputs* tab and look at it (make sure you are on the right draw call in the event browser):
 
-![The input texture inspected in RenderDoc](debug-mipmaps.png)
+```{figure} /images/debug-mipmaps.png
+:align: center
+:class: with-shadow
+The input texture inspected in RenderDoc.
+```
 
 So far so good, so what is wrong? Mmh, let's now inspect the different mip levels:
 
-![The mip levels inspected in RenderDoc](debug-wrong-mipmaps.png)
+```{figure} /images/debug-wrong-mipmaps.png
+:align: center
+:class: with-shadow
+The mip levels inspected in RenderDoc.
+```
 
 Here we are, the mip levels are not built correctly! We now know that we should focus our debugging effort on the part of `loadTexture` that builds and upload the mip levels.
 
@@ -68,10 +84,18 @@ Debugging geometry
 
 Another typical use case of RenderDoc is to inspect the geometry. And more generally, the *Pipeline State* tab gives precious information about draw calls:
 
-![The graphics pipeline tab in RenderDoc](debug-pipeline.png)
+```{figure} /images/debug-pipeline.png
+:align: center
+:class: with-shadow
+The graphics pipeline tab in RenderDoc.
+```
 
 We can see here the whole **render pipeline**, with both its fixed-function and programmable stages. In the *Vertex Input* stage, there is in particular a *Mesh View* that is very insightful:
 
-![The mesh view in RenderDoc](debug-mesh.png)
+```{figure} /images/debug-mesh.png
+:align: center
+:class: with-shadow
+The mesh view in RenderDoc.
+```
 
 You can see, both as a table and in a 3D viewer, the assembled input geometry and the post vertex shader one.
