@@ -35,7 +35,11 @@ Something is wrong with the texture.
 
 First reflex before touching at the code is to **diagnose** a little better the issue with RenderDoc. In the *Launch Application* tab of RenderDoc, browse to your application in *Executable Path*, maybe adapt the *Working Directory* if you load resources from relative paths, and you should see your program start with a **debug overlay** on the top:
 
-![The application launched from RenderDoc](images/debug-rd.png)
+```{figure} /images/debug-rd.png
+:align: center
+:class: with-shadow
+The application launched from RenderDoc.
+```
 
 This overlay confirms that RenderDoc was able to inject itself between your program and the GPU, and as it suggests, press F12 to capture a frame. This records everything that transits to the GPU and creates a **Capture**.
 
@@ -59,7 +63,7 @@ The captured events do not exactly match the WebGPU commands, because RenderDoc 
 
 Since something seems wrong the input texture, let's go to the *Inputs* tab and look at it (make sure you are on the right draw call in the event browser):
 
-```{figure} /images/debug-mipmaps.png
+```{figure} /images/debug-mipmap.png
 :align: center
 :class: with-shadow
 The input texture inspected in RenderDoc.
