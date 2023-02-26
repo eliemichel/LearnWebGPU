@@ -8,6 +8,8 @@ Contents
 :titlesonly:
 
 recap
+specular
+normal-mapping
 pbr
 ibl
 ```

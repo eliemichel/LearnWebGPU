@@ -231,15 +231,9 @@ TODO https://www.scratchapixel.com/lessons/3d-basic-rendering/introduction-to-sh
 
 We are soon going to use more than one texture. Since we are doing a bit of a refactoring in this chapter, let us also make our code flexible to the addition of new textures.
 
-TODO
+We move the texture loading and associated binding in a dedicated method:
 
 ```C++
-// In onInit()
-if (!initTexture(RESOURCE_DIR "/fourareen2K_albedo.jpg")) return false;
-
-// In Application class:
-std::vector<wgpu::Texture> m_textures;
-
 bool Application::initTexture(const std::filesystem::path &path) {
 	// Create a texture
 	TextureView textureView = nullptr;
@@ -266,7 +260,22 @@ bool Application::initTexture(const std::filesystem::path &path) {
 
 	return true;
 }
+```
 
+The init simply becomes, just before `initLighting()`:
+
+```C++
+// In onInit()
+if (!initTexture(RESOURCE_DIR "/fourareen2K_albedo.jpg")) return false;
+```
+
+Note that this also assumes that the `m_texture` attribute is replaced by a vector:
+
+```C++
+// In Application class:
+std::vector<wgpu::Texture> m_textures;
+
+// In Application.cpp
 void Application::onFinish() {
 	for (auto texture : m_textures) {
 		texture.destroy();
@@ -275,9 +284,13 @@ void Application::onFinish() {
 }
 ```
 
+And I swapped the binding of the sampler and the texture, so that textures can be consecutive (not that it is a technical requirements, but it was easier to organize this way).
+
 ```rust
 @group(0) @binding(1) var textureSampler: sampler;
+//                 ^ Was 2
 @group(0) @binding(2) var baseColorTexture: texture_2d<f32>;
+//                 ^ Was 1
 ```
 
 Complement
@@ -336,11 +349,14 @@ m_lightingUniformsChanged = changed;
 Conclusion
 ----------
 
-In this chapter we have connected:
+In this chapter we have:
 
- - Diffuse shading with textures
- - 
- - Create a custom GUI
+ - Connected diffuse shading with textures,
+ - Connected lighting with GUI.
+ - Created a custom GUI.
+ - Refactored a bit the code to make room for more textures.
+
+We can now dive into material models.
 
 ````{tab} With webgpu.hpp
 *Resulting code:* [`step100`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step100)
