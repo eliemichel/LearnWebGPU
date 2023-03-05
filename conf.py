@@ -28,10 +28,10 @@ author = 'Élie Michel'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-	"myst_parser",
+    "myst_parser",
     "sphinxext.opengraph",
     "sphinx_copybutton",
-    "sphinx-favicon",
+    "sphinx_favicon",
     "sphinx_inline_tabs",
     "style",
     "sphinx_literate",
