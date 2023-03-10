@@ -65,7 +65,7 @@ To test the setup, we call the `wgpuCreateInstance` function at the beginning of
 And once again we meet a WebGPU idiom in the `WGPUInstanceDescriptor` structure. Its first field is a pointer called `nextInChain`. This is a generic way for the API to enable custom extensions to be added in the future, or to return multiple entries of data. In a lot of cases, we set it to `nullptr`.
 
 ```C++
-#include <webgpu.h>
+#include <webgpu/webgpu.h>
 
 // [...]
 

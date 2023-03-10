@@ -126,7 +126,7 @@ How do we get the surface? This depends on the OS, and GLFW does not handle this
 
 ### GLFW3 WebGPU Extension
 
-Download and unzip [glfw3webgpu.zip](https://github.com/eliemichel/glfw3webgpu/releases/download/v1.0.0/glfw3webgpu-v1.0.0.zip) in your project's directory. There should now be a directory `glfw3webgpu` sitting next to your `main.cpp`. Like we have done before, we can add this directory and link the target it creates to our App:
+Download and unzip [glfw3webgpu.zip](https://github.com/eliemichel/glfw3webgpu/releases/download/v1.0.1/glfw3webgpu-v1.0.1.zip) in your project's directory. There should now be a directory `glfw3webgpu` sitting next to your `main.cpp`. Like we have done before, we can add this directory and link the target it creates to our App:
 
 ```CMake
 add_subdirectory(glfw3webgpu)

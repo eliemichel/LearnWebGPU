@@ -107,6 +107,32 @@ src/main.cpp
 ```{tangle} file: CMakeLists.txt
 ```
 
+### Test
+
+```C++
+#include <webgpu/webgpu.h>
+
+// [...]
+
+int main (int, char**) {
+    // 1. Create a descriptor
+    WGPUInstanceDescriptor desc = {};
+    desc.nextInChain = nullptr;
+
+    // 2. Create the instance using this descriptor
+    WGPUInstance instance = wgpuCreateInstance(&desc);
+
+    // 3. Check for errors
+    if (!instance) {
+        std::cerr << "Could not initialize WebGPU!" << std::endl;
+        return 1;
+    }
+
+    // 4. Display the object (WGPUInstance is a simple pointer).
+    std::cout << "WGPU instance: " << instance << std::endl;
+}
+```
+
 Known Limitations
 -----------------
 
