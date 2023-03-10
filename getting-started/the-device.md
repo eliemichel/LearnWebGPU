@@ -7,7 +7,7 @@ A WebGPU *device* represents a *context* of use of the API. All the objects that
 
 Why do we have both an *adapter* and then a *device* abstraction? The idea is to limit the "it worked on my machine" issue you could encounter when trying your program on a different machine. The adapter is used to access the capabilities of the customer's hardware, which are used to select the behavior of your application among very different code paths. Once a code path is chosen, a device is created with the available options we need, and only the capabilities selected for this device are then allowed in the rest of the application. This way, it is not possible to inadvertedly rely on capabilities specific to your own machine.
 
-Requesting the device looks a lot like requesting the adapter, se we will use a very similar function:
+Requesting the device looks a lot like requesting the adapter, so we will use a very similar function:
 
 ```C++
 /**
