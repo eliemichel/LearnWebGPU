@@ -133,6 +133,129 @@ int main (int, char**) {
 }
 ```
 
+```C++
+void Application::run() {
+    initDevice();     // Different for native or web target
+
+    loadResources();  // Textures, Buffers, Samplers, Shaders
+
+    initBindings();   // Expose resources to shaders (Texture view)
+
+    initPipelines();  // Prepare configurations of the GPU's pipeline
+
+    submitCommands(); // Main core
+
+    fetchResult();    // Get data back from the GPU
+
+    cleanup();        // Different for wgpu and Dawn!
+}
+```
+
+```C++
+// Native
+void Application::initDevice() {
+    WGPUInstanceDescriptor desc;
+    desc.nextInChain = nullptr;
+    WGPUInstance instance = wgpuCreateInstance(&desc);
+
+    WGPURequestAdapterOptions adapterOpts;
+    adapterOpts.nextInChain = nullptr;
+    // [...]
+    WGPUAdapter adapter = wgpuInstanceRequestAdapterSync(instance, &adapterOpts);
+
+    RequiredLimits requiredLimits = /* important! */;
+
+    WGPUDeviceDescriptor deviceDesc;
+    deviceDesc.nextInChain = nullptr;
+    deviceDesc.requiredLimits = &requiredLimits;
+    // [...]
+    this->device = wgpuAdapterRequestDeviceSync(adapter, &deviceDesc);
+}
+
+// Web
+#include <emscripten/html5_webgpu.h>
+void Application::initDevice() {
+    // Device setup goes in the JavaScript shell
+    // that populates `Module.preinitializedWebGPUDevice`
+    this->device = emscripten_webgpu_get_device();
+}
+```
+
+```C++
+// Native - webgpu.cpp
+
+#include <webgpu/webgpu.hpp>
+using namespace wgpu;
+
+void Application::initDevice() {
+    Instance instance = createInstance(InstanceDescriptor{});
+
+    RequestAdapterOptions adapterOpts;
+    // [...]
+    Adapter adapter = instance.requestAdapterSync(adapterOpts);
+
+    RequiredLimits requiredLimits = /* important! */;
+
+    DeviceDescriptor deviceDesc;
+    deviceDesc.requiredLimits = &requiredLimits;
+    // [...]
+    this->device = adapter.requestDeviceSync(deviceDesc);
+}
+```
+
+```JavaScript
+const adapter = await navigator.gpu.requestAdapter({ /* ... */ });
+const device = await adapter.requestDevice({ requiredLimits: /* important! */ });
+Module.preinitializedWebGPUDevice = device;
+```
+
+```html
+<script>
+    // From emscripten default shell
+    const Module = { /* ... */ };
+
+    // Custom for WebGPU
+    (async () => {
+        if (!navigator.gpu) {
+            console.error("Sorry, WebGPU is not suported by your browser.");
+            return;
+        } else {
+            const adapter = await navigator.gpu.requestAdapter();
+            const device = await adapter.requestDevice();
+            Module.preinitializedWebGPUDevice = device;
+
+            const js = document.getElementById("main-script").content.cloneNode(true);
+            document.body.appendChild(js);
+        }
+    })();
+</script>
+<template id="main-script">
+    {{{ SCRIPT }}}
+</template>
+```
+
+```C++
+WGPUTexture texture = loadTexture("input.png");
+
+WGPUComputePipeline computePipeline = initComputePipeline();
+
+Queue queue = device.getQueue();
+
+CommandEncoderDescriptor commandEncoderDesc = Default;
+CommandEncoder encoder = m_device.createCommandEncoder(commandEncoderDesc);
+
+ComputePassDescriptor computePassDesc = Default;
+ComputePassEncoder computePass = encoder.beginComputePass(computePassDesc);
+
+computePass.setPipeline(computePipeline);
+computePass.setBindGroup(0, bindGroup, 0, nullptr);
+computePass.dispatchWorkgroups(x, y, z);
+
+computePass.end();
+CommandBuffer command = encoder.finish(CommandBufferDescriptor{});
+queue.submit(command);
+```
+
 Known Limitations
 -----------------
 

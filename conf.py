@@ -60,7 +60,7 @@ myst_enable_extensions = [
 html_theme = 'furo'
 
 html_theme_options = {
-    "announcement": "<em>Important</em> This documentation is a work in progress!",
+    "announcement": "<em>Important</em> This documentation is a work in progress! <a href=\"/LearnWebGPU/appendices/feedback-needed.html\">Feedback needed!</a>",
 
     "light_logo": "webgpu-light.svg",
     "dark_logo": "webgpu-dark.svg",
