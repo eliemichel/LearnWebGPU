@@ -19,14 +19,10 @@ I tested both, and settled on the Firefox one for this documentation because its
  - [wgpu-native for Windows](../data/wgpu-native-for-windows.zip)
  - [wgpu-native for MacOS](../data/wgpu-native-for-macos.zip)
  - [wgpu-native for any plateform](../data/wgpu-native-for-any.zip) (a bit heavier as it's a merge of all the above basically)
- - [GitHub repository](https://github.com/eliemichel/WebGPU-binaries)
+ - [GitHub repository](https://github.com/eliemichel/WebGPU-distribution/tree/wgpu)
 
 ```{important}
 **WIP:** Use the GitHub repository link rather than the zip files, I haven't automated their generation yet so they are usually behind the repo.
-```
-
-```{note}
-There is [an experimental branch](https://github.com/eliemichel/WebGPU-binaries/tree/dawn) of the repository for linking against Dawn instead of wgpu-native. It can be used as a drop-in replacement to the content of the `webgpu/` directory.
 ```
 
 Compared to the build provided by [the wgpu-native repository](https://github.com/gfx-rs/wgpu-native), I have added a simple `CMakeLists.txt` to make it as easy to integrate in our project as GLFW:
