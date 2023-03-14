@@ -108,7 +108,7 @@ pygments_dark_style = "monokai"
 
 # -- Options for sphinxext-opengraph -----------------------------------------
 
-ogp_site_url = "https://learnwgpu.com"
+ogp_site_url = "https://eliemichel.github.io/LearnWebGPU"
 ogp_site_name = "Learn WebGPU for C++"
 ogp_image = "images/webgpu-responsive.svg"
 

@@ -256,6 +256,19 @@ CommandBuffer command = encoder.finish(CommandBufferDescriptor{});
 queue.submit(command);
 ```
 
+```C++
+QuerySetDescriptor querySetDesc;
+querySetDesc.count = 1;
+querySetDesc.pipelineStatisticsCount = 0;
+querySetDesc.type = QueryType::Timestamp;
+QuerySet querySet = m_device.createQuerySet(querySetDesc);
+
+ComputePassTimestampWrite timestampWrites;
+timestampWrites.location = ComputePassTimestampLocation::Beginning;
+timestampWrites.queryIndex = 0;
+timestampWrites.querySet = querySet;
+```
+
 Known Limitations
 -----------------
 
