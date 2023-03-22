@@ -1,6 +1,10 @@
 Project setup
 =============
 
+```{lit-setup}
+:tangle-root: Project setup
+```
+
 *Resulting code:* [`step000`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step000)
 
 In our running example, we use [CMake](https://cmake.org/) to organize the compilation of the code. This is a very standard way of handling cross-platform builds, and we follow the idioms of [modern cmake](https://cliutils.gitlab.io/modern-cmake/).
@@ -39,7 +43,7 @@ The most minimal project consists then in a `main.cpp` source file, and a `CMake
 
 Let us start with the classic hello world in `main.cpp`:
 
-```C++
+```{lit} C++, file: main.cpp
 #include <iostream>
 
 int main (int, char**) {
@@ -50,19 +54,21 @@ int main (int, char**) {
 
 In `CMakeLists.txt`, we specify that we want to create a *target* of type *executable*, called "App" (this will also be the name of the executable file), and whose source code is `main.cpp`:
 
-```CMake
+```{lit} CMake, Define app target
 add_executable(App main.cpp)
 ```
 
 CMake also expects at the beginning of `CMakeLists.txt` to know the version of CMake the file is written for (minimum supported...your version) and some information about the project:
 
-```CMake
+```{lit} CMake, file: CMakeLists.txt
 cmake_minimum_required(VERSION 3.0...3.25)
 project(
 	LearnWebGPU # name of the project, which will also be the name of the visual studio solution if you use it
 	VERSION 0.1.0 # any version number
 	LANGUAGES CXX C # programming languages used by the project
 )
+{{Define app target}}
+{{Recommended extras}}
 ```
 
 Building
@@ -102,7 +108,7 @@ Recommended extras
 
 We set up some properties of the target `App` by calling somewhere after `add_executable` the `set_target_properties` command.
 
-```CMake
+```{lit} CMake, Recommended extras
 set_target_properties(App PROPERTIES
 	CXX_STANDARD 17
 	COMPILE_WARNING_AS_ERROR ON
@@ -113,7 +119,7 @@ The `CXX_STANDARD` property is set to 17 to mean that we require C++17 (this wil
 
 The `COMPILE_WARNING_AS_ERROR` is turned on as a good practice, to make sure no warning is left ignored. Warnings are actually important, especially when learning a new language/library. To make sure we even have as many warnings as possible, we add some compile options:
 
-```CMake
+```{lit} CMake, Recommended extras (append)
 if (MSVC)
 	target_compile_options(App PRIVATE /W4)
 else()
