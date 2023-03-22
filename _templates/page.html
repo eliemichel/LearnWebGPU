@@ -1,0 +1,28 @@
+{% extends "furo/page.html" %}
+
+{% block right_sidebar -%}
+<div class="toc-sticky toc-scroll">
+	<div class="toc-title-container">
+		<span class="toc-title">
+			{{ _("On this page") }}
+		</span>
+	</div>
+	<div class="toc-tree-container">
+		<div class="toc-tree">
+			{{ toc }}
+		</div>
+	</div>
+	{% if lit_show_options %}
+	<div class="toc-title-container">
+		<span class="toc-title">
+			{{ _("Literate options") }}
+		</span>
+	</div>
+	<div class="toc-tree-container">
+		<div class="toc-tree">
+			{% include "literate-options.html" %}
+		</div>
+	</div>
+	{% endif %}
+</div>
+{%- endblock %}

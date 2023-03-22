@@ -31,7 +31,7 @@ $ venv/Scripts/activate
 pip install -r requirements.txt
 ```
 
-2. And finally build the website by running:
+3. And finally build the website by running:
 
 ```
 make html
