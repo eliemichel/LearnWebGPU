@@ -43,12 +43,14 @@ const options = new Options();
 const lightStyleVariables = `
 --color-background-lit-info: #d5eca8;
 --color-foreground-lit-info: rgb(113, 138, 26);
+--color-foreground-hover-lit-comment-ref: #353328;
 `;
 
 const darkStyleVariables = `
 --color-background-lit-info: #3e3d35;
 //--color-foreground-lit-info: rgba(0, 0, 0, 0.39);
 --color-foreground-lit-info: rgb(142, 142, 142);
+--color-foreground-hover-lit-comment-ref: #97906f;
 `;
 
 // Reproduce Furo's light/dark theme mechanism
@@ -108,6 +110,9 @@ const litRefStyle = `
 	color: #75715e;
 	font-style: italic;
 }
+a.comment:hover {
+	color: var(--color-foreground-hover-lit-comment-ref);
+}
 `;
 
 const litBlockInfoStyle = `
@@ -128,6 +133,23 @@ const litBlockInfoStyle = `
 	color: rgba(0, 0, 0, 0.94);
 }
 `;
+
+function buildComment(content, lexer) {
+	// TODO: get comment format from Sphinx lexer automatically?
+	lexer = lexer.toLowerCase();
+	if (["python", "cmake"].includes(lexer)) {
+		return "# " + content;
+	}
+	else if (["c++", "c", "javascript", "js"].includes(lexer)) {
+		return "// " + content;
+	}
+	else if (["css"].includes(lexer)) {
+		return "/* " + content + " */";
+	}
+	else {
+		return content;
+	}
+}
 
 class LitRef extends HTMLSpanElement {
 	constructor() {
@@ -160,10 +182,14 @@ class LitRef extends HTMLSpanElement {
 
 			this.shadowRoot.replaceChildren(this.styleElement, open, link, close);
 		} else {
-			// TODO: comment depends on language... (must be given by sphinx build)
-			const comment = document.createElement("span");
-			comment.textContent = "// [...] " + this.getAttribute("name");
+			const comment = document.createElement("a");
 			comment.setAttribute("class", "comment");
+			comment.setAttribute("href", this.getAttribute("href"));
+			let lexer = null;
+			if (this.hasAttribute("lexer")) {
+				lexer = this.getAttribute("lexer");
+			}
+			comment.textContent = buildComment("[...] " + this.getAttribute("name"), lexer);
 
 			this.shadowRoot.replaceChildren(this.styleElement, comment);
 		}

@@ -95,8 +95,9 @@ class LiterateNode(nodes.General, nodes.Element):
             refnode.append(nodes.Text(lit.name))
             """
             url = lit.link_url(node.lit.source_location.docname, app.builder)
+            lexer = f'"{lit.lexer}"' if lit.lexer is not None else "null";
             return (
-                f'<lit-ref name="{lit.name}" href="{url}">' +
+                f'<lit-ref name="{lit.name}" href="{url}" lexer={lexer}>' +
                     app.config.lit_begin_ref +
                         f'<a href="{url}">{lit.name}</a>' +
                     app.config.lit_end_ref +
