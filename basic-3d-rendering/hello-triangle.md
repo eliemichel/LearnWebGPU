@@ -426,7 +426,7 @@ shaderDesc.nextInChain = &shaderCodeDesc.chain;
 WGPUShaderModuleWGSLDescriptor shaderCodeDesc{};
 // Set the chained struct's header
 shaderCodeDesc.chain.next = nullptr;
-shaderCodeDesc.chain.sType = SType_ShaderModuleWGSLDescriptor;
+shaderCodeDesc.chain.sType = WGPUSType_ShaderModuleWGSLDescriptor;
 // Connect the chain
 shaderDesc.nextInChain = &shaderCodeDesc.chain;
 ```
