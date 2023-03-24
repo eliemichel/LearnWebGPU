@@ -151,7 +151,7 @@ function buildComment(content, lexer) {
 	}
 }
 
-class LitRef extends HTMLSpanElement {
+class LitRef extends HTMLElement {
 	constructor() {
 		super();
 	}
@@ -196,9 +196,9 @@ class LitRef extends HTMLSpanElement {
 	}
 }
 
-customElements.define("lit-ref", LitRef, { extends: "span" });
+customElements.define("lit-ref", LitRef);
 
-class LitBlockInfo extends HTMLDivElement {
+class LitBlockInfo extends HTMLElement {
 	constructor() {
 		super();
 	}
@@ -259,7 +259,7 @@ class LitBlockInfo extends HTMLDivElement {
 	}
 }
 
-customElements.define("lit-block-info", LitBlockInfo, { extends: "div" });
+customElements.define("lit-block-info", LitBlockInfo);
 
 const literateBtnTemplate = `
 <button title="Literate options">
