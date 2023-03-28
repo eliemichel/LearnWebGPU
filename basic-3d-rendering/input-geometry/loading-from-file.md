@@ -91,6 +91,12 @@ bool loadGeometry(const fs::path& path, std::vector<float>& pointData, std::vect
 	std::string line;
 	while (!file.eof()) {
 		getline(file, line);
+		
+		// overcome the `CRLF` problem
+	        if (!line.empty() && line.back() == '\r') {
+	          line.pop_back();
+	        }
+		
 		if (line == "[points]") {
 			currentSection = Section::Points;
 		}
