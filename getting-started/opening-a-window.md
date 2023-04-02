@@ -1,6 +1,11 @@
 Opening a window
 ================
 
+```{lit-setup}
+:tangle-root: Opening a window
+:parent: Project setup
+```
+
 *Resulting code:* [`step001`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step001)
 
 Before being able to render anything on screen, we need to ask the Operating System to hand us some place where to draw things, something commonly known as a **window**.
@@ -18,7 +23,7 @@ We do **not need to install** it, we just need to add the code of GLFW to our pr
 
 To integrate GLFW in your project, we first add its directory to our root `CMakeLists.txt`:
 
-```CMake
+```{lit} CMake, Dependency subdirectories (insert in {{Define app target}} before "add_executable")
 add_subdirectory(glfw)
 ```
 
@@ -28,7 +33,7 @@ The name 'glfw' here designate the directory where GLFW is located, so there sho
 
 Then, we must tell CMake to link our application to this library (after `add_executable(App main.cpp)`):
 
-```CMake
+```{lit} CMake, Link libraries (insert in {{Define app target}} after "add_executable")
 target_link_libraries(App PRIVATE glfw)
 ```
 

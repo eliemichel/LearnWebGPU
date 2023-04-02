@@ -176,7 +176,7 @@ class CodeBlock:
                 yield ll
 
         # If no replace, maybe add source from the parent tangle
-        if start.prev is not None and start.relation_to_prev == 'APPEND':
+        if start.prev is not None and start.relation_to_prev in {'APPEND', 'INSERT'}:
             assert(start.prev.tangle_root != start.tangle_root)
             for l in start.prev.all_content():
                 for ll in maybeInsert(l):
@@ -194,8 +194,8 @@ class CodeBlock:
             for pattern, nodes in node_dict.items():
                 for n in nodes:
                     message = (
-                        f"The block {n.inserted_block.format()} was supposed to be inserted {placement} "
-                        + f"\"{pattern}\" in block {self.format()}, " +
+                        f"The block {n.inserted_block.format()} was supposed to be inserted {placement.lower()} "
+                        + f"\"{pattern}\" in block {self.format()}, "
                         + f"but no occurrence of this text was found."
                     )
                     raise ExtensionError(message, modname="sphinx_literate")
@@ -319,7 +319,11 @@ class CodeBlockRegistry:
 
             lit.relation_to_prev = 'INSERTED'
             lit.prev = modifier
+
+            print(f"YYYYYYYYY lit = {lit.format()}")
+            print("\n".join(self.pretty_dump()))
         else:
+            lit.relation_to_prev = 'NEW'
             self._add_codeblock(lit)
 
     def _add_codeblock(self, lit: CodeBlock) -> None:
@@ -346,7 +350,6 @@ class CodeBlockRegistry:
             )
             raise ExtensionError(message, modname="sphinx_literate")
 
-        lit.relation_to_prev = 'NEW'
         self._blocks[key] = lit
 
     def _override_codeblock(self, lit: CodeBlock, relation_to_prev: str):
@@ -385,15 +388,18 @@ class CodeBlockRegistry:
         defined before the other one (matters when resolving missing blocks).
         The other registry must no longer be used after this.
         """
+        print("#### MERGE")
         # Merge tangle hierarchies
         for h in other._hierarchy.values():
             self.set_tangle_parent(h.root, h.parent, h.source_location)
 
         # Merge blocks
         for lit in other.blocks():
-            if lit.relation_to_prev == 'NEW':
+            if lit.relation_to_prev in {'NEW', 'INSERTED'}:
                 self._add_codeblock(lit)
             else:
+                if lit.relation_to_prev == 'INSERT':
+                    print(f"XXXXXXXXXXXXXX lit = {lit.format()}")
                 self._override_codeblock(lit, lit.relation_to_prev)
 
         # Merge cross-references
@@ -516,11 +522,14 @@ class CodeBlockRegistry:
             action_str = {
                 'APPEND': "append to",
                 'REPLACE': "replace",
+                'INSERT': "insert to",
+                'INSERTED': "???",
             }[missing.relation_to_prev]
             message = (
                 f"Trying to {action_str} a non existing literate code blocks {lit.format()}\n" +
                 f"  - In {lit.source_location.format()}.\n"
             )
+            print("\n".join(self.pretty_dump()))
             raise ExtensionError(message, modname="sphinx_literate")
 
     def pretty_dump(self, options: List[str] = set()):
