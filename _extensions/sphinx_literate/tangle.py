@@ -1,6 +1,7 @@
 from typing import List
 
 from .registry import CodeBlock, CodeBlockRegistry
+from .parse import parse_block_link
 
 from sphinx.errors import ExtensionError
 
@@ -16,19 +17,21 @@ def _tangle_rec(
     tangled_content, # return list
     prefix = "" # for recursive use only
 ) -> None:
+    assert(lit is not None)
     for line in lit.all_content():
         # TODO: use parse.parse_block_content here?
         subprefix = None
-        name = None
+        link = None
         begin_offset = line.find(begin_ref)
         if begin_offset != -1:
             end_offset = line.find(end_ref, begin_offset)
             if end_offset != -1:
                 subprefix = line[:begin_offset]
-                name = line[begin_offset+len(begin_ref):end_offset]
-        if name is not None:
-            sublit = registry.get_rec(name, lit.tangle_root, override_tangle_root=override_tangle_root)
-            if lit is None:
+                link = line[begin_offset+len(begin_ref):end_offset]
+        if link is not None:
+            parsed_link = parse_block_link(link, lit.tangle_root)
+            sublit = registry.get_rec_by_key(parsed_link.key, override_tangle_root=override_tangle_root)
+            if sublit is None:
                 message = (
                     f"Literate code block not found: '{name}' " +
                     f"(in tangle directive from {lit.source_location.format()}, " +

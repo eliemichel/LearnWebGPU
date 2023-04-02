@@ -19,6 +19,15 @@ class TangleNode(nodes.General, nodes.Element):
 
 #############################################################
 
+class RegistryNode(nodes.General, nodes.Element):
+    def __init__(self, source_location, raw_block_node, *args):
+        self.source_location = source_location
+        self.raw_block_node = raw_block_node
+
+        super().__init__(*args)
+
+#############################################################
+
 class LiterateHighlighter:
     """
     A custom code block highlighter that uses an existing highlighter and
@@ -35,8 +44,8 @@ class LiterateHighlighter:
         highlighted = self._original_highlighter.highlight_block(rawsource, lang, **kwargs)
 
         # Post-process: Replace hashes with links
-        for uid, lit in self.node.uid_to_lit.items():
-            ref = self.ref_factory(self.node, lit)
+        for uid, (lit, options) in self.node.uid_to_lit.items():
+            ref = self.ref_factory(self.node, lit, options)
             highlighted = highlighted.replace(uid, ref)
 
         return highlighted
@@ -49,7 +58,7 @@ class LiterateNode(nodes.General, nodes.Element):
         We wrap a literal node and insert links to references code blocks
         """
         self._literal_node = literal_node
-        self.uid_to_block_key = {}
+        self.uid_to_block_link = {}
         self.uid_to_lit = {}
         self.lit = lit
         self.references: List[CodeBlock] = []
@@ -83,7 +92,7 @@ class LiterateNode(nodes.General, nodes.Element):
 
         inherited_html_visit, inherited_html_depart = literal_block_handlers.get('html', (None, None))
 
-        def create_ref(node, lit):
+        def create_ref(node, lit, options):
             """
             # TODO: Could this be a way to make that protable to all builders?
             refnode = nodes.reference('', '')
@@ -95,9 +104,10 @@ class LiterateNode(nodes.General, nodes.Element):
             refnode.append(nodes.Text(lit.name))
             """
             url = lit.link_url(node.lit.source_location.docname, app.builder)
-            lexer = f'"{lit.lexer}"' if lit.lexer is not None else "null";
+            lexer = f'"{lit.lexer}"' if lit.lexer is not None else "null"
+            hidden = "true" if 'HIDDEN' in options else "false"
             return (
-                f'<lit-ref name="{lit.name}" href="{url}" lexer={lexer}>' +
+                f'<lit-ref name="{lit.name}" href="{url}" lexer={lexer} hidden-link="{hidden}">' +
                     app.config.lit_begin_ref +
                         f'<a href="{url}">{lit.name}</a>' +
                     app.config.lit_end_ref +
@@ -128,19 +138,23 @@ class LiterateNode(nodes.General, nodes.Element):
 
             docname = node.lit.source_location.docname
 
-            def make_link_metadata(lit):
+            def make_link_metadata(lit, details = None):
                 return {
                     'name': lit.name,
                     'url': lit.link_url(docname, self.builder),
+                    'details': details,
                 }
 
             metadata = {
                 'name': node.lit.name,
                 'permalink': "#" + node.lit.target['refid'],
+                'hidden': node.lit.hidden,
                 'replaced by': [],
                 'completed in': [],
-                'completing': [],
+                'patched by': [],
                 'replacing': [],
+                'completing': [],
+                'inserted in': [],
                 'referenced in': [],
             }
 
@@ -148,15 +162,28 @@ class LiterateNode(nodes.General, nodes.Element):
                 section = {
                     'REPLACE': 'replacing',
                     'APPEND': 'completing',
+                    'INSERT': None, # not happening
+                    'INSERTED': 'inserted in',
                 }[node.lit.relation_to_prev]
+
+                prev = node.lit.prev
+                details = None
+                if node.lit.relation_to_prev == 'INSERTED':
+                    # prev is the modifier, we need the prev of the modifier
+                    modifier = prev
+                    prev = modifier.prev
+                    loc = modifier.inserted_location
+                    details = f'{loc.placement.lower()} "{loc.pattern}"'
                 metadata[section].append(
-                    make_link_metadata(node.lit.prev)
+                    make_link_metadata(prev, details)
                 )
 
             if node.lit.next is not None:
                 section = {
                     'REPLACE': 'replaced by',
                     'APPEND': 'completed in',
+                    'INSERT': 'patched by',
+                    'INSERTED': None, # not happening
                 }[node.lit.next.relation_to_prev]
                 metadata[section].append(
                     make_link_metadata(node.lit.next)

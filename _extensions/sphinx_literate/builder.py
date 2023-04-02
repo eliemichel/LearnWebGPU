@@ -17,13 +17,12 @@ from .tangle import tangle
 class TangleBuilder(Builder):
     name = 'tangle'
     format = 'tangle'
-    epilog = __('The HTML pages are in %(outdir)s.')
+    epilog = __('The tangled source code is in %(outdir)s.')
 
     def init(self) -> None:
         pass
 
     def get_outdated_docs(self) -> Iterator[str]:
-        print(f"get_outdated_docs()")
         for docname in self.env.found_docs:
             if docname not in self.env.all_docs:
                 yield docname

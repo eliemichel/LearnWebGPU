@@ -17,6 +17,8 @@ class Options {
 			showBlockName: false,
 			showReferenceDetails: false,
 			showReferenceLinks: false,
+			showHiddenLinks: false,
+			showHiddenBlocks: false,
 		}
 
 		for (const [key, value] of Object.entries(this.defaultOptions)) {
@@ -83,6 +85,13 @@ body:not([data-theme="light"]) {
   color: inherit;
   height: 1rem;
   width: 1rem;
+}
+
+.lit-block-hidden {
+	display: none;
+}
+body[data-lit-block-show-hidden="true"] .lit-block-hidden {
+	display: block;	
 }
 `;
 
@@ -151,12 +160,60 @@ function buildComment(content, lexer) {
 	}
 }
 
+/**
+ * Wrap the line that contains the element in a span with the given class name.
+ */
+function createLineWrapper(element, className) {
+	const parentPre = element.closest("pre");
+
+	let parent = element.parentNode;
+	let container = element;
+	while (parent != parentPre) {
+		container = parent;
+		parent = parent.parentNode;
+	}
+
+	const containerIndex = [].indexOf.call(parentPre.childNodes, container);
+
+	const elementsOnSameLine = [container];
+	// Find all next nodes on the same line
+	for (let i = containerIndex + 1 ; i < parentPre.childNodes.length ; ++i) {
+		const node = parentPre.childNodes[i];
+		const nlIdx = node.nodeValue.indexOf("\n");
+		if (node.nodeType === Node.TEXT_NODE && nlIdx != -1) {
+			if (nlIdx === node.nodeValue.length - 1) {
+				elementsOnSameLine.push(node);
+			} else {
+				// Split text node after the first new line
+				const nodeSecondHalf = document.createTextNode(node.nodeValue.substring(nlIdx + 1));
+				node.nodeValue = node.nodeValue.substring(0, nlIdx + 1);
+				elementsOnSameLine.push(node);
+				parentPre.insertBefore(nodeSecondHalf, node.nextSibling);
+			}
+			break;
+		}
+		elementsOnSameLine.push(node);
+	}
+	// Find all previous nodes on the same line
+	for (let i = containerIndex - 1 ; i >= 0 ; --i) {
+		const node = parentPre.childNodes[i];
+		if (node.nodeType === Node.TEXT_NODE && node.nodeValue.indexOf("\n") != -1) {
+			break;
+		}
+		elementsOnSameLine.unshift(node);
+	}
+
+	lineWrapper = document.createElement('span');
+	lineWrapper.setAttribute("class", className);
+	parentPre.insertBefore(lineWrapper, elementsOnSameLine[0]);
+	lineWrapper.append(...elementsOnSameLine);
+	return lineWrapper;
+}
+
 class LitRef extends HTMLElement {
 	constructor() {
 		super();
-	}
 
-	connectedCallback() {
 		const shadow = this.attachShadow({ mode: "open" });
 
 		this.styleElement = document.createElement("style");
@@ -171,6 +228,20 @@ class LitRef extends HTMLElement {
 	}
 
 	rebuildShadow() {
+		const hidden = this.getAttribute("hidden-link") === "true" && !options.get('showHiddenLinks');
+		if (hidden) {
+			let lineWrapper = this.closest(".lit-line-wrapper");
+			if (lineWrapper === null) {
+				lineWrapper = createLineWrapper(this, "lit-line-wrapper");
+			}
+			lineWrapper.setAttribute("style", "display: none;");
+		} else {
+			let lineWrapper = this.closest(".lit-line-wrapper");
+			if (lineWrapper !== null) {
+				lineWrapper.setAttribute("style", "");
+			}
+		}
+
 		if (options.get('showReferenceLinks')) {
 			const open = document.createTextNode(config.begin_ref);
 
@@ -201,9 +272,7 @@ customElements.define("lit-ref", LitRef);
 class LitBlockInfo extends HTMLElement {
 	constructor() {
 		super();
-	}
 
-	connectedCallback() {
 		this.attachShadow({ mode: "open" });
 
 		this.styleElement = document.createElement("style");
@@ -229,12 +298,15 @@ class LitBlockInfo extends HTMLElement {
 		}
 
 		if (options.get('showReferenceDetails')) {
-			const details = ['replaced by', 'completed in', 'completing', 'replacing', 'referenced in'];
+			const details = ['replaced by', 'completed in', 'completing', 'patched by', 'replacing', 'referenced in', 'inserted in'];
 			details.map(section => {
 				if (data[section].length > 0) {
 					wrapper.append(document.createTextNode(" " + section + " "));
 					data[section].map(lit => {
 						wrapper.append(...this.createLitLink(lit.name, lit.url));
+						if (lit.details) {
+							wrapper.append(document.createTextNode(" " + lit.details));
+						}
 					});
 				}
 			});
@@ -295,6 +367,8 @@ function onDOMContentLoaded() {
 		"lit-opts-show-block-name": "showBlockName",
 		"lit-opts-show-reference-details": "showReferenceDetails",
 		"lit-opts-show-reference-links": "showReferenceLinks",
+		"lit-opts-show-hidden-links": "showHiddenLinks",
+		"lit-opts-show-hidden-blocks": "showHiddenBlocks",
 	}
 	for (const [id, opt] of Object.entries(checkboxIdToOption)) {
 		const input = document.getElementById(id);
@@ -304,5 +378,10 @@ function onDOMContentLoaded() {
 			options.set(opt, input.checked);
 		});
 	}
+
+	document.body.setAttribute("data-lit-block-show-hidden", options.get("showHiddenBlocks"));
+	document.addEventListener(options.changedEvent.type, function() {
+		document.body.setAttribute("data-lit-block-show-hidden", options.get("showHiddenBlocks"));
+	});
 }
 document.addEventListener('DOMContentLoaded', onDOMContentLoaded, {once: true});

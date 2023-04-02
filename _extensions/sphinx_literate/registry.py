@@ -1,9 +1,15 @@
 from __future__ import annotations
-from typing import Any, Dict, Set
+from typing import Any, Dict, Set, Tuple
 from dataclasses import dataclass, field
 from collections import defaultdict
 
 from sphinx.errors import ExtensionError
+
+#############################################################
+
+BlockOptions = Set[str|Tuple[str]]
+
+Key = str
 
 #############################################################
 
@@ -23,15 +29,26 @@ class SourceLocation:
         return f"document '{self.docname}', line {self.lineno}"
 
 #############################################################
-# Codeblock
 
-Key = str
+@dataclass
+class InsertLocation:
+    # Either 'BEFORE' or 'AFTER'
+    placement: str
+
+    # Substring used to detect the line before/after which inserting
+    pattern: str
+
+#############################################################
+# Codeblock
 
 @dataclass
 class CodeBlock:
     """
     Data store about a code block parsed from a {lit} directive, to be
     assembled when tangling.
+    TODO This class should be split in 2 parts:
+     1. What directly comes from a given source block
+     2. What relates to CodeBlock being a nodes in the block graph
     """
 
     # Name of the code block (see title parsing)
@@ -58,17 +75,32 @@ class CodeBlock:
     next: CodeBlock | None = None
     prev: CodeBlock | None = None
 
-    # This is either 'NEW, 'APPEND' or 'REPLACE', telling whether this block's
+    # This is either 'NEW*'', 'APPEND' or 'REPLACE', telling whether this block's
     # content must be added to the result of evaluating the previous ones or
     # whether it replaces the previous content.
     # The difference between NEW and REPLACE is that REPLACE affects lit
     # references in the parent tangle but NEW creates an independant chain of
     # blocks (which may or may not have the same name as one block from the
     # parent tangle root, but it does not matter).
+    # The special value 'INSERT' means that instead of considering the content
+    # of this block, we fetch from another one and insert before or after a
+    # given line.
+    # The value 'INSERTED' means a new block that is inserted somewhere, whereas
+    # INSERT is the value used for the modifier node in the chain of the target
+    # of the insertion.
     relation_to_prev: str = 'NEW'
+
+    # When relation_to_prev is 'INSERT', the content of this block is inserted
+    inserted_block: CodeBlock | None = None
+
+    # When relation_to_prev is 'INSERT', the inserted content is placed here
+    inserted_location: InsertLocation | None = None
 
     # The index of the block in the child list
     child_index: int = 0
+
+    # Hide by default in HTML
+    hidden: bool = False
 
     @classmethod
     def build_key(cls, name: str, tangle_root: str | None = None) -> Key:
@@ -111,18 +143,62 @@ class CodeBlock:
                 start = lit
             lit = lit.next
 
+        # Consolidate all INSERT nodes downstream of the last REPLACE
+        # Then create the maybeInsert function to handle them
+        insert_nodes = {
+            'BEFORE': defaultdict(list), # pattern: nodes
+            'AFTER': defaultdict(list), # pattern: nodes
+        }
+        lit = start
+        while lit is not None:
+            if lit.relation_to_prev == 'INSERT':
+                assert(not lit.content)
+                loc = lit.inserted_location
+                insert_nodes[loc.placement][loc.pattern].append(lit)
+            lit = lit.next
+
+        def _maybeInsertAux(l, placement):
+            matched = []
+            for pattern, nodes in insert_nodes[placement].items():
+                if pattern in l:
+                    for n in nodes:
+                        for ll in n.inserted_block.all_content():
+                            yield ll
+                    matched.append(pattern)
+            for pattern in matched:
+                del insert_nodes[placement][pattern]
+
+        def maybeInsert(l):
+            for ll in _maybeInsertAux(l, 'BEFORE'):
+                yield ll
+            yield l
+            for ll in _maybeInsertAux(l, 'AFTER'):
+                yield ll
+
         # If no replace, maybe add source from the parent tangle
         if start.prev is not None and start.relation_to_prev == 'APPEND':
             assert(start.prev.tangle_root != start.tangle_root)
             for l in start.prev.all_content():
-                yield l
+                for ll in maybeInsert(l):
+                    yield ll
 
         # Content of the start and next blocks
         lit = start
         while lit is not None:
             for l in lit.content:
-                yield l
+                for ll in maybeInsert(l):
+                    yield ll
             lit = lit.next
+
+        for placement, node_dict in insert_nodes.items():
+            for pattern, nodes in node_dict.items():
+                for n in nodes:
+                    message = (
+                        f"The block {n.inserted_block.format()} was supposed to be inserted {placement} "
+                        + f"\"{pattern}\" in block {self.format()}, " +
+                        + f"but no occurrence of this text was found."
+                    )
+                    raise ExtensionError(message, modname="sphinx_literate")
 
     def format(self):
         maybe_root = ''
@@ -154,6 +230,18 @@ class TangleHierarchyEntry:
     source_location: SourceLocation
 
 #############################################################
+
+@dataclass
+class MissingCodeBlock:
+    """
+    We allow missing blocks to enable parallel compilation. Missing
+    blocks are resolved when combining multiple registers comming from
+    parallel units.
+    """
+    key: Key
+    relation_to_prev: str
+
+#############################################################
 # Codeblock registry
 
 class CodeBlockRegistry:
@@ -182,7 +270,59 @@ class CodeBlockRegistry:
         # This maps a root to its parent
         self._hierarchy: Dict[str,TangleHierarchyEntry] = {}
 
-    def add_codeblock(self, lit: CodeBlock) -> None:
+        # We allow missing blocks to enable parallel compilation. Missing
+        # blocks are resolved when combining multiple registers comming from
+        # parallel units.
+        self._missing: List[MissingCodeBlock] = []
+
+    def register_codeblock(self, lit: CodeBlock, options: BlockOptions = set()) -> None:
+        """
+        Add a new code block to the repository. The behavior depends on the
+        options:
+         - If 'APPEND' is present in the options, append the content of the
+           code block to the code block that already has the same name.
+           If such a block does not exist, it is added to the list of missing
+           blocks (so check_integrity() will raise an exception).
+         - If 'REPLACE' is in the options, replace a block and all its children
+           with a new one. If such a block does not exist, it is added to the
+           list of missing blocks.
+         - Otherwise, the block is added as NEW and if a block already exists
+           with the same key, an error is raised.
+        @param lit block to register
+        @param options the options
+        """
+        opt_dict = {
+            (x[0] if type(x) == tuple else x): x
+            for x in options
+        }
+        lit.hidden = 'HIDDEN' in options
+        if 'APPEND' in options:
+            self._override_codeblock(lit, 'APPEND')
+        elif 'REPLACE' in options:
+            self._override_codeblock(lit, 'REPLACE')
+        elif 'INSERT' in opt_dict:
+            # In this case we add the block as new, and add a "modifier" block
+            # to the chain of the target of the insertion to notify it that it
+            # must fetch data from this new block chain.
+            self._add_codeblock(lit)
+
+            _, block_name, placement, pattern = opt_dict['INSERT']
+            modifier = CodeBlock(
+                name = block_name,
+                tangle_root = lit.tangle_root,
+                source_location = lit.source_location,
+                target = lit.target,
+            )
+            modifier.inserted_location = InsertLocation(placement, pattern)
+            modifier.inserted_block = lit
+            self._override_codeblock(modifier, 'INSERT')
+
+            lit.relation_to_prev = 'INSERTED'
+            lit.prev = modifier
+        else:
+            self._add_codeblock(lit)
+
+    def _add_codeblock(self, lit: CodeBlock) -> None:
         """
         Add a new code block to the repository. If a block already exists with
         the same key, an error is raised.
@@ -209,42 +349,25 @@ class CodeBlockRegistry:
         lit.relation_to_prev = 'NEW'
         self._blocks[key] = lit
 
-    def append_codeblock(self, lit: CodeBlock) -> None:
-        """
-        Append the content of the code block to the code block that already has
-        the same name. Raises an exception if such a block does not exist.
-        @param lit block to append
-        """
-        self._append_or_replace_codeblock(lit, 'APPEND')
-
-    def replace_codeblock(self, lit: CodeBlock) -> None:
-        """
-        Replace a block and all this children with a new one. Raises an
-        exception if such a block does not exist.
-        @param lit block to append
-        """
-        self._append_or_replace_codeblock(lit, 'REPLACE')
-
-    def _append_or_replace_codeblock(self, lit: CodeBlock, relation_to_prev: str):
+    def _override_codeblock(self, lit: CodeBlock, relation_to_prev: str):
         """
         Shared behavior between append_codeblock() and replace_codeblock()
+        @param args extra arguments precising the relation to previous block
         """
+        lit.relation_to_prev = relation_to_prev
+
         existing = self.get_rec(lit.name, lit.tangle_root)
 
         if existing is None:
-            action_str = {
-                'APPEND': "append to",
-                'REPLACE': "replace",
-            }[relation_to_prev]
-            message = (
-                f"Trying to {action_str} a non existing literate code blocks {lit.format()}\n" +
-                f"  - In {lit.source_location.format()}.\n"
+            self._missing.append(
+                MissingCodeBlock(lit.key, lit.relation_to_prev)
             )
-            raise ExtensionError(message, modname="sphinx_literate")
-
-        lit.relation_to_prev = relation_to_prev
-        
-        if existing.tangle_root != lit.tangle_root:
+            # Add to the list of block with no parent, even though the
+            # relation_to_prev is not NEW. This will be addressed when
+            # resolving missings.
+            self._blocks[lit.key] = lit
+            lit.prev = None
+        elif existing.tangle_root != lit.tangle_root:
             self._blocks[lit.key] = lit
             lit.prev = existing
         else:
@@ -258,10 +381,22 @@ class CodeBlockRegistry:
 
     def merge(self, other: CodeBlockRegistry) -> None:
         """
-        Merge antoher registry into this one.
+        Merge antoher registry into this one. This one comes from a document
+        defined before the other one (matters when resolving missing blocks).
+        The other registry must no longer be used after this.
         """
+        # Merge tangle hierarchies
+        for h in other._hierarchy.values():
+            self.set_tangle_parent(h.root, h.parent, h.source_location)
+
+        # Merge blocks
         for lit in other.blocks():
-            self.add_codeblock(lit, refs)
+            if lit.relation_to_prev == 'NEW':
+                self._add_codeblock(lit)
+            else:
+                self._override_codeblock(lit, lit.relation_to_prev)
+
+        # Merge cross-references
         for key, refs in other._references.items():
             self._references[key].update(refs)
 
@@ -273,7 +408,7 @@ class CodeBlockRegistry:
             if lit.source_location.docname != docname
         }
 
-    def set_tangle_parent(self, tangle_root: str, parent: str, source_location: SourceLocation) -> None:
+    def set_tangle_parent(self, tangle_root: str, parent: str, source_location: SourceLocation = SourceLocation()) -> None:
         """
         Set the parent for a given tangle root. Fail if a different root has
         already been defined.
@@ -297,6 +432,16 @@ class CodeBlockRegistry:
                 parent = parent,
                 source_location = source_location,
             )
+
+            # Now that 'tangle_root' has a parent, blocks that were missing for
+            # this tangle may be resolved
+            def isStillUnresolved(missing):
+                missing_tangle_root, missing_name = missing.key.split("##")
+                if missing_tangle_root == tangle_root:
+                    if self.get_rec_by_key(missing.key) is not None:
+                        return False
+                return True
+            self._missing = list(filter(isStillUnresolved, self._missing))
 
     def blocks(self) -> CodeBlock:
         return self._blocks.values()
@@ -343,9 +488,9 @@ class CodeBlockRegistry:
     def get_by_key(self, key: Key) -> CodeBlock:
         return self._blocks.get(key)
 
-    def get_rec_by_key(self, key: Key) -> CodeBlock:
+    def get_rec_by_key(self, key: Key, override_tangle_root: str | None = None) -> CodeBlock:
         tangle_root, name = key.split("##")
-        return self.get_rec(name, tangle_root)
+        return self.get_rec(name, tangle_root, override_tangle_root)
 
     def keys(self) -> dict_keys:
         return self._blocks.keys()
@@ -359,3 +504,56 @@ class CodeBlockRegistry:
     def _parent_tangle_root(self, tangle_root: str) -> str | None:
         h = self._hierarchy.get(tangle_root)
         return h.parent if h is not None else None
+
+    def check_integrity(self):
+        """
+        Thi is called when the whole doctree has been seen, it checks that
+        there is no more missing block otherwise throws an exception.
+        """
+        for missing in self._missing:
+            lit = self.get_by_key(missing.key)
+            assert(lit is not None)
+            action_str = {
+                'APPEND': "append to",
+                'REPLACE': "replace",
+            }[missing.relation_to_prev]
+            message = (
+                f"Trying to {action_str} a non existing literate code blocks {lit.format()}\n" +
+                f"  - In {lit.source_location.format()}.\n"
+            )
+            raise ExtensionError(message, modname="sphinx_literate")
+
+    def pretty_dump(self, options: List[str] = set()):
+        """
+        Display debug information about the registry.
+        Used by {lit-registry} directive.
+        """
+        options = set()
+        ret = []
+        ret += ["== Registry dump =="]
+        ret += ["Blocks:"]
+        for lit in self._blocks.values():
+            ret += [
+                f" - {lit.name}"
+                + (f" ({lit.tangle_root})" if lit.tangle_root is not None else "")
+                + f" [{lit.relation_to_prev}]"
+            ]
+            if 'SHOW LOCATION' in options:
+                ret += [f"   | From: " + lit.source_location.format()]
+
+            if lit.prev is not None:
+                ret += ["   | Prev: " + lit.prev.name + (f" ({lit.prev.tangle_root})" if lit.prev.tangle_root is not None else "")]
+
+            next_lit = lit.next
+            while next_lit is not None:
+                ret += [
+                    "   | Next: " + next_lit.name
+                    + (f" ({next_lit.tangle_root})" if next_lit.tangle_root is not None else "")
+                    + f" [{next_lit.relation_to_prev}]"
+                ]
+                next_lit = next_lit.next
+        ret += [""]
+        ret += ["Missing:"]
+        for missing in self._missing:
+            ret += [f" - {missing.key} [{missing.relation_to_prev}]"]
+        return ret
