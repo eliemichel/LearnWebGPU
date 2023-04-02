@@ -5,6 +5,8 @@ This guide is still a Work in Progress. Because it is not finished, to begin wit
 
 Any suggestion? [**Please fill this feedback form!**](https://forms.gle/SUHKuogBRMMnXf7PA)
 
+You may also contact me on Twitter [@exppad](https://twitter.com/exppad) and join the support Discord server: https://discord.gg/2Tar4Kt564
+
 Is it easy to follow?
 ---------------------
 
