@@ -46,6 +46,9 @@ def process_literate_nodes(app: Sphinx, doctree, fromdocname: str):
             for k in registry.references_to_key(literate_node.lit.key)
         ]
 
+        # Fix references broken by serialization
+        literate_node.lit = registry.get_by_uid(literate_node.lit.uid)
+
     for tangle_node in doctree.findall(TangleNode):
 
         tangled_content, lit = tangle(

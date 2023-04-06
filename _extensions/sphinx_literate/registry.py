@@ -2,6 +2,7 @@ from __future__ import annotations
 from typing import Any, Dict, Set, Tuple
 from dataclasses import dataclass, field
 from collections import defaultdict
+import random
 
 from sphinx.errors import ExtensionError
 
@@ -69,6 +70,10 @@ class CodeBlock:
     lexer: str | None = None
 
     # NB: Fields bellow are handled by the registry
+
+    # Unique identifier, used for recovery after deserializing (which Sphinx
+    # does when pickling)
+    uid: str | None = None
 
     # A block has children when it gets appended/replaced some content in later
     # blocks (this is a basic doubly linked list)
@@ -238,7 +243,9 @@ class MissingCodeBlock:
     blocks are resolved when combining multiple registers comming from
     parallel units.
     """
+    # The key of the referee, that expected its 'prev' to exist
     key: Key
+    # The relation of the referee to the expected block
     relation_to_prev: str
 
 #############################################################
@@ -275,6 +282,10 @@ class CodeBlockRegistry:
         # parallel units.
         self._missing: List[MissingCodeBlock] = []
 
+    @classmethod
+    def create_uid(cls):
+        return ''.join([random.choice(['123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ']) for _ in range(16)])
+
     def register_codeblock(self, lit: CodeBlock, options: BlockOptions = set()) -> None:
         """
         Add a new code block to the repository. The behavior depends on the
@@ -291,6 +302,9 @@ class CodeBlockRegistry:
         @param lit block to register
         @param options the options
         """
+        assert(lit.uid is None)
+        lit.uid = self.create_uid()
+
         opt_dict = {
             (x[0] if type(x) == tuple else x): x
             for x in options
@@ -316,15 +330,36 @@ class CodeBlockRegistry:
             modifier.inserted_location = InsertLocation(placement, pattern)
             modifier.inserted_block = lit
             self._override_codeblock(modifier, 'INSERT')
+            assert(modifier.prev is not None or self._missing[-1].key == modifier.key)
 
             lit.relation_to_prev = 'INSERTED'
             lit.prev = modifier
-
-            print(f"YYYYYYYYY lit = {lit.format()}")
-            print("\n".join(self.pretty_dump()))
         else:
             lit.relation_to_prev = 'NEW'
             self._add_codeblock(lit)
+
+        self._fix_missing_referess(lit)
+
+    def _fix_missing_referess(self, lit):
+        """
+        Notify all children tangles that a new block `lit` is defined and thus
+        may no longer be missing.
+        Also set child_lit.prev
+        FIXME: This is inefficient, maybe we should manage missings
+        differently (e.g., by not storing them and only testing once the full
+        register is created.)
+        """
+        for child_tangle in self._all_children_tangle_roots(lit.tangle_root):
+            new_missing = []
+            for missing in self._missing:
+                if missing.key == CodeBlock.build_key(lit.name, child_tangle):
+                    child_lit = self.get_by_key(missing.key)
+                    assert(child_lit.prev is None)
+                    assert(child_lit.relation_to_prev not in {'NEW', 'INSERTED'})
+                    child_lit.prev = lit
+                else:
+                    new_missing.append(missing)
+            self._missing = new_missing
 
     def _add_codeblock(self, lit: CodeBlock) -> None:
         """
@@ -360,7 +395,7 @@ class CodeBlockRegistry:
         lit.relation_to_prev = relation_to_prev
 
         existing = self.get_rec(lit.name, lit.tangle_root)
-
+        
         if existing is None:
             self._missing.append(
                 MissingCodeBlock(lit.key, lit.relation_to_prev)
@@ -388,7 +423,6 @@ class CodeBlockRegistry:
         defined before the other one (matters when resolving missing blocks).
         The other registry must no longer be used after this.
         """
-        print("#### MERGE")
         # Merge tangle hierarchies
         for h in other._hierarchy.values():
             self.set_tangle_parent(h.root, h.parent, h.source_location)
@@ -398,9 +432,9 @@ class CodeBlockRegistry:
             if lit.relation_to_prev in {'NEW', 'INSERTED'}:
                 self._add_codeblock(lit)
             else:
-                if lit.relation_to_prev == 'INSERT':
-                    print(f"XXXXXXXXXXXXXX lit = {lit.format()}")
                 self._override_codeblock(lit, lit.relation_to_prev)
+            self._fix_missing_referess(lit)
+            self.check_integrity(allow_missing=True)
 
         # Merge cross-references
         for key, refs in other._references.items():
@@ -444,7 +478,13 @@ class CodeBlockRegistry:
             def isStillUnresolved(missing):
                 missing_tangle_root, missing_name = missing.key.split("##")
                 if missing_tangle_root == tangle_root:
-                    if self.get_rec_by_key(missing.key) is not None:
+                    child_lit = self.get_by_key(missing.key)
+                    if child_lit is not None:
+                        assert(child_lit.prev is None)
+                        assert(child_lit.relation_to_prev not in {'NEW', 'INSERTED'})
+                        child_lit.prev = self.get_rec(child_lit.name, parent)
+                        assert(child_lit.prev is not None)
+                        assert(child_lit.prev.tangle_root != child_lit.tangle_root)
                         return False
                 return True
             self._missing = list(filter(isStillUnresolved, self._missing))
@@ -498,6 +538,14 @@ class CodeBlockRegistry:
         tangle_root, name = key.split("##")
         return self.get_rec(name, tangle_root, override_tangle_root)
 
+    def get_by_uid(self, uid: str) -> CodeBlock | None:
+        for b in self._blocks.values():
+            bb = b
+            while bb is not None:
+                if bb.uid == uid:
+                    return bb
+                bb = bb.next
+
     def keys(self) -> dict_keys:
         return self._blocks.keys()
 
@@ -511,11 +559,46 @@ class CodeBlockRegistry:
         h = self._hierarchy.get(tangle_root)
         return h.parent if h is not None else None
 
-    def check_integrity(self):
+    def _children_tangle_roots(self, tangle_root: str) -> List[str] | None:
+        """Return direct children"""
+        return [
+            h.root
+            for h in self._hierarchy.values()
+            if h.parent == tangle_root
+        ]
+
+    def _all_children_tangle_roots(self, tangle_root: str) -> List[str] | None:
+        """Recursively return all children"""
+        children = self._children_tangle_roots(tangle_root)
+        prev_len_children = -1
+        while len(children) != prev_len_children:
+            prev_len_children = len(children)
+            children = sum([
+                self._children_tangle_roots(child)
+                for child in children
+            ], children)
+        return children
+
+    def check_integrity(self, allow_missing=False):
         """
         Thi is called when the whole doctree has been seen, it checks that
         there is no more missing block otherwise throws an exception.
         """
+        missing_by_key = {
+            missing.key: missing
+            for missing in self._missing
+        }
+        for b in self._blocks.values():
+            bb = b
+            while bb is not None:
+                if bb.prev is None and bb.relation_to_prev != 'NEW':
+                    assert(bb.key in missing_by_key)
+                    assert(missing_by_key[bb.key].relation_to_prev == bb.relation_to_prev)
+                bb = bb.next
+
+        if allow_missing:
+            return
+
         for missing in self._missing:
             lit = self.get_by_key(missing.key)
             assert(lit is not None)
@@ -529,7 +612,6 @@ class CodeBlockRegistry:
                 f"Trying to {action_str} a non existing literate code blocks {lit.format()}\n" +
                 f"  - In {lit.source_location.format()}.\n"
             )
-            print("\n".join(self.pretty_dump()))
             raise ExtensionError(message, modname="sphinx_literate")
 
     def pretty_dump(self, options: List[str] = set()):

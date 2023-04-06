@@ -174,6 +174,10 @@ class LiterateNode(nodes.General, nodes.Element):
                     prev = modifier.prev
                     loc = modifier.inserted_location
                     details = f'{loc.placement.lower()} "{loc.pattern}"'
+                    assert(modifier.relation_to_prev == 'INSERT')
+                    if prev is None:
+                        print(f"ERROR: modifier.key = {modifier.key}, lit<{hex(id(node.lit))}>.key = {node.lit.key}")
+                    assert(prev is not None)
                 metadata[section].append(
                     make_link_metadata(prev, details)
                 )
