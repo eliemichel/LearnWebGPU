@@ -12,9 +12,9 @@ on:
 permissions:
   contents: read
 
-# Allow one concurrent deployment
+# Allow one concurrent test
 concurrency:
-  group: "pages"
+  group: "tangle"
   cancel-in-progress: true
 
 env:
@@ -37,7 +37,7 @@ jobs:
       run: make tangle
     - name: List tangle roots
       id: set-tangle-roots
-      run: echo "::set-output name=roots::$(printf '['; find _build/tangle -maxdepth 1 -mindepth 1 -type d -printf '"%P", '; printf ']\n')"
+      run: echo "roots=$(printf '['; find _build/tangle -maxdepth 1 -mindepth 1 -type d -printf '"%P", '; printf ']\n')" >> $GITHUB_OUTPUT
     - name: Upload artifact
       uses: actions/upload-artifact@v3
       with:
