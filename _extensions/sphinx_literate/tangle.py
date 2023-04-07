@@ -34,7 +34,7 @@ def _tangle_rec(
             if sublit is None:
                 message = (
                     f"Literate code block not found: '{name}' " +
-                    f"(in tangle directive from {lit.source_location.format()}, " +
+                    f"(in lit directive from {lit.source_location.format()}, " +
                     f"tangle root {lit.tangle_root})"
                 )
                 raise ExtensionError(message, modname="sphinx_literate")

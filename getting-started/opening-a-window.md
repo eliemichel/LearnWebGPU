@@ -4,6 +4,7 @@ Opening a window
 ```{lit-setup}
 :tangle-root: Opening a window
 :parent: Project setup
+:fetch-files: ../data/glfw.zip
 ```
 
 *Resulting code:* [`step001`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step001)
@@ -42,6 +43,11 @@ This time, the name 'glfw' is the one of the *target* defined in `glfw/CMakeList
 ```
 
 You should now be able to build the application and add `#include <GLFW/glfw3.h>` at the beginning of the main file.
+
+```{lit} C++, Includes (hidden)
+#include <iostream>
+#include <GLFW/glfw3.h>
+```
 
 If you are on a linux system, make sure to install the package `xorg-dev`, which GLFW depends on.
 
@@ -112,8 +118,8 @@ This main loop is where most of the application's logic occurs. We will repeated
 Our first window, using the GLFW library.
 ```
 
-```{lit} C++, file:main.cpp (hidden)
-#include <iostream>
+```{lit} C++, file: main.cpp (hidden)
+{{Includes}}
 
 int main (int, char**) {
     {{Main Content}}

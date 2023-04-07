@@ -4,9 +4,12 @@ import sphinx
 from sphinx.builders import Builder
 from sphinx.locale import __
 from sphinx.util.osutil import ensuredir
+from sphinx.errors import ExtensionError
 
-from os import path
+from os.path import join, dirname, getmtime
 from typing import Any, Iterator, Set, Optional
+from zipfile import ZipFile
+import shutil
 
 from .registry import CodeBlock, CodeBlockRegistry
 from .tangle import tangle
@@ -29,13 +32,13 @@ class TangleBuilder(Builder):
             if docname not in self.env.all_docs:
                 yield docname
                 continue
-            targetname = path.join(self.outdir, docname + ".meta.txt")
+            targetname = join(self.outdir, docname + ".meta.txt")
             try:
-                targetmtime = path.getmtime(targetname)
+                targetmtime = getmtime(targetname)
             except Exception:
                 targetmtime = 0
             try:
-                srcmtime = path.getmtime(self.env.doc2path(docname))
+                srcmtime = getmtime(self.env.doc2path(docname))
                 if srcmtime > targetmtime:
                     yield docname
             except OSError:
@@ -58,9 +61,24 @@ class TangleBuilder(Builder):
         # Tangle only at the end to account for unordered definitions and inheritance
         registry = CodeBlockRegistry.from_env(self.env)
         for tangle_root in registry.all_tangle_roots():
+            self.processed_files = set()
+
+            # Tangle blocks
             for lit in registry.blocks_by_root(tangle_root):
                 if lit.name.startswith("file:"):
                     self.tangle_and_write(lit, tangle_root)
+
+            # Fetch extra code
+            info = registry.get_tangle_info(tangle_root)
+            fetch_files = info.fetch_files if info is not None else []
+            for path in fetch_files:
+                if not path.exists():
+                    message = (
+                        f"Cannot fetch file {path} for tangle root {tangle_root} " +
+                        f"(in lit-setup directive from {info.source_location.format()})"
+                    )
+                    raise ExtensionError(message, modname="sphinx_literate")
+                self.fetch_file(path, tangle_root)
 
     # Internal methods
 
@@ -71,8 +89,18 @@ class TangleBuilder(Builder):
         registry = CodeBlockRegistry.from_env(self.env)
         assert(lit.name.startswith("file:"))
         filename = lit.name[len("file:"):].strip()
+        
+        # Easy mistake guard
+        if filename in self.processed_files:
+            message = (
+                f"There are two different blocks with a name 'file: {filename}' that " +
+                f"only differ from spaces after 'file:', this is likely a mistake."
+            )
+            raise ExtensionError(message, modname="sphinx_literate")
+        self.processed_files.add(filename)
+
         if tangle_root is not None:
-            filename = path.join(tangle_root, filename)
+            filename = join(tangle_root, filename)
 
         tangled_content, root_lit = tangle(
             lit.name,
@@ -82,10 +110,17 @@ class TangleBuilder(Builder):
             lit.source_location.format() + ", "
         )
 
-        outfilename = path.join(self.outdir, filename)
-        ensuredir(path.dirname(outfilename))
+        outfilename = join(self.outdir, filename)
+        ensuredir(dirname(outfilename))
         try:
             with open(outfilename, 'w', encoding='utf-8') as f:
                 f.write('\n'.join(tangled_content))
         except OSError as err:
             logger.warning(__("error writing file %s: %s"), outfilename, err)
+
+    def fetch_file(self, path, tangle_root):
+        if path.name.endswith(".zip"):
+            with ZipFile(path) as zf:
+                zf.extractall(join(self.outdir, tangle_root))
+        else:
+            shutil.copy(path, join(self.outdir, tangle_root))

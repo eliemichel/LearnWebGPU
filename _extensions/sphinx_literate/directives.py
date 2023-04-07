@@ -10,7 +10,7 @@ from sphinx.util.typing import OptionSpec
 from sphinx.directives.code import CodeBlock as SphinxCodeBlock
 from sphinx.application import Sphinx
 
-from .parse import parse_block_content, parse_block_title
+from .parse import parse_block_content, parse_block_title, parse_fetched_files
 from .registry import CodeBlock, CodeBlockRegistry, SourceLocation
 from .nodes import LiterateNode, TangleNode, RegistryNode
 
@@ -30,11 +30,13 @@ class LiterateSetupDirective(SphinxDirective):
         'linenothreshold': directives.positive_int,
         'tangle-root': directives.unchanged,
         'parent': directives.unchanged,
+        'fetch-files': directives.unchanged,
     }
 
     def run(self) -> List[Node]:
         tangle_root = self.options.get('tangle-root')
         tangle_parent = self.options.get('parent')
+        fetch_files = self.options.get('fetch-files')
         force = 'force' in self.options
         reg = CodeBlockRegistry.from_env(self.env)
 
@@ -51,6 +53,7 @@ class LiterateSetupDirective(SphinxDirective):
                     docname = self.env.docname,
                     lineno = self.lineno,
                 ),
+                parse_fetched_files(fetch_files, self.env.docname),
             )
 
         return []

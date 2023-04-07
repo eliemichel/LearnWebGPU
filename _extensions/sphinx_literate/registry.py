@@ -2,6 +2,7 @@ from __future__ import annotations
 from typing import Any, Dict, Set, Tuple
 from dataclasses import dataclass, field
 from collections import defaultdict
+from pathlib import Path
 import random
 
 from sphinx.errors import ExtensionError
@@ -231,8 +232,14 @@ class TangleHierarchyEntry:
     defiend its parent.
     """
     root: str
+
     parent: str
+
+    # Where the parenting relation was defined
     source_location: SourceLocation
+
+    # Files copied to the tangle root
+    fetch_files: List[Path]
 
 #############################################################
 
@@ -425,7 +432,7 @@ class CodeBlockRegistry:
         """
         # Merge tangle hierarchies
         for h in other._hierarchy.values():
-            self.set_tangle_parent(h.root, h.parent, h.source_location)
+            self.set_tangle_parent(h.root, h.parent, h.source_location, h.fetch_files)
 
         # Merge blocks
         for lit in other.blocks():
@@ -448,7 +455,7 @@ class CodeBlockRegistry:
             if lit.source_location.docname != docname
         }
 
-    def set_tangle_parent(self, tangle_root: str, parent: str, source_location: SourceLocation = SourceLocation()) -> None:
+    def set_tangle_parent(self, tangle_root: str, parent: str, source_location: SourceLocation = SourceLocation(), fetch_files: List[Path] = []) -> None:
         """
         Set the parent for a given tangle root. Fail if a different root has
         already been defined.
@@ -471,6 +478,7 @@ class CodeBlockRegistry:
                 root = tangle_root,
                 parent = parent,
                 source_location = source_location,
+                fetch_files = fetch_files,
             )
 
             # Now that 'tangle_root' has a parent, blocks that were missing for
@@ -585,6 +593,9 @@ class CodeBlockRegistry:
             for h in self._hierarchy.values()
         })
         return list(ret)
+
+    def get_tangle_info(self, tangle_root: str) -> TangleHierarchyEntry:
+        return self._hierarchy.get(tangle_root)
 
     def _parent_tangle_root(self, tangle_root: str) -> str | None:
         h = self._hierarchy.get(tangle_root)

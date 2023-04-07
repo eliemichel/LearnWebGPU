@@ -1,5 +1,6 @@
 from typing import List, Dict, Set, Tuple
 from dataclasses import dataclass, field
+from pathlib import Path
 import random
 import re
 
@@ -249,5 +250,13 @@ def parse_block_content(content: List[str], tangle_root: str | None, config) -> 
     parsed.content = parsed_source.split('\n')
 
     return parsed
+
+#############################################################
+
+def parse_fetched_files(raw_file_list: str, docpath: str) -> List[Path]:
+    return [
+        Path(docpath).parent.joinpath(f).resolve()
+        for f in raw_file_list.split(",")
+    ]
 
 #############################################################
