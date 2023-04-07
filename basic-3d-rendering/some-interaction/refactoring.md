@@ -9,16 +9,16 @@ Refactoring
 *Resulting code:* [`step080-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step080-vanilla)
 ````
 
-The goal of this chapter is to add some interactivity to our viewer. From a WebGPU standpoint, we know everything we need. For instance enabling the user to turn around the object using the mouse is only about **updating the view matrix**.
+The goal of this chapter is to add some interactivity to our viewer. From a WebGPU standpoint, we know everything we need for this. For instance enabling the user to turn around the object using the mouse is only about **updating the view matrix**.
 
 However, it is also the occasion to **organize a bit our code base**, which we have not been discussing much until now. It was not the primary topic, and the size of the code was still manageable as mostly a big main function, but this never holds for bigger applications.
 
 An application structure
 ------------------------
 
-I am going to avoid over-engineering things, since each use case is different so you will customize the details for your needs. But it will always start with a class (or struct) that holds all the global state of the application.
+I am going to avoid over-engineering things since each use case is different, so you will customize the details for your needs. Nevertheless it always starts with a class (or struct) that holds all the global state of the application.
 
-We implement this in two new files `Application.h` and `Application.cpp`
+We implement this in two new files `Application.h` and `Application.cpp`, where the behavior of the application is distributed across **event handlers**. To make this logic clear, handles start with "on", like `onFrame`.
 
 ```C++
 // In Application.h
@@ -113,7 +113,9 @@ bool Application::isRunning() {
 
 ### Resource manager
 
-Our three procedure for loading external resources can be moved in a `ResourceManager.h` file and namespace or class with only static members.
+Our three procedure for loading external resources can be moved into a separate namespace or class with only static members.
+
+We create a `ResourceManager.h` and `ResourceManager.cpp` files, add them to the CMakeLists and move resource loaders there.
 
 ```C++
 // In ResourceManager.h
@@ -134,6 +136,7 @@ public:
 		vec2 uv;
 	};
 
+	// (Just an alias to make notations lighter)
 	using path = std::filesystem::path;
 
 	// Load a shader from a WGSL file into a new shader module
