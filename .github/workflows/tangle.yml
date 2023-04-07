@@ -24,26 +24,32 @@ jobs:
   # Build job
   tangle:
     runs-on: ubuntu-latest
+    outputs:
+      tangle-roots: ${{ steps.set-tangle-roots.outputs.roots }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Setup Pages
-        uses: actions/configure-pages@v2
-      - name: Setup Python
-        run: pip install -r requirements.txt
-      - name: Build with Sphinx
-        run: make tangle
-      - name: Upload artifact
-        uses: actions/upload-artifact@v2
-        with:
-          name: tangled-code
-          path: _build/tangle
+    - name: Checkout
+      uses: actions/checkout@v3
+    - name: Setup Pages
+      uses: actions/configure-pages@v2
+    - name: Setup Python
+      run: pip install -r requirements.txt
+    - name: Build with Sphinx
+      run: make tangle
+    - name: List tangle roots
+      id: set-tangle-roots
+      run: echo "::set-output name=roots::$(printf '['; find -maxdepth 1 -mindepth 1 -type d -printf '"%P", '; printf ']\n')"
+    - name: Upload artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: tangled-code
+        path: _build/tangle
 
   # Test job
   test:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
+        tangle-root: ${{ fromJson(needs.tangle.outputs.tangle-roots) }}
         include:
         - os: ubuntu-latest
           install-deps: |
@@ -58,12 +64,12 @@ jobs:
       run: ${{ matrix.install-deps }}
 
     - name: Download artifact
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v3
       with:
         name: tangled-code
 
     - name: Configure CMake
-      run: cmake -S "000 - Project setup" -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+      run: cmake -S "${{ matrix.tangle-root }}" -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
 
     - name: Build
       run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
