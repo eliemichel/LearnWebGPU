@@ -1,4 +1,4 @@
-Lighting and Material (WIP)
+Lighting and Material
 =====================
 
 Contents

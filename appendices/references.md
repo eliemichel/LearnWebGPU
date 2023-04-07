@@ -10,3 +10,4 @@ References
  - [Efficiently rendering glTF models - A WebGPU Case Study](https://toji.github.io/webgpu-gltf-case-study)
  - [Awesome WebGPU: A curated list of WebGPU ressources, libraries and tools](https://github.com/mikbry/awesome-webgpu)
  - [WebGPU is Not Just About the Web](../data/2023-03_WebGPU%20is%20not%20just%20about%20the%20Web.pdf), an introduction to this guide that was given at *QCon London 2023*.
+ - [A detailed introduction to Computer Graphics](https://www.scratchapixel.com)
