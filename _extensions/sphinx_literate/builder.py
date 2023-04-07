@@ -69,13 +69,12 @@ class TangleBuilder(Builder):
                     self.tangle_and_write(lit, tangle_root)
 
             # Fetch extra code
-            info = registry.get_tangle_info(tangle_root)
-            fetch_files = info.fetch_files if info is not None else []
-            for path in fetch_files:
+            fetch_files = registry.all_tangle_fetch_files(tangle_root)
+            for path, source_location in fetch_files:
                 if not path.exists():
                     message = (
                         f"Cannot fetch file {path} for tangle root {tangle_root} " +
-                        f"(in lit-setup directive from {info.source_location.format()})"
+                        f"(in lit-setup directive from {source_location.format()})"
                     )
                     raise ExtensionError(message, modname="sphinx_literate")
                 self.fetch_file(path, tangle_root)

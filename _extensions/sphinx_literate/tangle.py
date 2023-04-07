@@ -18,7 +18,7 @@ def _tangle_rec(
     prefix = "" # for recursive use only
 ) -> None:
     assert(lit is not None)
-    for line in lit.all_content():
+    for line in lit.all_content(registry, override_tangle_root):
         # TODO: use parse.parse_block_content here?
         subprefix = None
         link = None

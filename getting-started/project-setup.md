@@ -2,7 +2,7 @@ Project setup
 =============
 
 ```{lit-setup}
-:tangle-root: Project setup
+:tangle-root: 000 - Project setup
 ```
 
 *Resulting code:* [`step000`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step000)

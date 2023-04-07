@@ -2,8 +2,8 @@ Opening a window
 ================
 
 ```{lit-setup}
-:tangle-root: Opening a window
-:parent: Project setup
+:tangle-root: 001 - Opening a window
+:parent: 000 - Project setup
 :fetch-files: ../data/glfw.zip
 ```
 
