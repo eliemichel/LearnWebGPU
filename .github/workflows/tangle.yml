@@ -37,7 +37,7 @@ jobs:
       run: make tangle
     - name: List tangle roots
       id: set-tangle-roots
-      run: echo "::set-output name=roots::$(printf '['; find -maxdepth 1 -mindepth 1 -type d -printf '"%P", '; printf ']\n')"
+      run: echo "::set-output name=roots::$(printf '['; find _build/tangle -maxdepth 1 -mindepth 1 -type d -printf '"%P", '; printf ']\n')"
     - name: Upload artifact
       uses: actions/upload-artifact@v3
       with:
