@@ -194,6 +194,7 @@ class LiterateNode(nodes.General, nodes.Element):
                 )
 
             for ref in node.references:
+                assert(ref is not None)
                 metadata['referenced in'].append(
                     make_link_metadata(ref)
                 )

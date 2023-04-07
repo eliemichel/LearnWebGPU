@@ -179,7 +179,7 @@ function createLineWrapper(element, className) {
 	// Find all next nodes on the same line
 	for (let i = containerIndex + 1 ; i < parentPre.childNodes.length ; ++i) {
 		const node = parentPre.childNodes[i];
-		const nlIdx = node.nodeValue.indexOf("\n");
+		const nlIdx = node.nodeValue === null ? -1 : node.nodeValue.indexOf("\n");
 		if (node.nodeType === Node.TEXT_NODE && nlIdx != -1) {
 			if (nlIdx === node.nodeValue.length - 1) {
 				elementsOnSameLine.push(node);

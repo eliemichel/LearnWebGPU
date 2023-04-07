@@ -23,7 +23,7 @@ Debugging textures
 
 This first example of debugging is inspired by a real bug encountered by a reader[^iazalong] when following the [texture loading](../basic-3d-rendering/texturing/loading-from-file.md) chapter.
 
-[^iazalong]: Thanks [Iazalong](#)!
+[^iazalong]: Thanks *Iazalong*!
 
 Clearly, something was wrong with the texture:
 

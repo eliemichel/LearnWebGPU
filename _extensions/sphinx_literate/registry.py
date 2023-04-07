@@ -59,7 +59,7 @@ class CodeBlock:
     source_location: SourceLocation = field(default_factory=SourceLocation)
 
     # Tangle root as defined by lit-setup at the time the block was created
-    tangle_root: str | None = ""
+    tangle_root: str | None = None
 
     # A list of lines
     content: List[str] = field(default_factory=list)
@@ -284,7 +284,7 @@ class CodeBlockRegistry:
 
     @classmethod
     def create_uid(cls):
-        return ''.join([random.choice(['123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ']) for _ in range(16)])
+        return ''.join([random.choice('123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ') for _ in range(16)])
 
     def register_codeblock(self, lit: CodeBlock, options: BlockOptions = set()) -> None:
         """
@@ -489,8 +489,22 @@ class CodeBlockRegistry:
                 return True
             self._missing = list(filter(isStillUnresolved, self._missing))
 
-    def blocks(self) -> CodeBlock:
+    def blocks(self) -> List[CodeBlock]:
         return self._blocks.values()
+
+    def blocks_by_root(self, tangle_root: str | None) -> List[CodeBlock]:
+        """
+        If a tangle root is given, return only blocks for this tangle root,
+        including the inherited ones
+        """
+        block_names = set()
+        for b in self._blocks.values():
+            if self.get_rec(b.name, tangle_root) is not None:
+                block_names.add(b.name)
+        return [
+            self.get_rec(name, tangle_root)
+            for name in block_names
+        ]
 
     def get(self, name: str, tangle_root: str | None = None) -> CodeBlock:
         return self.get_by_key(CodeBlock.build_key(name, tangle_root))
@@ -520,14 +534,15 @@ class CodeBlockRegistry:
         if found is not None:
             return found
 
+        if tangle_root is None:
+            return self.get(name)
+
         # In upstream tangle tree, return the first match
-        prev_tr = ()
         tr = tangle_root
-        while tr != prev_tr:
+        while tr is not None:
             found = self.get(name, tr)
             if found is not None:
                 return found
-            prev_tr = tr
             tr = self._parent_tangle_root(tr)
         return None
 
@@ -554,6 +569,22 @@ class CodeBlockRegistry:
 
     def references_to_key(self, key: Key) -> List[Key]:
         return list(self._references[key])
+
+    def all_tangle_roots(self) -> List[str|None]:
+        ret = set()
+        ret.update({
+            b.tangle_root
+            for b in self._blocks.values()
+        })
+        ret.update({
+            h.root
+            for h in self._hierarchy.values()
+        })
+        ret.update({
+            h.parent
+            for h in self._hierarchy.values()
+        })
+        return list(ret)
 
     def _parent_tangle_root(self, tangle_root: str) -> str | None:
         h = self._hierarchy.get(tangle_root)

@@ -19,6 +19,8 @@ class TangleBuilder(Builder):
     format = 'tangle'
     epilog = __('The tangled source code is in %(outdir)s.')
 
+    # Inherited methods
+
     def init(self) -> None:
         pass
 
@@ -41,32 +43,41 @@ class TangleBuilder(Builder):
                 pass
 
     def get_target_uri(self, docname: str, typ: Optional[str] = None) -> str:
-        print(f"get_target_uri(docname={docname}, typ={typ})")
+        #print(f"get_target_uri(docname={docname}, typ={typ})")
         return ""
 
     def prepare_writing(self, docnames: Set[str]) -> None:
-        print(f"prepare_writing(docnames={docnames})")
+        #print(f"prepare_writing(docnames={docnames})")
+        pass
 
     def write_doc(self, docname: str, doctree: Node) -> None:
-        print(f"write_doc(docname={docname}, doctree=...)")
-        # Get all code blocks whose name start with "file:", these are all the
-        # root blocks we tangle.
-        lit_codeblocks = CodeBlockRegistry.from_env(self.env)
-        for k, lit in lit_codeblocks.items():
-            if lit.name.startswith("file:"):
-                self.tangle_and_write(lit)
+        #print(f"write_doc(docname={docname}, doctree=...)")
+        pass
 
-    def tangle_and_write(self, lit: CodeBlock):
-        lit_codeblocks = CodeBlockRegistry.from_env(self.env)
+    def finish(self) -> None:
+        # Tangle only at the end to account for unordered definitions and inheritance
+        registry = CodeBlockRegistry.from_env(self.env)
+        for tangle_root in registry.all_tangle_roots():
+            for lit in registry.blocks_by_root(tangle_root):
+                if lit.name.startswith("file:"):
+                    self.tangle_and_write(lit, tangle_root)
+
+    # Internal methods
+
+    def tangle_and_write(self, lit: CodeBlock, tangle_root: str | None):
+        """
+        NB: tangle_root is different from lit.tangle_root in case of inheritance
+        """
+        registry = CodeBlockRegistry.from_env(self.env)
         assert(lit.name.startswith("file:"))
         filename = lit.name[len("file:"):].strip()
-        if lit.tangle_root is not None:
-            filename = path.join(lit.tangle_root, filename)
+        if tangle_root is not None:
+            filename = path.join(tangle_root, filename)
 
         tangled_content, root_lit = tangle(
             lit.name,
-            lit.tangle_root,
-            lit_codeblocks,
+            tangle_root,
+            registry,
             self.app.config,
             lit.source_location.format() + ", "
         )
@@ -78,6 +89,3 @@ class TangleBuilder(Builder):
                 f.write('\n'.join(tangled_content))
         except OSError as err:
             logger.warning(__("error writing file %s: %s"), outfilename, err)
-
-    def finish(self) -> None:
-        print("finish")

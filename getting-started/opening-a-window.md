@@ -50,27 +50,28 @@ Basic usage
 
 First of all, any call to the GLFW library must be between its initialization and termination:
 
-```C++
+```{lit} C++, Main Content
 glfwInit();
-// [...] Use GLFW
+{{Use GLFW}}
 glfwTerminate();
 ```
 
 The init function returns false when it could not setup things up:
 
-```C++
+```{lit} C++, Use GLFW
 if (!glfwInit()) {
 	std::cerr << "Could not initialize GLFW!" << std::endl;
 	return 1;
 }
+{{Create and destroy window (hidden)}}
 ```
 
 Once the library has been initialized, we may create a window:
 
-```C++
+```{lit} C++, Create and destroy window
 glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 GLFWwindow* window = glfwCreateWindow(640, 480, "Learn WebGPU", NULL, NULL);
-// [...] Use the window
+{{Use the window}}
 glfwDestroyWindow(window);
 ```
 
@@ -82,17 +83,18 @@ I invite you to look at the documentation of GLFW to know more about [`glfwCreat
 
 Here again, we may add some error management:
 
-```C++
+```{lit} C++, Use the window
 if (!window) {
 	std::cerr << "Could not open window!" << std::endl;
 	glfwTerminate();
 	return 1;
 }
+{{Main loop (hidden)}}
 ```
 
 At this point, the window opens and closes immediately after. To address this, we add the application's **main loop**:
 
-```C++
+```{lit} C++, Main loop
 while (!glfwWindowShouldClose(window)) {
 	// Check whether the user clicked on the close button (and any other
 	// mouse/key event, which we don't use so far)
@@ -108,6 +110,15 @@ This main loop is where most of the application's logic occurs. We will repeated
 :align: center
 :class: with-shadow
 Our first window, using the GLFW library.
+```
+
+```{lit} C++, file:main.cpp (hidden)
+#include <iostream>
+
+int main (int, char**) {
+    {{Main Content}}
+    return 0;
+}
 ```
 
 *Resulting code:* [`step001`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step001)
