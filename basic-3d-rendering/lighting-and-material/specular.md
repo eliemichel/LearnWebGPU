@@ -1,4 +1,4 @@
-Specularity (WIP)
+Specularity
 ===========
 
 ````{tab} With webgpu.hpp
@@ -126,13 +126,37 @@ The information of camera position is somehow contained in the `viewMatrix`, but
 let cameraWorldPosition = uMyUniforms.cameraWorldPosition;
 ```
 
+````{tab} With webgpu.hpp
 ```C++
 void Application::updateViewMatrix() {
 	// [...]
 	m_uniforms.cameraWorldPosition = position;
-	m_device.getQueue().writeBuffer(m_uniformBuffer, offsetof(MyUniforms, cameraWorldPosition), &m_uniforms.cameraWorldPosition, sizeof(MyUniforms::cameraWorldPosition));
+	m_device.getQueue().writeBuffer(
+		m_uniformBuffer,
+		offsetof(MyUniforms, cameraWorldPosition),
+		&m_uniforms.cameraWorldPosition,
+		sizeof(MyUniforms::cameraWorldPosition)
+	);
 }
 ```
+````
+
+````{tab} Vanilla webgpu.h
+```C++
+void Application::updateViewMatrix() {
+	// [...]
+	m_uniforms.cameraWorldPosition = position;
+	WGPUQueue  = wgpuDeviceGetQueue(m_device);
+	wgpuQueueWriteBuffer(
+		queue,
+		m_uniformBuffer,
+		offsetof(MyUniforms, cameraWorldPosition),
+		&m_uniforms.cameraWorldPosition,
+		sizeof(MyUniforms::cameraWorldPosition)
+	);
+}
+```
+````
 
 ````{note}
 Alternatively, you can do the whole shading in **view space**. The camera position in view space is always `vec3<f32>(0.0)` and all you need to do is to transform the light direction like we did for the vertex normal, except using the view matrix:
@@ -212,6 +236,8 @@ The material properties exposed in the Lighting GUI.
 
 Conclusion
 ----------
+
+We have acquired in this chapter a **good intuition** of how to model the specular highlight of material. The next chapters refine this by first modifying the **local normal** against which the light bounces and second by introducing a more **physically grounded** model of materials.
 
 ````{tab} With webgpu.hpp
 *Resulting code:* [`step105`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step105)
