@@ -1,4 +1,4 @@
-Compute Pipeline (WIP)
+Compute Pipeline (🚧WIP)
 ================
 
 ````{tab} With webgpu.hpp

@@ -1,4 +1,4 @@
-Image Processing (WIP)
+Image Processing (🛑TODO)
 ================
 
  - Computing mip maps on GPU

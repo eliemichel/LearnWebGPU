@@ -1,4 +1,4 @@
-Image-Based Lighting (WIP)
+Image-Based Lighting (🚧WIP)
 ====================
 
 ````{tab} With webgpu.hpp
@@ -13,6 +13,12 @@ Image-Based Lighting (WIP)
 :align: center
 :class: with-shadow
 An environment map is a 360° image in high-dynamic range that we use as an omnidirectional light source.
+```
+
+```{figure} /images/ibl-coords.png
+:align: center
+:class: with-shadow
+TODO
 ```
 
 TODO

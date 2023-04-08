@@ -1,4 +1,4 @@
-Building for the Web (WIP)
+Building for the Web (🚧WIP)
 ====================
 
 *Resulting code:* [`step095-emscripten`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step095-emscripten)

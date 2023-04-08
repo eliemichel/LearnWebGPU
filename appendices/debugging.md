@@ -1,4 +1,4 @@
-Debugging (WIP)
+Debugging (🚧WIP)
 =========
 
 It is important to get familiar with some basic debugging tips as early as possible.

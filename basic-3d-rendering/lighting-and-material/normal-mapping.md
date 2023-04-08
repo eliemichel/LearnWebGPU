@@ -1,4 +1,4 @@
-Normal mapping (WIP)
+Normal mapping (🚧WIP)
 ==============
 
 ````{tab} With webgpu.hpp
