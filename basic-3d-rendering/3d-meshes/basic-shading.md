@@ -41,7 +41,7 @@ The direction of a face is expressed as **a vector that is perpendicular to the 
 ```
 
 <p class="align-center">
-	<span class="caption-text"><em>A normal vector is perpendicular to its face and has a length of $1$.</em></span>
+	<span class="caption-text"><em>A normal vector is perpendicular to its face and has a length of <span class="math">1</span>.</em></span>
 </p>
 
 ```{note}
