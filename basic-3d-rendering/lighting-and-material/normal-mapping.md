@@ -256,6 +256,8 @@ computeTextureFrameAttributes(vertexData);
 return true;
 ```
 
+The exact procedure is once again a matter of **convention**, to be aligned to what authoring tools export.
+
 ```C++
 void ResourceManager::computeTextureFrameAttributes(std::vector<VertexAttributes>& vertexData) {
 	size_t triangleCount = vertexData.size() / 3;
@@ -324,6 +326,16 @@ let N = mix(in.normal, rotatedN, uLighting.normalMapStrength);
 :class: with-shadow
 Fixed normal maps.
 ```
+
+You can try with the fourareen boat using [`fourareen2K_normals.png`](../../data/fourareen2K_normals.png):
+
+```{figure} /images/fourareen-normal-mapping.png
+:align: center
+:class: with-shadow
+The Fourareen boat with normal mapping.
+```
+
+(TODO: investigate why we still see some cracks and fireflies)
 
 Conclusion
 ----------

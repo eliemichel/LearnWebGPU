@@ -10,6 +10,6 @@ Contents
 recap
 specular
 normal-mapping
-pbr
 ibl
+pbr
 ```
