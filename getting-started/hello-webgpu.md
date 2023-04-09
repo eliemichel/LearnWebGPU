@@ -11,6 +11,12 @@ Hello WebGPU
 
 For your C++ code, WebGPU is nothing more than a single header file listing all the available procedures and data structures: [`webgpu.h`](https://github.com/webgpu-native/webgpu-headers/blob/main/webgpu.h). When building the program though, your compiler must know in the end (at the final *linking* step) where to find the actual implementation of these functions.
 
+```{figure} /images/rhi-vs-opengl.png
+:align: center
+:class: with-shadow
+A *Render Hardware Interface* like WebGPU is not directly provided by the drivers: we need to link to a library that implements the API on top of the low-level one that the system provides.
+```
+
 Installing WebGPU
 -----------------
 
@@ -18,6 +24,12 @@ There exists mostly two implementations of the WebGPU native header:
 
  - [wgpu-native](https://github.com/gfx-rs/wgpu-native), exposing a native interface to the `wgpu` Rust library developed for Firefox.
  - Google's [Dawn](https://dawn.googlesource.com/dawn), developed for Chrome.
+
+```{figure} /images/different-backend.png
+:align: center
+:class: with-shadow
+There are (at least) two implementations of WebGPU, developed for the two key web engines.
+```
 
 I tested both, and settled on the Firefox one for this documentation because its resulting binaries are much more lightweight than with Dawn. In both cases, the build process is a bit too heavy to be included in our CMakeLists so I provide pre-compiled builds:
 
