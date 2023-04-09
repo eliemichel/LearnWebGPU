@@ -192,7 +192,7 @@ bool Application::initTexture(const std::filesystem::path &path) {
 The [texture format capabilities table](https://www.w3.org/TR/webgpu/#texture-format-caps) shows that in order to allow filtering for float32 textures, we need to enable the `float32-filterable` **feature** when creating the device.
 ```
 
-We use [`float16_t.hpp`](../../data/float16-t.hpp) because C++ does not have a 16-bit float type out of the box.
+We use [`float16_t.hpp`](../../data/float16_t.hpp) because C++ does not have a 16-bit float type out of the box.
 
 Conclusion
 ----------

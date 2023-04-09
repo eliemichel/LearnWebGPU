@@ -15,6 +15,8 @@ Image-Based Lighting (🚧WIP)
 An environment map is a 360° image in high-dynamic range that we use as an omnidirectional light source.
 ```
 
+(TODO: Use cubemap instead of envmap?)
+
 ```{figure} /images/ibl-coords.png
 :align: center
 :class: with-shadow
