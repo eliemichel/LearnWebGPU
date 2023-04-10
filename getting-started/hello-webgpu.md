@@ -128,7 +128,7 @@ cmake -B build -DWEBGPU_BACKEND=DAWN
 
 This is given by the `main` branch of my distribution repository:
 
- - [WebGPU distribution](https://github.com/eliemichel/WebGPU-distribution/archive/refs/heads/main.zip)
+ - [WebGPU any distribution](https://github.com/eliemichel/WebGPU-distribution/archive/refs/heads/main.zip)
 
 **Pros**
  - You can have two `build` at the same time, one that uses Dawn and one that uses `wgpu-native`
@@ -171,7 +171,7 @@ int main (int, char**) {
 }
 ```
 
-This should build correctly and display something like `WGPU instance: 0000000000000008` at startup.
+This should build correctly and display something like `WGPU instance: 000001C0D2637720` at startup.
 
 Differences between implementations
 -----------------------------------

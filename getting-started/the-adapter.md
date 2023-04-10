@@ -6,7 +6,7 @@ The Adapter
 Requesting the adapter
 ----------------------
 
-The first thing we need to do in order to dialog with our GPU is to get a WebGPU *adapter*. It is the main entry point of the library, and the same host system may expose multiple adapters if it has multiple implementations of the WebGPU backend (e.g., a high performance one, a low energy consumption one, etc.).
+The first thing we need to do in order to dialog with our GPU is to get a WebGPU **adapter**. It is the main entry point of the library, and the same host system may expose multiple adapters if it has multiple implementations of the WebGPU backend (e.g., a high performance one, a low energy consumption one, etc.).
 
 In JavaScript, this would be:
 
@@ -26,10 +26,15 @@ function onAdapterRequestEnded(adapter) {
 navigator.gpu.requestAdapter(options).then(onAdapterRequestEnded);
 ```
 
-which is close enough to the C++ version:
+which is close enough to the C/C++ version (minus the boilerplate):
 
 ```C++
-void onAdapterRequestEnded(WGPURequestAdapterStatus status, WGPUAdapter adapter, char const * message, void * userdata) {
+void onAdapterRequestEnded(
+	WGPURequestAdapterStatus status, // a success status
+	WGPUAdapter adapter, // the returned adapter
+	char const* message, // error message, or nullptr
+	void* userdata // custom user data, as provided when requesting the adapter
+) {
 	// do something with the adapter
 }
 wgpuInstanceRequestAdapter(
@@ -39,6 +44,19 @@ wgpuInstanceRequestAdapter(
 	nullptr // custom user data, see bellow
 );
 ```
+
+````{note}
+The names of the procedure provided by `webgpu.h` always follow the same construction:
+
+```C
+wgpuSomethingSomeAction(something, ...)
+             ^^^^^^^^^^ // What to do...
+    ^^^^^^^^^ // ...on what type of object
+^^^^ // (Common prefix to allow naming collisions)
+```
+
+The first argument of the fonction is always a "handle" (a blind pointer) representing an object of type "Something".
+````
 
 We can wrap this in a `requestAdapter()` function that mimicks the JS `await requestAdapter()`:
 
@@ -142,7 +160,7 @@ You can now `#include <glfw3webgpu.h>` at the beginning of your `main.cpp` and g
 WGPUSurface surface = glfwGetWGPUSurface(instance, window);
 ```
 
-One last thing: we can tell GLFW not to care about the graphics API setup, as it does not know WebGPU and we won't use what it could set up by default for other APIs:
+One last thing: we can **tell GLFW not to care about the graphics API** setup, as it does not know WebGPU and we won't use what it could set up by default for other APIs:
 
 ```C++
 glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API); // NEW
@@ -157,11 +175,13 @@ The `glfw3webgpu` library is very simple, it is only made of 2 files so we could
 Inspecting the adapter
 ----------------------
 
-The adapter object provides information about the underlying implementation and hardware, and about what it is able or not to do.
+The adapter object provides **information about the underlying implementation** and hardware, and about what it is able or not to do.
 
 Let us focus on the `wgpuAdapterEnumerateFeatures` function, which enumerates the features of the WebGPU implementation, because its usage is very typical from WebGPU native.
 
-We call the function twice. The first time, we provide a null pointer as the return, and as a consequence the function only returns the number of features, but not the features themselves. We then dynamically allocate memory for storing this many items of result, and call the same function a second time, this time with a pointer to where the result should store its result.
+We call the function **twice**. The **first time**, we provide a null pointer as the return, and as a consequence the function only returns the **number of features**, but not the features themselves.
+
+We then dynamically **allocate memory** for storing this many items of result, and call the same function a **second time**, this time with a pointer to where the result should store its result.
 
 ```C++
 #include <vector>
@@ -185,10 +205,20 @@ for (auto f : features) {
 }
 ```
 
-The features are numbers corresponding to the enum `WGPUFeatureName` defined in `webgpu.h`. You may notice very high numbers apparently not defined in this enum. These are extensions provided by our native implementation.
+The features are numbers corresponding to the enum `WGPUFeatureName` defined in `webgpu.h`.
+
+You may notice very high numbers apparently not defined in this enum. These are **extensions** provided by our native implementation (e.g., defined in `wgpu.h` instead of `webgpu.h` in the case of `wgpu-native`).
 
 ```{note}
 In the accompanying code, extra information retrieval is exemplified in the `inspectAdapter()` function. Look in `webgpu.h` for function that starts with `wgpuAdapter` to find other adapter methods.
 ```
+
+Conclusion
+----------
+
+ - The very first thing to do with WebGPU is to get the **adapter**.
+ - This adapter can have **options**, in particular the **surface** on which it draws.
+ - To get a WebGPU surface from our GLFW window, we use a small **extension of GLFW** called `glfw3webgpu`.
+ - Once we have an adapter, we can inspect its **capabilities**.
 
 *Resulting code:* [`step010`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step010)
