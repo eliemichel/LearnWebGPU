@@ -68,13 +68,14 @@ jobs:
         roots: ${{ needs.filter-unchanged.outputs.tangle-roots }}
         foundPrevious: ${{ steps.cache.outputs.cache-hit }}
       run: |-
-        if $foundPrevious
+        if [[ $foundPrevious -eq "true" ]]
+        then
           # Only keep the ones that changed
           echo "roots=$(python tools/filter_unchanged_tangle_roots.py "$roots" current previous)" >> $GITHUB_OUTPUT
         else
           # Just forward the list
           echo "roots=$roots" >> $GITHUB_OUTPUT
-        endif
+        fi
     - name: Cache current tangle
       uses: actions/cache@v3
       with:
