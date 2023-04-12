@@ -58,12 +58,17 @@ def hash_dir(dirname):
 
 def main(args):
 	sys.stderr.write(f"input: {args.roots_json}\n")
+	# Dirty fix to transform ["foo", "bar",] into ["foo", "bar"]
+	clean_roots_json = '[' + args.roots_json.strip('[]').strip().strip(',') + ']'
+
+	roots = json.loads(clean_roots_json, strict=False)
+
 	def did_change(root):
 		current_hash = hash_dir(join(args.current, root))
 		previous_hash = hash_dir(join(args.previous, root))
 		return current_hash != previous_hash
-	roots = json.loads(args.roots_json, strict=False)
 	changed_roots = list(filter(did_change, roots))
+
 	sys.stderr.write(f"output: {changed_roots}\n")
 	print(json.dumps(changed_roots))
 
