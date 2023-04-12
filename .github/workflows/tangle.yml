@@ -67,7 +67,7 @@ jobs:
     - name: Filter out unchanged roots
       id: filter-tangle-roots
       env:
-        roots: ${{ needs.filter-unchanged.outputs.tangle-roots }}
+        roots: ${{ needs.tangle.outputs.tangle-roots }}
         foundPrevious: ${{ steps.cache.outputs.cache-hit }}
       run: |-
         if [[ $foundPrevious -eq "true" ]]
