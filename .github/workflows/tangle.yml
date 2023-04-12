@@ -51,6 +51,8 @@ jobs:
     outputs:
       tangle-roots: ${{ steps.filter-tangle-roots.outputs.roots }}
     steps:
+    - name: Checkout
+      uses: actions/checkout@v3
     - name: Download current tangle
       uses: actions/download-artifact@v3
       with:
