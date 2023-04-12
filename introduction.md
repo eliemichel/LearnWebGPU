@@ -8,7 +8,6 @@ A personal computer or smartphone commonly contains two computing units: the **C
 
 ```{figure} /images/architecture-notes.png
 :align: center
-:class: with-shadow
 The CPU and GPU are two different processors. We program the CPU so that it instructs the GPU what to do through the graphics API and the driver.
 ```
 

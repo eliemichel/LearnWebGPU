@@ -5,6 +5,12 @@ The Command Queue
 
 We are getting close, but we will still not display anything on our window. We learn in this chapter a key concept of WebGPU (and of most modern graphics APIs as well): the *command queue*.
 
+```{figure} /images/command-queue.png
+:align: center
+:class: with-shadow
+The CPU instructs the GPU what to do by sending commands through a command queue.
+```
+
 Different timelines
 -------------------
 

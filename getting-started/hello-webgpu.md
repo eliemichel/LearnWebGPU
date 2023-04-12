@@ -4,7 +4,7 @@ Hello WebGPU
 ```{lit-setup}
 :tangle-root: 005 - Hello WebGPU
 :parent: 001 - Opening a window
-:fetch-files: ../data/wgpu-native-for-any.zip
+:fetch-files: ../data/webgpu-distribution.zip
 ```
 
 *Resulting code:* [`step005`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step005)
@@ -13,7 +13,6 @@ For your C++ code, WebGPU is nothing more than a single header file listing all 
 
 ```{figure} /images/rhi-vs-opengl.png
 :align: center
-:class: with-shadow
 A *Render Hardware Interface* (RHI) like WebGPU is not directly provided by the drivers: we need to link to a library that implements the API on top of the low-level one that the system supports.
 ```
 
@@ -27,7 +26,6 @@ There exists mostly two implementations of the WebGPU native header:
 
 ```{figure} /images/different-backend.png
 :align: center
-:class: with-shadow
 There are (at least) two implementations of WebGPU, developed for the two main web engines.
 ```
 

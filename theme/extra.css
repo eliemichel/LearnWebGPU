@@ -8,12 +8,17 @@ ol.simple li:not(:last-child) {
 	margin-bottom: 0.5rem;
 }
 
-body.dark .with-shadow {
-	box-shadow: 0 0 6px 0 rgba(0, 0, 0, 0.7);
-}
-body.light .with-shadow {
+body .with-shadow {
 	box-shadow: 0 0 6px 0 rgba(0, 0, 0, 0.25);
 }
+
+@media (prefers-color-scheme: dark) {
+body[data-theme="dark"] .with-shadow,
+body:not([data-theme="light"]) .with-shadow {
+	box-shadow: 0 0 6px 0 rgba(0, 0, 0, 0.7);
+}
+}
+
 figcaption {
 	font-style: italic;
 	font-size: 1.0rem;

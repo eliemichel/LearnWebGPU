@@ -3,9 +3,21 @@ The Device
 
 *Resulting code:* [`step015`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step015)
 
-A WebGPU *device* represents a *context* of use of the API. All the objects that will later be created (geometry, textures, etc.) will be owned by the device.
+A WebGPU **device** represents a **context** of use of the API. All the objects that we create (geometry, textures, etc.) are owned by the device.
 
-Why do we have both an *adapter* and then a *device* abstraction? The idea is to limit the "it worked on my machine" issue you could encounter when trying your program on a different machine. The adapter is used to access the capabilities of the customer's hardware, which are used to select the behavior of your application among very different code paths. Once a code path is chosen, a device is created with the available options we need, and only the capabilities selected for this device are then allowed in the rest of the application. This way, it is not possible to inadvertedly rely on capabilities specific to your own machine.
+> 🤔 Why do we have both an **adapter** and then a **device** abstraction?
+
+The idea is to limit the "it worked on my machine" issue you could encounter when trying your program on a different machine. The **adapter** is used to **access the capabilities** of the customer's hardware, which are used to select the behavior of your application among very different code paths. Once a code path is chosen, a **device** is created with **the capabilities we choose**.
+
+Only the capabilities selected for this device are then allowed in the rest of the application. This way, it is **not possible to inadvertedly rely on capabilities specific to your own machine**.
+
+```{figure} /images/device-creation.png
+:align: center
+In an advanced use of the adapter/device duality, we can set up multiple limit presets and select one depending on the adapter. In our case, we have a single preset and abort early if it is not supported.
+```
+
+Device request
+--------------
 
 Requesting the device looks a lot like requesting the adapter, so we will use a very similar function:
 
@@ -98,8 +110,12 @@ deviceDesc.defaultQueue.label = "The default queue";
 
 We will come back here and refine these options whenever we will need some more capabilities from the device.
 
-Device descriptor
------------------
+```{note}
+The `label` is **used in error message** to help you debug where something went wrong, so it is good practice to use it as soon as you get multiple objects of the same type. Currently, this is only used by Dawn.
+```
+
+Device error callback
+---------------------
 
 Before moving on to the next section, I would like you to add this call after creating the device:
 
@@ -112,8 +128,8 @@ auto onDeviceError = [](WGPUErrorType type, char const* message, void* /* pUserD
 wgpuDeviceSetUncapturedErrorCallback(device, onDeviceError, nullptr /* pUserData */);
 ```
 
-This defines a callback that gets executed upon errors, which is very handy for debugging, especially when we will start using *asynchronous* operations.
+This defines **a callback that gets executed upon errors**, which is very handy for debugging, especially when we will start using **asynchronous** operations.
 
-If you use a debugger (which I recommend), like `gdb` or you IDE, I recommend you put a breakpoint in this callback, so that your program pauses and provides you with a call stack whenever WebGPU encounters an unexpected error.
+If you use a debugger (which I recommend), like `gdb` or you IDE, I recommend you **put a breakpoint** in this callback, so that your program pauses and provides you with a call stack whenever WebGPU encounters an unexpected error.
 
 *Resulting code:* [`step015`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step015)
