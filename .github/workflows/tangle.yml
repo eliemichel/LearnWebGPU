@@ -21,7 +21,7 @@ env:
   BUILD_TYPE: Release
 
 jobs:
-  # Build job
+  # Tangle job
   tangle:
     runs-on: ubuntu-latest
     outputs:
@@ -44,12 +44,49 @@ jobs:
         name: tangled-code
         path: _build/tangle
 
+  # Filter unnecessary tests
+  filter-unchanged:
+    runs-on: ubuntu-latest
+    needs: tangle
+    outputs:
+      tangle-roots: ${{ steps.filter-tangle-roots.outputs.roots }}
+    steps:
+    - name: Download current tangle
+      uses: actions/download-artifact@v3
+      with:
+        name: tangled-code
+        path: current
+    - name: Download previous tangle
+      uses: actions/cache/restore@v3
+      id: cache
+      with:
+        path: previous
+        key: previous-tangle
+    - name: Filter out unchanged roots
+      id: filter-tangle-roots
+      env:
+        roots: ${{ needs.filter-unchanged.outputs.tangle-roots }}
+        foundPrevious: ${{ steps.cache.outputs.cache-hit }}
+      run: |-
+        if $foundPrevious
+          # Only keep the ones that changed
+          echo "roots=$(python tools/filter_unchanged_tangle_roots.py "$roots" current previous" >> $GITHUB_OUTPUT
+        else
+          # Just forward the list
+          echo "roots=$roots" >> $GITHUB_OUTPUT
+        endif
+    - name: Cache current tangle
+      uses: actions/cache@v3
+      with:
+        path: current
+        key: previous-tangle
+
   # Test job
   test:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        tangle-root: ${{ fromJson(needs.tangle.outputs.tangle-roots) }}
+        tangle-root: ${{ fromJson(needs.filter-unchanged.outputs.tangle-roots) }}
         include:
         - os: ubuntu-latest
           install-deps: |
@@ -57,7 +94,7 @@ jobs:
             sudo apt-get install -y xorg-dev
         
     runs-on: ${{ matrix.os }}
-    needs: tangle
+    needs: [tangle, filter-unchanged]
     steps:
     - if: ${{ matrix.install-deps }}
       name: Install dependencies
