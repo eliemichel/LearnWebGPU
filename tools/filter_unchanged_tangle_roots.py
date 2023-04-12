@@ -5,6 +5,7 @@ filter_unchanged_tangle_roots.py <roots_json> <current> <previous>
 
 import json
 import argparse
+import sys
 import os
 from os.path import join
 import hashlib
@@ -56,12 +57,14 @@ def hash_dir(dirname):
 	return h.digest()
 
 def main(args):
+	sys.stderr.write(f"input: {args.roots_json}\n")
 	def did_change(root):
 		current_hash = hash_dir(join(args.current, root))
 		previous_hash = hash_dir(join(args.previous, root))
 		return current_hash != previous_hash
-	roots = json.loads(args.roots_json)
+	roots = json.loads(args.roots_json, strict=False)
 	changed_roots = list(filter(did_change, roots))
+	sys.stderr.write(f"output: {changed_roots}\n")
 	print(json.dumps(changed_roots))
 
 if __name__ == "__main__":
