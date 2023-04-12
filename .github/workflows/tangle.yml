@@ -70,7 +70,7 @@ jobs:
       run: |-
         if $foundPrevious
           # Only keep the ones that changed
-          echo "roots=$(python tools/filter_unchanged_tangle_roots.py "$roots" current previous" >> $GITHUB_OUTPUT
+          echo "roots=$(python tools/filter_unchanged_tangle_roots.py \"$roots\" current previous" >> $GITHUB_OUTPUT
         else
           # Just forward the list
           echo "roots=$roots" >> $GITHUB_OUTPUT
