@@ -68,6 +68,7 @@ jobs:
 
     - name: Download previous tangle
       id: download-previous-tangle
+      continue-on-error: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         RUN_ID: ${{ github.run_id }}
