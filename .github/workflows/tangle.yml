@@ -21,6 +21,34 @@ env:
   BUILD_TYPE: Release
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Download previous tangle
+      id: download-previous-tangle
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        RUN_ID: ${{ github.run_id }}
+        REPO: ${{ github.repository }}
+        BRANCH: ${{ github.branch }}
+        WORKFLOW: ${{ github.workflow }}
+      run: |
+        API_HEADERS='
+          -H "Accept: application/vnd.github+json"
+          -H "X-GitHub-Api-Version: 2022-11-28"
+        '
+        API_PREFIX="$API_HEADERS /repos/$REPO/actions"
+        # Get Workflow Node ID from Workflow name
+        echo API_PREFIX=$API_PREFIX
+        WORKFLOW_NODE_ID=$(gh api $API_PREFIX/workflows/$WORKFLOW -q .node_id)
+        echo WORKFLOW_NODE_ID=$WORKFLOW_NODE_ID
+        # Get previous Run ID from Workflow ID
+        PREV_RUN_ID=$(gh api $API_PREFIX/workflows/$WORKFLOW/runs?status=success&per_page=1&branch=$BRANCH -q .workflow_runs[0].id)
+        echo PREV_RUN_ID=$PREV_RUN_ID
+        mkdir previous
+        cd previous
+        gh run download $PREV_RUN_ID -n tangled-code
+
   # Tangle job
   tangle:
     runs-on: ubuntu-latest
@@ -66,10 +94,10 @@ jobs:
         path: current
 
     - name: Download previous tangle
+      id: download-previous-tangle
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         RUN_ID: ${{ github.run_id }}
-        OWNER: ${{ github.repository_owner }}
         REPO: ${{ github.repository }}
         BRANCH: ${{ github.branch }}
         WORKFLOW: ${{ github.workflow }}
@@ -78,8 +106,9 @@ jobs:
           -H "Accept: application/vnd.github+json"
           -H "X-GitHub-Api-Version: 2022-11-28"
         '
-        API_PREFIX="$API_HEADERS /repos/$OWNER/$REPO/actions"
+        API_PREFIX="$API_HEADERS /repos/$REPO/actions"
         # Get Workflow Node ID from Workflow name
+        echo API_PREFIX=$API_PREFIX
         WORKFLOW_NODE_ID=$(gh api $API_PREFIX/workflows/$WORKFLOW -q .node_id)
         echo WORKFLOW_NODE_ID=$WORKFLOW_NODE_ID
         # Get previous Run ID from Workflow ID
