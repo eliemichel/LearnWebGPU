@@ -79,7 +79,7 @@ jobs:
           echo "roots=$roots" >> $GITHUB_OUTPUT
         fi
     - name: Cache current tangle
-      uses: actions/cache@v3
+      uses: actions/cache/save@v3
       with:
         path: current
         key: previous-tangle
