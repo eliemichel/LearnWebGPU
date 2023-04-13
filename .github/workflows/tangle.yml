@@ -78,14 +78,6 @@ jobs:
           # Just forward the list
           echo "roots=$roots" >> $GITHUB_OUTPUT
         fi
-    - name: Clean up previous cache
-      env:
-        GH_TOKEN: ${{ github.token }}
-      run: |
-        gh extension install actions/gh-actions-cache
-        REPO=${{ github.repository }}
-        BRANCH=main
-        gh actions-cache delete previous-tangle -R $REPO -B $BRANCH --confirm
     - name: Cache current tangle
       uses: actions/cache/save@v3
       with:
