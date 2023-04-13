@@ -47,3 +47,4 @@ jobs:
         PREV_RUN_ID=$(gh api "$API_PREFIX/workflows/$WORKFLOW_ID/runs?status=success&per_page=1&branch=$BRANCH" -q '.workflow_runs[0] | .id')
         echo PREV_RUN_ID=$PREV_RUN_ID
         gh run download $PREV_RUN_ID -R $REPO -n tangled-code -D previous
+        ls previous
