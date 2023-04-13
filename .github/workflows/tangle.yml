@@ -41,6 +41,8 @@ jobs:
         echo API_PREFIX=$API_PREFIX
         echo RUN_ID=$RUN_ID
         # Get Workflow ID from Run ID
+        gh api repos/$REPO/actions/runs/$RUN_ID
+        gh api -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" repos/$REPO/actions/runs/$RUN_ID
         WORKFLOW_ID=$(gh api $API_PREFIX/runs/$RUN_ID)
         echo WORKFLOW_ID=$WORKFLOW_ID
         gh api $API_PREFIX/workflows/$WORKFLOW_ID
