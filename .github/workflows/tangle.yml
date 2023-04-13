@@ -107,6 +107,7 @@ jobs:
 
   # Test job
   test:
+    if: ${{ needs.filter-unchanged.outputs.tangle-roots != '[]' }}
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
