@@ -36,8 +36,6 @@ jobs:
         API_PREFIX="$API_HEADERS /repos/$REPO/actions"
         # Get Workflow Node ID from Workflow name
         echo API_PREFIX=$API_PREFIX
-        WORKFLOW_NODE_ID=$(gh api $API_PREFIX/workflows/$WORKFLOW -q .node_id)
-        echo WORKFLOW_NODE_ID=$WORKFLOW_NODE_ID
         # Get previous Run ID from Workflow ID
         PREV_RUN_ID=$(gh api $API_PREFIX/workflows/$WORKFLOW/runs?status=success&per_page=1&branch=$BRANCH -q .workflow_runs[0].id)
         echo PREV_RUN_ID=$PREV_RUN_ID
