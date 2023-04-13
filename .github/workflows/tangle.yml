@@ -79,6 +79,8 @@ jobs:
           echo "roots=$roots" >> $GITHUB_OUTPUT
         fi
     - name: Clean up previous cache
+      env:
+        GH_TOKEN: ${{ github.token }}
       run: |
         gh extension install actions/gh-actions-cache
         REPO=${{ github.repository }}
