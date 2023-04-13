@@ -21,9 +21,51 @@ env:
   BUILD_TYPE: Release
 
 jobs:
-  tmp:
+
+  # Tangle job
+  tangle:
     runs-on: ubuntu-latest
+    outputs:
+      tangle-roots: ${{ steps.set-tangle-roots.outputs.roots }}
     steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Setup Pages
+      uses: actions/configure-pages@v2
+
+    - name: Setup Python
+      run: pip install -r requirements.txt
+
+    - name: Build with Sphinx
+      run: make tangle
+
+    - name: List tangle roots
+      id: set-tangle-roots
+      run: echo "roots=$(printf '['; find _build/tangle -maxdepth 1 -mindepth 1 -type d -printf '"%P", '; printf ']\n')" >> $GITHUB_OUTPUT
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: tangled-code
+        path: _build/tangle
+
+  # Filter unnecessary tests
+  filter-unchanged:
+    runs-on: ubuntu-latest
+    needs: tangle
+    outputs:
+      tangle-roots: ${{ steps.filter-tangle-roots.outputs.roots }}
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Download current tangle
+      uses: actions/download-artifact@v3
+      with:
+        name: tangled-code
+        path: current
+
     - name: Download previous tangle
       id: download-previous-tangle
       env:
@@ -47,4 +89,49 @@ jobs:
         PREV_RUN_ID=$(gh api "$API_PREFIX/workflows/$WORKFLOW_ID/runs?status=success&per_page=1&branch=$BRANCH" -q '.workflow_runs[0] | .id')
         echo PREV_RUN_ID=$PREV_RUN_ID
         gh run download $PREV_RUN_ID -R $REPO -n tangled-code -D previous
-        ls previous
+
+    - name: Filter out unchanged roots
+      if: failure() || success()
+      id: filter-tangle-roots
+      env:
+        roots: ${{ needs.tangle.outputs.tangle-roots }}
+        downloadPreviousOutcome: ${{ steps.download-previous-tangle.outcome }}
+      run: |-
+        if [[ $downloadPreviousOutcome -eq "success" ]]
+        then
+          # Only keep the ones that changed
+          echo "roots=$(python tools/filter_unchanged_tangle_roots.py "$roots" current previous)" >> $GITHUB_OUTPUT
+        else
+          # Just forward the list
+          echo "roots=$roots" >> $GITHUB_OUTPUT
+        fi
+
+  # Test job
+  test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        tangle-root: ${{ fromJson(needs.filter-unchanged.outputs.tangle-roots) }}
+        include:
+        - os: ubuntu-latest
+          install-deps: |
+            sudo apt-get update -y
+            sudo apt-get install -y xorg-dev
+        
+    runs-on: ${{ matrix.os }}
+    needs: [tangle, filter-unchanged]
+    steps:
+    - if: ${{ matrix.install-deps }}
+      name: Install dependencies
+      run: ${{ matrix.install-deps }}
+
+    - name: Download artifact
+      uses: actions/download-artifact@v3
+      with:
+        name: tangled-code
+
+    - name: Configure CMake
+      run: cmake -S "${{ matrix.tangle-root }}" -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+
+    - name: Build
+      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
