@@ -37,7 +37,7 @@ jobs:
           -H "Accept: application/vnd.github+json"
           -H "X-GitHub-Api-Version: 2022-11-28"
         '
-        API_PREFIX="$API_HEADERS /repos/$REPO/actions"
+        API_PREFIX=$API_HEADERS repos/$REPO/actions
         # Get Workflow Node ID from Workflow name
         echo API_PREFIX=$API_PREFIX
         gh api $API_PREFIX/workflows/$WORKFLOW
