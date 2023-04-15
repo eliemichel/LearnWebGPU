@@ -77,7 +77,7 @@ The Dawn-based distribution I provide here fetches the source code of Dawn from 
  - It is in general ahead of `wgpu-native` regarding the progress of implementation (but `wgpu-native` will catch up eventually).
 
 **Cons**
- - Although I reduced the need for extra dependencies, you still need to [install Python](https://www.python.org/)
+ - Although I reduced the need for extra dependencies, you still need to [install Python](https://www.python.org/) and [git](https://git-scm.com/download).
  - The distribution fetches Dawn's source code and its dependencies so the first time you build you need an **Internet connection**.
  - The initial build takes significantly longer, and occupies more disk space overall.
 
@@ -132,7 +132,7 @@ This is given by the `main` branch of my distribution repository:
  - You can have two `build` at the same time, one that uses Dawn and one that uses `wgpu-native`
 
 **Cons**
- - This is a "meta-distribution" that fetches the one you want at configuration time (i.e., when calling `cmake` the first time) so you need an **Internet connection** at that time.
+ - This is a "meta-distribution" that fetches the one you want at configuration time (i.e., when calling `cmake` the first time) so you need an **Internet connection** and **git** at that time.
 
 And of course depending on your choice the pros and cons of *Option A* and *Option B* apply.
 

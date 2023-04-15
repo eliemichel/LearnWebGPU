@@ -14,3 +14,4 @@ References (🚧WIP)
  - Filament's [material guide](https://google.github.io/filament/Materials.html) and [design document](https://google.github.io/filament/Filament.html)
  - A simple playground for testing WGSL shaders: [https://takahirox.github.io/online-wgsl-editor](https://takahirox.github.io/online-wgsl-editor)
  - A guide to get started with the WebGPU Shader Language[Tour of WGSL](https://google.github.io/tour-of-wgsl/)
+ - Examples of AI tool based on WebGPU: https://mlc.ai/web-llm/ and https://mlc.ai/web-stable-diffusion/

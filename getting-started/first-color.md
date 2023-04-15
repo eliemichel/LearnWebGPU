@@ -3,7 +3,7 @@ First Color
 
 *Resulting code:* [`step020`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step020)
 
-The goal of this chapter is to draw a solid color all over our window. This will be the occasion to introduce 3 new concepts of WebGPU:
+The goal of this chapter is to **draw a solid color** all over our window. This will be the occasion to introduce 3 new concepts of WebGPU:
 
  - Swap Chains
  - Texture Views
@@ -14,13 +14,13 @@ Swap Chain
 
 ### Drawing process
 
-To understand the notion of *Swap Chain*, we need to know a little more about how the window's surface is drawn.
+To understand the notion of **Swap Chain**, we need to know a little more about how the window's surface is drawn.
 
-First, the render pipeline does not draw directly on the texture that is currently displayed, otherwise we would see pixels change all the time. A typical pipeline draws to an off-screen texture, which replaces the currently displayed one only once it is complete. We then say that the texture is **presented** to the surface.
+First, the render pipeline **does not draw directly on the texture that is currently displayed**, otherwise we would see pixels change all the time. A typical pipeline draws to an off-screen texture, which replaces the currently displayed one only once it is complete. We then say that the texture is **presented** to the surface.
 
-Second, drawing takes a different time than the frame rate required by your application, so the GPU may have to wait until the next frame is needed. There might be more than one off-screen texture waiting in the queue to be presented, so that fluctuations in the render time get amortized.
+Second, drawing takes a **different time** than the frame rate required by your application, so the GPU may have to wait until the next frame is needed. There might be more than one off-screen texture waiting in the queue to be presented, so that fluctuations in the render time get amortized.
 
-Last, these textures are reused as much as possible. As soon as a new texture is presented, the previous one can be reused as a target for the next frame. This whole texture swapping mechanism is implemented by the **Swap Chain** object.
+Last, **these off-screen textures are reused** as much as possible. As soon as a new texture is presented, the previous one can be reused as a target for the next frame. This whole texture swapping mechanism is implemented by the **Swap Chain** object.
 
 ```{note}
 Remember that the GPU process runs at its own pace and that our CPU-issued commands are only asynchronously executed. Implementing the swap chain process manually would hence require a lot of boilerplate, so we are glad it is provided by the API!
@@ -38,15 +38,16 @@ As always, we pass swap chain creation option through a descriptor. A first obvi
 
 ```C++
 WGPUSwapChainDescriptor swapChainDesc = {};
+swapChainDesc.nextInChain = nullptr;
 swapChainDesc.width = 640;
 swapChainDesc.height = 480;
 ```
 
 ```{warning}
-As you can guess, we will have to take care of creating a new swap chain when the window is resized. In the meantime, do not try to resize it. You may add `glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);` before creating the window to instruct GLFW to disable resizing.
+As you can guess, we will have to take care of creating a new swap chain **when the window is resized**. In the meantime, do not try to resize it. You may add `glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);` before creating the window to instruct GLFW to disable resizing.
 ```
 
-For the swap chain to allocate textures, we also need to specify their *format*. The format is a combination of a number of channels (a subset of red, green, blue, alpha), a size per channel (8, 16 or 32 bits) and a channel type (float, integer, signed or not), a compression scheme, a normalization mode, etc.
+For the swap chain to **allocate textures**, we also need to specify their **format**. The format is a combination of a number of channels (a subset of red, green, blue, alpha), a size per channel (8, 16 or 32 bits) and a channel type (float, integer, signed or not), a compression scheme, a normalization mode, etc.
 
 All available combinations are listed in the `WGPUTextureFormat` enum, but since our swap chain targets an existing surface, we can just use whichever format the surface uses:
 
@@ -59,7 +60,7 @@ swapChainDesc.format = swapChainFormat;
 When using the Dawn implementation of WebGPU, `wgpuSurfaceGetPreferredFormat` is not implemented yet. Actually, the only texture format it supports is `WGPUTextureFormat_BGRA8Unorm`.
 ```
 
-Like buffers, textures are allocated for a specific usage. In our case, we will use them as the target of a Render Pass so it needs to be created with the `RenderAttachment` usage flag:
+Textures are allocated for a **specific usage**, that dictates the way the GPU organizes its memory. In our case, we use the swap chain textures as targets for a *Render Pass* so it needs to be created with the `RenderAttachment` usage flag:
 
 ```C++
 swapChainDesc.usage = WGPUTextureUsage_RenderAttachment;
@@ -75,7 +76,7 @@ Finally, we can tell which texture from the waiting queue must be presented at e
 The `Force32` enum values that you can find when reading the source code of `webgpu.h` is not a "legal" value, it is just here to force the underlying enum type to be a 32 bit integer.
 ```
 
-In our case, we use a Fifo, as illustrated in the video above.
+In our case, we use `Fifo`, as illustrated in the video above.
 
 ```C++
 swapChainDesc.presentMode = WGPUPresentMode_Fifo;
@@ -99,7 +100,7 @@ If you get the error `Uncaptured device error: type 3 (Device(OutOfMemory))` whe
 Texture View
 ------------
 
-Let's move on to the main loop and see how to use the swap chain. As explained above, the swap chain provides us with the texture where to draw the next frame. It is as simple as this:
+Let's move on to the **main loop** and see how to use the swap chain. As explained above, the swap chain provides us with the texture where to draw the next frame. It is as simple as this:
 
 ```C++
 // In the main loop
@@ -107,9 +108,9 @@ WGPUTextureView nextTexture = wgpuSwapChainGetCurrentTextureView(swapChain);
 std::cout << "nextTexture: " << nextTexture << std::endl;
 ```
 
-Note that this returns a *Texture View*. This gives restricted access to the actual texture object allocated by the swap chain, so that internally the swap chain can use whatever organization it wants while exposing a view that has the dimensions and format that we expect.
+Note that this returns a **Texture View**. This gives a restricted access to the actual texture object allocated by the swap chain, so that internally the swap chain can use whatever organization it wants while exposing a view that has the dimensions and format that we expect.
 
-Getting the texture may fail, in particular if the window has been resized and thus the target surface changed, so don't forget to check that it is not null:
+Getting the texture view **may fail**, in particular if the window has been resized and thus the target surface changed, so don't forget to check that it is not null:
 
 ```C++
 if (!nextTexture) {

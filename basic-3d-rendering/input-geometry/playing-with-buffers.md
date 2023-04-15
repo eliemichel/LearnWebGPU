@@ -3,11 +3,7 @@ Playing with buffers
 
 *Resulting code:* [`step018`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step018)
 
-This is the last off-screen chapter, where we introduce *buffers*. A buffer is "just" a chunk of memory allocated in the VRAM (the GPU's memory). Think of it as some kind of `new` or `malloc` for the GPU.
-
-```{tip}
-You can skip this chapter if you want to quickly get to the next section and start manipulating colors. We will not use buffers directly, but this helps understanding the mechanisms of the API.
-```
+Before feeding vertex data to the render pipeline, we need to get familiar with the notion of **buffer**. A buffer is "just" a chunk of memory allocated in the VRAM (the GPU's memory). Think of it as some kind of `new` or `malloc` for the GPU.
 
 One notable difference is that we must state some hint about our use of this memory upon its creation. For instance, if we are going to use it only to write it from the CPU but never to read it back, we set its `CopyDst` flag on but not the `CopySrc` flag. This not fully agnostic memory management helps the device figure out the best memory layout.
 
@@ -118,7 +114,7 @@ Make sure the calls to `wgpuBufferDestroy` are issued *after* the main loop, oth
 
 You should now see `Buffer 2 mapped with status 0` (0 being the value of `WGPUBufferMapAsyncStatus_Success`) when running your program.
 
-Now, we need to get more than a status when running this callback, we need to access the buffer. We will thus use the `void *userdata` pointer communicated from the original call to `wgpuBufferMapAsync` to the callback, like we did in [the adapter request](the-adapter.md) or [the device request](the-device.md):
+Now, we need to get more than a status when running this callback, we need to access the buffer. We will thus use the `void *userdata` pointer communicated from the original call to `wgpuBufferMapAsync` to the callback, like we did in [the adapter request](../../getting-started/the-adapter.md) or [the device request](../../getting-started/the-device.md):
 
 
 ```C++
@@ -173,6 +169,6 @@ We have seen a number of important notions in this chapter:
  - buffers
  - asynchronous operations
 
-We did not see very exciting operations on buffers though. More interesting ones are defined by *passes*, and in particular by the *render pass* that we will see in the next chapter.
+We can now use a buffer to specify vertex attributes, in particular vertex positions!
 
 *Resulting code:* [`step018`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step018)

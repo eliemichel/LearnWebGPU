@@ -13,7 +13,6 @@ hello-webgpu
 the-adapter
 the-device
 the-command-queue
-buffers
 first-color
 
 cpp-idioms

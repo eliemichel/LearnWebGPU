@@ -164,6 +164,8 @@ We have seen a few important notions in this chapter:
  - Commands are streamed from CPU to GPU through a **command queue**.
  - Queued command buffers must be encoded using a **command encoder**.
 
-This was a bit abstract because we can queue operations but we did not see any yet. The next chapter shows how to use it to manipulate **buffers**, but you may also skip it to go right away to your [first color](/getting-started/first-color.md) and come back to it later on.
+This was a bit abstract because we can queue operations but we did not see any yet. In the next chapter we use it to **finally display something** in our window!
+
+We will also see in [*Playing with buffers*](../basic-3d-rendering/input-geometry/playing-with-buffers.md) how to use it for GPU-side buffer manipulation.
 
 *Resulting code:* [`step017`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step017)
