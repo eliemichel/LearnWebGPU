@@ -40,10 +40,10 @@ Since `wgpu-native` is written in rust, we cannot easily build it from scratch s
  - [wgpu-native for Linux](../data/wgpu-native-for-linux.zip)
  - [wgpu-native for Windows](../data/wgpu-native-for-windows.zip)
  - [wgpu-native for MacOS](../data/wgpu-native-for-macos.zip)
- - [wgpu-native for any plateform](https://github.com/eliemichel/WebGPU-distribution/archive/refs/heads/wgpu.zip) (a bit heavier as it's a merge of all the above basically)
+ - [wgpu-native for any platform](https://github.com/eliemichel/WebGPU-distribution/archive/refs/heads/wgpu.zip) (a bit heavier as it's a merge of all the above basically)
 
 ```{important}
-**WIP:** Use the "any plateform" link rather than the platform-specific ones, I haven't automated their generation yet so they are usually behind the main one.
+**WIP:** Use the "any platform" link rather than the platform-specific ones, I haven't automated their generation yet so they are usually behind the main one.
 ```
 
 ```{note}
@@ -61,7 +61,7 @@ The pre-compiled binaries are provided by the `wgpu-native` project itself so yo
 
 Dawn gives much better error messages, and since it is written in C++ we can build it from source and thus inspect more deeply the stack trace in case of crash:
 
- - [Dawn for any plateform](https://github.com/eliemichel/WebGPU-distribution/archive/refs/heads/dawn.zip)
+ - [Dawn for any platform](https://github.com/eliemichel/WebGPU-distribution/archive/refs/heads/dawn.zip)
 
 ```{important}
 **WIP:** The first steps of this guide were more intensively tested with `wgpu-native`. Some later parts were tested with both and I tried to includes notes about the differences but for now I recommend using `wgpu-native` at least at the beginning.
