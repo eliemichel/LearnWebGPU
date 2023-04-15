@@ -139,41 +139,115 @@ And of course depending on your choice the pros and cons of *Option A* and *Opti
 Testing the installation
 ------------------------
 
-To test the setup, we call the `wgpuCreateInstance` function at the beginning of our main function. Like many WebGPU functions meant to **create** an entity, it takes as argument a **descriptor**, which we can use to specify options regarding how to set up this object.
-
-And once again we meet a WebGPU idiom in the `WGPUInstanceDescriptor` structure. Its first field is a pointer called `nextInChain`. This is a generic way for the API to enable custom extensions to be added in the future, or to return multiple entries of data. In a lot of cases, we set it to `nullptr`.
+To test the implementation, we simply create the WebGPU **instance**, i.e., the equivalent of the `navigator.gpu` we could get in JavaScript. We then check it and destroy it.
 
 ```{lit} C++, file: main.cpp
 #include <webgpu/webgpu.h>
 #include <iostream>
 
+{{Fix a wgpu-native/Dawn mismatch}}
+
 int main (int, char**) {
-	// We create the equivalent of the navigator.gpu if this were web code
+    {{Create WebGPU instance}}
 
-    // 1. We create a descriptor
-	WGPUInstanceDescriptor desc = {};
-    desc.nextInChain = nullptr;
+    {{Check WebGPU instance}}
 
-    // 2. We create the instance using this descriptor
-	WGPUInstance instance = wgpuCreateInstance(&desc);
+    {{Destroy WebGPU instance}}
 
-    // 3. We can check whether there is actually an instance created
-    if (!instance) {
-        std::cerr << "Could not initialize WebGPU!" << std::endl;
-        return 1;
-    }
-
-    // 4. Display the object (WGPUInstance is a simple pointer, it may be
-    // copied around without worrying about its size).
-	std::cout << "WGPU instance: " << instance << std::endl;
+    return 0;
 }
 ```
 
-This should build correctly and display something like `WGPU instance: 000001C0D2637720` at startup.
+### Descriptors and Creation
 
-Differences between implementations
------------------------------------
+The instance is created using the `wgpuCreateInstance` function. Like all WebGPU functions meant to **create** an entity, it takes as argument a **descriptor**, which we can use to specify options regarding how to set up this object.
 
+```{lit} C++, Create WebGPU instance
+// 1. We create a descriptor
+WGPUInstanceDescriptor desc = {};
+desc.nextInChain = nullptr;
+
+// 2. We create the instance using this descriptor
+WGPUInstance instance = wgpuCreateInstance(&desc);
+```
+
+```{note}
+The descriptor is a kind of way to pack many function arguments together, because some descriptors really have a lot of fields. It can also be used to write utility functions that take care of populating the arguments, to ease the program's architecture.
+```
+
+We meet another WebGPU idiom in the `WGPUInstanceDescriptor` structure: the first field of a descriptor is always a pointer called `nextInChain`. This is a generic way for the API to enable custom extensions to be added in the future, or to return multiple entries of data. In a lot of cases, we set it to `nullptr`.
+
+
+### Check
+
+A WebGPU entity created with a `wgpuCreateSomething` function is technically **just a pointer**. It is a blind handle that identifies the actual object, which lives on the backend side and to which we never need direct access.
+
+To check that an object is valid, we can just compare it with `nullptr`, or use the boolean operator:
+
+```{lit} C++, Check WebGPU instance
+// 3. We can check whether there is actually an instance created
+if (!instance) {
+    std::cerr << "Could not initialize WebGPU!" << std::endl;
+    return 1;
+}
+
+// 4. Display the object (WGPUInstance is a simple pointer, it may be
+// copied around without worrying about its size).
+std::cout << "WGPU instance: " << instance << std::endl;
+```
+
+This should display something like `WGPU instance: 000001C0D2637720` at startup.
+
+### Destruction and lifetime management
+
+The destruction of entities is a part of the API on which `wgpu-native` and Dawn [do not agree yet](https://github.com/webgpu-native/webgpu-headers/issues/9). The key difference is that Dawn provides a reference counting mechanism but `wgpu-native` does not:
+
+```C++
+// A. With wgpu-native
+
+WGPUSomething sth = wgpuCreateSomething(/* descriptor */);
+// This means "the object sth will never be used ever again"
+// and destroys the object right away.
+wgpuSomethingDrop(sth);
+```
+
+```C++
+// B. With Dawn
+
+WGPUSomething sth = wgpuCreateSomething(/* descriptor */);
+// This means "increase the ref counter of the object sth by 1"
+wgpuSomethingReference(sth);
+// Now the reference is 2 (it is set to 1 at creation)
+
+// This means "decrease the ref counter of the object sth by 1
+// and if it gets down to 0 then destroy the object"
+wgpuSomethingRelease(sth);
+// Now the reference is back to 1, the object can still be used
+
+// Release again
+wgpuSomethingRelease(sth);
+// Now the reference is down to 0, the object is destroyed and
+// should no longer be used!
+```
+
+In practice **as long as we never use** `wgpuSomethingRelease`, the behavior of wgpu-native's **Drop** and Dawn's **Release** is the same so we set up an alias:
+
+```{lit} C++, Fix a wgpu-native/Dawn mismatch
+#ifdef WEBGPU_BACKEND_WGPU
+// wgpu-native's non-standard parts are in a different header file:
+#include <webgpu/wgpu.h>
+#define wgpuInstanceRelease wgpuInstanceDrop
+#endif
+```
+
+And we can simply call the Dawn-style *Release* procedure:
+
+```{lit} C++, Destroy WebGPU instance
+// 5. We clean up the WebGPU instance
+wgpuInstanceRelease(instance);
+```
+
+````{note}
 In order to handle the slight differences between implementations, the distributions I provide also define the following preprocessor variables:
 
 ```C++
@@ -188,5 +262,11 @@ In order to handle the slight differences between implementations, the distribut
 ```
 
 The case of emscripten only occurs when trying to compile our code as a WebAssembly module, which is covered in the [Building for the Web](../appendices/building-for-the-web.md) appendix.
+````
+
+Conclusion
+----------
+
+In this chapter we set up WebGPU and learnt that there are **multiple backends** available. We also saw the basic idioms of **object creation and destruction** that will be used all the time in WebGPU API!
 
 *Resulting code:* [`step005`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step005)
