@@ -24,7 +24,7 @@ In this documentation, we learn a graphics API called [WebGPU](https://www.w3.or
 ```{figure} /images/rhi.png
 :align: center
 :class: with-shadow
-WebGPU is a *Render Hardware Interface* built on top of the various APIs provided by the driver/OS depending on your plateform. This duplicated development effort is made once by the web browsers and made available to us through the `webgpu.h` header they provide.
+WebGPU is a *Render Hardware Interface* built on top of the various APIs provided by the driver/OS depending on your platform. This duplicated development effort is made once by the web browsers and made available to us through the `webgpu.h` header they provide.
 ```
 
 <!--
