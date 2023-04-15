@@ -1,6 +1,11 @@
 The Command Queue
 =================
 
+```{lit-setup}
+:tangle-root: 020 - The Command Queue
+:parent: 015 - The Device
+```
+
 *Resulting code:* [`step017`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step017)
 
 We are getting close, but we will still not display anything on our window. We learn in this chapter a key concept of WebGPU (and of most modern graphics APIs as well): the **command queue**.
@@ -34,7 +39,7 @@ Queue operations
 
 Our WebGPU device has a single queue, which we can get with `wgpuDeviceGetQueue`.
 
-```C++
+```{lit} C++, Get Queue
 WGPUQueue queue = wgpuDeviceGetQueue(device);
 ```
 
@@ -52,7 +57,7 @@ The first one only sends commands (potentially complicated ones though), and the
 
 We also find a `wgpuQueueOnSubmittedWorkDone` procedure that we can use to set up a function to be called back once the work is done. Let us do it to make sure things happen as expected:
 
-```C++
+```{lit} C++, Add queue callback
 auto onQueueWorkDone = [](WGPUQueueWorkDoneStatus status, void* /* pUserData */) {
 	std::cout << "Queued work finished with status: " << status << std::endl;
 };
@@ -61,6 +66,16 @@ wgpuQueueOnSubmittedWorkDone(queue, onQueueWorkDone, nullptr /* pUserData */);
 
 ```{error}
 As of now, the `wgpuQueueOnSubmittedWorkDone` is not implemented by our wgpu-native backend. Using it will result in a null pointer exception so do not copy the above code block.
+```
+
+```{lit} C++, Add queue callback (replace, hidden)
+#ifdef WEBGPU_BACKEND_DAWN
+// Add a callback to monitor the moment queued work winished
+auto onQueueWorkDone = [](WGPUQueueWorkDoneStatus status, void* /* pUserData */) {
+    std::cout << "Queued work finished with status: " << status << std::endl;
+};
+wgpuQueueOnSubmittedWorkDone(queue, 0 /* non standard argument for Dawn */, onQueueWorkDone, nullptr /* pUserData */);
+#endif // WEBGPU_BACKEND_DAWN
 ```
 
 Submitting commands
@@ -115,7 +130,7 @@ Command encoder
 
 A command encoder is created following the usual object creation idiom of WebGPU:
 
-```C++
+```{lit} C++, Create Command Encoder
 WGPUCommandEncoderDescriptor encoderDesc = {};
 encoderDesc.nextInChain = nullptr;
 encoderDesc.label = "My command encoder";
@@ -124,14 +139,14 @@ WGPUCommandEncoder encoder = wgpuDeviceCreateCommandEncoder(device, &encoderDesc
 
 We can now use the encoder to write instructions (debug placeholder for now).
 
-```C++
+```{lit} C++, Add commands
 wgpuCommandEncoderInsertDebugMarker(encoder, "Do one thing");
 wgpuCommandEncoderInsertDebugMarker(encoder, "Do another thing");
 ```
 
 And then finally generating the command from the encoder also requires an extra descriptor:
 
-```C++
+```{lit} C++, Finish encoding
 WGPUCommandBufferDescriptor cmdBufferDescriptor = {};
 cmdBufferDescriptor.nextInChain = nullptr;
 cmdBufferDescriptor.label = "Command buffer";
@@ -140,6 +155,22 @@ WGPUCommandBuffer command = wgpuCommandEncoderFinish(encoder, &cmdBufferDescript
 // Finally submit the command queue
 std::cout << "Submitting command..." << std::endl;
 wgpuQueueSubmit(queue, 1, &command);
+```
+
+```{note}
+The `Finish` operation also destroys the `encoder`, it must not be called afterwards and there is no need to call `wgpuCommandEncoderRelease`. Similarly the `wgpuQueueSubmit` takes care of destroying the command buffer.
+```
+
+```{lit} C++, Test command encoding (hidden)
+{{Get Queue}}
+{{Add queue callback}}
+{{Create Command Encoder}}
+{{Add commands}}
+{{Finish encoding}}
+```
+
+```{lit} C++, Create things (append, hidden)
+{{Test command encoding}}
 ```
 
 This should output:
