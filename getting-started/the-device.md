@@ -1,6 +1,11 @@
 The Device
 ==========
 
+```{lit-setup}
+:tangle-root: 015 - The Device
+:parent: 010 - The Adapter - Part B
+```
+
 *Resulting code:* [`step015`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step015)
 
 A WebGPU **device** represents a **context** of use of the API. All the objects that we create (geometry, textures, etc.) are owned by the device.
@@ -21,7 +26,11 @@ Device request
 
 Requesting the device looks a lot like requesting the adapter, so we will use a very similar function:
 
-```C++
+```{lit} C++, Utility functions (append, hidden)
+{{Request device function}}
+```
+
+```{lit} C++, Request device function
 /**
  * Utility function to get a WebGPU device, so that
  *     WGPUAdapter device = requestDevice(adapter, options);
@@ -63,16 +72,69 @@ WGPUDevice requestDevice(WGPUAdapter adapter, WGPUDeviceDescriptor const * descr
 In the accompanying code, I moved these utility functions into `webgpu-utils.cpp`
 ```
 
+```{lit} C++, file: webgpu-utils.h (hidden)
+#pragma once
+
+#include <webgpu/webgpu.h>
+
+/**
+ * Utility function to get a WebGPU adapter, so that
+ *     WGPUAdapter adapter = requestAdapter(options);
+ * is roughly equivalent to
+ *     const adapter = await navigator.gpu.requestAdapter(options);
+ */
+WGPUAdapter requestAdapter(WGPUInstance instance, WGPURequestAdapterOptions const * options);
+
+/**
+ * Utility function to get a WebGPU device, so that
+ *     WGPUAdapter device = requestDevice(adapter, options);
+ * is roughly equivalent to
+ *     const device = await adapter.requestDevice(descriptor);
+ * It is very similar to requestAdapter
+ */
+WGPUDevice requestDevice(WGPUAdapter adapter, WGPUDeviceDescriptor const * descriptor);
+
+/**
+ * An example of how we can inspect the capabilities of the hardware through
+ * the adapter object.
+ */
+void inspectAdapter(WGPUAdapter adapter);
+
+/**
+ * Display information about a device
+ */
+void inspectDevice(WGPUDevice device);
+```
+
+```{lit} C++, file: webgpu-utils.cpp (hidden)
+#include "webgpu-utils.h"
+
+#include <iostream>
+#include <vector>
+#include <cassert>
+
+{{Utility functions}}
+```
+
+```{lit} C++, Includes (prepend, hidden)
+#include "webgpu-utils.h"
+```
+
 In the main function, after getting the adapter, we can request the device:
 
-```C++
+```{lit} C++, Request device
 std::cout << "Requesting device..." << std::endl;
 
 WGPUDeviceDescriptor deviceDesc = {};
-// (We will build the device descriptor here)
+{{Build device descriptor}}
 WGPUDevice device = requestDevice(adapter, &deviceDesc);
 
 std::cout << "Got device: " << device << std::endl;
+```
+
+```{lit} C++, Create things (append, hidden)
+{{Request device}}
+{{Setup device callbacks}}
 ```
 
 Device descriptor
@@ -99,7 +161,7 @@ typedef struct WGPUQueueDescriptor {
 
 For now we will initialize this to a very minimal option:
 
-```C++
+```{lit} C++, Build device descriptor
 deviceDesc.nextInChain = nullptr;
 deviceDesc.label = "My Device"; // anything works here, that's your call
 deviceDesc.requiredFeaturesCount = 0; // we do not require any specific feature
@@ -119,7 +181,7 @@ Device error callback
 
 Before moving on to the next section, I would like you to add this call after creating the device:
 
-```C++
+```{lit} C++, Setup device callbacks
 auto onDeviceError = [](WGPUErrorType type, char const* message, void* /* pUserData */) {
 	std::cout << "Uncaptured device error: type " << type;
 	if (message) std::cout << " (" << message << ")";
@@ -133,3 +195,55 @@ This defines **a callback that gets executed upon errors**, which is very handy 
 If you use a debugger (which I recommend), like `gdb` or you IDE, I recommend you **put a breakpoint** in this callback, so that your program pauses and provides you with a call stack whenever WebGPU encounters an unexpected error.
 
 *Resulting code:* [`step015`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step015)
+
+```{lit} C++, Utility functions (append, hidden)
+// We also add an inspect device function:
+void inspectDevice(WGPUDevice device) {
+	std::vector<WGPUFeatureName> features;
+	size_t featureCount = wgpuDeviceEnumerateFeatures(device, nullptr);
+	features.resize(featureCount);
+	wgpuDeviceEnumerateFeatures(device, features.data());
+
+	std::cout << "Device features:" << std::endl;
+	for (auto f : features) {
+		std::cout << " - " << f << std::endl;
+	}
+
+	WGPUSupportedLimits limits = {};
+	limits.nextInChain = nullptr;
+	bool success = wgpuDeviceGetLimits(device, &limits);
+	if (success) {
+		std::cout << "Device limits:" << std::endl;
+		std::cout << " - maxTextureDimension1D: " << limits.limits.maxTextureDimension1D << std::endl;
+		std::cout << " - maxTextureDimension2D: " << limits.limits.maxTextureDimension2D << std::endl;
+		std::cout << " - maxTextureDimension3D: " << limits.limits.maxTextureDimension3D << std::endl;
+		std::cout << " - maxTextureArrayLayers: " << limits.limits.maxTextureArrayLayers << std::endl;
+		std::cout << " - maxBindGroups: " << limits.limits.maxBindGroups << std::endl;
+		std::cout << " - maxDynamicUniformBuffersPerPipelineLayout: " << limits.limits.maxDynamicUniformBuffersPerPipelineLayout << std::endl;
+		std::cout << " - maxDynamicStorageBuffersPerPipelineLayout: " << limits.limits.maxDynamicStorageBuffersPerPipelineLayout << std::endl;
+		std::cout << " - maxSampledTexturesPerShaderStage: " << limits.limits.maxSampledTexturesPerShaderStage << std::endl;
+		std::cout << " - maxSamplersPerShaderStage: " << limits.limits.maxSamplersPerShaderStage << std::endl;
+		std::cout << " - maxStorageBuffersPerShaderStage: " << limits.limits.maxStorageBuffersPerShaderStage << std::endl;
+		std::cout << " - maxStorageTexturesPerShaderStage: " << limits.limits.maxStorageTexturesPerShaderStage << std::endl;
+		std::cout << " - maxUniformBuffersPerShaderStage: " << limits.limits.maxUniformBuffersPerShaderStage << std::endl;
+		std::cout << " - maxUniformBufferBindingSize: " << limits.limits.maxUniformBufferBindingSize << std::endl;
+		std::cout << " - maxStorageBufferBindingSize: " << limits.limits.maxStorageBufferBindingSize << std::endl;
+		std::cout << " - minUniformBufferOffsetAlignment: " << limits.limits.minUniformBufferOffsetAlignment << std::endl;
+		std::cout << " - minStorageBufferOffsetAlignment: " << limits.limits.minStorageBufferOffsetAlignment << std::endl;
+		std::cout << " - maxVertexBuffers: " << limits.limits.maxVertexBuffers << std::endl;
+		std::cout << " - maxVertexAttributes: " << limits.limits.maxVertexAttributes << std::endl;
+		std::cout << " - maxVertexBufferArrayStride: " << limits.limits.maxVertexBufferArrayStride << std::endl;
+		std::cout << " - maxInterStageShaderComponents: " << limits.limits.maxInterStageShaderComponents << std::endl;
+		std::cout << " - maxComputeWorkgroupStorageSize: " << limits.limits.maxComputeWorkgroupStorageSize << std::endl;
+		std::cout << " - maxComputeInvocationsPerWorkgroup: " << limits.limits.maxComputeInvocationsPerWorkgroup << std::endl;
+		std::cout << " - maxComputeWorkgroupSizeX: " << limits.limits.maxComputeWorkgroupSizeX << std::endl;
+		std::cout << " - maxComputeWorkgroupSizeY: " << limits.limits.maxComputeWorkgroupSizeY << std::endl;
+		std::cout << " - maxComputeWorkgroupSizeZ: " << limits.limits.maxComputeWorkgroupSizeZ << std::endl;
+		std::cout << " - maxComputeWorkgroupsPerDimension: " << limits.limits.maxComputeWorkgroupsPerDimension << std::endl;
+	}
+}
+```
+
+```{lit} C++, Create things (append, hidden)
+inspectDevice(device);
+```

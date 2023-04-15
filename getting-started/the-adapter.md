@@ -149,7 +149,7 @@ Here again we face the difference between `wgpu-native` and Dawn, so we need to 
 #include <webgpu/webgpu.h>
 ```
 
-```{lit} C++, Includes (append)
+```{lit} C++, Includes (prepend)
 #include "webgpu-release.h"
 ```
 

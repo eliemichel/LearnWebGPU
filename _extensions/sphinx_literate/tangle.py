@@ -33,7 +33,7 @@ def _tangle_rec(
             sublit = registry.get_rec_by_key(parsed_link.key, override_tangle_root=override_tangle_root)
             if sublit is None:
                 message = (
-                    f"Literate code block not found: '{name}' " +
+                    f"Literate code block not found: '{parsed_link.key}' " +
                     f"(in lit directive from {lit.source_location.format()}, " +
                     f"tangle root {lit.tangle_root})"
                 )
