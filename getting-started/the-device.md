@@ -116,8 +116,27 @@ void inspectDevice(WGPUDevice device);
 {{Utility functions}}
 ```
 
+```{lit} C++, Utility functions in main.cpp (replace, hidden)
+```
+
 ```{lit} C++, Includes (prepend, hidden)
 #include "webgpu-utils.h"
+```
+
+```{lit} CMake, Define app target (replace, hidden)
+{{Dependency subdirectories}}
+
+add_executable(App
+	{{App source files}}
+)
+
+{{Link libraries}}
+```
+
+```{lit} CMake, App source files (hidden)
+main.cpp
+webgpu-utils.h
+webgpu-utils.cpp
 ```
 
 In the main function, after getting the adapter, we can request the device:
@@ -135,6 +154,12 @@ std::cout << "Got device: " << device << std::endl;
 ```{lit} C++, Create things (append, hidden)
 {{Request device}}
 {{Setup device callbacks}}
+```
+
+And before destroying the adapter, we release the device:
+
+```{lit} C++, Destroy things (prepend)
+wgpuDeviceRelease(device);
 ```
 
 Device descriptor

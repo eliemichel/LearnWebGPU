@@ -156,7 +156,7 @@ Here again we face the difference between `wgpu-native` and Dawn, so we need to 
 ```{lit} C++, file: main.cpp (hidden)
 {{Includes}}
 
-{{Utility functions}}
+{{Utility functions in main.cpp}}
 
 int main() {
 	{{Create things}}
@@ -165,6 +165,10 @@ int main() {
 
 	{{Destroy things}}
 }
+```
+
+```{lit} C++, Utility functions in main.cpp (hidden)
+{{Utility functions}}
 ```
 
 ```{lit} C++, Utility functions (hidden)

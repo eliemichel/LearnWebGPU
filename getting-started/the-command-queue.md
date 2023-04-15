@@ -2,7 +2,7 @@ The Command Queue
 =================
 
 ```{lit-setup}
-:tangle-root: 020 - The Command Queue
+:tangle-root: 017 - The Command Queue
 :parent: 015 - The Device
 ```
 
@@ -146,7 +146,7 @@ wgpuCommandEncoderInsertDebugMarker(encoder, "Do another thing");
 
 And then finally generating the command from the encoder also requires an extra descriptor:
 
-```{lit} C++, Finish encoding
+```{lit} C++, Finish encoding and submit
 WGPUCommandBufferDescriptor cmdBufferDescriptor = {};
 cmdBufferDescriptor.nextInChain = nullptr;
 cmdBufferDescriptor.label = "Command buffer";
@@ -166,7 +166,7 @@ The `Finish` operation also destroys the `encoder`, it must not be called afterw
 {{Add queue callback}}
 {{Create Command Encoder}}
 {{Add commands}}
-{{Finish encoding}}
+{{Finish encoding and submit}}
 ```
 
 ```{lit} C++, Create things (append, hidden)

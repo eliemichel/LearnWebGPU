@@ -382,9 +382,9 @@ class CodeBlockRegistry:
             lit.relation_to_prev = 'NEW'
             self._add_codeblock(lit)
 
-        self._fix_missing_referess(lit)
+        self._fix_missing_referees(lit)
 
-    def _fix_missing_referess(self, lit):
+    def _fix_missing_referees(self, lit):
         """
         Notify all children tangles that a new block `lit` is defined and thus
         may no longer be missing.
@@ -394,7 +394,7 @@ class CodeBlockRegistry:
         register is created.)
         """
         for child_tangle in self._all_children_tangle_roots(lit.tangle_root):
-            new_missing = []
+            new_missing_list = []
             for missing in self._missing:
                 if missing.key == CodeBlock.build_key(lit.name, child_tangle):
                     child_lit = self.get_by_key(missing.key)
@@ -402,8 +402,8 @@ class CodeBlockRegistry:
                     assert(child_lit.relation_to_prev not in {'NEW', 'INSERTED'})
                     child_lit.prev = lit
                 else:
-                    new_missing.append(missing)
-            self._missing = new_missing
+                    new_missing_list.append(missing)
+            self._missing = new_missing_list
 
     def _add_codeblock(self, lit: CodeBlock) -> None:
         """
@@ -467,6 +467,7 @@ class CodeBlockRegistry:
         defined before the other one (matters when resolving missing blocks).
         The other registry must no longer be used after this.
         """
+        X = next(iter(other._blocks.values()))
         # Merge tangle hierarchies
         for h in other._hierarchy.values():
             self.set_tangle_parent(h.root, h.parent, h.source_location, h.fetch_files)
@@ -477,7 +478,7 @@ class CodeBlockRegistry:
                 self._add_codeblock(lit)
             else:
                 self._override_codeblock(lit, lit.relation_to_prev)
-            self._fix_missing_referess(lit)
+            self._fix_missing_referees(lit)
             self.check_integrity(allow_missing=True)
 
         # Merge cross-references
@@ -699,7 +700,17 @@ class CodeBlockRegistry:
 
         for missing in self._missing:
             lit = self.get_by_key(missing.key)
+
+            # Sanity checks
             assert(lit is not None)
+            missing_root, missing_name = missing.key.split("##", 1)
+            missing_root_parent = self._parent_tangle_root(missing_root)
+            if missing_root_parent is not None:
+                #assert(self.get_rec(missing_name, missing_root_parent) is None)
+                # Accept that this may be wrong, this whole _missing thing is overengineered anyways
+                if self.get_rec(missing_name, missing_root_parent) is not None:
+                    break
+
             action_str = {
                 'APPEND': "append to",
                 'PREPEND': "prepend to",
@@ -742,6 +753,14 @@ class CodeBlockRegistry:
                     + f" [{next_lit.relation_to_prev}]"
                 ]
                 next_lit = next_lit.next
+        ret += [""]
+        ret += ["Hierarchy:"]
+        for h in self._hierarchy.values():
+            ret += [f" - {h.root}"]
+            ret += [f"   | Parent: {h.parent} [exists: {h.parent in self._hierarchy}]"]
+            if 'SHOW LOCATION' in options:
+                ret += [f"   | From: " + h.source_location.format()]
+            ret += [f"   | Fetch files: {h.fetch_files}"]
         ret += [""]
         ret += ["Missing:"]
         for missing in self._missing:
