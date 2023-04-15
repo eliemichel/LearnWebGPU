@@ -1,6 +1,12 @@
 The Adapter
 ===========
 
+```{lit-setup}
+:tangle-root: 010 - The Adapter
+:parent: 005 - Hello WebGPU
+:fetch-files: ../data/webgpu-release.h
+```
+
 *Resulting code:* [`step010`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step010)
 
 Requesting the adapter
@@ -35,7 +41,7 @@ void onAdapterRequestEnded(
 	char const* message, // error message, or nullptr
 	void* userdata // custom user data, as provided when requesting the adapter
 ) {
-	// do something with the adapter
+	// [...] Do something with the adapter
 }
 wgpuInstanceRequestAdapter(
 	instance /* equivalent of navigator.gpu */,
@@ -58,11 +64,15 @@ wgpuSomethingSomeAction(something, ...)
 The first argument of the fonction is always a "handle" (a blind pointer) representing an object of type "Something".
 ````
 
+### Request
+
 We can wrap this in a `requestAdapter()` function that mimicks the JS `await requestAdapter()`:
 
-```C++
+```{lit} C++, Includes (append)
 #include <cassert>
+```
 
+```{lit} C++, Request adapter function
 /**
  * Utility function to get a WebGPU adapter, so that
  *     WGPUAdapter adapter = requestAdapter(options);
@@ -116,13 +126,47 @@ WGPUAdapter requestAdapter(WGPUInstance instance, WGPURequestAdapterOptions cons
 
 In the main function, after opening the window, we can get the adapter:
 
-```C++
+```{lit} C++, Request adapter
 std::cout << "Requesting adapter..." << std::endl;
 
 WGPURequestAdapterOptions adapterOpts = {};
 WGPUAdapter adapter = requestAdapter(instance, &adapterOpts);
 
 std::cout << "Got adapter: " << adapter << std::endl;
+```
+
+### Destruction
+
+Like for the WebGPU instance, we must destroy the adapter:
+
+```{lit} C++, Destroy adapter
+wgpuAdapterRelease(adapter);
+```
+
+Here again we face the difference between `wgpu-native` and Dawn, so we need to set up an alias to use the "release" version. To make things easier, I made a little [`webgpu-release.h`](../data/webgpu-release.h) file that defines such an alias for all types of objects. You can save next to your `main.cpp` and include:
+
+```{lit} C++, Includes (append, hidden)
+#include <webgpu/webgpu.h>
+```
+
+```{lit} C++, Includes (append)
+#include "webgpu-release.h"
+```
+
+We can finally wrap it up and test that the adapter request goes well:
+
+```{lit} C++, file: main.cpp
+{{Includes}}
+
+{{Request adapter function}}
+
+int main() {
+	{{Create WebGPU instance}}
+	{{Request adapter}}
+
+	{{Destroy adapter}}
+	{{Destroy WebGPU instance}}
+}
 ```
 
 The Surface
