@@ -298,7 +298,17 @@ class LitBlockInfo extends HTMLElement {
 		}
 
 		if (options.get('showReferenceDetails')) {
-			const details = ['replaced by', 'completed in', 'completing', 'patched by', 'replacing', 'referenced in', 'inserted in'];
+			const details = [
+				'replaced by',
+				'completed in',
+				'completing',
+				'prepended in',
+				'prepending',
+				'patched by',
+				'replacing',
+				'referenced in',
+				'inserted in'
+			];
 			details.map(section => {
 				if (data[section].length > 0) {
 					wrapper.append(document.createTextNode(" " + section + " "));

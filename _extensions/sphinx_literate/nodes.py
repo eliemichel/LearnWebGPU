@@ -151,9 +151,11 @@ class LiterateNode(nodes.General, nodes.Element):
                 'hidden': node.lit.hidden,
                 'replaced by': [],
                 'completed in': [],
+                'prepended in': [],
                 'patched by': [],
                 'replacing': [],
                 'completing': [],
+                'prepending': [],
                 'inserted in': [],
                 'referenced in': [],
             }
@@ -162,6 +164,7 @@ class LiterateNode(nodes.General, nodes.Element):
                 section = {
                     'REPLACE': 'replacing',
                     'APPEND': 'completing',
+                    'PREPEND': 'prepending',
                     'INSERT': None, # not happening
                     'INSERTED': 'inserted in',
                 }[node.lit.relation_to_prev]
@@ -186,6 +189,7 @@ class LiterateNode(nodes.General, nodes.Element):
                 section = {
                     'REPLACE': 'replaced by',
                     'APPEND': 'completed in',
+                    'PREPEND': 'prepended in',
                     'INSERT': 'patched by',
                     'INSERTED': None, # not happening
                 }[node.lit.next.relation_to_prev]

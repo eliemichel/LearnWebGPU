@@ -81,9 +81,9 @@ class CodeBlock:
     next: CodeBlock | None = None
     prev: CodeBlock | None = None
 
-    # This is either 'NEW*'', 'APPEND' or 'REPLACE', telling whether this block's
-    # content must be added to the result of evaluating the previous ones or
-    # whether it replaces the previous content.
+    # This is either 'NEW*'', 'APPEND', 'PREPEND' or 'REPLACE', telling whether
+    # this block's content must be added to the result of evaluating the
+    # previous ones or whether it replaces the previous content.
     # The difference between NEW and REPLACE is that REPLACE affects lit
     # references in the parent tangle but NEW creates an independant chain of
     # blocks (which may or may not have the same name as one block from the
@@ -179,7 +179,7 @@ class CodeBlock:
                         inserted_block = n.inserted_block
                         if registry is not None:
                             inserted_block = registry.get_rec_by_key(n.inserted_block.key, override_tangle_root=tangle_root)
-                        for ll in inserted_block.all_content(tangle_root):
+                        for ll in inserted_block.all_content(registry, tangle_root):
                             yield ll
                     matched.append(pattern)
             for pattern in matched:
@@ -195,17 +195,37 @@ class CodeBlock:
         # If no replace, maybe add source from the parent tangle
         if start.prev is not None and start.relation_to_prev in {'APPEND', 'INSERT'}:
             assert(start.prev.tangle_root != start.tangle_root)
-            for l in start.prev.all_content(tangle_root):
+            for l in start.prev.all_content(registry, tangle_root):
                 for ll in maybeInsert(l):
                     yield ll
 
         # Content of the start and next blocks
         lit = start
+        # (Because of PREPEND we can no longer "stream" the yields, we need to
+        # save everything in a list and yields lines afterwards.)
+        consolidated_content = []
+        test = False
         while lit is not None:
+            chunk = []
             for l in lit.content:
                 for ll in maybeInsert(l):
-                    yield ll
+                    chunk.append(ll)
+            if lit.relation_to_prev == 'PREPEND':
+                consolidated_content.insert(0, chunk)
+            else:
+                consolidated_content.append(chunk)
             lit = lit.next
+
+        for chunk in consolidated_content:
+            for ll in chunk:
+                yield ll
+
+        # Add parent tangle afterwards if this block is prepended
+        if start.prev is not None and start.relation_to_prev in {'PREPEND'}:
+            assert(start.prev.tangle_root != start.tangle_root)
+            for l in start.prev.all_content(registry, tangle_root):
+                for ll in maybeInsert(l):
+                    yield ll
 
         for placement, node_dict in insert_nodes.items():
             for pattern, nodes in node_dict.items():
@@ -312,6 +332,10 @@ class CodeBlockRegistry:
            code block to the code block that already has the same name.
            If such a block does not exist, it is added to the list of missing
            blocks (so check_integrity() will raise an exception).
+         - If 'PREPEND' is present in the options, add the content of the code
+           block to beginning of the code block that already has the same name.
+           If such a block does not exist, it is added to the list of missing
+           blocks (so check_integrity() will raise an exception).
          - If 'REPLACE' is in the options, replace a block and all its children
            with a new one. If such a block does not exist, it is added to the
            list of missing blocks.
@@ -330,6 +354,8 @@ class CodeBlockRegistry:
         lit.hidden = 'HIDDEN' in options
         if 'APPEND' in options:
             self._override_codeblock(lit, 'APPEND')
+        elif 'PREPEND' in options:
+            self._override_codeblock(lit, 'PREPEND')
         elif 'REPLACE' in options:
             self._override_codeblock(lit, 'REPLACE')
         elif 'INSERT' in opt_dict:
@@ -539,7 +565,7 @@ class CodeBlockRegistry:
         """
         Get a block and recursively search for it in parent tangles
         If a root override is provided, first look there for a block that has
-        a 'REPLACE' or 'APPEND' relation.
+        a 'APPEND', 'PREPEND' or 'REPLACE' relation.
         """
 
         # Explore downstream parent tree towards the 'override' root.
@@ -676,6 +702,7 @@ class CodeBlockRegistry:
             assert(lit is not None)
             action_str = {
                 'APPEND': "append to",
+                'PREPEND': "prepend to",
                 'REPLACE': "replace",
                 'INSERT': "insert to",
                 'INSERTED': "???",

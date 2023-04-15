@@ -2,7 +2,7 @@ The Adapter
 ===========
 
 ```{lit-setup}
-:tangle-root: 010 - The Adapter
+:tangle-root: 010 - The Adapter - Part A
 :parent: 005 - Hello WebGPU
 :fetch-files: ../data/webgpu-release.h
 ```
@@ -153,29 +153,50 @@ Here again we face the difference between `wgpu-native` and Dawn, so we need to 
 #include "webgpu-release.h"
 ```
 
-We can finally wrap it up and test that the adapter request goes well:
-
-```{lit} C++, file: main.cpp
+```{lit} C++, file: main.cpp (hidden)
 {{Includes}}
 
-{{Request adapter function}}
+{{Utility functions}}
 
 int main() {
-	{{Create WebGPU instance}}
-	{{Request adapter}}
+	{{Create things}}
 
-	{{Destroy adapter}}
-	{{Destroy WebGPU instance}}
+	{{Main body}}
+
+	{{Destroy things}}
 }
+```
+
+```{lit} C++, Utility functions (hidden)
+{{Request adapter function}}
+```
+
+```{lit} C++, Create things (hidden)
+{{Create WebGPU instance}}
+{{Request adapter}}
+```
+
+```{lit} C++, Main body (hidden)
+```
+
+```{lit} C++, Destroy things (hidden)
+{{Destroy adapter}}
+{{Destroy WebGPU instance}}
 ```
 
 The Surface
 -----------
 
-We actually need to pass an option to the adapter request: the *surface* onto which we draw.
+```{lit-setup}
+:tangle-root: 010 - The Adapter - Part B
+:parent: 010 - The Adapter - Part A
+:fetch-files: ../data/glfw3webgpu.zip
+```
 
-```C++
-WGPUSurface surface = ???;
+We actually need to pass an option to the adapter request: the **surface** onto which we draw.
+
+```{lit} C++, Request adapter (replace)
+{{Get the surface}}
 
 WGPURequestAdapterOptions adapterOpts = {};
 adapterOpts.nextInChain = nullptr;
@@ -190,30 +211,52 @@ How do we get the surface? This depends on the OS, and GLFW does not handle this
 
 Download and unzip [glfw3webgpu.zip](https://github.com/eliemichel/glfw3webgpu/releases/download/v1.0.1/glfw3webgpu-v1.0.1.zip) in your project's directory. There should now be a directory `glfw3webgpu` sitting next to your `main.cpp`. Like we have done before, we can add this directory and link the target it creates to our App:
 
-```CMake
+```{lit} CMake, Dependency subdirectories (append)
 add_subdirectory(glfw3webgpu)
+```
 
-# [...]
-
+```{lit} CMake, Link libraries (replace)
 target_link_libraries(App PRIVATE glfw webgpu glfw3webgpu)
-```
-
-You can now `#include <glfw3webgpu.h>` at the beginning of your `main.cpp` and get the surface by simply doing:
-
-```C++
-WGPUSurface surface = glfwGetWGPUSurface(instance, window);
-```
-
-One last thing: we can **tell GLFW not to care about the graphics API** setup, as it does not know WebGPU and we won't use what it could set up by default for other APIs:
-
-```C++
-glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API); // NEW
-GLFWwindow* window = glfwCreateWindow(640, 480, "Learn WebGPU", NULL, NULL);
-// [...]
+target_copy_webgpu_binaries(App)
 ```
 
 ```{note}
 The `glfw3webgpu` library is very simple, it is only made of 2 files so we could have almost included them directly in our project's source tree. However, it requires some special compilation flags in macOS that we would have had to deal with (you can see them in the `CMakeLists.txt`).
+```
+
+You can now `#include <glfw3webgpu.h>` at the beginning of your `main.cpp` and get the surface by simply doing:
+
+```{lit} C++, Get the surface
+WGPUSurface surface = glfwGetWGPUSurface(instance, window);
+```
+
+```{lit} C++, Includes (append, hidden)
+#include <glfw3webgpu.h>
+```
+
+One last thing: we can **tell GLFW not to care about the graphics API** setup, as it does not know WebGPU and we won't use what it could set up by default for other APIs:
+
+```{lit} C++, Create window
+glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API); // NEW
+GLFWwindow* window = glfwCreateWindow(640, 480, "Learn WebGPU", NULL, NULL);
+```
+
+```{lit} C++, Create things (prepend, hidden)
+{{Create window}}
+```
+
+```{lit} C++, Main body (replace, hidden)
+{{Main loop}}
+```
+
+```{lit} C++, Destroy things (append, hidden)
+glfwDestroyWindow(window);
+```
+
+The `glfwWindowHint` function is a way to pass optional arguments to `glfwCreateWindow`. Here we tell it to initialize no particular graphics API by default, as we manage this ourselves.
+
+```{tip}
+I invite you to look at the documentation of GLFW to know more about [`glfwCreateWindow`](https://www.glfw.org/docs/latest/group__window.html#ga3555a418df92ad53f917597fe2f64aeb) and other related functions.
 ```
 
 Inspecting the adapter
@@ -227,10 +270,11 @@ We call the function **twice**. The **first time**, we provide a null pointer as
 
 We then dynamically **allocate memory** for storing this many items of result, and call the same function a **second time**, this time with a pointer to where the result should store its result.
 
-```C++
+```{lit} C++, Includes (append)
 #include <vector>
-// [...]
+```
 
+```C++
 std::vector<WGPUFeatureName> features;
 
 // Call the function a first time with a null return address, just to get
