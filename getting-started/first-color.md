@@ -60,13 +60,27 @@ For the swap chain to **allocate textures**, we also need to specify their **for
 
 All available combinations are listed in the `WGPUTextureFormat` enum, but since our swap chain targets an existing surface, we can just use whichever format the surface uses:
 
-```{lit} C++, Describe Swap Chain (append)
+```{lit} C++, Describe Swap Chain format
 WGPUTextureFormat swapChainFormat = wgpuSurfaceGetPreferredFormat(surface, adapter);
 swapChainDesc.format = swapChainFormat;
 ```
 
+```{lit} C++, Describe Swap Chain (append, hidden)
+{{Describe Swap Chain format}}
+```
+
 ```{admonition} Dawn
 When using the Dawn implementation of WebGPU, `wgpuSurfaceGetPreferredFormat` is not implemented yet. Actually, the only texture format it supports is `WGPUTextureFormat_BGRA8Unorm`.
+
+```
+
+```{lit} C++, Describe Swap Chain format (replace, hidden)
+#ifdef WEBGPU_BACKEND_WGPU
+    WGPUTextureFormat swapChainFormat = wgpuSurfaceGetPreferredFormat(surface, adapter);
+#else
+    WGPUTextureFormat swapChainFormat = WGPUTextureFormat_BGRA8Unorm;
+#endif
+swapChainDesc.format = swapChainFormat;
 ```
 
 Textures are allocated for a **specific usage**, that dictates the way the GPU organizes its memory. In our case, we use the swap chain textures as targets for a *Render Pass* so it needs to be created with the `RenderAttachment` usage flag:
@@ -226,17 +240,6 @@ renderPassColorAttachment.storeOp = WGPUStoreOp_Store;
 renderPassColorAttachment.clearValue = WGPUColor{ 0.9, 0.1, 0.2, 1.0 };
 ```
 
-````{admonition} Dawn
-Dawn also has a legacy `clearColor` field that must be set to "not a number" so that `clearValue` is taken into account.
-
-```{lit} C++, Set up the attachment (append)
-#if defined(WEBGPU_BACKEND_DAWN) || defined(WEBGPU_BACKEND_EMSCRIPTEN)
-    constexpr auto NaN = std::numeric_limits<double>::quiet_NaN();
-    renderPassColorAttachment.clearColor = Color{ NaN, NaN, NaN, NaN };
-#endif
-```
-````
-
 ### Misc
 
 There is also one special type of attachment, namely the *depth* and *stencil* attachment (it is a single attachment potentially containing two channels). We'll come back on this later on, for now we do not use it so we set it to null:
@@ -272,6 +275,10 @@ At this stage you should be able to get a colored window. This seems simple, but
 :align: center
 :class: with-shadow
 Our first color!
+```
+
+```{note}
+When using Dawn, the displayed color is potentially different because the surface color format uses another color space. More on this [later](../basic-3d-rendering/input-geometry/loading-from-file.md)!
 ```
 
 We are now ready with the basic WebGPU setup, and can dive more deeply in the 3D rendering pipeline.
