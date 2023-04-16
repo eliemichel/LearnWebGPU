@@ -2,11 +2,11 @@ Physically-Based Materials (🚧WIP)
 ==========================
 
 ````{tab} With webgpu.hpp
-*Resulting code:* [`step120`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step120)
+*Resulting code:* [`step125`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step125)
 ````
 
 ````{tab} Vanilla webgpu.h
-*Resulting code:* [`step120-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step120-vanilla)
+*Resulting code:* [`step125-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step125-vanilla)
 ````
 
 TODO
@@ -45,15 +45,27 @@ Test bench
 
 We will focus our tests by using a simple sphere.
 
+```{figure} /images/pbr-test-roughness.png
+:align: center
+:class: with-shadow
+The same dielectric object with a roughness varrying from $0.41$ to $0.79$.
+```
+
+```{figure} /images/pbr-test-roughness-metallic.png
+:align: center
+:class: with-shadow
+The same metallic object with a roughness varrying from $0.15$ to $0.83$.
+```
+
 Conclusion
 ----------
 
 I recommend reading the [design document](https://google.github.io/filament/Filament.html) from the Filament render engine, which gives very insightful and ready-to-use information.
 
 ````{tab} With webgpu.hpp
-*Resulting code:* [`step120`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step120)
+*Resulting code:* [`step125`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step125)
 ````
 
 ````{tab} Vanilla webgpu.h
-*Resulting code:* [`step120-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step120-vanilla)
+*Resulting code:* [`step125-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step125-vanilla)
 ````
