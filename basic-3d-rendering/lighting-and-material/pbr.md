@@ -57,6 +57,12 @@ The same dielectric object with a roughness varrying from $0.41$ to $0.79$.
 The same metallic object with a roughness varrying from $0.15$ to $0.83$.
 ```
 
+```{figure} /images/pbr-test-roughness-metallic-boat.png
+:align: center
+:class: with-shadow
+Row 1: Varying from rough to glossy on a dielectric material. Row 2: Varying from dielectric to metallic (one should not use in-between though). Row 3: Varying from rough to glossy on a metallic material.
+```
+
 Conclusion
 ----------
 

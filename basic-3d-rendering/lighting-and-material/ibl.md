@@ -114,6 +114,13 @@ Our approach so far has 3 problems:
 
  - To be able to represent at the same time the sun and color details in indirectly lit areas, the environment texture usually uses **high-dynamic range** image formats like .hdr or .exr.
 
+Cube Maps
+---------
+
+The computation of the `ibl_uv` coordinates at which we sample the lighting is a bit costly, due to the `acos` and `atan2` operations. A more efficient way to store the environment map is as a **cube map**.
+
+TODO
+
 Conclusion
 ----------
 

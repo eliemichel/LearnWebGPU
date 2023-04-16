@@ -2,11 +2,11 @@ Compute Pipeline (🚧WIP)
 ================
 
 ````{tab} With webgpu.hpp
-*Resulting code:* [`step200`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step200)
+*Resulting code:* [`step201`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step201)
 ````
 
 ````{tab} Vanilla webgpu.h
-*Resulting code:* [`step200-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step200-vanilla)
+*Resulting code:* [`step201-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step201-vanilla)
 ````
 
 Rendering 3D data is the original use of GPUs, but it is far from being the only one nowadays. And even for 3D application, we sometimes use the GPU for non-rendering things, such as simulation, image processing, etc.
@@ -18,7 +18,7 @@ This chapter introduces the skeleton for running **compute shaders**, which are 
 Compute Pass
 ------------
 
-Remember how we drew [our first color](../getting-started/first-color.md), we submitted to the command queue a particular render-specific sequence of instructions called a `RenderPass`. The approach to run compute-only shaders is similar, and uses a `ComputePass` instead.
+Remember how we drew [our first color](../getting-started/first-color.md)? We submitted to the command queue a particular render-specific sequence of instructions called a `RenderPass`. The approach to run compute-only shaders is similar, and uses a `ComputePass` instead.
 
 For the sake of the examples throughout this chapter, we create a `computeStuff` function that we call once at the end of `onInit`. You may also remove the main loop is `main.cpp` because we won't need the interactive part.
 
@@ -101,7 +101,7 @@ At this point, it is possible to invoke our shader as long as we have no bind gr
 // Use compute pass
 computePass.setPipeline(computePipeline);
 //computePass.setBindGroup(/* ... */);
-computePass.dispatchWorkgroups(1, 0, 0);
+computePass.dispatchWorkgroups(1, 1, 1);
 ```
 
 Yey! Except... it does virtually nothing, because without accessing any resource, the compute shader cannot communicate any output.
@@ -184,7 +184,7 @@ BindGroup bindGroup = m_device.createBindGroup(bindGroupDesc);
 ```C++
 // Use compute pass
 computePass.setPipeline(computePipeline);
-computePass.setBindGroup(0, bindGroup, {});
+computePass.setBindGroup(0, bindGroup, 0, nullptr);
 computePass.dispatchWorkgroups(1, 1, 1);
 ```
 
@@ -205,19 +205,14 @@ encoder.copyBufferToBuffer(outputBuffer, 0, mapBuffer, 0, bufferDesc.size);
 
 // Print output
 bool done = false;
-auto handle = outputBuffer.mapAsync(MapMode::Read, 0, bufferDesc.size, [&](BufferMapAsyncStatus status) {
+auto handle = mapBuffer.mapAsync(MapMode::Read, 0, bufferDesc.size, [&](BufferMapAsyncStatus status) {
 	if (status == BufferMapAsyncStatus::Success) {
-		// Theory
-		//const float* output = (const float*)outputBuffer.getConstMappedRange(0, bufferDesc.size);
-		// wgpu-native
-		const float* output = (const float*)outputBuffer.getMappedRange(0, bufferDesc.size);
-		// Dawn
-		const float* output = (const float*)wgpuBufferGetConstMappedRange(mapBuffer, 0, bufferDesc.size);
+		const float* output = (const float*)mapBuffer.getConstMappedRange(0, bufferDesc.size);
 
 		for (int i = 0; i < input.size(); ++i) {
 			std::cout << "input " << input[i] << " became " << output[i] << std::endl;
 		}
-		outputBuffer.unmap();
+		mapBuffer.unmap();
 	}
 	done = true;
 });
@@ -246,9 +241,9 @@ Conclusion
 ----------
 
 ````{tab} With webgpu.hpp
-*Resulting code:* [`step200`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step200)
+*Resulting code:* [`step201`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step201)
 ````
 
 ````{tab} Vanilla webgpu.h
-*Resulting code:* [`step200-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step200-vanilla)
+*Resulting code:* [`step201-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step201-vanilla)
 ````
