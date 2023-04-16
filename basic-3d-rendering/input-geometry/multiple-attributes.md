@@ -323,8 +323,6 @@ wgpuRenderPassEncoderSetVertexBuffer(renderPass, 1, colorBuffer, 0, colorData.si
 Conclusion
 ----------
 
-TODO
-
 ```{figure} /images/color-attribute.png
 :align: center
 :class: with-shadow

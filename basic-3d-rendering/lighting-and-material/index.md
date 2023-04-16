@@ -11,6 +11,5 @@ recap
 specular
 normal-mapping
 ibl
-hdr-textures
 pbr
 ```

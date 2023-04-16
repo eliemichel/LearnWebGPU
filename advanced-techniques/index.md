@@ -7,6 +7,7 @@ Contents
 ```{toctree}
 :titlesonly:
 
+hdr-textures
 deferred-shading
 benchmarking
 multi-sampling
