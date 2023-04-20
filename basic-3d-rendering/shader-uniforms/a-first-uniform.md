@@ -191,7 +191,7 @@ BindGroupLayout bindGroupLayout = device.createBindGroupLayout(bindGroupLayoutDe
 // Create the pipeline layout
 PipelineLayoutDescriptor layoutDesc{};
 layoutDesc.bindGroupLayoutCount = 1;
-layoutDesc.bindGroupLayouts = &(WGPUBindGroupLayout)bindGroupLayout;
+layoutDesc.bindGroupLayouts = (WGPUBindGroupLayout*)&bindGroupLayout;
 PipelineLayout layout = device.createPipelineLayout(layoutDesc);
 ```
 ````

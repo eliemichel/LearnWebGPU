@@ -179,8 +179,12 @@ For our shader to actually communicate with an input and output buffer, we need 
 We add in the compute shader the two buffer bindings as variables defined in the `storage`address space. It is important to specify the **access mode**, which is `read` for the input and `read_write` for the output (there is no "write only" mode):
 
 ```rust
-@group(0) @binding(0) var<storage,read> inputBuffer: array<f32,32>;
-@group(0) @binding(1) var<storage,read_write> outputBuffer: array<f32,32>;
+@group(0) @binding(0) var<storage,read> inputBuffer: array<f32,64>;
+@group(0) @binding(1) var<storage,read_write> outputBuffer: array<f32,64>;
+```
+
+```{note}
+The [`array`](https://gpuweb.github.io/gpuweb/wgsl/#array-types) type of WGSL is very similar to the [`std::array`](https://en.cppreference.com/w/cpp/container/array) type of C++.
 ```
 
 And we create on the C++ side a **bind group layout** that matches these bindings:
@@ -227,63 +231,169 @@ The objects `m_bindGroupLayout` and `m_pipelineLayout` are attributes of the `Ap
 Before binding the buffers, we must of course create them (in `initBuffers`):
 
 ```C++
-// Create input/output buffers
+// We save this size in an attribute, it will be useful later on
+m_bufferSize = 64 * sizeof(float);
+
+// Create input buffers
 BufferDescriptor bufferDesc;
 bufferDesc.mappedAtCreation = false;
-bufferDesc.size = 32 * sizeof(float);
+bufferDesc.size = m_bufferSize;
 bufferDesc.usage = BufferUsage::Storage | BufferUsage::CopyDst;
 Buffer inputBuffer = m_device.createBuffer(bufferDesc);
+
+
+// Create output buffer: the only difference is the usage
 bufferDesc.usage = BufferUsage::Storage | BufferUsage::MapRead;
 Buffer outputBuffer = m_device.createBuffer(bufferDesc);
+```
 
+We can already fill in the input buffer with some values:
+
+```C++
 // Fill in input buffer
-std::vector<float> input(32);
+std::vector<float> input(m_bufferSize / sizeof(float));
 for (int i = 0; i < input.size(); ++i) {
 	input[i] = 0.1f * i;
 }
-queue.writeBuffer(inputBuffer, 0, input.data(), input.size() * sizeof(float));
+queue.writeBuffer(inputBuffer, 0, input.data(), m_bufferSize);
 ```
 
 ### Bind Group
 
-TODO
+Remember: the bind group **layout** was telling *how* to bind resources to the shader. Once we effectively have created these resources (the buffers), we can define a **bind group** to tell *what* to bind:
 
 ```C++
-// Create compute bind group
-std::vector<BindGroupEntry> entries(2, Default);
-// Input buffer
-entries[0].binding = 0;
-entries[0].buffer = inputBuffer;
-entries[0].offset = 0;
-entries[0].size = bufferDesc.size;
-// Output buffer
-entries[1].binding = 1;
-entries[1].buffer = outputBuffer;
-entries[1].offset = 0;
-entries[1].size = bufferDesc.size;
+void Application::initBindGroup() {
+	// Create compute bind group
+	std::vector<BindGroupEntry> entries(2, Default);
 
-BindGroupDescriptor bindGroupDesc;
-bindGroupDesc.layout = bindGroupLayout;
-bindGroupDesc.entryCount = (uint32_t)entries.size();
-bindGroupDesc.entries = (WGPUBindGroupEntry*)entries.data();
-BindGroup bindGroup = m_device.createBindGroup(bindGroupDesc);
+	// Input buffer
+	entries[0].binding = 0;
+	entries[0].buffer = m_inputBuffer;
+	entries[0].offset = 0;
+	entries[0].size = m_bufferSize;
+
+	// Output buffer
+	entries[1].binding = 1;
+	entries[1].buffer = m_outputBuffer;
+	entries[1].offset = 0;
+	entries[1].size = m_bufferSize;
+
+	BindGroupDescriptor bindGroupDesc;
+	bindGroupDesc.layout = m_bindGroupLayout;
+	bindGroupDesc.entryCount = (uint32_t)entries.size();
+	bindGroupDesc.entries = (WGPUBindGroupEntry*)entries.data();
+	m_bindGroup = m_device.createBindGroup(bindGroupDesc);
+}
 ```
 
-Invoking the compute shader `1 * 1 * 1 * workgroup_size` times:
+Once the bind group is created, it can be bound to the pipeline in `onCompute()`:
 
 ```C++
-// Use compute pass
 computePass.setPipeline(computePipeline);
+// Set the bind group:
 computePass.setBindGroup(0, bindGroup, 0, nullptr);
 computePass.dispatchWorkgroups(1, 1, 1);
 ```
 
-The invocation id is provided to the `computeStuff` entry point through the `global_invocation_id` built-in input:
+Invocation
+----------
+
+### Concurrent calls
+
+Now that the the `dispatchWorkgroups` call actually does something, let us explain a little more what it does.
+
+A compute shader (and more generally a GPU) is **good at doing the same thing multiple times in parallel**, so built in this *dispatch* operation is the possibility to call the shader's entry point multiple times.
+
+Instead of providing a single number of concurrent calls, we express this number as a **grid** (a.k.a. **dispatch**) of $x \times y \times z$ **workgroups**:
+
+```C++
+computePass.dispatchWorkgroups(x, y, z);
+```
+
+Beware that this launches $x \times y \times z$ **workgroups**, i.e., groups of calls. Each workgroup is itself a little block of $w \times h \times d$ **threads**, each of which runs the entry point. The workgroup size is set by the shader's entry point:
+
+```rust
+@compute
+@workgroup_size(w, d, h)
+fn computeStuff() {
+	// [...]
+}
+```
+
+```{note}
+The workgroup sizes must be constant expressions.
+```
+
+### Workgroup size vs count
+
+> 😟 Okey, that makes a lot of variables just to set a number of jobs that is just the product of them in the end, doesn't it?
+
+The thing is: **all combinations are not equivalent**, even if they multiply to the same number of threads.
+
+The jobs are **not really all launched at once**: under the hood a scheduler organizes the execution of individual workgroups. What we can now is that the jobs from the **same workgroup** are launched together, but two **different workgroup** might get executed at significantly different times.
+
+The appropriate size for a workgroup **depends a lot on the task** that threads run. Here are some rules of thumb about the **workgroup size versus workgroup count**:
+
+ - The number $w \times h \times d$ of threads per workgroup should be a multiple of 32, because within a workgroup threads are launched by **warps** of (usually a multiple of) 32 threads.
+
+ - The total resource usage of a workgroup should be kept to a **minimum**, so that the scheduler has more freedom in organizing things.
+
+ - When threads **share memory** with each others, it is cheaper if they are in the same workgroup (and even cheaper if they are in the same warp).
+
+ - Group threads that are likely to have the **same branching path**. Threads from the same warp share the same instruction pointer, so threads are idling when one of their neighbors follows a different branch of an `if` or loop condition.
+
+ - Try to have workgroup sizes be powers of two.
+
+```{note}
+These rules are somehow contradictory. Only a benchmark on your specific use case can tell you what the best trade-off is.
+```
+
+### Workgroup dimensions
+
+> 😟 Ok I see better now, but what about the different axes $w$, $h$ and $d$? Is a workgroup size of $2 \times 2 \times 4$ different from $16 \times 1 \times 1$?
+
+It is different indeed, because this size **give hints to the hardware** about the potential **consistency of memory access** across threads.
+
+Both the CPU and the GPU try in general to guess patterns in the way consecutive and/or concurrent operations use memory, in order for instance to [prefetch](https://en.wikipedia.org/wiki/Cache_prefetching) memory in caches or to group (a.k.a. "coalesce") concurrent read/writes into a single memory access.
+
+Since a very common task of the GPU is to process **data organized as a 2D or 3D grid**, a graphics API provides grid-based data storage (**textures**) and grid-based concurrency model. When neighbor threads access neighbor pixels/voxels in a similar way, the hardware can better anticipate what is happening.
+
+So the main rule of thumb here is that although the $x$, $y$ and $z$ axes are at first glance abstract values that are "just" multiplied together, you should really use them as the $x$, $y$ and $z$ axes of your data grid.
+
+### In practice
+
+In our simple example, we process data laid out in 1D buffers, so our dispatch is also a one dimensional series of workgroups: $(x, y, z) = (x, 1, 1)$ and $(w, h, d) = (w, 1, 1)$.
+
+The workgroup size $w$ should be at least 32, and there is no apparent reason for it to be more than that. So in the end, we dispatch workgroups of `32 * 1 * 1` threads:
+
+```rust
+@compute @workgroup_size(32, 1, 1) // or just @workgroup_size(32)
+fn computeStuff() {
+    // [...]
+}
+```
+
+And we infer the number of workgroups from the expected invocation calls:
+
+```C++
+uint32_t invocationCount = m_bufferSize / sizeof(float);
+uint32_t workgroupSize = 32;
+// This ceils invocationCount / workgroupSize
+uint32_t workgroupCount = (invocationCount + workgroupSize - 1) / workgroupSize;
+computePass.dispatchWorkgroups(workgroupCount, 1, 1);
+```
+
+```{note}
+Be careful about ceiling the `invocationCount / workgroupSize` division instead of flooring it, otherwise when `workgroupSize` does not exactly divide `invocationCount` the last threads will be missing.
+```
+
+All we need now is to now in which thread of which workgroup we are, to figure out which index of the buffer we need to process. This is given by [built-in shader inputs](https://gpuweb.github.io/gpuweb/wgsl/#built-in-values-global_invocation_id), and in particular the **invocation id** provided as the `global_invocation_id` built-in:
 
 ```rust
 @compute @workgroup_size(32)
 fn computeStuff(@builtin(global_invocation_id) id: vec3<u32>) {
-    // Compute stuff
+    // Apply the function f to the buffer element at index id.x:
     outputBuffer[id.x] = f(inputBuffer[id.x]);
 }
 ```
@@ -329,9 +439,6 @@ while (!done) {
 	wgpuQueueSubmit(queue, 0, nullptr);
 }
 ```
-
-When to use compute shaders?
-----------------------------
 
 Conclusion
 ----------
