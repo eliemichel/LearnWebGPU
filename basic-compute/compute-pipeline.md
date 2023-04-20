@@ -15,6 +15,10 @@ When using the GPU for **general purpose** computation (GPGPU), we usually **do 
 
 This chapter introduces the skeleton for running **compute shaders**, which are shaders ran outside of the fixed-function pipeline.
 
+```{note}
+We do not expect you to have read the whole 3D rendering part of the guide, but at least up to the end of the [Shader Uniforms](../basic-3d-rendering/shader-uniforms/index.md) part.
+```
+
 Compute Pass
 ------------
 

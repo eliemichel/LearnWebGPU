@@ -113,6 +113,10 @@ wgpuQueueWriteBuffer(queue, indexBuffer, 0, indexData.data(), bufferDesc.size);
 ```
 ````
 
+```{note}
+A `writeBuffer` operation must copy a number of bytes that is a multiple of 4. To ensure so we can switch `bufferDesc.size` for `(bufferDesc.size + 3) & ~4`.
+```
+
 Render pass
 -----------
 

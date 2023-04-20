@@ -100,7 +100,7 @@ Buffer data
 
 The basic idea is to have a buffer that is **twice the size** of `MyUniforms`. For the first draw call, we set the dynamic offset to 0 so that it uses the first set of values, then we issue a second draw call with an offset of `sizeof(MyUniforms)` to point to the second half of the buffer.
 
-There is one thing though: the value of the offset is constrained by the `minStorageBufferOffsetAlignment` limit of the device.
+There is one thing though: the value of the offset is constrained by the `minUniformBufferOffsetAlignment` limit of the device.
 
 ```
   ---------------------------------     ---------------------------------
@@ -110,7 +110,7 @@ There is one thing though: the value of the offset is constrained by the `minSto
  ^^^^^^ first instance of the MyUniform struct
 ```
 
-This means that the **stride** of the uniform buffer is the largest of `sizeof(MyUniforms)` and `minStorageBufferOffsetAlignment`:
+This means that the **stride** of the uniform buffer is the largest of `sizeof(MyUniforms)` and `minUniformBufferOffsetAlignment`:
 
 ````{tab} With webgpu.hpp
 ```C++
@@ -122,7 +122,7 @@ Limits deviceLimits = supportedLimits.limits;
 // Subtlety
 uint32_t uniformStride = std::max(
 	(uint32_t)sizeof(MyUniforms),
-	(uint32_t)deviceLimits.minStorageBufferOffsetAlignment
+	(uint32_t)deviceLimits.minUniformBufferOffsetAlignment
 );
 ```
 ````
@@ -137,7 +137,7 @@ WGPULimits deviceLimits = supportedLimits.limits;
 // Subtlety
 uint32_t uniformStride = std::max(
 	(uint32_t)sizeof(MyUniforms),
-	(uint32_t)deviceLimits.minStorageBufferOffsetAlignment
+	(uint32_t)deviceLimits.minUniformBufferOffsetAlignment
 );
 ```
 ````
