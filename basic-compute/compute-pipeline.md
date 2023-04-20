@@ -19,17 +19,35 @@ This chapter introduces the skeleton for running **compute shaders**, which are 
 We do not expect you to have read the whole 3D rendering part of the guide, but at least up to the end of the [Shader Uniforms](../basic-3d-rendering/shader-uniforms/index.md) part.
 ```
 
-Compute Pass
-------------
+Set-up
+------
 
-Remember how we drew [our first color](../getting-started/first-color.md)? We submitted to the command queue a particular render-specific sequence of instructions called a `RenderPass`. The approach to run compute-only shaders is similar, and uses a `ComputePass` instead.
+### A simple example
 
-For the sake of the examples throughout this chapter, we create a `computeStuff` function that we call once at the end of `onInit`. You may also remove the main loop is `main.cpp` because we won't need the interactive part.
+Let us start with a very **simple problem**: we have a GPU-side buffer and want to evaluate a simple function `f` for each element of this buffer:
+
+```rust
+// In WGSL
+fn f(x: f32) -> f32 {
+	return 2.0 * x + 1.0;
+}
+```
+
+A **naive solution** would be to copy this buffer back to the CPU, evaluate the function here, and upload the result to the GPU again. But this is **very inefficient** for two reasons:
+
+ - The CPU-GPU **copies** are expansive, especially for large buffers.
+ - Since `f` is applied independently to each values, the problem is very **parallel**, and the GPU is much better than the CPU at this type of *Single Instruction Multiple Data* (SIMD) parallelism.
+
+So we set up a compute shader that evaluates `f` directly on the GPU, and save the result in a second buffer.
+
+### Architecture
+
+For the sake of the examples throughout this chapter, we create a `onCompute` function that we call once after `onInit`. You may also remove the main loop is `main.cpp` because we won't need the interactive part.
 
 We reuse the same outline as when submitting our render pass on `onFrame`:
 
 ```C++
-void Application::computeStuff() {
+void Application::onCompute() {
 	// Initialize a command encoder
 	Queue queue = m_device.getQueue();
 	CommandEncoderDescriptor encoderDesc = Default;
@@ -40,8 +58,45 @@ void Application::computeStuff() {
 	// Encode and submit the GPU commands
 	CommandBuffer commands = encoder.finish(CommandBufferDescriptor{});
 	queue.submit(commands);
+
+	// Clean up
+#if !defined(WEBGPU_BACKEND_WGPU)
+	wgpuCommandBufferRelease(commands);
+	wgpuCommandEncoderRelease(encoder);
+	wgpuQueueRelease(queue);
+#endif
 }
 ```
+
+In the initialization method, we mostly keep the initialization of the device and create (private) methods to organize the different steps:
+
+```C++
+bool Application::onInit() {
+	if (!initDevice()) return false;
+	initBindGroupLayout();
+	initComputePipeline();
+	initBuffers();
+	initBindGroup();
+	return true;
+}
+```
+
+Each `initSomething` step comes with a `terminateSomething` that is called at the end in reverse order:
+
+```C++
+void Application::onFinish() {
+	terminateBindGroup();
+	terminateBuffers();
+	terminateComputePipeline();
+	terminateBindGroupLayout();
+	terminateDevice();
+}
+```
+
+Compute Pass
+------------
+
+Remember how we drew [our first color](../getting-started/first-color.md)? We submitted to the command queue a particular render-specific sequence of instructions called a `RenderPass`. The approach to run compute-only shaders is similar, and uses a `ComputePass` instead.
 
 The creation of the compute pass is **much simpler** than the one of the render pass, because since we do **not use any fixed-function stage**, there is almost nothing to configure! The only option if the timestamp writes that will be described in the benchmarking chapter.
 
@@ -56,6 +111,11 @@ ComputePassEncoder computePass = encoder.beginComputePass(computePassDesc);
 
 // Finalize compute pass
 computePass.end();
+
+// Clean up
+#if !defined(WEBGPU_BACKEND_WGPU)
+	wgpuComputePassEncoderRelease(computePass);
+#endif
 ```
 
 Compute pipeline
@@ -70,26 +130,25 @@ computePass.setBindGroup(/* ... */);
 computePass.dispatchWorkgroups(/* ... */);
 ```
 
-The compute pipeline mainly defines the shader to be used. It also defines a layout for bind groups, but let us start simple:
+The compute pipeline first defines the shader to be used:
 
 ```C++
+// In initComputePipeline():
+
 // Load compute shader
 ShaderModule computeShaderModule = ResourceManager::loadShaderModule(RESOURCE_DIR "/compute-shader.wsl", m_device);
 
 // Create compute pipeline
-ComputePipelineDescriptor computePipelineDesc;
-computePipelineDesc.compute.constantCount = 0;
-computePipelineDesc.compute.constants = nullptr;
+ComputePipelineDescriptor computePipelineDesc = Default;
 computePipelineDesc.compute.entryPoint = "computeStuff";
 computePipelineDesc.compute.module = computeShaderModule;
-computePipelineDesc.layout = nullptr;
 ComputePipeline computePipeline = m_device.createComputePipeline(computePipelineDesc);
 ```
 
 The file `compute-shader.wsl` defines a function named like the entry point `computeStuff` and signal that it is a `@compute`. It must also indicate a **workgroup size**, more or this soon!
 
 ```rust
-@compute @workgroup_size(64)
+@compute @workgroup_size(32)
 fn computeStuff() {
 	// Compute stuff
 }
@@ -113,9 +172,59 @@ Yey! Except... it does virtually nothing, because without accessing any resource
 Resources
 ---------
 
-Again, binding resources is similar to what we have done with the render pipeline. We define a **pipeline layout** that tells how the resources should be bound, and set a **bind group** that actually connects the resources for a given shader invocation.
+For our shader to actually communicate with an input and output buffer, we need to setup a **pipeline layout** that tells how the shader resources should be bound, and a **bind group** that actually connects the resources for a given shader invocation.
 
-For our first example, we create two buffers, one used as input and the other one as output.
+### Pipeline layout
+
+We add in the compute shader the two buffer bindings as variables defined in the `storage`address space. It is important to specify the **access mode**, which is `read` for the input and `read_write` for the output (there is no "write only" mode):
+
+```rust
+@group(0) @binding(0) var<storage,read> inputBuffer: array<f32,32>;
+@group(0) @binding(1) var<storage,read_write> outputBuffer: array<f32,32>;
+```
+
+And we create on the C++ side a **bind group layout** that matches these bindings:
+
+```C++
+void Application::initBindGroupLayout() {
+	// Create bind group layout
+	std::vector<BindGroupLayoutEntry> bindings(2, Default);
+
+	// Input buffer
+	bindings[0].binding = 0;
+	bindings[0].buffer.type = BufferBindingType::ReadOnlyStorage;
+	bindings[0].visibility = ShaderStage::Compute;
+
+	// Output buffer
+	bindings[1].binding = 1;
+	bindings[1].buffer.type = BufferBindingType::Storage;
+	bindings[1].visibility = ShaderStage::Compute;
+
+	BindGroupLayoutDescriptor bindGroupLayoutDesc;
+	bindGroupLayoutDesc.entryCount = (uint32_t)bindings.size();
+	bindGroupLayoutDesc.entries = bindings.data();
+	m_bindGroupLayout = m_device.createBindGroupLayout(bindGroupLayoutDesc);
+}
+```
+
+In `initComputePipeline()` we simply assigns this to the compute pipeline through the **pipeline layout**:
+
+```C++
+// Create compute pipeline layout
+PipelineLayoutDescriptor pipelineLayoutDesc;
+pipelineLayoutDesc.bindGroupLayoutCount = 1;
+pipelineLayoutDesc.bindGroupLayouts = (WGPUBindGroupLayout*)&m_bindGroupLayout;
+m_pipelineLayout = m_device.createPipelineLayout(pipelineLayoutDesc);
+computePipelineDesc.layout = m_pipelineLayout;
+```
+
+```{note}
+The objects `m_bindGroupLayout` and `m_pipelineLayout` are attributes of the `Application` class (hence the `m_` prefix) so that they can be used in different methods. Do not forget to destroy them in the terminate functions by the way.
+```
+
+### Buffers
+
+Before binding the buffers, we must of course create them (in `initBuffers`):
 
 ```C++
 // Create input/output buffers
@@ -135,34 +244,9 @@ for (int i = 0; i < input.size(); ++i) {
 queue.writeBuffer(inputBuffer, 0, input.data(), input.size() * sizeof(float));
 ```
 
+### Bind Group
+
 TODO
-
-```C++
-// Create bind group layout
-std::vector<BindGroupLayoutEntry> bindings(2, Default);
-// Input buffer
-bindings[0].binding = 0;
-bindings[0].buffer.type = BufferBindingType::ReadOnlyStorage;
-bindings[0].visibility = ShaderStage::Compute;
-// Output buffer
-bindings[1].binding = 1;
-bindings[1].buffer.type = BufferBindingType::Storage;
-bindings[1].visibility = ShaderStage::Compute;
-
-BindGroupLayoutDescriptor bindGroupLayoutDesc;
-bindGroupLayoutDesc.entryCount = (uint32_t)bindings.size();
-bindGroupLayoutDesc.entries = bindings.data();
-BindGroupLayout bindGroupLayout = m_device.createBindGroupLayout(bindGroupLayoutDesc);
-
-// Create compute pipeline layout
-PipelineLayoutDescriptor pipelineLayoutDesc;
-pipelineLayoutDesc.bindGroupLayoutCount = 1;
-pipelineLayoutDesc.bindGroupLayouts = (WGPUBindGroupLayout*)&bindGroupLayout;
-PipelineLayout pipelineLayout = m_device.createPipelineLayout(pipelineLayoutDesc);
-
-// [...]
-computePipelineDesc.layout = pipelineLayout;
-```
 
 ```C++
 // Create compute bind group
@@ -185,12 +269,31 @@ bindGroupDesc.entries = (WGPUBindGroupEntry*)entries.data();
 BindGroup bindGroup = m_device.createBindGroup(bindGroupDesc);
 ```
 
+Invoking the compute shader `1 * 1 * 1 * workgroup_size` times:
+
 ```C++
 // Use compute pass
 computePass.setPipeline(computePipeline);
 computePass.setBindGroup(0, bindGroup, 0, nullptr);
 computePass.dispatchWorkgroups(1, 1, 1);
 ```
+
+The invocation id is provided to the `computeStuff` entry point through the `global_invocation_id` built-in input:
+
+```rust
+@compute @workgroup_size(32)
+fn computeStuff(@builtin(global_invocation_id) id: vec3<u32>) {
+    // Compute stuff
+    outputBuffer[id.x] = f(inputBuffer[id.x]);
+}
+```
+
+Read-back
+---------
+
+TODO
+
+One of the point of computing things on the GPU is to avoid CPU-GPU copies, but in our example case we still want to check that the computation went well, so we copy the output buffer back to the CPU.
 
 To get the result back, we need to add an extra buffer. This is because the same buffer cannot be used both as a storage and for mapping.
 
@@ -224,17 +327,6 @@ auto handle = mapBuffer.mapAsync(MapMode::Read, 0, bufferDesc.size, [&](BufferMa
 while (!done) {
 	// Do nothing, this checks for ongoing asynchronous operations and call their callbacks if needed
 	wgpuQueueSubmit(queue, 0, nullptr);
-}
-```
-
-```rust
-@group(0) @binding(0) var<storage,read> inputBuffer: array<f32,32>;
-@group(0) @binding(1) var<storage,read_write> outputBuffer: array<f32,32>;
-
-@compute @workgroup_size(32)
-fn computeStuff(@builtin(global_invocation_id) id: vec3<u32>) {
-	// Compute stuff
-	outputBuffer[id.x] = 2.0 * inputBuffer[id.x] + 1.0;
 }
 ```
 
