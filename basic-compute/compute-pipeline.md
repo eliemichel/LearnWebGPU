@@ -1,4 +1,4 @@
-Compute Pipeline (🚧WIP)
+Compute Pipeline
 ================
 
 ````{tab} With webgpu.hpp
@@ -228,7 +228,7 @@ The objects `m_bindGroupLayout` and `m_pipelineLayout` are attributes of the `Ap
 
 ### Buffers
 
-Before binding the buffers, we must of course create them (in `initBuffers`):
+Before binding the buffers, we must of course create them (in `initBuffers`). An important point is to mark their usage with the `Storage` flag, so that we can read/write them from shaders:
 
 ```C++
 // We save this size in an attribute, it will be useful later on
@@ -243,8 +243,19 @@ Buffer inputBuffer = m_device.createBuffer(bufferDesc);
 
 
 // Create output buffer: the only difference is the usage
-bufferDesc.usage = BufferUsage::Storage | BufferUsage::MapRead;
+bufferDesc.usage = BufferUsage::Storage;
 Buffer outputBuffer = m_device.createBuffer(bufferDesc);
+```
+
+Buffers that have the `Storage` usage are confronted to specific device limits:
+
+```C++
+// We bind an input, and an output buffers:
+requiredLimits.limits.maxStorageBuffersPerShaderStage = 2;
+
+// Each buffer has (at most) the size m_bufferSize (which definition should be
+// moved to the constructor so that it is known in initDevice):
+requiredLimits.limits.maxStorageBufferBindingSize = m_bufferSize;
 ```
 
 We can already fill in the input buffer with some values:
@@ -361,7 +372,7 @@ Since a very common task of the GPU is to process **data organized as a 2D or 3D
 
 So the main rule of thumb here is that although the $x$, $y$ and $z$ axes are at first glance abstract values that are "just" multiplied together, you should really use them as the $x$, $y$ and $z$ axes of your data grid.
 
-### In practice
+### Example
 
 In our simple example, we process data laid out in 1D buffers, so our dispatch is also a one dimensional series of workgroups: $(x, y, z) = (x, 1, 1)$ and $(w, h, d) = (w, 1, 1)$.
 
@@ -398,50 +409,122 @@ fn computeStuff(@builtin(global_invocation_id) id: vec3<u32>) {
 }
 ```
 
+### Device limits
+
+There are a bunch of device limits associated to the choice of workgroup size/count:
+
+```C++
+// The maximum value for respectively w, h and d
+requiredLimits.limits.maxComputeWorkgroupSizeX = 32;
+requiredLimits.limits.maxComputeWorkgroupSizeY = 1;
+requiredLimits.limits.maxComputeWorkgroupSizeZ = 1;
+
+// The maximum value of the product w * h * d
+requiredLimits.limits.maxComputeInvocationsPerWorkgroup = 32;
+
+// And the maximum value of max(x, y, z)
+// (It is 2 because workgroupCount = 64 / 32 = 2)
+requiredLimits.limits.maxComputeWorkgroupsPerDimension = 2;
+```
+
 Read-back
 ---------
 
-TODO
+After dispatching all parallel compute threads, the output buffer is populated with the result. So naturally now we want to **read this output buffer** back.
 
-One of the point of computing things on the GPU is to avoid CPU-GPU copies, but in our example case we still want to check that the computation went well, so we copy the output buffer back to the CPU.
+```{note}
+One of the point of computing things on the GPU is to avoid CPU-GPU copies, because maybe the output buffer is only used in a subsequent operation on the GPU. But in our example case we still want to check that the computation went well.
+```
 
-To get the result back, we need to add an extra buffer. This is because the same buffer cannot be used both as a storage and for mapping.
+### Map Buffer
+
+We have seen already how to use the Buffer's `mapAsync` method to read a buffer back, but this won't work directly:
 
 ```C++
+// DON'T
+m_outputBuffer.mapAsync(MapMode::Read, /* ... */);
+```
+
+Why not? This requires the output buffer to be created with the `MapRead` usage flag. But unfortunately **this flag is incompatible** with `Storage`, that is needed for the shader to be allowed to write in the output.
+
+The solution is to **create a 3rd buffer**, responsible for the transport back on CPU. In the `initBuffers()` method we create this new "map buffer" and add the `CopySrc` usage to the output:
+
+```C++
+// Add the CopySrc usage here, so that we can copy to the map buffer
+bufferDesc.usage = BufferUsage::Storage | BufferUsage::CopySrc;
+m_outputBuffer = m_device.createBuffer(bufferDesc);
+
 // Create an intermediary buffer to which we copy the output and that can be
 // used for reading into the CPU memory.
 bufferDesc.usage = BufferUsage::CopyDst | BufferUsage::MapRead;
-Buffer mapBuffer = m_device.createBuffer(bufferDesc);
+m_mapBuffer = m_device.createBuffer(bufferDesc);
+```
 
-// [...]
+After the `computePass.end()`, and before `encoder.finish(...)`, we add a copy command:
 
-// Before encoder.finish
-encoder.copyBufferToBuffer(outputBuffer, 0, mapBuffer, 0, bufferDesc.size);
+```C++
+// Copy the memory from the output buffer that lies in the storage part of the
+// memory to the map buffer, which is in the "mappable" part of the memory.
+encoder.copyBufferToBuffer(m_outputBuffer, 0, m_mapBuffer, 0, bufferDesc.size);
+```
 
-// [...]
+### Callback
 
+We are now ready to read from the map buffer on the CPU, through a callback provided to `mapAsync`:
+
+```C++
 // Print output
 bool done = false;
-auto handle = mapBuffer.mapAsync(MapMode::Read, 0, bufferDesc.size, [&](BufferMapAsyncStatus status) {
+auto handle = m_mapBuffer.mapAsync(MapMode::Read, 0, m_bufferSize, [&](BufferMapAsyncStatus status) {
 	if (status == BufferMapAsyncStatus::Success) {
-		const float* output = (const float*)mapBuffer.getConstMappedRange(0, bufferDesc.size);
-
+		const float* output = (const float*)m_mapBuffer.getConstMappedRange(0, m_bufferSize);
 		for (int i = 0; i < input.size(); ++i) {
 			std::cout << "input " << input[i] << " became " << output[i] << std::endl;
 		}
-		mapBuffer.unmap();
+		m_mapBuffer.unmap();
 	}
 	done = true;
 });
+```
 
+Do not forget to call `Instance::processEvents` in the loop that waits that the map is done afterwards:
+
+```C++
 while (!done) {
-	// Do nothing, this checks for ongoing asynchronous operations and call their callbacks if needed
-	wgpuQueueSubmit(queue, 0, nullptr);
+	// Checks for ongoing asynchronous operations and call their callbacks if needed
+	m_instance.processEvents();
 }
+```
+
+````{caution}
+As of April 23, 2023, `wgpu-native` does not implement `processEvent` yet, but its behavior can be mimicked by submitting an empty queue:
+
+```C++
+#ifdef WEBGPU_BACKEND_WGPU
+		queue.submit(0, nullptr);
+#else
+		m_instance.processEvents();
+#endif
+```
+````
+
+And you should finally see something like this in the output console:
+
+```
+input 0 became 1
+input 0.1 became 1.2
+input 0.2 became 1.4
+input 0.3 became 1.6
+input 0.4 became 1.8
+[...]
 ```
 
 Conclusion
 ----------
+
+Some parts of this chapters were reminders of what has been done with the render pass, the **most important news** here is the dispatch/workgroup/thread hierarchy. Make sure to come back to the list of rules regularly to check that the choice of workgroup size is relevant (and benchmark whenever possible).
+
+We are now ready to focus on the content of the compute shader itself, and the different ways it can manipulate resources and memory!
 
 ````{tab} With webgpu.hpp
 *Resulting code:* [`step201`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step201)
