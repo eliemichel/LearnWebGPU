@@ -10,4 +10,5 @@ Contents
 compute-pipeline
 image-processing/index
 procedural-geometry/index
+neural-networks
 ```

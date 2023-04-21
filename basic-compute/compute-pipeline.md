@@ -1,13 +1,7 @@
 Compute Pipeline
 ================
 
-````{tab} With webgpu.hpp
 *Resulting code:* [`step201`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step201)
-````
-
-````{tab} Vanilla webgpu.h
-*Resulting code:* [`step201-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step201-vanilla)
-````
 
 Rendering 3D data is the original use of GPUs, but it is far from being the only one nowadays. And even for 3D application, we sometimes use the GPU for non-rendering things, such as simulation, image processing, etc.
 
@@ -526,10 +520,4 @@ Some parts of this chapters were reminders of what has been done with the render
 
 We are now ready to focus on the content of the compute shader itself, and the different ways it can manipulate resources and memory!
 
-````{tab} With webgpu.hpp
 *Resulting code:* [`step201`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step201)
-````
-
-````{tab} Vanilla webgpu.h
-*Resulting code:* [`step201-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step201-vanilla)
-````
