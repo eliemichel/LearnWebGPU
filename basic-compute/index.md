@@ -8,6 +8,6 @@ Contents
 :titlesonly:
 
 compute-pipeline
-procedural-geometry
-image-processing
+image-processing/index
+procedural-geometry/index
 ```
