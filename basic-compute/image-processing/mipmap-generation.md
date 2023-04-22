@@ -40,12 +40,18 @@ Option A has 4 times less threads, but each thread does 4 texture reads instead 
 The limiting factor in the case of such a simple mathematical operation is memory access, we do not really care about the computation of the average itself.
 ```
 
-**Spoiler alert:** Option A is the best one in this case, but we will actually implement both. One reason is that Option B raises a typical case of **race condition**. A second reason is that you should not trust me but rather **benchmark** to check which option is better.
+**Spoiler alert:** Option A is the best one in this case, for multiple reasons:
+
+ - Option B requires an **extra pass to initialize** all texels of the the output 0.
+ - Option B leads to **race conditions** because accumulating values requires to read the current average, then write the updated one, and if multiple threads do the same the **parallel write operations will conflict**.
+ - Actually, it is **not even possible to read and write from the same texture** in a single compute shader dispatch.
+
+For all these reasons, we will implement **Option A**.
 
 Input/Output
 ------------
 
-Whether we use Option A or B, we first need to load an input texture and save the output to check that the process worked well. For our test, we use **a single texture with 2 MIP levels**: MIP level 0 is the input image, MIP level 1 is the output of the compute shader.
+We first need to load an input texture and save the output to check that the process worked well. For our test, we use **a single texture with 2 MIP levels**: MIP level 0 is the input image, MIP level 1 is the output of the compute shader.
 
 ### Loading
 
@@ -267,11 +273,14 @@ I suggest we use a workgroup size of $8 \times 8$: this treats both $X$ and $Y$ 
 @workgroup_size(8, 8)
 ```
 
-We then need to compute the number of workgroup to dispatch. This depends on the expected number of thread, which itself depends on which one of Option A or B we chose:
+We then need to compute the number of workgroup to dispatch. This depends on the expected number of thread. In our so called Option A, we launch **1 thread per texel** of the **output** MIP level:
 
 ```C++
-uint32_t invocationCountX = /* depends on the option */;
-uint32_t invocationCountY = /* depends on the option */;
+uint32_t invocationCountX = m_textureSize.width / 2;
+uint32_t invocationCountY = m_textureSize.height / 2;
+```
+
+```C++
 uint32_t workgroupSizePerDim = 8;
 // This ceils invocationCountX / workgroupSizePerDim
 uint32_t workgroupCountX = (invocationCountX + workgroupSizePerDim - 1) / workgroupSizePerDim;
@@ -283,20 +292,13 @@ computePass.dispatchWorkgroups(workgroupCountX, workgroupCountY, 1);
 The input image I provided above has a size that is a **power of 2**, which always makes things easier as there is no wasted thread.
 ```
 
-### Option A
-
-This option consists in running **1 thread per texel** of the **output** MIP level.
-
-```C++
-uint32_t invocationCountX = m_textureSize.width / 2;
-uint32_t invocationCountY = m_textureSize.height / 2;
-```
+### Shader
 
 For each texel, we use `textureLoad` 4 times to average corresponding texels from the previous MIP level, then `textureStore` to write in the new MIP level:
 
 ```rust
 @compute @workgroup_size(8, 8)
-fn computeMipMap_OptionA(@builtin(global_invocation_id) id: vec3<u32>) {
+fn computeMipMap(@builtin(global_invocation_id) id: vec3<u32>) {
     let offset = vec2<u32>(0, 1);
     let color = (
         textureLoad(previousMipLevel, 2 * id.xy + offset.xx, 0) +
@@ -314,6 +316,8 @@ The last argument of `textureLoad` is a MIP level **relative to the texture view
 
 And this is it! Most of the work was about binding inputs/outputs, the compute shader itself is very simple.
 
+### Result
+
 We can inspect the result to check that it matches a [reference](../../images/mipmap-generation/reference.png), downsampled with a regular image editing tool like GIMP or Photoshop:
 
 ```{image} /images/mipmap-generation/compare-light.png
@@ -330,72 +334,9 @@ We can inspect the result to check that it matches a [reference](../../images/mi
     <span class="caption-text"><em>Comparison of the output MIP level #1 with a reference. The error map is all black, meaning that this is a perfect match.</em></span>
 </p>
 
-### Option B
+Conclusion
+----------
 
-Let us move on to Option B, which introduces **various problems** we can have when not making a wrong choice about how to organize threads.
-
-```{note}
-In the accompanying code, I added in `Application.cpp` a `#define MIPMAP_GEN_OPTION` that is either `A` or `B`. This is a quick but dirty way of adding a parameter to a program, as requires to recompile when switching.
-```
-
-This option consists in running **1 thread per texel** of the **input** MIP level.
-
-```C++
-uint32_t invocationCountX = m_textureSize.width;
-uint32_t invocationCountY = m_textureSize.height;
-```
-
-For each texel of the previous MIP level, we accumulate it in the new MIP level:
-
-```rust
-@compute @workgroup_size(8, 8)
-fn computeMipMap_OptionB(@builtin(global_invocation_id) id: vec3<u32>) {
-    let prevCoord = id.xy;
-    let nextCoord = id.xy / 2;
-
-    // The value we add to the average
-    let prevTexel = textureLoad(previousMipLevel, prevCoord, 0);
-
-    // We load, modify then store the next MIP level to accumulate the average
-    var nextTexel = textureLoad(nextMipLevel, nextCoord, 0);
-    nextTexel += prevTexel * 0.25;
-    textureStore(nextMipLevel, nextCoord, nextTexel);
-}
-```
-
-This **will not work** as is, because `nextMipLevel` can only be used for **writing**, not for `textureLoad`. We must add an extra binding:
-
-```C++
-// In initBindGroupLayout():
-#if MIPMAP_GEN_OPTION == B
-    bindings.resize(3);
-    // Extra binding to access the output in read mode
-    bindings[2].binding = 2;
-    bindings[2].texture.sampleType = TextureSampleType::Float;
-    bindings[2].texture.viewDimension = TextureViewDimension::_2D;
-    bindings[2].visibility = ShaderStage::Compute;
-#endif
-
-// In initBindGroup():
-#if MIPMAP_GEN_OPTION == B
-    entries.resize(3);
-    entries[2].binding = 2;
-    entries[2].textureView = m_outputTextureView;
-#endif
-```
-
-And we use this new binding in the shader when trying to access the intermediary value of the next MIP level:
-
-```rust
-@group(0) @binding(2) var nextMipLevel_readonly: texture_2d<f32>;
-
-// [...]
-
-// Use this read-only binding when reading the already accumulated value:
-var nextTexel = textureLoad(nextMipLevel_readonly, nextCoord, 0);
-```
-
-Benchmarking
-------------
+It is common that multiple parallelization schemes seem possible, but that in practice one of them is a much better idea! So think twice before implementing the first idea that comes to your mind.
 
 *Resulting code:* [`step210`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step210)
