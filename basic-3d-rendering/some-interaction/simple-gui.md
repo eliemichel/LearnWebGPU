@@ -28,7 +28,7 @@ This also comes at the price of redrawing the whole GUI from scratch at each fra
 Setting up ImGui
 ----------------
 
-Although ImGui supports using WebGPU as a backend, this support is imperfect so I invite you to download [imgui.zip](https://github.com/eliemichel/imgui/archive/refs/tags/portable_wgpu_backend-1.0.0.zip) from my own branch of ImGui (until my [Pull Request](https://github.com/ocornut/imgui/pull/6188) is merged).
+Although ImGui supports using WebGPU as a backend, this support is imperfect so I invite you to download [imgui.zip](https://github.com/eliemichel/imgui/archive/refs/tags/portable_wgpu_backend-1.1.0.zip) from my own branch of ImGui (until my [Pull Request](https://github.com/ocornut/imgui/pull/6188) is merged).
 
 Unzip it as a `imgui/` directory, remove examples and doc (or keep them but we don't need them). ImGui does not provide a `CMakeLists.txt` but it is straightforward to write it ourselves (still in the `imgui/` directory):
 
