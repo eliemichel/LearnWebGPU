@@ -1,7 +1,7 @@
 Mipmap Generation (🚧WIP)
 =================
 
-*Resulting code:* [`step210`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step210)
+*Resulting code:* [`step211`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step211)
 
 A first application that I suggest for our newly learnt compute shaders is the **generation of mipmaps**. In the chapter about [Texture Sampling](../../basic-3d-rendering/texturing/sampler.md#filtering) we saw that before applying a texture on a 3D mesh, we pre-compute different downsampled versions of it.
 
@@ -334,9 +334,54 @@ We can inspect the result to check that it matches a [reference](../../images/mi
     <span class="caption-text"><em>Comparison of the output MIP level #1 with a reference. The error map is all black, meaning that this is a perfect match.</em></span>
 </p>
 
+*Intermediary resulting code:* [`step210`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step210)
+
+Application to all MIP levels
+-----------------------------
+
+TODO
+
+We know how to compute the MIP level $1$, given the MIP level $0$. Generalizing this to be called in a loop is rather straightforward. We move our dispatch into a loop over all MIP levels:
+
+```C++
+ComputePassEncoder computePass = encoder.beginComputePass(computePassDesc);
+computePass.setPipeline(m_pipeline);
+
+uint32_t levelCount = getMaxMipLevelCount(m_textureSize);
+for (int nextLevel = 1; nextLevel < levelCount; ++nextLevel) {
+    computePass.setBindGroup(0, m_bindGroup, 0, nullptr);
+    // [...] Compute workgroup counts
+    computePass.dispatchWorkgroups(workgroupCountX, workgroupCountY, 1);
+}
+
+computePass.end();
+```
+
+The `getMaxMipLevels()` utility function is the same one we were using for texture loading when computing mipmaps on CPU:
+
+```C++
+// Equivalent of std::bit_width that is available from C++20 onward
+uint32_t bit_width(uint32_t m) {
+    if (m == 0) return 0;
+    else { uint32_t w = 0; while (m >>= 1) ++w; return w; }
+}
+
+uint32_t getMaxMipLevelCount(const Extent3D& textureSize) {
+    return bit_width(std::max(textureSize.width, textureSize.height));
+}
+```
+
+We also use this function when creating the texture:
+
+```C++
+
+```
+
+This is where we see how the distinction between **bind group** and **bind group layout** can get handy: the layout is the same for all dispatches
+
 Conclusion
 ----------
 
 It is common that multiple parallelization schemes seem possible, but that in practice one of them is a much better idea! So think twice before implementing the first idea that comes to your mind.
 
-*Resulting code:* [`step210`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step210)
+*Resulting code:* [`step211`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step211)
