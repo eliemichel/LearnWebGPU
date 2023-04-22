@@ -10,6 +10,12 @@ A first example
 
 TODO: Sobel filter
 
+```{figure} /images/sobel.jpg
+:align: center
+:class: with-shadow
+A Sobel filter (left: input, right: output)
+```
+
 GUI
 ---
 
