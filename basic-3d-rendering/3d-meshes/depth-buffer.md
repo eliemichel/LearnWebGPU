@@ -207,11 +207,38 @@ Again, more on textures and texture views later!
 Depth attachment
 ----------------
 
-Like when attaching a color target or binding a uniform buffer, we define an object to "connect" our depth texture to the render pipeline. This is the `RenderPassDepthStencilAttachment`. We must set up clear/store operations for the stencil part as well even if we do not use it:
+Like when attaching a color target or binding a uniform buffer, we define an object to "connect" our depth texture to the render pipeline. This is the `RenderPassDepthStencilAttachment`:
 
 ````{tab} With webgpu.hpp
 ```C++
+// We already had a color attachment:
+renderPassDesc.colorAttachments = &colorAttachment;
+
+// We now add a depth/stencil attachment:
 RenderPassDepthStencilAttachment depthStencilAttachment;
+// [...] // Setup depth/stencil attachment
+renderPassDesc.depthStencilAttachment = &depthStencilAttachment;
+```
+````
+
+````{tab} Vanilla webgpu.h
+```C++
+// We already had a color attachment:
+renderPassDesc.colorAttachments = &colorAttachment;
+
+// We now add a depth/stencil attachment:
+WGPURenderPassDepthStencilAttachment depthStencilAttachment;
+// [...] // Setup depth/stencil attachment
+renderPassDesc.depthStencilAttachment = &depthStencilAttachment;
+```
+````
+
+We must set up clear/store operations for the stencil part as well even if we do not use it:
+
+````{tab} With webgpu.hpp
+```C++
+// Setup depth/stencil attachment
+
 // The view of the depth texture
 depthStencilAttachment.view = depthTextureView;
 
@@ -233,7 +260,8 @@ depthStencilAttachment.stencilReadOnly = true;
 
 ````{tab} Vanilla webgpu.h
 ```C++
-WGPURenderPassDepthStencilAttachment depthStencilAttachment;
+// Setup depth/stencil attachment
+
 // The view of the depth texture
 depthStencilAttachment.view = depthTextureView;
 
