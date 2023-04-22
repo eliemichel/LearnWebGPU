@@ -1,4 +1,4 @@
-Mipmap Generation (🚧WIP)
+Mipmap Generation
 =================
 
 *Resulting code:* [`step211`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step211)
@@ -339,7 +339,7 @@ We can inspect the result to check that it matches a [reference](../../images/mi
 Application to all MIP levels
 -----------------------------
 
-TODO
+### Loop over MIP levels
 
 We know how to compute the MIP level $1$, given the MIP level $0$. Generalizing this to be called in a loop is rather straightforward. We move our dispatch into a loop over all MIP levels:
 
@@ -348,13 +348,17 @@ ComputePassEncoder computePass = encoder.beginComputePass(computePassDesc);
 computePass.setPipeline(m_pipeline);
 
 uint32_t levelCount = getMaxMipLevelCount(m_textureSize);
-for (int nextLevel = 1; nextLevel < levelCount; ++nextLevel) {
+for (uint32_t nextLevel = 1; nextLevel < levelCount; ++nextLevel) {
     computePass.setBindGroup(0, m_bindGroup, 0, nullptr);
     // [...] Compute workgroup counts
     computePass.dispatchWorkgroups(workgroupCountX, workgroupCountY, 1);
 }
 
 computePass.end();
+```
+
+```{note}
+The loop starts at level 1, because more generally it is responsible for computing level `nextLevel` given level `nextLevel - 1`.
 ```
 
 The `getMaxMipLevels()` utility function is the same one we were using for texture loading when computing mipmaps on CPU:
@@ -371,17 +375,124 @@ uint32_t getMaxMipLevelCount(const Extent3D& textureSize) {
 }
 ```
 
-We also use this function when creating the texture:
+We also use this function when creating the texture by the way:
 
 ```C++
-
+// In initTexture():
+textureDesc.mipLevelCount = getMaxMipLevelCount(m_textureSize);
 ```
 
-This is where we see how the distinction between **bind group** and **bind group layout** can get handy: the layout is the same for all dispatches
+### One view per MIP level
+
+Two things differ from one iteration of dispatch to another:
+
+ - The number of thread (i.e., the number of texels for the next MIP level)
+ - The bind group
+
+In order to build a different bind group at each iteration, we create in `initTextureViews` not just 2 views but one per MIP level. We also compute at the same time the size of each such level.
+
+```C++
+// In Application.h, replacing input/output views and m_textureSize
+std::vector<wgpu::TextureView> m_textureMipViews;
+std::vector<wgpu::Extent3D> m_textureMipSizes;
+```
+
+```C++
+// In initTextureViews()
+m_textureMipViews.reserve(m_textureMipSizes.size());
+for (uint32_t level = 0; level < m_textureMipSizes.size(); ++level) {
+    std::string label = "MIP level #" + std::to_string(level);
+    textureViewDesc.label = label.c_str();
+    textureViewDesc.baseMipLevel = level;
+    m_textureMipViews.push_back(m_texture.createView(textureViewDesc));
+
+    if (level > 0) {
+        Extent3D previousSize = m_textureMipSizes[level - 1];
+        m_textureMipSizes[level] = {
+            previousSize.width / 2,
+            previousSize.height / 2,
+            previousSize.depthOrArrayLayers / 2
+        };
+    }
+}
+```
+
+```{important}
+The views bound as writable storage and as readable texture must not share any MIP level!
+```
+
+We also make sure to initialize the size `m_textureMipSizes[0]` for the first level:
+
+```C++
+// In initTexture()
+Extent3D textureSize = { (uint32_t)width, (uint32_t)height, 1 };
+// [...]
+textureDesc.mipLevelCount = getMaxMipLevelCount(textureSize);
+m_textureMipSizes.resize(textureDesc.mipLevelCount);
+m_textureMipSizes[0] = textureSize;
+```
+
+### Bind group
+
+Finally we can add a MIP level parameter to the `initBindGroup()` method and call it the compute loop. Don't forget to also call `terminateBindGroup()` at the end of each iteration.
+
+```C++
+void Application::initBindGroup(uint32_t nextMipLevel) {
+    std::vector<BindGroupEntry> entries(2, Default);
+    // Input buffer
+    entries[0].binding = 0;
+    entries[0].textureView = m_textureMipViews[nextMipLevel - 1];
+    // Output buffer
+    entries[1].binding = 1;
+    entries[1].textureView = m_textureMipViews[nextMipLevel];
+
+    // [...]
+}
+```
+
+The main dispatch loop thus becomes:
+
+```C++
+for (uint32_t nextLevel = 1; nextLevel < m_textureMipSizes.size(); ++nextLevel) {
+    // Create the bind group specific to this iteration
+    initBindGroup(nextLevel);
+    computePass.setBindGroup(0, m_bindGroup, 0, nullptr);
+
+    // Get size from the precomputed vector
+    uint32_t invocationCountX = m_textureMipSizes[nextLevel].width;
+    uint32_t invocationCountY = m_textureMipSizes[nextLevel].height;
+    uint32_t workgroupSizePerDim = 8;
+    // This ceils invocationCountX / workgroupSizePerDim
+    uint32_t workgroupCountX = (invocationCountX + workgroupSizePerDim - 1) / workgroupSizePerDim;
+    uint32_t workgroupCountY = (invocationCountY + workgroupSizePerDim - 1) / workgroupSizePerDim;
+    computePass.dispatchWorkgroups(workgroupCountX, workgroupCountY, 1);
+
+    // Destroy the bind group
+    terminateBindGroup();
+}
+```
+
+After the commands are submitted, we can save the texture's MIP levels in individual files:
+
+```C++
+for (uint32_t nextLevel = 1; nextLevel < m_textureMipSizes.size(); ++nextLevel) {
+    // Save the MIP level
+    std::filesystem::path path = RESOURCE_DIR "/output.mip" + std::to_string(nextLevel) + ".png";
+    saveTexture(path, m_device, m_texture, nextLevel);
+}
+```
+
+```{figure} /images/mipmap-generation/pyramid.png
+:align: center
+:class: with-shadow
+The resulting MIP levels, computed directly on GPU.
+```
 
 Conclusion
 ----------
 
-It is common that multiple parallelization schemes seem possible, but that in practice one of them is a much better idea! So think twice before implementing the first idea that comes to your mind.
+In this chapter we have seen how to play with textures in compute shader, and in particular how reading and writing require different bindings, which **must not overlap**. We are going to keep on playing with this in the next chapter.
+
+Also, remember how we had two options A and B at the beginning? It is common that **multiple parallelization schemes seem possible**, but that in practice one of them is a much better idea! So **think twice** before implementing the first idea that comes to your mind.
 
 *Resulting code:* [`step211`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step211)
