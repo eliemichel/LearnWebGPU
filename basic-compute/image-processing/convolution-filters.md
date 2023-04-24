@@ -28,7 +28,16 @@ By changing the kernel, we can create a wide variety of filters. Some of them ar
 Sobel filter
 ------------
 
-We can start with the Sobel filter from the figure above. A Sobel filter is meant to **detect edges**, either vertical ones or horizontal ones depending on how we orient the kernel.
+We can start with the Sobel filter from the figure above. A Sobel filter is meant to **detect edges**, either vertical ones or horizontal ones depending on how we orient the kernel. For vertical edges, the kernel is:
+
+$$
+K =
+\left[\begin{array}{ccc}
+-1 & 0 & +1 \\
+-2 & 0 & +2 \\
+-1 & 0 & +1 \\
+\end{array}\right]
+$$
 
 Let us write the shader first, and then connect the dots:
 
@@ -188,16 +197,86 @@ You can now dynamically play with the filter! Try for instance the Sobel filter 
 The kernel is exposed as a uniform in the UI. Here we show an horizontal Sobel filter (left: input, right: output).
 ```
 
-Gaussian blur
--------------
+Blur filters
+------------
 
-TODO
+### Box blur
 
-In theory a Gaussian blur requires an **infinite kernel**. But the influence of neighbors decreases exponentially, so we can quickly round weight to 0 and thus **bound the size** of the kernel.
+If we set all the weights of the kernel to $1/9$, we get a blur effect.
 
-Still, for large blur effects it may easily require a kernel of more than 100 pixels wide for instance, which means $100x100$ texture reads... This is too much, but **fortunately the math gives us a workaround**!
+$$
+K = \frac{1}{9}
+\left[\begin{array}{ccc}
+1 & 1 & 1 \\
+1 & 1 & 1 \\
+1 & 1 & 1 \\
+\end{array}\right]
+$$
 
-TODO: We iterate instead of using a large kernel.
+```{figure} /images/convolution/box-blur-insets.jpg
+:align: center
+:class: with-shadow
+A **box blur** is obtained by convolving with a **uniform kernel**.
+```
+
+```{note}
+When the kernel is all non-negative, it is common to need to **normalize** its weights, i.e., to divide them by the total sum of weights. You may want to add **a checkbox in the UI** to do so.
+```
+
+### Separability
+
+If we want a **stronger blur**, we can simply use a **larger kernel**. However, this quickly reaches an unreasonable number of old texel fetch per new texel.
+
+Fortunately, the box filter is **separable**: it can be applied on **one axis first**, and on the second axis then, using non-square kernel of size $r \times 1$ and $1 \times r$. This requires $2r$ operations instead of $r^2$, huge savings! For instance for $r = 5$:
+
+$$
+K_1 = \frac{1}{5}
+\left[\begin{array}{c}
+1 \\
+1 \\
+1 \\
+1 \\
+1 \\
+\end{array}\right]
+\quad
+\text{then}
+\quad
+K_2 = \frac{1}{5}
+\left[\begin{array}{ccccc}
+1 & 1 & 1 & 1 & 1 \\
+\end{array}\right]
+$$
+
+The box blur is fine, but if you apply it with large kernels you will quickly see **why it is called "box" blur**. It transforms spikes in the signal into very noticeable squares.
+
+### Gaussian blur
+
+The Gaussian blur is the most natural type of blur (a.k.a. low-pass filter), it is found in a lot of different contexts and you have likely seen at least once its 1D kernel:
+
+```{figure} /images/convolution/gaussians.png
+:align: center
+:class: with-shadow
+Single-dimensional Gaussian kernels (a.k.a. normal distributions) of standard deviation $\sigma = 1.0$ (red), $\sigma = 0.5$ (green) and $\sigma = 0.25$ (blue).
+```
+
+In theory a Gaussian blur requires an **infinite kernel**. But the influence of neighbors decreases exponentially, so we can quickly round weight to 0 and thus **bound the size** of the kernel. Here is a simple approximation of a 2D Gaussian kernel:
+
+$$
+K = \frac{1}{16}
+\left[\begin{array}{ccc}
+1 & 2 & 1 \\
+2 & 4 & 2 \\
+1 & 2 & 1 \\
+\end{array}\right]
+$$
+
+And **good news**: the Gaussian blur is also separable! It is actually the only blur that is **both separable and circularly symmetric** ([proof](https://www.sciencedirect.com/science/article/pii/089396599090151Z)).
+
+To calculate the coefficients of a Gaussian blur (separated) kernel, you can use [this blur coefficients generator](https://lisyarus.github.io/blog/graphics/2023/02/24/blur-coefficients-generator.html): the `WEIGHTS` array it creates can directly be used in `writeBuffer` to communicate it to the compute shader.
+
+```{important}
+In order to save some texture reads, this generator assumes that you are using a linear **sampler** to get values from the input texture. In other terms, use `textureSample` rather than `textureLoad`.
+```
 
 Morphological filters
 ---------------------
