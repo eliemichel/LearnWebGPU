@@ -1,4 +1,4 @@
-Convolution Filters (🚧WIP)
+Convolution Filters
 ===================
 
 *Resulting code:* [`step215`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step215)
@@ -281,6 +281,25 @@ In order to save some texture reads, this generator assumes that you are using a
 Morphological filters
 ---------------------
 
-TODO: Slightly different, not multiply + add but min/max operations.
+Morphological filters are also based on a **sliding window**, except that after multiplying by the kernel, **instead of summing** the different neighbors, we collect the **maximum** or **minimum** (or yet another non-linear operations).
+
+A maximum tends to **dilate** the bright areas and inversely a minimum **erodes** the white pixels.
+
+The kernel is generally defined by a binary mask called the **structuring element** of the morphological operation. When the structuring element is a **rectangle**, the filter is **separable**.
+
+```{figure} /images/convolution/morpho.jpg
+:align: center
+:class: with-shadow
+Morphological filters applied to an RGB image.
+```
+
+```{note}
+It is common to use morphological filters on black and white masks, for instance to filter out imperfection on contour detection.
+```
+
+Conclusion
+----------
+
+Convolution filters are a good example of use of compute shaders (even though they can easily be emulated by drawing a full screen triangle and then using a fragment shader). They are also a building block for a lot of image processing tools.
 
 *Resulting code:* [`step215`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step215)
