@@ -75,29 +75,45 @@ It is interesting to apply this filter to the different MIP levels independently
 GUI
 ---
 
-TODO
-
 ```{admonition} Optional section
 If you are only interested in the convolution filters themselves and that making a non-interactive command line tool is fine, you may skip this section.
 ```
 
-In order to quickly experiment with our filters, we import the image viewer we had in the [First texture](../../basic-3d-rendering/texturing/a-first-texture.md) chapter, and the GUI elements from the [Simple GUI](../../basic-3d-rendering/some-interaction/simple-gui.md) chapter.
+### Setup
+
+In order to quickly experiment with our filters, we reuse the GUI elements from the [Simple GUI](../../basic-3d-rendering/some-interaction/simple-gui.md) chapter.
 
 In a nutshell, we must:
 
  - Add the `glfw`, `glfw3webgpu` and `imgui` library as dependencies (don't forget to add a CMakeLists in the `imgui` directory).
  - Add an `initWindow`, `initSwapChain` and `initGui` init steps (and matching teminate steps).
  - Add a main application loop.
- - Add event callbacks.
 
-To avoid building our own render pipeline, we can use ImGui to draw texture views:
+I also add a `m_shouldCompute` boolean to instruct the main loop to call onCompute only when needed (i.e., when an input parameter changes):
+
+```C++
+// Main frame
+while (app.isRunning()) {
+	app.onFrame();
+
+	if (app.shouldCompute()) {
+		app.onCompute();
+	}
+}
+```
+
+### Displaying textures
+
+To **avoid building our own render pipeline**, we can use ImGui to draw texture views, by manually adding instructions to the `ImDrawList`:
 
 ```C++
 void Application::onGui(RenderPassEncoder renderPass) {
 	// [...]
 
 	ImDrawList* drawList = ImGui::GetBackgroundDrawList();
+	// Draw a red rectangle
 	drawList->AddRectFilled({ 0, 0 }, { 20, 20 }, ImColor(255, 0, 0));
+	// Draw a texture view
 	drawList->AddImage((ImTextureID)m_textureMipViews[0], { 20, 0 }, { 220, 200 });
 
 	// [...]
@@ -110,18 +126,82 @@ void Application::onGui(RenderPassEncoder renderPass) {
 The red rectangle and the image are drawn by ImGui, no need for us to care about a render pipeline!
 ```
 
-```{figure} /images/sobel.jpg
-:align: center
-:class: with-shadow
-A Sobel filter (left: input, right: output)
+In the end our render pass in `onFrame` is simple:
+
+```C++
+RenderPassEncoder renderPass = encoder.beginRenderPass(renderPassDesc);
+onGui(renderPass);
+renderPass.end();
 ```
 
-Uniforms
---------
+```{note}
+What ImGui calls `ImTextureID` depends on the drawing backend. In the case of our WebGPU-based backend, it must correspond to a valid `TextureView` object. Using a `Texture` instead leads to crashes.
+```
+
+### Uniforms
+
+We can add uniforms in order to drive the behavior of the filter from the UI.
+
+Note that all ImGui functions return a boolean telling whether the value they represent has been modified, we can use it to update our `m_shouldCompute` and **run the compute shader only when needed**:
+
+```C++
+bool changed = false;
+ImGui::Begin("Uniforms");
+changed = ImGui::SliderFloat("Test", &m_uniforms.test, 0.0f, 1.0f) || changed;
+ImGui::End();
+
+m_shouldCompute = changed;
+```
+
+You can then add a uniform for the **kernel**. Be careful with [alignment rules](https://gpuweb.github.io/gpuweb/wgsl/#structure-member-layout) when using a `mat3x3`, because padding is needed between columns of the matrix:
+
+```rust
+// WGSL struct
+struct Uniforms {
+    kernel: mat3x3<f32>,
+    test: f32,
+}
+```
+
+```C++
+// C++ struct with matching alignment
+struct Uniforms {
+	// The mat3x3 becomes a mat3x4 because vec3 columns are aligned as vec4
+	mat3x4 kernel = mat3x4(0.0);
+
+	float test = 0.5f;
+
+	// Add padding at the end to round up to a multiple of 16 bytes
+	float _pad[3];
+};
+```
+
+```{note}
+To assist you with this tedious alignment, I have started writing [a little online tool](https://eliemichel.github.io/WebGPU-AutoLayout)!
+```
+
+You can now dynamically play with the filter! Try for instance the Sobel filter on a different axis:
+
+```{figure} /images/convolution/ui-uniforms.jpg
+:align: center
+:class: with-shadow
+The kernel is exposed as a uniform in the UI. Here we show an horizontal Sobel filter (left: input, right: output).
+```
 
 Gaussian blur
 -------------
 
+TODO
+
+In theory a Gaussian blur requires an **infinite kernel**. But the influence of neighbors decreases exponentially, so we can quickly round weight to 0 and thus **bound the size** of the kernel.
+
+Still, for large blur effects it may easily require a kernel of more than 100 pixels wide for instance, which means $100x100$ texture reads... This is too much, but **fortunately the math gives us a workaround**!
+
 TODO: We iterate instead of using a large kernel.
+
+Morphological filters
+---------------------
+
+TODO: Slightly different, not multiply + add but min/max operations.
 
 *Resulting code:* [`step215`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step215)
