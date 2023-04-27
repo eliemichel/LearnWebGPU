@@ -51,7 +51,7 @@ And it is actually the **only** graphics API that benefits from all of these pro
 Yes, the WebGPU API has been **designed primarily for the web**, as an interface between JavaScript and GPUs. This is **not a drawback**, since as of today the requirements in terms of performance for web pages is actually the same as for native application. You can read more about [why I believe that WebGPU is the best graphics API to learn in 2023](appendices/teaching-native-graphics-in-2023.md).
 
 ```{note}
-When designing an API for the Web, the two key constraints are **portability** and **privacy**. We **benefit** here from the effort developped for portability, and fortunately the limitations of the API due to privacy considerations can be **disabled** when using WebGPU as a native API.
+When designing an API for the Web, the two key constraints are **portability** and **privacy**. We **benefit** here from the effort developed for portability, and fortunately the limitations of the API due to privacy considerations can be **disabled** when using WebGPU as a native API.
 ```
 
 Why C++ then?
