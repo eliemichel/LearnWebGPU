@@ -58,7 +58,7 @@ The names of the procedure provided by `webgpu.h` always follow the same constru
 wgpuSomethingSomeAction(something, ...)
              ^^^^^^^^^^ // What to do...
     ^^^^^^^^^ // ...on what type of object
-^^^^ // (Common prefix to allow naming collisions)
+^^^^ // (Common prefix to avoid naming collisions)
 ```
 
 The first argument of the fonction is always a "handle" (a blind pointer) representing an object of type "Something".
