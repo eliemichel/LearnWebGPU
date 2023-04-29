@@ -19,7 +19,6 @@ An environment map is a 360° image in high-dynamic range that we use as an omni
 
 ```{figure} /images/ibl-coords.png
 :align: center
-:class: with-shadow
 TODO
 ```
 
