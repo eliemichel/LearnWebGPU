@@ -230,7 +230,7 @@ wgpuSomethingRelease(sth);
 // should no longer be used!
 ```
 
-In practice **as long as we never use** `wgpuSomethingRelease`, the behavior of wgpu-native's **Drop** and Dawn's **Release** is the same so we set up an alias:
+In practice **as long as we never use** `wgpuSomethingReference`, the behavior of wgpu-native's **Drop** and Dawn's **Release** is the same so we set up an alias:
 
 ```{lit} C++, Fix a wgpu-native/Dawn mismatch
 #ifdef WEBGPU_BACKEND_WGPU
