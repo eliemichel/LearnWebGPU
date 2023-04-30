@@ -13,6 +13,7 @@ feedback-needed
 debugging
 building-for-the-web
 memory-model
+custom-extensions
 references
 tmp
 ```
