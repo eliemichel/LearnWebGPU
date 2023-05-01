@@ -25,7 +25,12 @@ The equirectangular map is parameterized with a latitude and longitude graduatio
 
 **Output:**
 
-TODO
+```{figure} /images/cubemap-conv/cubemap.svg
+:align: center
+A cubemap is made of 6 squared textures, or rather 1 texture with 6 layers. Each layer corresponds to one face of a cube that wraps the scene.
+```
+
+Since it is easier to find equirectangular images, but a cubemap is faster to query (because it is accelerated by the hardware), our goal is to convert an equirectangular image to a cubemap.
 
 Implementation
 --------------
