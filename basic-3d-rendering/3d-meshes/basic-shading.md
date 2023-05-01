@@ -45,7 +45,7 @@ The direction of a face is expressed as **a vector that is perpendicular to the 
 </p>
 
 ```{note}
-There are two possible vectors that are perpendicular to the face and have a unit length: one and its opposite. By convention, we point the normal towards the output of the object, but this might not be well defined for meshes that are not closed. Whenever you encounter weird shading artifacts, always check your normals!
+There are two possible vectors that are perpendicular to the face and have a unit length: one and its opposite. By convention, we point the normal towards the outside of the object, but this might not be well defined for meshes that are not closed. Whenever you encounter weird shading artifacts, always check your normals!
 ```
 
 Normal

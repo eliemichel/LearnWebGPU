@@ -55,7 +55,7 @@ wgpuRenderPassEncoderDrawIndexed(renderPass, indexCount, 1, 0, 0, 0);
 
 It is legal, but will not do what you expect. Remember that commands are executed **asynchronously**! When we call methods of the `renderPass` object, we do not really trigger operations, we rather build a command buffer, that is sent all at once at the end. So the calls to `writeBuffer` **do not** get interleaved between the draw calls as we would like.
 
-Instead, we need to use **dynamic uniform buffers**. This is a simple option to turn on in the binding layout, but requires to be careful with the buffer's **stride** (see bellow).
+Instead, we need to use **dynamic uniform buffers**. This is a simple option to turn on in the binding layout, but requires to be careful with the buffer's **stride** (see below).
 
 Device limits
 -------------

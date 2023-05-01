@@ -47,7 +47,7 @@ wgpuInstanceRequestAdapter(
 	instance /* equivalent of navigator.gpu */,
 	&options,
 	onAdapterRequestEnded,
-	nullptr // custom user data, see bellow
+	nullptr // custom user data, see below
 );
 ```
 
@@ -61,7 +61,7 @@ wgpuSomethingSomeAction(something, ...)
 ^^^^ // (Common prefix to avoid naming collisions)
 ```
 
-The first argument of the fonction is always a "handle" (a blind pointer) representing an object of type "Something".
+The first argument of the function is always a "handle" (a blind pointer) representing an object of type "Something".
 ````
 
 ### Request
