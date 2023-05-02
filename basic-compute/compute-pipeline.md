@@ -7,7 +7,7 @@ Rendering 3D data is the original use of GPUs, but it is far from being the only
 
 When using the GPU for **general purpose** computation (GPGPU), we usually **do not need to call the 3D-specific fixed parts** of the render pipeline, like the rasterization.
 
-This chapter introduces the skeleton for running **compute shaders**, which are shaders ran outside of the fixed-function pipeline.
+This chapter introduces the skeleton for running **compute shaders**, which are shaders run outside of the fixed-function pipeline.
 
 ```{note}
 We do not expect you to have read the whole 3D rendering part of the guide, but at least up to the end of the [Shader Uniforms](../basic-3d-rendering/shader-uniforms/index.md) part.
@@ -139,7 +139,7 @@ computePipelineDesc.compute.module = computeShaderModule;
 ComputePipeline computePipeline = m_device.createComputePipeline(computePipelineDesc);
 ```
 
-The file `compute-shader.wsl` defines a function named like the entry point `computeStuff` and signal that it is a `@compute`. It must also indicate a **workgroup size**, more or this soon!
+The file `compute-shader.wsl` defines a function named like the entry point `computeStuff` and signal that it is a `@compute`. It must also indicate a **workgroup size**, more on this soon!
 
 ```rust
 @compute @workgroup_size(32)
@@ -205,7 +205,7 @@ void Application::initBindGroupLayout() {
 }
 ```
 
-In `initComputePipeline()` we simply assigns this to the compute pipeline through the **pipeline layout**:
+In `initComputePipeline()` we simply assign this to the compute pipeline through the **pipeline layout**:
 
 ```C++
 // Create compute pipeline layout

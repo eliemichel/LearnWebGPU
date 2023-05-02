@@ -70,7 +70,7 @@ class CodeBlock:
 
     lexer: str | None = None
 
-    # NB: Fields bellow are handled by the registry
+    # NB: Fields below are handled by the registry
 
     # Unique identifier, used for recovery after deserializing (which Sphinx
     # does when pickling)

@@ -14,7 +14,7 @@ A WebGPU **device** represents a **context** of use of the API. All the objects 
 
 The idea is to limit the "it worked on my machine" issue you could encounter when trying your program on a different machine. The **adapter** is used to **access the capabilities** of the customer's hardware, which are used to select the behavior of your application among very different code paths. Once a code path is chosen, a **device** is created with **the capabilities we choose**.
 
-Only the capabilities selected for this device are then allowed in the rest of the application. This way, it is **not possible to inadvertedly rely on capabilities specific to your own machine**.
+Only the capabilities selected for this device are then allowed in the rest of the application. This way, it is **not possible to inadvertently rely on capabilities specific to your own machine**.
 
 ```{figure} /images/device-creation.png
 :align: center

@@ -20,7 +20,7 @@ For applications that are mostly about these inputs, it is common to use **a who
 In the case of video games or prototypes like ours, one usually turns towards **more lightweights solutions**, among which [Dear ImGui](https://github.com/ocornut/imgui) is a very popular choice.
 
 ```{note}
-ImGui does try to give a OS-native look to your app. Instead, it focuses on being very **easy to integrate** to any existing project, and **easy to program with**.
+ImGui does not try to give a OS-native look to your app. Instead, it focuses on being very **easy to integrate** to any existing project, and **easy to program with**.
 
 This also comes at the price of redrawing the whole GUI from scratch at each frame while frameworks usually only update what is needed.
 ```

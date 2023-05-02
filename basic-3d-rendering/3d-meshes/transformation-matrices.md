@@ -172,7 +172,7 @@ How do we address this? We add **an extra coordinate that is meant to always equ
 // Option A
 position = position + vec3<f32>(tx, ty, tz);
 
-// Option B, which is equivalent (BUT WON'T WORK as-is, see bellow)
+// Option B, which is equivalent (BUT WON'T WORK as-is, see below)
 let M = transpose(mat4x3<f32>(
 // in x    y    z   1.0
 	1.0,  0.0, 0.0,  tx, // -> out x = 1.0 * x + tx * 1.0

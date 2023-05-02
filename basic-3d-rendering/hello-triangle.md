@@ -40,13 +40,13 @@ In order to achieve high performance real-time 3D rendering, the GPU processes s
 If you are familiar with OpenGL, you can see WebGPU's render pipeline as a memorized value for all the stateful functions used to configure the rasterization pipeline.
 ```
 
-The figure bellow illustrates the sequence of data processing *stages* executed by the render pipeline. Most of them are *fixed-function* stages, for which we can only customize some variables, but the most powerful ones are the *programmable stages*.
+The figure below illustrates the sequence of data processing *stages* executed by the render pipeline. Most of them are *fixed-function* stages, for which we can only customize some variables, but the most powerful ones are the *programmable stages*.
 
 In these programmable stages, a true program, called a **shader**, is executed in a massively parallel way (across input *vertices*, or across rasterized *fragments*).
 
 ![The Render Pipeline abstraction used by WebGPU](/images/render-pipeline.png)
 
-*The Render Pipeline abstraction used by WebGPU, detailed in subsections bellow.*
+*The Render Pipeline abstraction used by WebGPU, detailed in subsections below.*
 
 ```{note}
 Other graphics APIs provide access to more programmable stages (geometry shader, mesh shader, task shader). These are not part of the Web standard. They might be available in the future as native-only extensions, but in a lot of cases one can use general purpose [compute shaders](../basic-compute/index.md) to mimic their behavior.
