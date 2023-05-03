@@ -18,7 +18,7 @@ You may have guessed that we can simply add a second argument to the vertex shad
 
 ```rust
 @vertex
-fn vs_main(@location(0) in_position: vec2<f32>, @location(1) in_color: vec3<f32>) -> /* ... */ {
+fn vs_main(@location(0) in_position: vec2f, @location(1) in_color: vec3f) -> /* ... */ {
 	// [...]
 }
 ```
@@ -31,8 +31,8 @@ This works, but you might prefer when the number of input attribute grows to ins
  * as input to the entry point of a shader.
  */
 struct VertexInput {
-	@location(0) position: vec2<f32>,
-	@location(1) color: vec3<f32>,
+	@location(0) position: vec2f,
+	@location(1) color: vec3f,
 };
 
 @vertex
@@ -41,14 +41,14 @@ fn vs_main(in: VertexInput) -> /* ... */ {
 }
 ```
 
-> 😐 But I don't need the color in the vertex shader, I want it in the fragment shader, can I do `fn fs_main(@location(1) color: vec3<f32>)`?
+> 😐 But I don't need the color in the vertex shader, I want it in the fragment shader, can I do `fn fs_main(@location(1) color: vec3f)`?
 
 Nope. The vertex attributes are only provided to the vertex shader. However, **the fragment shader can receive what the vertex shader returns!** This is where the structure-based approach becomes handy:
 
 ```rust
 struct VertexInput {
-	@location(0) position: vec2<f32>,
-	@location(1) color: vec3<f32>,
+	@location(0) position: vec2f,
+	@location(1) color: vec3f,
 };
 
 /**
@@ -57,26 +57,32 @@ struct VertexInput {
  * shader.
  */
 struct VertexOutput {
-	@builtin(position) position: vec4<f32>,
+	@builtin(position) position: vec4f,
 	// The location here does not refer to a vertex attribute, it just means
 	// that this field must be handled by the rasterizer.
 	// (It can also refer to another field of another struct that would be used
 	// as input to the fragment shader.)
-	@location(0) color: vec3<f32>,
+	@location(0) color: vec3f,
 };
 
 @vertex
 fn vs_main(in: VertexInput) -> VertexOutput {
 	var out: VertexOutput;
-	out.position = vec4<f32>(in.position, 0.0, 1.0);
+	out.position = vec4f(in.position, 0.0, 1.0);
 	out.color = in.color; // forward to the fragment shader
 	return out;
 }
 
 @fragment
-fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
-	return vec4<f32>(in.color, 1.0);
+fn fs_main(in: VertexOutput) -> @location(0) vec4f {
+	return vec4f(in.color, 1.0);
 }
+```
+
+There is a limit on the number of components that can be forwarded from vertex to fragment shader. In our case, we ask for 3 (float) components:
+
+```C++
+requiredLimits.limits.maxInterStageShaderComponents = 3;
 ```
 
 Vertex Buffer Layout
@@ -117,6 +123,13 @@ The first thing we can remark is that now the **stride** of our position attribu
 ```C++
 // The new stride
 vertexBufferLayout.arrayStride = 5 * sizeof(float);
+```
+
+We thus need to update the buffer size and stride limits:
+
+```C++
+requiredLimits.limits.maxBufferSize = 6 * 5 * sizeof(float);
+requiredLimits.limits.maxVertexBufferArrayStride = 5 * sizeof(float);
 ```
 
 This stride is the same for both attributes, so it is not a problem that the stride is set at the level of the while buffer layout. The main difference between our two attributes actually is the offset at which they start in the buffer: the color starts after 2 floats.
@@ -169,7 +182,6 @@ Another possible data layout is to have two different buffers for the two attrib
 
 ```C++
 requiredLimits.limits.maxVertexAttributes = 2;
-requiredLimits.limits.maxVertexBuffers = 2;
 ```
 
 We thus have 2 input vectors:
@@ -198,6 +210,15 @@ std::vector<float> colorData = {
 int vertexCount = static_cast<int>(positionData.size() / 2);
 assert(vertexCount == static_cast<int>(colorData.size() / 3));
 ```
+
+````{note}
+This time, the maximum buffer size/stride can be lower:
+
+```C++
+requiredLimits.limits.maxBufferSize = 6 * 3 * sizeof(float);
+requiredLimits.limits.maxVertexBufferArrayStride = 3 * sizeof(float);
+```
+````
 
 Which lead to two GPU buffers:
 
