@@ -18,7 +18,7 @@ If we look at our current shader, we see some hard-coded constants:
 
 ```rust
 let ratio = 640.0 / 480.0;
-let offset = vec2<f32>(-0.6875, -0.463);
+let offset = vec2f(-0.6875, -0.463);
 ```
 
 This is not very satisfying, what happens when we want to move the object during the execution of the application? Or change the ratio because the user resized the window?
@@ -99,8 +99,8 @@ We are now done with the declaration of the uniform variable, we can use it like
 fn vs_main(in: VertexInput) -> VertexOutput {
 	// [...]
 	// We move the scene depending on the time
-	var offset = vec2<f32>(-0.6875, -0.463);
-	offset += 0.3 * vec2<f32>(cos(uTime), sin(uTime));
+	var offset = vec2f(-0.6875, -0.463);
+	offset += 0.3 * vec2f(cos(uTime), sin(uTime));
 	// [...]
 }
 ```

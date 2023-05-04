@@ -193,6 +193,8 @@ for (uint32_t layer = 0; layer < 6; ++layer) {
 Images appear upside down because the convention was designed by people who use $Y$ as the vertical axis, and in this guide we use $Z$ as the vertical. Anyways even when using $Y$-up it is better to stick to the convention table above than to try to intuitively guess the correct S and T texture axes.
 ```
 
+TODO
+
 Conclusion
 ----------
 
