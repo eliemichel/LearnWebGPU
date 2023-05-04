@@ -21,7 +21,7 @@ const adapter = await navigator.gpu.requestAdapter(options);
 // do something with the adapter
 ```
 
-The equivalent in the C API is a bit more complexe because there is no such thing as [promises](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise) in C, but the logic is very similar.
+The equivalent in the C API is a bit more complex because there is no such thing as [promises](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise) in C, but the logic is very similar.
 
 Without the `await` keyword, the JavaScript version can be rewritten as:
 
