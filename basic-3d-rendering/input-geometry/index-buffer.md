@@ -169,7 +169,7 @@ We could do this either in the initial vertex data vector, but this will require
 ```rust
 // In vs_main():
 let ratio = 640.0 / 480.0; // The width and height of the target surface
-out.position = vec4<f32>(in.position.x, in.position.y * ratio, 0.0, 1.0);
+out.position = vec4f(in.position.x, in.position.y * ratio, 0.0, 1.0);
 ```
 
 Although basic, this is a first step towards what will be the key use of the vertex shader when introducing **3D transforms**.

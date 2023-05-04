@@ -41,12 +41,12 @@ On the shader side, we replace the vertex index argument with a new one:
 
 ```rust
 @vertex
-fn vs_main(@location(0) in_vertex_position: vec2<f32>) -> /* [...] */ {
+fn vs_main(@location(0) in_vertex_position: vec2f) -> /* [...] */ {
 	// [...]
 }
 ```
 
-The `@location(0)` attribute means that this input variable is described by the vertex attribute in the `pipelineDesc.vertex.buffers` array. The type `vec2<f32>` must comply with what we will declare in the layout. The argument name `in_vertex_position` is up to you, it is only internal to the shader code!
+The `@location(0)` attribute means that this input variable is described by the vertex attribute in the `pipelineDesc.vertex.buffers` array. The type `vec2f` must comply with what we will declare in the layout. The argument name `in_vertex_position` is up to you, it is only internal to the shader code!
 
 ```{note}
 The term *attribute* is used for two different things. We talk about **WGSL attribute** to mean tokens of the form `@something` in a WGSL code, and about **vertex attribute** to mean an input of the vertex shader.
@@ -55,8 +55,8 @@ The term *attribute* is used for two different things. We talk about **WGSL attr
 The vertex shader becomes really simple in the end:
 
 ```rust
-fn vs_main(@location(0) in_vertex_position: vec2<f32>) -> @builtin(position) vec4<f32> {
-	return vec4<f32>(in_vertex_position, 0.0, 1.0);
+fn vs_main(@location(0) in_vertex_position: vec2f) -> @builtin(position) vec4f {
+	return vec4f(in_vertex_position, 0.0, 1.0);
 }
 ```
 
@@ -113,8 +113,14 @@ RequiredLimits requiredLimits = Default;
 requiredLimits.limits.maxVertexAttributes = 1;
 // We should also tell that we use 1 vertex buffers
 requiredLimits.limits.maxVertexBuffers = 1;
+// Maximum size of a buffer is 6 vertices of 2 float each
+requiredLimits.limits.maxBufferSize = 6 * 2 * sizeof(float);
+// Maximum stride between 2 consecutive vertices in the vertex buffer
+requiredLimits.limits.maxVertexBufferArrayStride = 2 * sizeof(float);
+// This must be set even if we do not use storage buffers for now
+requiredLimits.limits.minStorageBufferOffsetAlignment = supportedLimits.limits.minStorageBufferOffsetAlignment;
 
-DeviceDescriptor deviceDesc{};
+DeviceDescriptor deviceDesc;
 // [...]
 // We specify required limits here
 deviceDesc.requiredLimits = &requiredLimits;
@@ -141,6 +147,12 @@ setDefault(requiredLimits.limits);
 requiredLimits.limits.maxVertexAttributes = 1;
 // We should also tell that we use 1 vertex buffers
 requiredLimits.limits.maxVertexBuffers = 1;
+// Maximum size of a buffer is 6 vertices of 2 float each
+requiredLimits.limits.maxBufferSize = 6 * 2 * sizeof(float);
+// Maximum stride between 2 consecutive vertices in the vertex buffer
+requiredLimits.limits.maxVertexBufferArrayStride = 2 * sizeof(float);
+// This must be set even if we do not use storage buffers for now
+requiredLimits.limits.minStorageBufferOffsetAlignment = supportedLimits.limits.minStorageBufferOffsetAlignment;
 
 DeviceDescriptor deviceDesc{};
 // [...]
@@ -255,14 +267,14 @@ vertexBufferLayout.attributeCount = 1;
 vertexBufferLayout.attributes = &vertexAttrib;
 ```
 
-We can now configure our vertex attribute. The value of `shaderLocation` must be the same than what specifies the WGSL attribute `@location(...)` in the vertex shader. The format `Float32x2` corresponds at the same time to the type `vec2<f32>` in the shader and to the sequence of 2 floats in the vertex buffer data.
+We can now configure our vertex attribute. The value of `shaderLocation` must be the same than what specifies the WGSL attribute `@location(...)` in the vertex shader. The format `Float32x2` corresponds at the same time to the type `vec2f` in the shader and to the sequence of 2 floats in the vertex buffer data.
 
 ````{tab} With webgpu.hpp
 ```C++
 // == Per attribute ==
 // Corresponds to @location(...)
 vertexAttrib.shaderLocation = 0;
-// Means vec2<f32> in the shader
+// Means vec2f in the shader
 vertexAttrib.format = VertexFormat::Float32x2;
 // Index of the first element
 vertexAttrib.offset = 0;
@@ -274,14 +286,14 @@ vertexAttrib.offset = 0;
 // == Per attribute ==
 // Corresponds to @location(...)
 vertexAttrib.shaderLocation = 0;
-// Means vec2<f32> in the shader
+// Means vec2f in the shader
 vertexAttrib.format = WGPUVertexFormat_Float32x2;
 // Index of the first element
 vertexAttrib.offset = 0;
 ```
 ````
 
-The **stride** is a common concept in buffer manipulation: it designates the number of bytes between two consecutive elements. In our case, the positions are **contiguous** so the stride is equal to the size of a `vec2<f32>`, but this will change when adding more attributes in the same buffer.
+The **stride** is a common concept in buffer manipulation: it designates the number of bytes between two consecutive elements. In our case, the positions are **contiguous** so the stride is equal to the size of a `vec2f`, but this will change when adding more attributes in the same buffer.
 
 Finally the `stepMode` is set to `Vertex` to mean that each vertex corresponds to a different value from the buffer. The step mode is set to `Instance` when each value is shared by all vertices of the same instance (i.e., copy) of the shape.
 
@@ -347,13 +359,13 @@ std::vector<float> vertexData = {
 Conclusion
 ----------
 
-TODO
-
 ```{figure} /images/two-triangles.png
 :align: center
 :class: with-shadow
 Triangles rendered using a vertex attribute
 ```
+
+We have seen in this chapter how to use **GPU buffers** to feed data as **input** to the vertex shader, and thus to the whole rasterization pipeline. We will refine this in the next chapter by adding **additional attributes**.
 
 ````{tab} With webgpu.hpp
 *Resulting code:* [`step032`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step032)

@@ -56,6 +56,14 @@ The file format I introduce here is not standard, but it is simple enough to par
 
 It is basically the content of the `pointData` and `indexData` defined previously as C++ vectors, introduced by a line of the form `[section name]`. Lines that are empty or starting with a `#` are ignored.
 
+````{note}
+We can already bump up the maximum buffer size limit:
+
+```C++
+requiredLimits.limits.maxBufferSize = 15 * 5 * sizeof(float);
+```
+````
+
 ### Parser
 
 I am not going to detail the parser. I believe it is rather simple to understand, and it is not the core topic of this lecture.
@@ -290,11 +298,11 @@ WGPUShaderModule loadShaderModule(const fs::path& path, WGPUDevice device) {
 ```
 ````
 
-Move the original content of the shaderSource variable into `resources/shader.wsl` and replace the module creation step by:
+Move the original content of the shaderSource variable into `resources/shader.wgsl` and replace the module creation step by:
 
 ```C++
 std::cout << "Creating shader module..." << std::endl;
-ShaderModule shaderModule = loadShaderModule(RESOURCE_DIR "/shader.wsl");
+ShaderModule shaderModule = loadShaderModule(RESOURCE_DIR "/shader.wgsl");
 std::cout << "Shader module: " << shaderModule << std::endl;
 ```
 
@@ -306,11 +314,7 @@ Adjustments
 <!--
 ### Alignment
 
-TODO
-
-```C++
-indexData.resize((size_t)ceil(indexData.size() / (float)4) * 4);
-```
+indexData is aligned to 4 bytes, so if we use u32 its fine, if we use u16 we need some precaution. To be moved in index buffer section actually.
 -->
 
 ### Transform
@@ -326,8 +330,8 @@ Our loaded shape is a bit off, we should move it to better center it!
 So how do we "move" the object? Similarly to how we fixed the ratio issue in the previous chapter, we can do it in the **vertex shader**, by adding something to the `x` and `y` coordinates:
 
 ```rust
-let offset = vec2<f32>(-0.6875, -0.463);
-out.position = vec4<f32>(in.position.x + offset.x, (in.position.y + offset.y) * ratio, 0.0, 1.0);
+let offset = vec2f(-0.6875, -0.463);
+out.position = vec4f(in.position.x + offset.x, (in.position.y + offset.y) * ratio, 0.0, 1.0);
 ```
 
 ```{note}
@@ -445,8 +449,8 @@ But ignoring the preferred format of the target surface may result in performanc
 // We apply a gamma-correction to the color
 // We need to convert our input sRGB color into linear before the target
 // surface converts it back to sRGB.
-let linear_color = pow(in.color, vec3<f32>(2.2));
-return vec4<f32>(linear_color, 1.0);
+let linear_color = pow(in.color, vec3f(2.2));
+return vec4f(linear_color, 1.0);
 ```
 
 ```{figure} /images/loaded-webgpu-logo.png
