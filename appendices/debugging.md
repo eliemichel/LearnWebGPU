@@ -103,3 +103,8 @@ The mesh view in RenderDoc.
 ```
 
 You can see, both as a table and in a 3D viewer, the assembled input geometry and the post vertex shader one.
+
+Debugging in browser
+--------------------
+
+If you are compiling your project as a web page using emscripten, you should check out [the `webgpu-devtools` Chrome extension](https://chrome.google.com/webstore/detail/webgpu-devtools/ckabpgjkjmbkfmichbbgcgbelkbbpopi), it provides advanced WebGPU-specific debugging tools!
