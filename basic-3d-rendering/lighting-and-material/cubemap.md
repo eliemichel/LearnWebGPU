@@ -18,6 +18,9 @@ TODO
 Cube maps are more efficient to sample and hardware accelerated.
 ```
 
+Multi-layer textures
+--------------------
+
 We will see in the [Cubemap Conversion](../../basic-compute/image-processing/cubemap-conversion.md) chapter how to convert an equirectangular environment map into a cubemap and vice versa.
 
 All we need to know for now is that **a cubemap is a special type of texture**. It is stored as a **2D array texture** with **6 layers**, which means that when creating the texture, with specify a dimension of `2D` but the `size` has 3 dimensions:
@@ -84,7 +87,117 @@ for (uint32_t layer = 0; layer < 6; ++layer) {
 Images appear upside down because the convention was designed by people who use $Y$ as the vertical axis, and in this guide we use $Z$ as the vertical. Anyways even when using $Y$-up it is better to stick to the convention table above than to try to intuitively guess the correct S and T texture axes.
 ```
 
+TODO
+
+Implementation
+--------------
+
+TODO
+
 Unzip [`autumn_park_4k.zip`](../../data/autumn_park_4k.zip) in your `resource` directory.
+
+```C++
+// In Application.h
+bool initTexture(const std::filesystem::path& path, bool isCubemap = false);
+
+// In onInit()
+if (!initTexture(RESOURCE_DIR "/autumn_park_4k"), true /* isCubemap */) return false;
+
+// In Application.cpp
+bool Application::initTexture(const std::filesystem::path& path, bool isCubemap) {
+    TextureView textureView = nullptr;
+    Texture texture =
+        isCubemap
+        ? ResourceManager::loadCubemapTexture(path, m_device, &textureView)
+        : ResourceManager::loadTexture(path, m_device, &textureView);
+
+    // [...]
+
+    bindingLayout.texture.viewDimension =
+        isCubemap
+        ? TextureViewDimension::Cube
+        : TextureViewDimension::_2D;
+
+    // [...]
+}
+```
+
+```C++
+// In ResourceManager.h
+static wgpu::Texture loadCubemapTexture(const path& path, wgpu::Device device, wgpu::TextureView* pTextureView = nullptr);
+
+// In ResourceManager.cpp
+Texture ResourceManager::loadCubemapTexture(const path& path, Device device, TextureView* pTextureView) {
+    const char* cubemapPaths[] = {
+        "cubemap-posX.png",
+        "cubemap-negX.png",
+        "cubemap-posY.png",
+        "cubemap-negY.png",
+        "cubemap-posZ.png",
+        "cubemap-negZ.png",
+    };
+
+    // Load image data for each of the 6 layers
+    Extent3D cubemapSize = { 0, 0, 6 };
+    std::array<uint8_t*, 6> pixelData;
+    for (uint32_t layer = 0; layer < 6; ++layer) {
+        int width, height, channels;
+        auto p = path / cubemapPaths[layer];
+        pixelData[layer] = stbi_load(p.string().c_str(), &width, &height, &channels, 4 /* force 4 channels */);
+        if (nullptr == pixelData[layer]) throw std::runtime_error("Could not load input texture!");
+        if (layer == 0) {
+            cubemapSize.width = (uint32_t)width;
+            cubemapSize.height = (uint32_t)height;
+        }
+        else {
+            if (cubemapSize.width != (uint32_t)width || cubemapSize.height != (uint32_t)height)
+                throw std::runtime_error("All cubemap faces must have the same size!");
+        }
+    }
+
+    // [...]
+    textureDesc.size = cubemapSize;
+
+    // [...]
+    Extent3D cubemapLayerSize = { cubemapSize.width , cubemapSize.height , 1 };
+    for (uint32_t layer = 0; layer < 6; ++layer) {
+        Extent3D origin = { 0, 0, layer };
+
+        writeMipMaps(device, texture, cubemapLayerSize, textureDesc.mipLevelCount, pixelData[layer], origin);
+
+        // Free CPU-side data
+        stbi_image_free(pixelData[layer]);
+    }
+
+    // [...]
+    textureViewDesc.arrayLayerCount = 6;
+    //                                ^ This was 1
+    textureViewDesc.dimension = TextureViewDimension::Cube;
+    //                                                ^ This was 2D
+```
+
+Note that we also add a new extra argument to `writeMipMaps` to specify which layer to upload to:
+
+```C++
+template<typename component_t>
+static void writeMipMaps(
+    /* [...] */
+    Origin3D origin = { 0, 0, 0 }
+) {
+    // [...]
+    destination.origin = origin;
+    // ^                 ^ This was { 0, 0, 0 }
+```
+
+```rust
+// In shader
+@group(0) @binding(4) var cubemapTexture: texture_cube<f32>;
+
+// [...]
+
+let ibl_sample = textureSample(cubemapTexture, textureSampler, ibl_direction).rgb;
+//                                                             ^ This was ibl_uv
+```
 
 TODO
 
