@@ -243,6 +243,15 @@ And this finally works!
 The WebGPU logo, tinted with our new uniform color.
 ```
 
+Conclusion
+----------
+
+We have seen here that providing multiple uniforms is commonly done by actually providing a single uniform that is a structure of multiple fields. Importantly these fields have memory alignment constraints.
+
+```{seealso}
+I started writing [an online utility tool](https://eliemichel.github.io/WebGPU-AutoLayout) to automatically derive a C++ struct that matches a WGSL struct. Note that it uses the type `vec3` from the GLM library instead of `std::array<float,3>` but it is easy to replace.
+```
+
 ````{tab} With webgpu.hpp
 *Resulting code:* [`step043`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step043)
 ````
