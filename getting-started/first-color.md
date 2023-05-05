@@ -39,7 +39,7 @@ Remember that the GPU process runs at its own pace and that our CPU-issued comma
     <source src="../_static/swapchain.mp4" type="video/mp4">
 </video>
 
-*Left: The render process draws on an off-screen texture. Middle: Rendered textures wait in a queue. Right: At a regular frame rate, rendered textures are presented to te window's surface.*
+*Left: The render process draws on an off-screen texture. Middle: Rendered textures wait in a queue. Right: At a regular frame rate, rendered textures are presented to the window's surface.*
 
 ### Creation
 
@@ -216,7 +216,7 @@ renderPassDesc.colorAttachmentCount = 1;
 renderPassDesc.colorAttachments = &renderPassColorAttachment;
 ```
 
-The first important setting of the attachment is the texture view it must draw in. In our case, the view returned by the swap chain because we directly want to draw on screen, but in a advanced pipelines it is very common to draw on intermediate textures, which are then fed to e.g., post-process passes.
+The first important setting of the attachment is the texture view it must draw in. In our case, the view returned by the swap chain because we directly want to draw on screen, but in advanced pipelines it is very common to draw on intermediate textures, which are then fed to e.g., post-process passes.
 
 ```{lit} C++, Set up the attachment
 renderPassColorAttachment.view = nextTexture;
