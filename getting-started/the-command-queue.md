@@ -70,7 +70,7 @@ As of now, the `wgpuQueueOnSubmittedWorkDone` is not implemented by our wgpu-nat
 
 ```{lit} C++, Add queue callback (replace, hidden)
 #ifdef WEBGPU_BACKEND_DAWN
-// Add a callback to monitor the moment queued work winished
+// Add a callback to monitor the moment queued work finished
 auto onQueueWorkDone = [](WGPUQueueWorkDoneStatus status, void* /* pUserData */) {
     std::cout << "Queued work finished with status: " << status << std::endl;
 };
