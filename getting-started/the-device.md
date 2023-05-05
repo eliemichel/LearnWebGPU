@@ -217,7 +217,7 @@ wgpuDeviceSetUncapturedErrorCallback(device, onDeviceError, nullptr /* pUserData
 
 This defines **a callback that gets executed upon errors**, which is very handy for debugging, especially when we will start using **asynchronous** operations.
 
-If you use a debugger (which I recommend), like `gdb` or you IDE, I recommend you **put a breakpoint** in this callback, so that your program pauses and provides you with a call stack whenever WebGPU encounters an unexpected error.
+If you use a debugger (which I recommend), like `gdb` or your IDE, I recommend you **put a breakpoint** in this callback, so that your program pauses and provides you with a call stack whenever WebGPU encounters an unexpected error.
 
 *Resulting code:* [`step015`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step015)
 
