@@ -34,7 +34,7 @@ Let us replace the `f32` uniform with a struct:
  */
 struct MyUniforms {
 	time: f32,
-	color: vec4<f32>,
+	color: vec4f,
 };
 
 // Instead of the simple uTime variable, our uniform variable is a struct
@@ -44,13 +44,13 @@ struct MyUniforms {
 // [...] (Replace uTime with uMyUniforms.time in here)
 
 @fragment
-fn fs_main() -> @location(0) vec4<f32> {
+fn fs_main() -> @location(0) vec4f {
 	// We multiply the scene's color with our global uniform (this is one
 	// possible use of the color uniform, among many others).
 	let color = in.color * uMyUniforms.color.rgb;
 	// Gamma-correction
-	let corrected_color = pow(color, vec3<f32>(2.2));
-	return vec4<f32>(corrected_color, uMyUniforms.color.a);
+	let corrected_color = pow(color, vec3f(2.2));
+	return vec4f(corrected_color, uMyUniforms.color.a);
 }
 ```
 
@@ -187,7 +187,7 @@ Memory Layout Constraints
 
 There is one thing I have omitted until now: the architecture of the GPU imposes some constraints on the way we can organize fields in a uniform buffer.
 
-If we look at [the uniform layout constraints](https://gpuweb.github.io/gpuweb/wgsl/#address-space-layout-constraints), we can see that **the offset** (as returned by `offsetof`) of a field of type `vec4<f32>` **must be a multiple** of the size of `vec4<f32>`, namely 16 bytes. We say that the field is **aligned** to 16 bytes.
+If we look at [the uniform layout constraints](https://gpuweb.github.io/gpuweb/wgsl/#address-space-layout-constraints), we can see that **the offset** (as returned by `offsetof`) of a field of type `vec4f` **must be a multiple** of the size of `vec4f`, namely 16 bytes. We say that the field is **aligned** to 16 bytes.
 
 In our current `MyUniforms` struct, this property is **not verified** because `color` as an offset of 4 bytes (`sizeof(float)`), which is obviously not a multiple of 16 bytes! An easy fix is simply to swap the `color` and `time` fields:
 
@@ -197,13 +197,13 @@ struct MyUniforms {
 	// offset = 0 * sizeof(f32) -> OK
 	float time;
 
-	// offset = 4 -> WRONG, not a multiple of sizeof(vec4<f32>)
+	// offset = 4 -> WRONG, not a multiple of sizeof(vec4f)
 	std::array<float,4> color;
 };
 
 // Do
 struct MyUniforms {
-	// offset = 0 * sizeof(vec4<f32>) -> OK
+	// offset = 0 * sizeof(vec4f) -> OK
 	std::array<float,4> color;
 
 	// offset = 16 = 4 * sizeof(f32) -> OK
@@ -221,7 +221,7 @@ If you used the `offsetof` macro to perform partial update of the uniform buffer
 
 Another constraint on uniform types is that they must be [host-shareable](https://gpuweb.github.io/gpuweb/wgsl/#host-shareable), which comes with [a constraint on the total structure size](https://gpuweb.github.io/gpuweb/wgsl/#alignment-and-size).
 
-Basically, the total size must be **a multiple of the alignment size of its largest field**. In our case, this means it must be a multiple of 16 bytes (the size of `vec4<f32>`).
+Basically, the total size must be **a multiple of the alignment size of its largest field**. In our case, this means it must be a multiple of 16 bytes (the size of `vec4f`).
 
 Thus we add **padding** to our structure, namely an unused attribute at the end that fills in extra bytes:
 

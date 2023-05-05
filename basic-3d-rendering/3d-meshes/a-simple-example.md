@@ -15,6 +15,10 @@ Let's dive into what you are quite likely here for: rendering **3D shapes**!
 I rolled back the part of the code about dynamic uniforms for now. I also set the `offset` to `vec2<f32>(0.0)`;
 ```
 
+```{admonition} WIP
+From this chapter on, the example WGSL code uses templated types `vec2<f32>` where we can use simpler aliases `vec2f` because when I first wrote this aliases were not supported by `wgpu-native`.
+```
+
 Switching to 3D data
 --------------------
 
