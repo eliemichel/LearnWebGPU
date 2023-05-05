@@ -11,5 +11,6 @@ recap
 specular
 normal-mapping
 ibl
+cubemap
 pbr
 ```
