@@ -35,7 +35,7 @@ Are things introduced in the right order?
 
 *Did you feel you had to go through chapter that don't interest you to reach the ones that do?*
 
-The potential audience of this guide if made of various profiles. Some people already know another graphics API and want to learn what is different with WebGPU. Some people already know WebGPU and want to know what is different in native and/or C++ programming. Some people are newcomers to real-time graphics and want to learn how to create a little video game.
+The potential audience of this guide is made of various profiles. Some people already know another graphics API and want to learn what is different with WebGPU. Some people already know WebGPU and want to know what is different in native and/or C++ programming. Some people are newcomers to real-time graphics and want to learn how to create a little video game.
 
 I wish I can provide a comfortable reading route to all of these readers but it requires some organization.
 

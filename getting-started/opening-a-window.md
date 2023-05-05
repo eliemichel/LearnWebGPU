@@ -39,7 +39,7 @@ target_link_libraries(App PRIVATE glfw)
 ```
 
 ```{tip}
-This time, the name 'glfw' is the one of the *target* defined in `glfw/CMakeLists.txt` by calling `add_library(glfw ...)`, it is not related to a directory name.
+This time, the name 'glfw' is one of the *target* defined in `glfw/CMakeLists.txt` by calling `add_library(glfw ...)`, it is not related to a directory name.
 ```
 
 You should now be able to build the application and add `#include <GLFW/glfw3.h>` at the beginning of the main file.
