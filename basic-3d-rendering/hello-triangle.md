@@ -213,7 +213,7 @@ pipelineDesc.depthStencil = nullptr;
 
 The blending stage takes each fragment's color and "paints" it onto the target color attachment. If the original color in the **destination** pixel is $(r_d, g_d, b_d, a_d)$ and the color of the **source** fragment to paint is $(r_s, g_s, b_s, a_s)$, what should be the final color $(r, g, b, a)$ of the final pixel? This is what the **blend state** specifies.
 
-We must also specify what **format** (i.e., how to represent the values as zeros and ones) the colors must use to be stored in the final attachment.
+We must also specify what **format** (i.e., how to represent the values as zeros and ones) the colors are to be stored in the final attachment.
 
 ````{tab} With webgpu.hpp
 ```C++
@@ -377,7 +377,7 @@ fn fs_main() -> @location(0) vec4f {
 }
 ```
 
-The function names `vs_main` (resp. `fs_main`) must have the very same name than what was specified as `entryPoint` in the vertex (resp. fragment) state.
+The function names `vs_main` (resp. `fs_main`) must have the very same name as what was specified as `entryPoint` in the vertex (resp. fragment) state.
 
 ```{note}
 Shader languages natively support **vector and matrix types** up to size 4. The type `vec2f` is a vector of 2 floats, and an **alias** for the *templated* type `vec2<f32>`. As another example, the type `vec4<u32>` is a vector of 4 unsigned integers and has alias `vec4u`.
