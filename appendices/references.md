@@ -9,6 +9,7 @@ References (🚧WIP)
  - [WebGPU Explainer](https://gpuweb.github.io/gpuweb/explainer)
  - [Efficiently rendering glTF models - A WebGPU Case Study](https://toji.github.io/webgpu-gltf-case-study)
  - [Awesome WebGPU: A curated list of WebGPU ressources, libraries and tools](https://github.com/mikbry/awesome-webgpu)
+ - [Another list of WebGPU ressources](https://wiki.nikiv.dev/computer-graphics/webgpu)
  - [WebGPU is Not Just About the Web](../data/2023-03_WebGPU%20is%20not%20just%20about%20the%20Web.pdf), an introduction to this guide that was given at *QCon London 2023* (and [another ref](http://kvark.github.io/web/gpu/native/2020/05/03/point-of-webgpu-native.html) backing this claim).
  - [A detailed introduction to Computer Graphics](https://www.scratchapixel.com)
  - Filament's [material guide](https://google.github.io/filament/Materials.html) and [design document](https://google.github.io/filament/Filament.html)

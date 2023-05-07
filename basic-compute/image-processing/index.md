@@ -10,4 +10,5 @@ Contents
 mipmap-generation
 convolution-filters
 cubemap-conversion
+cubemap-prefiltering
 ```
