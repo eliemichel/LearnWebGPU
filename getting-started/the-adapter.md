@@ -238,6 +238,18 @@ WGPUSurface surface = glfwGetWGPUSurface(instance, window);
 #include <glfw3webgpu.h>
 ```
 
+Also don't forget to release the texture at the end:
+
+```{lit} C++, Destroy surface
+wgpuSurfaceRelease(surface);
+```
+
+```{lit} C++, Destroy things (replace, hidden)
+{{Destroy surface}}
+{{Destroy adapter}}
+{{Destroy WebGPU instance}}
+```
+
 One last thing: we can **tell GLFW not to care about the graphics API** setup, as it does not know WebGPU and we won't use what it could set up by default for other APIs:
 
 ```{lit} C++, Create window
