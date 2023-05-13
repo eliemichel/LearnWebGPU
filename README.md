@@ -38,3 +38,9 @@ pip install -r requirements.txt
 ```
 make html
 ```
+
+4. To build the source code defined by [Sphinx Literate](https://github.com/eliemichel/sphinx_literate), run
+
+```
+make tangle
+```

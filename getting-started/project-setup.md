@@ -131,6 +131,20 @@ endif()
 In the accompanying code, I hid these details in the `target_treat_all_warnings_as_errors()` function defined in `utils.cmake` and included at the beginning of the `CMakeLists.txt`.
 ```
 
+On MacOS, CMake can generate XCode project files. However, by default, no *schemes* are
+created, and XCode itself generates a scheme for each CMake target -- usually we only
+want a scheme for our main target. Therefore, we set the `XCODE_GENERATE_SCHEME` property.
+We will also already enable frame capture for GPU debugging.
+
+```{lit} CMake, Recommended extras (append)
+if(XCODE)
+    set_target_properties(App PROPERTIES
+        XCODE_GENERATE_SCHEME ON
+        XCODE_SCHEME_ENABLE_GPU_FRAME_CAPTURE_MODE "Metal")
+endif()
+```
+
+
 We now have a good basic project configuration, that we'll build upon in the next chapters. We are ready to move on to opening a window.
 
 *Resulting code:* [`step000`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step000)
