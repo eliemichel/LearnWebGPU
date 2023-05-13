@@ -23,7 +23,7 @@ After the installation, you can type `which cmake` (linux/macOS) or `where cmake
 If you are under an Ubuntu/Debian distribution, install the following packages:
 
 ```bash
-sudo apt install cmake build-essentials
+sudo apt install cmake build-essential
 ```
 
 Other distributions have equivalent packages, make sure you have the commands `cmake`, `make` and `g++` working.
