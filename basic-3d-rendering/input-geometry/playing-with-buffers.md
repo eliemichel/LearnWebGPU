@@ -206,23 +206,43 @@ This is because there is no hidden process executed by the WebGPU library to che
 
 Unfortunately, this mechanism has no standard solution, so we write it differently for Dawn and `wgpu-native`:
 
+````{tab} With webgpu.hpp
 ```C++
 while (!glfwWindowShouldClose(window)) {
 	// Do nothing, this checks for ongoing asynchronous operations and call their callbacks
 #ifdef WEBGPU_BACKEND_WGPU
-		// Non-standardized behavior: submit empty queue to flush callbacks
-		// (wgpu-native also has a device.poll but its API is more complex)
-		queue.submit(0, nullptr);
+	// Non-standardized behavior: submit empty queue to flush callbacks
+	// (wgpu-native also has a device.poll but its API is more complex)
+	queue.submit(0, nullptr);
 #else
-		// Non-standard Dawn way
-		device.tick();
+	// Non-standard Dawn way
+	device.tick();
 #endif
+
+	// (This is the same idea, for the GLFW library callbacks)
+	glfwPollEvents();
 }
 ```
+````
 
-```{note}
-Our wgpu-native backend also provides a more explicit but non-standard `device.poll()` to do "nothing but check on async jobs" operation. But it needs multiple mandatory argument so in the end it is easier to just submit an empty queue.
+````{tab} Vanilla webgpu.h
+```C++
+while (!glfwWindowShouldClose(window)) {
+	// Do nothing, this checks for ongoing asynchronous operations and call their callbacks
+#ifdef WEBGPU_BACKEND_WGPU
+	// Non-standardized behavior: submit empty queue to flush callbacks
+	// (wgpu-native also has a wgpuDevicePoll but its API is more complex)
+	wgpuQueueSubmit(queue, 0, nullptr);
+#else
+	// Non-standard Dawn way
+	wgpuDeviceTick(device);
+#endif
+
+	// (This is the same idea, for the GLFW library callbacks)
+	glfwPollEvents();
+}
 ```
+````
 
 ```{warning}
 Make sure the calls to `buffer.destroy` are issued *after* the main loop, otherwise the callback will be called with status `BufferMapAsyncStatus::DestroyedBeforeCallback`.

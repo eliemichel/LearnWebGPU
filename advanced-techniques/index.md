@@ -7,6 +7,7 @@ Contents
 ```{toctree}
 :titlesonly:
 
+raii
 hdr-textures
 deferred-shading
 benchmarking
