@@ -215,7 +215,7 @@ while (!glfwWindowShouldClose(window)) {
 		queue.submit(0, nullptr);
 #else
 		// Non-standard Dawn way
-		queue.tick();
+		device.tick();
 #endif
 }
 ```
