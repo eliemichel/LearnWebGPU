@@ -1,4 +1,4 @@
-Procedural Geometry (🛑TODO)
+Procedural Geometry
 ===================
 
 Contents
@@ -6,4 +6,6 @@ Contents
 
 ```{toctree}
 :titlesonly:
+
+deformation
 ```
