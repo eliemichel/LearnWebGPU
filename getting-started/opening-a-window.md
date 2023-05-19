@@ -77,7 +77,6 @@ Once the library has been initialized, we may create a window:
 ```{lit} C++, Create and destroy window
 GLFWwindow* window = glfwCreateWindow(640, 480, "Learn WebGPU", NULL, NULL);
 {{Use the window}}
-glfwDestroyWindow(window);
 ```
 
 Here again, we may add some error management:
