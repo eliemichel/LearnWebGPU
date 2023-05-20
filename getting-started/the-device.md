@@ -219,6 +219,16 @@ This defines **a callback that gets executed upon errors**, which is very handy 
 
 If you use a debugger (which I recommend), like `gdb` or your IDE, I recommend you **put a breakpoint** in this callback, so that your program pauses and provides you with a call stack whenever WebGPU encounters an unexpected error.
 
+````{admonition} Dawn
+By default Dawn runs callbacks only when the device "ticks", so the error callbacks are invoked in a different call stack than where the error occurred, making the breakpoint less informative. To force Dawn to invoke error callbacks as soon as there is an error, you can set the environment variable `DAWN_DEBUG_BREAK_ON_ERROR` to a non-empty non-zero value.
+
+To automatically set this up in Visual Studio from CMake, you can add the followign to your `CMakeLists.txt`:
+
+```CMake
+set_target_properties(App PROPERTIES VS_DEBUGGER_ENVIRONMENT "DAWN_DEBUG_BREAK_ON_ERROR=1")
+```
+````
+
 *Resulting code:* [`step015`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step015)
 
 ```{lit} C++, Utility functions (append, hidden)
