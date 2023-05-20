@@ -75,8 +75,12 @@ if (!glfwInit()) {
 Once the library has been initialized, we may create a window:
 
 ```{lit} C++, Create and destroy window
+// Create the window
 GLFWwindow* window = glfwCreateWindow(640, 480, "Learn WebGPU", NULL, NULL);
+
 {{Use the window}}
+
+// At the end of the program, destroy the window
 glfwDestroyWindow(window);
 ```
 
