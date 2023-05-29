@@ -155,10 +155,15 @@ WGPUCommandBuffer command = wgpuCommandEncoderFinish(encoder, &cmdBufferDescript
 // Finally submit the command queue
 std::cout << "Submitting command..." << std::endl;
 wgpuQueueSubmit(queue, 1, &command);
+
+#ifdef WEBGPU_BACKEND_DAWN
+wgpuCommandEncoderRelease(encoder);
+wgpuCommandBufferRelease(command);
+#endif
 ```
 
-```{note}
-The `Finish` operation also destroys the `encoder`, it must not be called afterwards and there is no need to call `wgpuCommandEncoderRelease`. Similarly the `wgpuQueueSubmit` takes care of destroying the command buffer.
+```{admonition} Implementation divergence
+In `wgpu-native`, the `Finish` operation also destroys the `encoder`, so there is no need to call `wgpuCommandEncoderRelease`. Similarly the `wgpuQueueSubmit` takes care of destroying the command buffer. **This is likely to change in the future**.
 ```
 
 ```{lit} C++, Test command encoding (hidden)
