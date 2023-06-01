@@ -85,7 +85,7 @@ The fourth part [Advanced Techniques](advanced-techniques/index.md) is made of f
 ### Literate Programming
 
 ```{warning}
-This is in an early phase an only available for the first chapters.
+This guide is in an early phase; it is only available for the first few chapters.
 ```
 
 This guide follows the principle of **Literate Programming**: the documentation you read is annotated such that one can **automatically combine its code blocks** into a fully working code. This is a way to ensure that the guide truly contains everything you need to **reproduce the results**.
