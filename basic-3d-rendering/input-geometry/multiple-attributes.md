@@ -181,7 +181,7 @@ vertexBufferLayout.attributes = vertexAttribs.data();
 Another possible data layout is to have two different buffers for the two attributes. Make sure to change the device limit to support this:
 
 ```C++
-requiredLimits.limits.maxVertexAttributes = 2;
+requiredLimits.limits.maxVertexBuffers = 2;
 ```
 
 We thus have 2 input vectors:
