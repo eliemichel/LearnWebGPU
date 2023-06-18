@@ -303,7 +303,7 @@ Move the original content of the shaderSource variable into `resources/shader.wg
 
 ```C++
 std::cout << "Creating shader module..." << std::endl;
-ShaderModule shaderModule = loadShaderModule(RESOURCE_DIR "/shader.wgsl");
+ShaderModule shaderModule = loadShaderModule(RESOURCE_DIR "/shader.wgsl", device);
 std::cout << "Shader module: " << shaderModule << std::endl;
 ```
 
