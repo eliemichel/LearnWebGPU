@@ -230,8 +230,8 @@ endif()
 You can then have 2 different builds of your project in two different directories:
 
 ```
-cmake -B build-dev -DDEV_MOD=ON -DCMAKE_BUILD_TYPE=Debug
-cmake -B build-release -DDEV_MOD=OFF -DCMAKE_BUILD_TYPE=Release
+cmake -B build-dev -DDEV_MODE=ON -DCMAKE_BUILD_TYPE=Debug
+cmake -B build-release -DDEV_MODE=OFF -DCMAKE_BUILD_TYPE=Release
 ```
 
 The first one for comfort of development, the second one for the portability of a release.
