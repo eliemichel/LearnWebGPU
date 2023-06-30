@@ -196,8 +196,9 @@ target_compile_definitions(App PRIVATE
 
 The expression `${CMAKE_CURRENT_SOURCE_DIR}` is replaced by the content of CMake's variable [`CMAKE_CURRENT_SOURCE_DIR`](https://cmake.org/cmake/help/latest/variable/CMAKE_CURRENT_SOURCE_DIR.html), which is a built-in variable containing the full path to the `CMakeLists.txt` file that you are editing.
 
-```{note}```
+```{note}
 When writing a CMake *function*, the `CMAKE_CURRENT_SOURCE_DIR` variable contains the directory of the `CMakeLists.txt` that is currently calling the function. If you want to refer to the directory of the `CMakeLists.txt` that defines the function, use [`CMAKE_CURRENT_LIST_DIR`](https://cmake.org/cmake/help/latest/variable/CMAKE_CURRENT_LIST_DIR.html) instead.
+```
 
 ### Portability
 
@@ -229,8 +230,8 @@ endif()
 You can then have 2 different builds of your project in two different directories:
 
 ```
-cmake -B build-dev -DDEV_MOD=ON -DCMAKE_BUILD_TYPE=Debug
-cmake -B build-release -DDEV_MOD=OFF -DCMAKE_BUILD_TYPE=Release
+cmake -B build-dev -DDEV_MODE=ON -DCMAKE_BUILD_TYPE=Debug
+cmake -B build-release -DDEV_MODE=OFF -DCMAKE_BUILD_TYPE=Release
 ```
 
 The first one for comfort of development, the second one for the portability of a release.
@@ -302,7 +303,7 @@ Move the original content of the shaderSource variable into `resources/shader.wg
 
 ```C++
 std::cout << "Creating shader module..." << std::endl;
-ShaderModule shaderModule = loadShaderModule(RESOURCE_DIR "/shader.wgsl");
+ShaderModule shaderModule = loadShaderModule(RESOURCE_DIR "/shader.wgsl", device);
 std::cout << "Shader module: " << shaderModule << std::endl;
 ```
 
