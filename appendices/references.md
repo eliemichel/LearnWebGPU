@@ -17,3 +17,5 @@ References (🚧WIP)
  - A guide to get started with the WebGPU Shader Language[Tour of WGSL](https://google.github.io/tour-of-wgsl/)
  - Examples of AI tool based on WebGPU: https://mlc.ai/web-llm/ and https://mlc.ai/web-stable-diffusion/
  - [WebGPU fundamentals](https://webgpufundamentals.org/)
+ - [A blog post with nice diagrams about WebGPU usage](https://cohost.org/mcc/post/1406157-i-want-to-talk-about-webgpu)
+ - [WebGPU Bind Group best practices](https://toji.dev/webgpu-best-practices/bind-groups.html)

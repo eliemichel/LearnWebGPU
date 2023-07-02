@@ -94,6 +94,10 @@ Whichever distribution you choose, the integration is the same:
 add_subdirectory(webgpu)
 ```
 
+```{note}
+When using Dawn, make sure to add the `webgpu` directory **after** you add `glfw`, otherwise Dawn provides its own version (which may be fine sometimes, but you don't get to chose the version).
+```
+
  4. Add the `webgpu` target as a dependency of our app, after GLFW in the `target_link_libraries` command.
 
 ```{lit} CMake, Link libraries (replace)
@@ -200,21 +204,13 @@ This should display something like `WGPU instance: 000001C0D2637720` at startup.
 
 ### Destruction and lifetime management
 
-The destruction of entities is a part of the API on which `wgpu-native` and Dawn [do not agree yet](https://github.com/webgpu-native/webgpu-headers/issues/9). The key difference is that Dawn provides a reference counting mechanism but `wgpu-native` does not:
+All the entities that can be **created** using WebGPU entities must eventually be **released**. A procedure that creates an object always looks like `wgpuCreateSomething`, and its equivalent for releasing it is `wgpuSomethingRelease`.
+
+Note that each object internally holds a reference counter, and releasing it only frees related memory if no other part of your code still references it (i.e., the counter falls to 0):
 
 ```C++
-// A. With wgpu-native
-
 WGPUSomething sth = wgpuCreateSomething(/* descriptor */);
-// This means "the object sth will never be used ever again"
-// and destroys the object right away.
-wgpuSomethingDrop(sth);
-```
 
-```C++
-// B. With Dawn
-
-WGPUSomething sth = wgpuCreateSomething(/* descriptor */);
 // This means "increase the ref counter of the object sth by 1"
 wgpuSomethingReference(sth);
 // Now the reference is 2 (it is set to 1 at creation)
@@ -230,24 +226,20 @@ wgpuSomethingRelease(sth);
 // should no longer be used!
 ```
 
-In practice **as long as we never use** `wgpuSomethingReference`, the behavior of wgpu-native's **Drop** and Dawn's **Release** is the same so we set up an alias:
-
-```{lit} C++, Fix a wgpu-native/Dawn mismatch
-#ifdef WEBGPU_BACKEND_WGPU
-// wgpu-native's non-standard parts are in a different header file:
-#include <webgpu/wgpu.h>
-#define wgpuInstanceRelease wgpuInstanceDrop
-#endif
-```
-
-And we can simply call the Dawn-style *Release* procedure:
-
-```{lit} C++, Destroy WebGPU instance
-// 5. We clean up the WebGPU instance
-wgpuInstanceRelease(instance);
-```
-
 ````{note}
+In older versions of `wgpu-native`, the Release and Reference functions did not exist, and a Drop function was used to immediately free an object. See details in [this GitHub issue](https://github.com/webgpu-native/webgpu-headers/issues/9).
+
+```C++
+// With old versions of wgpu-native
+WGPUSomething sth = wgpuCreateSomething(/* descriptor */);
+// This means "the object sth will never be used ever again"
+// and destroys the object right away:
+wgpuSomethingDrop(sth);
+```
+````
+
+### Implementation-specific behavior
+
 In order to handle the slight differences between implementations, the distributions I provide also define the following preprocessor variables:
 
 ```C++
@@ -262,7 +254,6 @@ In order to handle the slight differences between implementations, the distribut
 ```
 
 The case of emscripten only occurs when trying to compile our code as a WebAssembly module, which is covered in the [Building for the Web](../appendices/building-for-the-web.md) appendix.
-````
 
 Conclusion
 ----------
