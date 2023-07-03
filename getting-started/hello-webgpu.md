@@ -149,8 +149,6 @@ To test the implementation, we simply create the WebGPU **instance**, i.e., the 
 #include <webgpu/webgpu.h>
 #include <iostream>
 
-{{Fix a wgpu-native/Dawn mismatch}}
-
 int main (int, char**) {
     {{Create WebGPU instance}}
 
@@ -224,6 +222,13 @@ wgpuSomethingRelease(sth);
 wgpuSomethingRelease(sth);
 // Now the reference is down to 0, the object is destroyed and
 // should no longer be used!
+```
+
+In particular, we need to release the global WebGPU instance:
+
+```{lit} C++, Destroy WebGPU instance
+// 5. We clean up the WebGPU instance
+wgpuInstanceRelease(instance);
 ```
 
 ````{note}
