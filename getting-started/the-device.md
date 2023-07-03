@@ -50,7 +50,7 @@ WGPUDevice requestDevice(WGPUAdapter adapter, WGPUDeviceDescriptor const * descr
 		if (status == WGPURequestDeviceStatus_Success) {
 			userData.device = device;
 		} else {
-			std::cout << "Could not get WebGPU adapter: " << message << std::endl;
+			std::cout << "Could not get WebGPU device: " << message << std::endl;
 		}
 		userData.requestEnded = true;
 	};

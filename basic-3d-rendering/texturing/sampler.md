@@ -34,7 +34,7 @@ samplerDesc.mipmapFilter = MipmapFilterMode::Linear;
 samplerDesc.lodMinClamp = 0.0f;
 samplerDesc.lodMaxClamp = 1.0f;
 samplerDesc.compare = CompareFunction::Undefined;
-samplerDesc.maxAnisotropy = 0;
+samplerDesc.maxAnisotropy = 1;
 Sampler sampler = device.createSampler(samplerDesc);
 ```
 ````
@@ -52,7 +52,7 @@ samplerDesc.mipmapFilter = WGPUMipmapFilterMode_Linear;
 samplerDesc.lodMinClamp = 0.0f;
 samplerDesc.lodMaxClamp = 1.0f;
 samplerDesc.compare = WGPUCompareFunction_Undefined;
-samplerDesc.maxAnisotropy = 0;
+samplerDesc.maxAnisotropy = 1;
 WGPUSampler sampler = wgpuDeviceCreateSampler(device, samplerDesc);
 ```
 ````

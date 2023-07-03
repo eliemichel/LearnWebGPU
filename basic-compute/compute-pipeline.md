@@ -297,7 +297,7 @@ Once the bind group is created, it can be bound to the pipeline in `onCompute()`
 ```C++
 computePass.setPipeline(computePipeline);
 // Set the bind group:
-computePass.setBindGroup(0, bindGroup, 0, nullptr);
+computePass.setBindGroup(0, m_bindGroup, 0, nullptr);
 computePass.dispatchWorkgroups(1, 1, 1);
 ```
 
@@ -459,7 +459,7 @@ After the `computePass.end()`, and before `encoder.finish(...)`, we add a copy c
 ```C++
 // Copy the memory from the output buffer that lies in the storage part of the
 // memory to the map buffer, which is in the "mappable" part of the memory.
-encoder.copyBufferToBuffer(m_outputBuffer, 0, m_mapBuffer, 0, bufferDesc.size);
+encoder.copyBufferToBuffer(m_outputBuffer, 0, m_mapBuffer, 0, m_bufferSize);
 ```
 
 ### Callback
