@@ -4,7 +4,7 @@ Introduction
 What is a graphics API?
 -----------------------
 
-A personal computer or smartphone commonly contains two computing units: the **CPU** (for *Central Processing Unit*) and the **GPU** (*Graphics Processing Unit*). When programming an application, **one primarily write instructions for the CPU**. This is what most of programming languages are for.
+A personal computer or smartphone commonly contains two computing units: the **CPU** (for *Central Processing Unit*) and the **GPU** (*Graphics Processing Unit*). When programming an application, **one primarily writes instructions for the CPU**. This is what most of programming languages are for.
 
 ```{figure} /images/architecture-notes.png
 :align: center
