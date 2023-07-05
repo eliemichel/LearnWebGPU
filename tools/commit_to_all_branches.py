@@ -2,7 +2,21 @@ import subprocess
 
 # Config
 clone_root = r"G:\SourceCode\LearnWebGPU-Code-folded"
-cherry_picked_commit = "9277c0fa9029dd2de29fd9e973953a43a3b32842"
+cherry_picked_commit = "fac8be2cff1b0d251f6bb91ded31bea5cb3bb3e3"
+all_branches = [
+'step020',
+'step025',
+'step030',
+'step030-vanilla',
+'step032',
+'step033',
+'step033-optionB',
+'step034',
+'step037',
+'step039',
+'step043',
+'step044',
+]
 excluded_branches = [
     'main',
     'step240',
@@ -11,10 +25,12 @@ excluded_branches = [
 git = lambda *x: subprocess.run(["git", '-C', clone_root, *x], capture_output=True)
 
 def main():
+    global all_branches
     print(f"Applying commit '{cherry_picked_commit}' to all branches but " + ", ".join(excluded_branches))
 
-    res = git("for-each-ref", "--format=%(refname:short)", "refs/heads/")
-    all_branches = res.stdout.decode().strip().split("\n")
+    if all_branches is None:
+        res = git("for-each-ref", "--format=%(refname:short)", "refs/heads/")
+        all_branches = res.stdout.decode().strip().split("\n")
     res = git("show-ref", "--head", "--hash", "HEAD")
     current_head = res.stdout.decode().strip()
     

@@ -120,6 +120,12 @@ If you encounter any typo or more important issue, feel free of fixing it by cli
 
 More generally, you can discuss any technical or organizational choice through [the repo's issues](https://github.com/eliemichel/LearnWebGPU/issues). Any constructive and/or benevolent feedback is welcome!
 
+### Work In Progress
+
+This guide is still under construction, and the WebGPU API itself is as well. I am trying to follow as tightly as I can the changes, but until the API gets stable this inherently leads to slight inconsistencies.
+
+Always pay attention to the date of last modification of a page and of the accompanying code (using [git](https://github.com/eliemichel/LearnWebGPU)). They may not be perfectly in sync; usually I first update the code, then the content of the guide.
+
 <!--
     Cross-platform is not optional. It never really was, but since the global pandemic of 2020 it is even more important: students follow the lecture from a wide variety of devices and a teacher cannot rely on them using all the same machine from the university's lab room.
 -->

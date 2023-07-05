@@ -229,6 +229,10 @@ set_target_properties(App PROPERTIES VS_DEBUGGER_ENVIRONMENT "DAWN_DEBUG_BREAK_O
 ```
 ````
 
+````{admonition} Dawn again
+Dawn will show a warning about a missing **device lost callback**. You may set it in a very similar way than the error callback, except as of now (2023-07-04) the API is different in the official `webgpu.h` header, so I won't add it until this is settled.
+````
+
 *Resulting code:* [`step015`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step015)
 
 ```{lit} C++, Utility functions (append, hidden)
