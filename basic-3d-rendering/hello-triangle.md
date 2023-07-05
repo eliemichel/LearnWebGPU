@@ -459,7 +459,7 @@ shaderCodeDesc.code = shaderSource;
 ```
 
 ```{admonition} Dawn
-The Dawn implementation of WebGPU does not fully handle this pipeline. First, it does not include the `hints`/`hintCount` in the shader module descriptor. Secondly, it renamed `shaderCodeDesc.code` into `shaderCodeDesc.source`.
+The Dawn implementation of WebGPU does not include the `hints`/`hintCount` in the shader module descriptor.
 ```
 
 ### Pipeline layout

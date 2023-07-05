@@ -227,6 +227,8 @@ To automatically set this up in Visual Studio from CMake, you can add the follow
 ```CMake
 set_target_properties(App PROPERTIES VS_DEBUGGER_ENVIRONMENT "DAWN_DEBUG_BREAK_ON_ERROR=1")
 ```
+
+Note that **this feature is imperfect** and sometimes breaks in non-error cases. This [has been reported](https://bugs.chromium.org/p/dawn/issues/detail?id=1789&q=&can=4), in the meantime just press "Continue" in your IDE when this happens.
 ````
 
 ````{admonition} Dawn again
