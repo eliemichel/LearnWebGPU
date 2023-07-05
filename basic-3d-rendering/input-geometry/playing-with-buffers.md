@@ -115,6 +115,8 @@ Uploading data from the CPU-side memory (RAM) to the GPU-side memory (VRAM) **ta
  - You can **free up the memory** from the address you just passed, because the backend maintains its own CPU-side copy of the buffer during transfer.
 
  - Commands that are **submitted in the queue after** the `writeBuffer()` operation will not be executed before the data transfer is finished.
+
+And don't forget that commands sent through the **command encoder** are only submitted when calling `queue.submit()` with the encoded command buffer returned by `encoder.finish()`.
 ```
 
 We can thus submit a buffer-buffer copy operation to the command queue, after having created a command encoder:
