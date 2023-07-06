@@ -11,7 +11,7 @@ Projection matrices
 
 Now that we are familiar with the concept of matrices, we see how they are used to represent projections, although a **perspective projection** is neither a linear nor an affine transform so it is not exactly what matrices are supposed to represent, mathematically speaking.
 
-We also present in a second part the typical way of managing transform and projection matrices from the C++ code.
+We also present in a second part a **typical way** of managing transform and projection matrices from the C++ code, using the GLM library.
 
 Orthographic projection
 -----------------------
@@ -19,7 +19,7 @@ Orthographic projection
 What have we been doing so far regarding the projection of the 3D scene onto our 2D screen? The $x$ and $y$ coordinates of the output position `out.position` is mapped to the window coordinates, and the $z$ coordinate does not affect the pixel position of our geometry, so this is **an orthographic projection along the Z axis**:
 
 ```rust
-out.position = vec4<f32>(position.x, position.y * ratio, position.z * 0.5 + 0.5, 1.0);
+out.position = vec4f(position.x, position.y * ratio, position.z * 0.5 + 0.5, 1.0);
 ```
 
 Remember that we had to remap the $z$ coordinate to the range $(0,1)$, because anything outside this range is **clipped out**, the same way anything outside the range $(-1,1)$ along the $x$ and $y$ axes falls outside the window.
@@ -38,7 +38,7 @@ Remember that we had to remap the $z$ coordinate to the range $(0,1)$, because a
 	<span class="caption-text"><em>The normalized clipping volume.</em></span>
 </p>
 
-We call this the **clipping volume**. Only the geometry that lies inside this volume after the vertex shader can produce visible fragments.
+We call this the **clipping volume**. Only the geometry that lies inside this volume after the vertex shader can produce **visible fragments**.
 
 ```{caution}
 The expected range for the output $z$ coordinate differs with the graphics API. All modern APIs (DirectX 12, Metal, Vulkan, WebGPU) use $(0,1)$ but OpenGL and WebGL expect $(-1,1)$. The projection matrices have thus slightly different definitions.
@@ -47,14 +47,14 @@ The expected range for the output $z$ coordinate differs with the graphics API. 
 Of course this orthographic projection can be easily represented as a matrix:
 
 ```rust
-let P = transpose(mat4x4<f32>(
+let P = transpose(mat4x4f(
 	1.0,  0.0,  0.0, 0.0,
 	0.0, ratio, 0.0, 0.0,
 	0.0,  0.0,  0.5, 0.5,
 	0.0,  0.0,  0.0, 1.0,
 ));
 
-let homogeneous_position = vec4<f32>(position, 1.0);
+let homogeneous_position = vec4f(position, 1.0);
 out.position = P * homogeneous_position;
 ```
 
@@ -67,7 +67,7 @@ We can also change the range of view by dividing the XY size of the scene to fit
 let near = -1.0;
 let far = 1.0;
 let scale = 1.0;
-let P = transpose(mat4x4<f32>(
+let P = transpose(mat4x4f(
 	1.0 / scale,      0.0,           0.0,                  0.0,
 	    0.0,     ratio / scale,      0.0,                  0.0,
 	    0.0,          0.0,      1.0 / (far - near), -near / (far - near),
@@ -80,7 +80,7 @@ Perspective projection
 
 ### Focal point
 
-A perspective projection is (more or less) the projection that occurs in a camera or a human eye. Instead of projecting the scene onto a plane, it **projects onto a single point**, called the **focal point**.
+A perspective projection is (more or less) the projection that occurs **in an actual camera** or a human eye. Instead of projecting the scene onto a plane, it **projects onto a single point**, called the **focal point**.
 
 The pixels of the screen correspond to different **incoming directions** from which elements of geometry are projected.
 
@@ -94,7 +94,7 @@ The pixels of the screen correspond to different **incoming directions** from wh
 :class: only-dark
 ```
 
-If we want to map the perspective view frustum to the normalized clip space described above, we **need to divide** the XY position by the $z$ coordinate:
+If we want to map the perspective **view frustum** (i.e., the set of visible directions) to the normalized clip space described above, we **need to divide** the XY position by the $z$ coordinate. Let us take an example:
 
 ```{image} /images/perspective2-light.svg
 :align: center
@@ -124,7 +124,7 @@ We can try this out:
 // We move the view point so that all Z coordinates are > 0
 // (this did not make a difference with the orthographic projection
 // but does now.)
-let focalPoint = vec3<f32>(0.0, 0.0, -2.0);
+let focalPoint = vec3f(0.0, 0.0, -2.0);
 position = position - focalPoint;
 
 // We divide by the Z coord
@@ -136,7 +136,7 @@ position.y /= position.z;
 let near = 0.0;
 let far = 100.0;
 let P = /* ... */;
-out.position = P * vec4<f32>(position, 1.0);
+out.position = P * vec4f(position, 1.0);
 ```
 
 <figure class="align-center">
@@ -166,7 +166,7 @@ y_\text{out} = l\frac{y}{z}
 $$
 
 ```{note}
-The focal length can be seen as the distance between the focal point and a virtual sensor corresponding to the output window (can be verified using Thales's theorem).
+The focal length can be seen as **the distance between the focal point and a virtual sensor** corresponding to the output window (can be verified using Thales's theorem).
 ```
 
 ```rust
@@ -185,7 +185,7 @@ position.y /= position.z / focalLength;
 :class: only-dark
 ```
 
-The focal length is an arbitrary parameter that corresponds to the **level of zoom** of our virtual camera.
+The focal length is a user parameter that corresponds to the **level of zoom** of our virtual camera.
 
 ```{figure} /images/pexels-alexandru-g-stavrica-2204008.jpg
 :align: center
@@ -216,7 +216,7 @@ let focalLength = 2.0;
 //position.y /= position.z / focalLength;
 
 let P = /* ... */;
-let homogeneous_position = vec4<f32>(position, 1.0);
+let homogeneous_position = vec4f(position, 1.0);
 out.position = P * homogeneous_position;
 
 // We change w instead:
@@ -240,13 +240,13 @@ let focalLength = 2.0;
 let near = 0.0;
 let far = 100.0;
 // (no need for a scale parameter now that we have focalLength)
-let P = transpose(mat4x4<f32>(
+let P = transpose(mat4x4f(
 	1.0,  0.0,       0.0,          0.0,
 	0.0, ratio,      0.0,          0.0,
 	0.0,  0.0,       p_zz,         p_zw,
 	0.0,  0.0,  1.0 / focalLength, 0.0,
 ));
-let homogeneous_position = vec4<f32>(position, 1.0);
+let homogeneous_position = vec4f(position, 1.0);
 out.position = P * homogeneous_position;
 ```
 
@@ -296,13 +296,13 @@ let focalLength = 2.0;
 let near = 0.01;
 let far = 100.0;
 let divides = 1.0 / (focalLength * (far - near));
-let P = transpose(mat4x4<f32>(
+let P = transpose(mat4x4f(
 	1.0,  0.0,        0.0,                  0.0,
 	0.0, ratio,       0.0,                  0.0,
 	0.0,  0.0,    far * divides,   -far * near * divides,
 	0.0,  0.0,  1.0 / focalLength,          0.0,
 ));
-let homogeneous_position = vec4<f32>(position, 1.0);
+let homogeneous_position = vec4f(position, 1.0);
 out.position = P * homogeneous_position;
 ```
 
@@ -317,7 +317,7 @@ Our matrix `P` as defined in the last code block is a **perspective projection m
 The projection matrix is in general globally multiplied by `focalLength` compared to our last formula:
 
 ```rust
-let P = transpose(mat4x4<f32>(
+let P = transpose(mat4x4f(
 	focalLength,         0.0,                0.0,                   0.0,
 	    0.0,     focalLength * ratio,        0.0,                   0.0,
 	    0.0,             0.0,         far / (far - near), -far * near / (far - near),
@@ -328,11 +328,11 @@ let P = transpose(mat4x4<f32>(
 This does not affect the end result because it also scales the $w$ coordinate. Similarly, multiplying `out.position` by any value does not change the end pixel of the vertex.
 
 ```{note}
-The value `out.position / out.position.w` that is computed by the fixed pipeline is called the ***Normalized** Device Coordinate*. It is this NDC that must fall within the normalized clipping volume described above.
+The value `out.position / out.position.w` that is computed by the fixed pipeline is called the ***Normalized** Device Coordinate* (NDC). It is this NDC that must fall within the normalized clipping volume described above.
 ```
 
 ```{seealso}
-Mathematically, considering that two vectors are *equivalent* when they are a multiple of each others (like we do here with `out.position`) defines a [projective space](https://en.wikipedia.org/wiki/Projective_space), namely a space of directions. Its elements are represented by *homogeneous coordinates*, called so to remind one that they are not unique, so they do not form a regular (Euclidean) coordinate system.
+Mathematically, considering that two vectors are **equivalent** when they are a multiple of each others (like we do here with `out.position`) defines a [projective space](https://en.wikipedia.org/wiki/Projective_space), namely a space of directions. Its elements are represented by **homogeneous coordinates**, called so to remind one that they are not unique, so they do not form a regular (Euclidean) coordinate system.
 ```
 
 Matrix Uniforms
@@ -359,10 +359,10 @@ struct MyUniforms {
 ```rust
 // WGSL side
 struct MyUniforms {
-	projectionMatrix: mat4x4<f32>,
-	viewMatrix: mat4x4<f32>,
-	modelMatrix: mat4x4<f32>,
-	color: vec4<f32>,
+	projectionMatrix: mat4x4f,
+	viewMatrix: mat4x4f,
+	modelMatrix: mat4x4f,
+	color: vec4f,
 	time: f32,
 };
 ```
@@ -393,7 +393,7 @@ As a consequence, we give a name to the intermediate **coordinate systems** thro
  - Afterwards, the fixed pipeline divides the clip coordinates by its $w$, which gives the **NDC** (normalized device coordinates).
 
 ```{note}
-In order to alleviate notations I omitted above the fact that we actually use the homogeneous coordinates `vec3<f32>(in.position, 1.0)` as the input of the transform.
+In order to alleviate notations I omitted above the fact that we actually use the homogeneous coordinates `vec3f(in.position, 1.0)` as the input of the transform.
 ```
 
 ### Precomputing
@@ -462,7 +462,7 @@ struct MyUniforms {
 ```
 
 ```{note}
-The `mat4x4` type of GLM corresponds to WGSL's `mat4x4<f32>`. The equivalent of `mat4x4<f64>` is `dmat4x4`, with the prefix `d` for `double`. It also has an alias called `mat4` to correspond to GLSL, which you might like as it is less characters to type. The same goes for vectors (`vec3` is `vec3<f32>`) for integers (`ivec2` is WGLS's `vec2<i32>`), etc.
+The `mat4x4` type of GLM corresponds to WGSL's `mat4x4f`. The equivalent of `mat4x4<f64>` is `dmat4x4`, with the prefix `d` for `double`. It also has an alias called `mat4` to correspond to GLSL, which you might like as it is less characters to type. The same goes for vectors (`vec3` is `vec3f`) for integers (`ivec2` is WGLS's `vec2<i32>`), etc.
 ```
 
 It is thus easy to reproduce what we were doing in WGSL. Let's start with the **model** transform:
@@ -549,7 +549,7 @@ The vertex shader simply becomes:
 ```rust
 fn vs_main(in: VertexInput) -> VertexOutput {
 	var out: VertexOutput;
-	out.position = uMyUniforms.projectionMatrix * uMyUniforms.viewMatrix * uMyUniforms.modelMatrix * vec4<f32>(in.position, 1.0);
+	out.position = uMyUniforms.projectionMatrix * uMyUniforms.viewMatrix * uMyUniforms.modelMatrix * vec4f(in.position, 1.0);
 	out.color = in.color;
 	return out;
 }

@@ -13,6 +13,10 @@ From the beginning of this 3D mesh section, we have been cheating by darkening t
 
 In this chapter we get an intuition about how to shade a scene, but do not follow a very physically based approach (this will come later on).
 
+```{admonition} WIP
+From this chapter on, the example WGSL code uses templated types `vec2<f32>` where we can use simpler aliases `vec2f` because when I first wrote this aliases were not supported by `wgpu-native`.
+```
+
 Theory
 ------
 
