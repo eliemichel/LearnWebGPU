@@ -2,11 +2,11 @@ Playing with buffers
 ====================
 
 ````{tab} With webgpu.hpp
-*Resulting code:* [`step018`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step018)
+*Resulting code:* [`step031`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step031)
 ````
 
 ````{tab} Vanilla webgpu.h
-*Resulting code:* [`step018-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step018-vanilla)
+*Resulting code:* [`step031-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step031-vanilla)
 ````
 
 Before feeding vertex data to the render pipeline, we need to get familiar with the notion of **buffer**. A buffer is "just" a chunk of memory allocated in the VRAM (the GPU's memory). Think of it as some kind of `new` or `malloc` for the GPU.
@@ -58,8 +58,8 @@ Also, don't forget to free your buffers once you no longer use them:
 buffer1.destroy();
 buffer2.destroy();
 
-wgpuBufferRelease(buffer1);
-wgpuBufferRelease(buffer2);
+buffer1.release();
+buffer2.release();
 ```
 ````
 
@@ -77,10 +77,6 @@ Note that there are two different operations here:
 
  - **Destroy** frees the GPU memory that was allocated for the buffer, but the buffer object itself, which lives on the driver/backend side, still exists.
  - **Release** frees the driver/backend side object (or rather decreases its reference pointer and frees it if nobody else uses it).
-
-```{note}
-As of now (May 13, 2023) the `wgpuBufferRelease` function is not provided by the C++ wrapper when using `wgpu-native` (one cannot do `buffer1.release()`) because they use a different procedure with different semantics (`wgpuBufferDrop`). The C-style `wgpuBufferRelease` works for both thanks to the `webgpu-release.h` (that should eventually no longer be needed).
-```
 
 Writing to a buffer
 -------------------
@@ -336,9 +332,9 @@ Conclusion
 Congratulations! We were able to create a GPU-side memory buffer, upload data into it, copy it remotely (operation triggered from the CPU, but executed on the GPU) using the command queue and download data back from the GPU. We can now use a buffer to specify vertex attributes, in particular vertex positions!
 
 ````{tab} With webgpu.hpp
-*Resulting code:* [`step018`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step018)
+*Resulting code:* [`step031`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step031)
 ````
 
 ````{tab} Vanilla webgpu.h
-*Resulting code:* [`step018-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step018-vanilla)
+*Resulting code:* [`step031-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step031-vanilla)
 ````

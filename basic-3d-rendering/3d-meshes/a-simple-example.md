@@ -12,11 +12,7 @@ A simple example
 Let's dive into what you are quite likely here for: rendering **3D shapes**!
 
 ```{note}
-I rolled back the part of the code about dynamic uniforms for now. I also set the `offset` to `vec2<f32>(0.0)`;
-```
-
-```{admonition} WIP
-From this chapter on, the example WGSL code uses templated types `vec2<f32>` where we can use simpler aliases `vec2f` because when I first wrote this aliases were not supported by `wgpu-native`.
+I rolled back the part of the code about dynamic uniforms for now. I also set the `offset` to `vec2f(0.0)`;
 ```
 
 Switching to 3D data
@@ -87,13 +83,22 @@ vertexBufferLayout.arrayStride = 6 * sizeof(float);
 //                               ^ This was a 5
 ```
 
+````{note}
+We also need to increase the maximum stride of vertex arrays:
+
+```C++
+requiredLimits.limits.maxVertexBufferArrayStride = 6 * sizeof(float);
+//                                                 ^ This was a 5
+```
+````
+
 And don't forget to update the vertex input struct in the **shader**!
 
 ```rust
 struct VertexInput {
-	@location(0) position: vec3<f32>,
+	@location(0) position: vec3f,
 	//                        ^ This was a 2
-	@location(1) color: vec3<f32>,
+	@location(1) color: vec3f,
 };
 ```
 
@@ -117,12 +122,12 @@ Basic transform
 Seen from above, this pyramid boringly looks like an square. Could we **rotate** this? A very basic way to change the view angle is to swap axes:
 
 ```rust
-var position = vec3<f32>(
+var position = vec3f(
 	in.position.x,
 	in.position.z, // swap axis Y and Z
 	in.position.y,
 );
-out.position = vec4<f32>(position.x, position.y * ratio, 0.0, 1.0);
+out.position = vec4f(position.x, position.y * ratio, 0.0, 1.0);
 ```
 
 ```{figure} /images/pyramid-side.png
@@ -134,12 +139,12 @@ The pyramid seen from the side (still no perspective).
 What about in-between rotations? The idea is to **mix axes**, adding a little bit of z in the y coordinates and a little bit of y in the z coordinates.
 
 ```rust
-var position = vec3<f32>(
+var position = vec3f(
 	in.position.x,
 	in.position.y + 0.5 * in.position.z, // add a bit of Z in Y...
 	in.position.z + 0.5 * in.position.y, // ...and a bit of Y in Z.
 );
-out.position = vec4<f32>(position.x, position.y * ratio, 0.0, 1.0);
+out.position = vec4f(position.x, position.y * ratio, 0.0, 1.0);
 ```
 
 ```{figure} /images/pyramid-tilted.png
@@ -154,16 +159,16 @@ Of course at some point we have to remove some of `in.position.y` from Y so that
 let angle = uMyUniforms.time; // you can multiply it go rotate faster
 let alpha: f32 = /* ??? */;
 let beta: f32 = /* ??? */;
-var position = vec3<f32>(
+var position = vec3f(
 	in.position.x,
 	alpha * in.position.y + beta * in.position.z,
 	alpha * in.position.z - beta * in.position.y,
 );
-out.position = vec4<f32>(position.x, position.y * ratio, 0.0, 1.0);
+out.position = vec4f(position.x, position.y * ratio, 0.0, 1.0);
 ```
 
 ```{note}
-If you payed close attention to the snippet above, you should have noticed a minus sign `-` before the second `beta`. It is not visible on our pyramid because it is symmetrical but swapping axes also flips the object. To counter-balance this, we can change the sign of one of the dimensions. Hence the Z coordinate after a quarter of turn must be `-in.position.y` instead of `in.position.y`.
+If you payed close attention to the snippet above, you should have noticed **a minus sign** `-` before the second `beta`. It is not visible on our pyramid because it is symmetrical but swapping axes also flips the object. To **counter-balance** this, we can change the sign of one of the dimensions. Hence the Z coordinate after a quarter of turn must be `-in.position.y` instead of `in.position.y`.
 ```
 
 It turns out that these weights `alpha` and `beta` are not easy to express in terms of basic operations with respect to the angle. So mathematicians came up with a dedicated name for them: **cosine** and **sine**! And the good news is that these are **built-in operations** in WGSL:
@@ -172,12 +177,12 @@ It turns out that these weights `alpha` and `beta` are not easy to express in te
 let angle = uMyUniforms.time; // you can multiply it go rotate faster
 let alpha = cos(angle);
 let beta = sin(angle);
-var position = vec3<f32>(
+var position = vec3f(
 	in.position.x,
 	alpha * in.position.y + beta * in.position.z,
 	alpha * in.position.z - beta * in.position.y,
 );
-out.position = vec4<f32>(position.x, position.y * ratio, 0.0, 1.0);
+out.position = vec4f(position.x, position.y * ratio, 0.0, 1.0);
 ```
 
 <figure class="align-center">
@@ -199,14 +204,14 @@ out.position = vec4<f32>(position.x, position.y * ratio, 0.0, 1.0);
 :class: only-dark
 ```
 
-Congratulations, you have learned most of what there is to know about trigonometry for computer graphics!
+Congratulations, you have learned most of what there is to know about **trigonometry** for computer graphics!
 
 ```{hint}
-If you cannot remember which one is the $cos$ and which one is the $sin$ among `alpha` and `beta`, which happens all the time, just take an example of very simple rotation: `angle = 0`. In such a case, we need `alpha = 1` and `beta = 0`. If you look at a plot of the $sin$ and $cos$ functions you'll quickly see that $cos(0) = 1$ and $sin(0) = 0$
+**If you cannot remember** which one is the $cos$ and which one is the $sin$ among `alpha` and `beta` (don't worry it happens to all the time), **just take an example** of very simple rotation: `angle = 0`. In such a case, we need `alpha = 1` and `beta = 0`. If you look at a plot of the $sin$ and $cos$ functions you'll quickly see that $cos(0) = 1$ and $sin(0) = 0$
 ```
 
 ```{important}
-The argument of trigonometric functions is an angle, but be aware that it must be expressed in **radians**. There is a total of $2\pi$ radians for a full turn, which leads to the following elementary cross-multiplication rule:
+The argument of trigonometric functions is an **angle**, but be aware that it must be expressed in **radians**. There is a total of $2\pi$ radians for a full turn, which leads to the following elementary cross-multiplication rule:
 
 $$
 \frac{r \text{ radians}}{d \text{ degrees}} = \frac{2\pi \text{ radians}}{360 \text{ degrees}}

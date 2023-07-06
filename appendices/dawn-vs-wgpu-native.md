@@ -13,3 +13,4 @@ Another limiting issue:
 
  - GLFW did not merge https://github.com/glfw/glfw/pull/2333 yet
  - Dawn uses size_t vs uint32_t everywhere in standard header
+ - With Dawn, stencilLoadOp and stencilStoreOp must be set to respectively LoadOp::Undefined and StoreOp::Undefined.
