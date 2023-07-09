@@ -13,6 +13,10 @@ This time, we are ready to load **an actual 3D file format**, so that you can pl
 
 In this chapter we load 3D models from the [OBJ](https://en.wikipedia.org/wiki/Wavefront_.obj_file) format. This is a very common format for storing 3D meshes with extra attributes (vertex colors, normals, but also texture coordinates and any other arbitrary data). You can for instance create an OBJ file by exporting it from [Blender](https://www.blender.org/).
 
+```{admonition} WIP
+From this chapter on, the example WGSL code uses templated types `vec2f` where we can use simpler aliases `vec2f` because when I first wrote this aliases were not supported by `wgpu-native`.
+```
+
 ## TinyOBJLoader
 
 Instead of manually parsing OBJ files, we use the [TinyOBJLoader](https://github.com/tinyobjloader/tinyobjloader) library. The file format is not that complex, but parsing files is not the main point of this tutorial series, and this library has been intensively tested and has a very small footprint.

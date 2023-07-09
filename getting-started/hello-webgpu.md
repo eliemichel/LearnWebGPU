@@ -37,9 +37,9 @@ To make the integration of either of these in a CMake project as easy as with GL
 
 Since `wgpu-native` is written in rust, we cannot easily build it from scratch so the distribution includes pre-compiled libraries:
 
- - [wgpu-native for Linux](../data/wgpu-native-for-linux.zip)
- - [wgpu-native for Windows](../data/wgpu-native-for-windows.zip)
- - [wgpu-native for MacOS](../data/wgpu-native-for-macos.zip)
+ - [wgpu-native for Linux](#)
+ - [wgpu-native for Windows](#)
+ - [wgpu-native for MacOS](#)
  - [wgpu-native for any platform](https://github.com/eliemichel/WebGPU-distribution/archive/refs/heads/wgpu.zip) (a bit heavier as it's a merge of all the above basically)
 
 ```{important}

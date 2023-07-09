@@ -9,13 +9,9 @@ Basic shading
 *Resulting code:* [`step056-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step056-vanilla)
 ````
 
-From the beginning of this 3D mesh section, we have been cheating by darkening the color of the tip of the pyramid in order to get some sense of the geometry. But in reality, the strongest **visual clues** we get about the geometry of the objects that surround us come from the **lighting effects**, and in particular the **shading**.
+From the beginning of this 3D mesh section, **we have been cheating** by darkening the color of the tip of the pyramid in order to get some sense of the geometry. But in reality, the strongest **visual clues** we get about the geometry of the objects that surround us come from the **lighting effects**, and in particular the **shading**.
 
-In this chapter we get an intuition about how to shade a scene, but do not follow a very physically based approach (this will come later on).
-
-```{admonition} WIP
-From this chapter on, the example WGSL code uses templated types `vec2<f32>` where we can use simpler aliases `vec2f` because when I first wrote this aliases were not supported by `wgpu-native`.
-```
+In this chapter we get **an intuition** about how to shade a scene, but do not follow a very physically based approach (this will come later on).
 
 Theory
 ------
@@ -45,11 +41,11 @@ The direction of a face is expressed as **a vector that is perpendicular to the 
 ```
 
 <p class="align-center">
-	<span class="caption-text"><em>A normal vector is perpendicular to its face and has a length of <span class="math">1</span>.</em></span>
+	<span class="caption-text"><em>A normal vector represents a direction. It is perpendicular to its face and has a length of <span class="math">1</span>.</em></span>
 </p>
 
 ```{note}
-There are two possible vectors that are perpendicular to the face and have a unit length: one and its opposite. By convention, we point the normal towards the outside of the object, but this might not be well defined for meshes that are not closed. Whenever you encounter weird shading artifacts, always check your normals!
+There are **two possible** vectors that are perpendicular to the face and have a unit length: one and its opposite (going towards the other side of the face). **By convention**, we point the normal towards the outside of the object, but this might not be well defined for meshes that are not closed. Whenever you encounter weird shading artifacts, always check your normals!
 ```
 
 Normal
@@ -103,7 +99,7 @@ We will add this normal information to our little file format and add a new vert
 ```
 
 ```{caution}
-I had to duplicate some points, because although they have the same location, they have different normals depending on the face they belong to. Actually, vertices should be considered in general as **face corners** rather than 3D points.
+I had to **duplicate some points**, because although they have the same location, they have different normals depending on the face they belong to. Actually, vertices should be considered in general as **face corners** rather than 3D points.
 ```
 
 ```{note}
@@ -114,16 +110,14 @@ To better see the impact of our shading, I gave the same base color to the whole
 
 We do not need to change our geometry loading procedure, only the number of float attributes per vertex:
 
-```
+```c++
 bool success = loadGeometry(RESOURCE_DIR "/pyramid.txt", vertexData, indexData, 6);
-//                                                                             ^ This was a 3
+//                                                                              ^ This was a 3
 ```
 
 The `vertexData` array now contains 3 attributes per vertex. In order to **better manage** our vertex attributes, we can create a structure that we will use similarly to the `MyUniforms` struct:
 
 ```C++
-using glm::vec3;
-
 /**
  * A structure that describes the data layout in the vertex buffer
  * We do not instantiate it but use it in `sizeof` and `offsetof`
@@ -135,13 +129,13 @@ struct VertexAttributes {
 };
 ```
 
-This structure mirrors the VertexInput struct from the WGSL shader:
+This structure mirrors the `VertexInput` struct from the WGSL shader:
 
 ```rust
 struct VertexInput {
-	@location(0) position: vec3<f32>,
-	@location(1) normal: vec3<f32>, // new attribute
-	@location(2) color: vec3<f32>,
+	@location(0) position: vec3f,
+	@location(1) normal: vec3f, // new attribute
+	@location(2) color: vec3f,
 };
 ```
 
@@ -177,8 +171,18 @@ vertexBufferLayout.arrayStride = sizeof(VertexAttributes);
 And do not forget to change the device limits:
 
 ```C++
+// We changed the number of attributes
 requiredLimits.limits.maxVertexAttributes = 3;
 //                                          ^ This was a 2
+requiredLimits.limits.maxBufferSize = 15 * sizeof(VertexAttributes);
+//                                         ^^^^^^^^^^^^^^^^^^^^^^^^ This was 6 * sizeof(float)
+requiredLimits.limits.maxVertexBufferArrayStride = sizeof(VertexAttributes);
+//                                                        ^^^^^^^^^^^^^^^^^^^^^^^^ This was 6 * sizeof(float)
+
+// We changed the number of components transiting from vertex to fragment shader
+// (to color.rgb we added normal.xyz, hence a total of 6 components)
+requiredLimits.limits.maxInterStageShaderComponents = 6;
+//                                                    ^ This was a 3
 ```
 
 Shading
@@ -190,9 +194,9 @@ Now the normal data is loaded from the file, and accessible to the vertex shader
 
 ```rust
 struct VertexOutput {
-	@builtin(position) position: vec4<f32>,
-	@location(0) color: vec3<f32>,
-	@location(1) normal: vec3<f32>, // <--- Add a normal output
+	@builtin(position) position: vec4f,
+	@location(0) color: vec3f,
+	@location(1) normal: vec3f, // <--- Add a normal output
 };
 
 // [...]
@@ -206,10 +210,10 @@ fn vs_main(in: VertexInput) -> VertexOutput {
 }
 ```
 
-In order to check that everything is piped up correctly, you can try to just use the coordinates of the normal vector as the output color. Since these coordinates are in the range $(-1,1)$, I usually add ` * 0.5 + 0.5` to remap them in the range $(0,1)$, which the color output expects:
+In order to **check that everything is piped up correctly**, you can try to just use the coordinates of the normal vector as the output color. Since these coordinates are in the range $(-1,1)$, I usually add ` * 0.5 + 0.5` to remap them in the range $(0,1)$, which the color output expects:
 
 ```rust
-fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
+fn fs_main(in: VertexOutput) -> @location(0) vec4f {
 	let color = in.normal * 0.5 + 0.5;
 	// [...]
 }
@@ -227,7 +231,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
 Let's now do some experiments with this normal:
 
 ```rust
-fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
+fn fs_main(in: VertexOutput) -> @location(0) vec4f {
 	let color = in.color * in.normal.x;
 	// [...]
 }
@@ -242,7 +246,7 @@ Multiplying the color by the normal axes creates axis-aligned directional lights
 To apply a lighting coming from an arbitrary direction, we again use a linear combination of the different axes:
 
 ```rust
-fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
+fn fs_main(in: VertexOutput) -> @location(0) vec4f {
 	let shading = 0.5 * in.normal.x - 0.9 * in.normal.y + 0.1 * in.normal.z;
 	let color = in.color * shading;
 	// [...]
@@ -258,8 +262,8 @@ Mixing multiple axes can create a directional light coming from any direction.
 The coefficient $(0.5, -0.9, 0.1)$ are in fact the **light direction** This combination is called a **dot product**:
 
 ```rust
-fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
-	let lightDirection = vec3<f32>(0.5, -0.9, 0.1);
+fn fs_main(in: VertexOutput) -> @location(0) vec4f {
+	let lightDirection = vec3f(0.5, -0.9, 0.1);
 	let shading = dot(lightDirection, in.normal);
 	let color = in.color * shading;
 	// [...]
@@ -280,9 +284,9 @@ let shading = max(0.0, dot(lightDirection, in.normal));
 ```
 
 ```rust
-fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
-	let lightDirection1 = vec3<f32>(0.5, -0.9, 0.1);
-	let lightDirection2 = vec3<f32>(0.2, 0.4, 0.3);
+fn fs_main(in: VertexOutput) -> @location(0) vec4f {
+	let lightDirection1 = vec3f(0.5, -0.9, 0.1);
+	let lightDirection2 = vec3f(0.2, 0.4, 0.3);
 	let shading1 = max(0.0, dot(lightDirection1, in.normal));
 	let shading2 = max(0.0, dot(lightDirection2, in.normal));
 	let shading = shading1 + shading2;
@@ -292,9 +296,9 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
 ```
 
 ```rust
-fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
-	let lightColor1 = vec3<f32>(1.0, 0.9, 0.6);
-	let lightColor2 = vec3<f32>(0.6, 0.9, 1.0);
+fn fs_main(in: VertexOutput) -> @location(0) vec4f {
+	let lightColor1 = vec3f(1.0, 0.9, 0.6);
+	let lightColor2 = vec3f(0.6, 0.9, 1.0);
 	// [...]
 	let shading = shading1 * lightColor1 + shading2 * lightColor2;
 	let color = in.color * shading;
@@ -318,7 +322,7 @@ In the previous part, the light direction changes with the object's orientation.
 
 ```rust
 // in Vertex shader
-out.normal = (uMyUniforms.modelMatrix * vec4<f32>(in.normal, 0.0)).xyz;
+out.normal = (uMyUniforms.modelMatrix * vec4f(in.normal, 0.0)).xyz;
 
 // [...]
 
