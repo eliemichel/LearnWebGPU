@@ -9,7 +9,7 @@ Dynamic uniforms
 *Resulting code:* [`step044-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step044-vanilla)
 ````
 
-Imagine we want to issue two calls to the `draw` method of our render pipeline with different values of the uniforms, in order to draw two WebGPU logos with different colors. Naively we could try this:
+Imagine we want to issue **two calls** to the `draw` method of our render pipeline **with different values** of the uniforms, in order to draw two WebGPU logos with different colors. Naively we could try this:
 
 ````{tab} With webgpu.hpp
 ```C++
@@ -53,24 +53,26 @@ wgpuRenderPassEncoderDrawIndexed(renderPass, indexCount, 1, 0, 0, 0);
 ```
 ````
 
-It is legal, but will not do what you expect. Remember that commands are executed **asynchronously**! When we call methods of the `renderPass` object, we do not really trigger operations, we rather build a command buffer, that is sent all at once at the end. So the calls to `writeBuffer` **do not** get interleaved between the draw calls as we would like.
+It is legal, but **will not do** what you expect. Remember that commands are executed **asynchronously**! When we call methods of the `renderPass` object, we do not really trigger operations, we rather build a command buffer, that **is sent all at once** at the end. So the calls to `writeBuffer` **do not** get interleaved between the draw calls as we would like.
 
 Instead, we need to use **dynamic uniform buffers**. This is a simple option to turn on in the binding layout, but requires to be careful with the buffer's **stride** (see below).
 
 Device limits
 -------------
 
-As always, we checkout first that the feature we use are somewhere in the `WGPULimits` struct and add our requirements to the device creation code:
+As always, we checkout first that the features we use are somewhere in the `WGPULimits` struct and add our requirements to the device creation code:
 
 ```C++
 // Extra limit requirement
 requiredLimits.limits.maxDynamicUniformBuffersPerPipelineLayout = 1;
 ```
 
+Another related limit is `minUniformBufferOffsetAlignment`, which we already set as the minimum value supported by the adapter (see below).
+
 Binding layout
 --------------
 
-When declaring the bind group layout, we can set the buffer as dynamically offset:
+When declaring the bind group layout, we can **set the buffer as dynamically offset**:
 
 ````{tab} With webgpu.hpp
 ```C++
@@ -100,7 +102,7 @@ Buffer data
 
 The basic idea is to have a buffer that is **twice the size** of `MyUniforms`. For the first draw call, we set the dynamic offset to 0 so that it uses the first set of values, then we issue a second draw call with an offset of `sizeof(MyUniforms)` to point to the second half of the buffer.
 
-There is one thing though: the value of the offset is constrained by the `minUniformBufferOffsetAlignment` limit of the device.
+There is **one thing to keep in mind** though: the value of the offset is constrained to be **a multiple of** the `minUniformBufferOffsetAlignment` limit of the device.
 
 ```
   ---------------------------------     ---------------------------------
@@ -110,7 +112,7 @@ There is one thing though: the value of the offset is constrained by the `minUni
  ^^^^^^ first instance of the MyUniform struct
 ```
 
-This means that the **stride** of the uniform buffer is the largest of `sizeof(MyUniforms)` and `minUniformBufferOffsetAlignment`:
+This means that the **stride** of the uniform buffer, i.e., the number of bytes between the first `r` and the second `r` above, must be rounded up to the closest multiple of `minUniformBufferOffsetAlignment`:
 
 ````{tab} With webgpu.hpp
 ```C++
@@ -120,7 +122,7 @@ Limits deviceLimits = supportedLimits.limits;
 //[...]
 
 // Subtlety
-uint32_t uniformStride = std::max(
+uint32_t uniformStride = ceilToNextMultiple(
 	(uint32_t)sizeof(MyUniforms),
 	(uint32_t)deviceLimits.minUniformBufferOffsetAlignment
 );
@@ -135,12 +137,24 @@ WGPULimits deviceLimits = supportedLimits.limits;
 //[...]
 
 // Subtlety
-uint32_t uniformStride = std::max(
+uint32_t uniformStride = ceilToNextMultiple(
 	(uint32_t)sizeof(MyUniforms),
 	(uint32_t)deviceLimits.minUniformBufferOffsetAlignment
 );
 ```
 ````
+
+Where the utility function is given by:
+
+```C++
+/**
+ * Round 'value' up to the next multiplier of 'step'.
+ */
+uint32_t ceilToNextMultiple(uint32_t value, uint32_t step) {
+	uint32_t divide_and_ceil = value / step + (value % step == 0 ? 0 : 1);
+	return step * divide_and_ceil;
+}
+```
 
 We can now create the buffer and upload 2 different set of values:
 
