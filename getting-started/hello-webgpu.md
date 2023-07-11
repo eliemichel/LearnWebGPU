@@ -37,14 +37,14 @@ To make the integration of either of these in a CMake project as easy as with GL
 
 Since `wgpu-native` is written in rust, we cannot easily build it from scratch so the distribution includes pre-compiled libraries:
 
+```{important}
+**WIP:** Use the "for any platform" link rather than the platform-specific ones, I haven't automated their generation yet so they are usually behind the main one.
+```
+
+ - [wgpu-native for any platform](https://github.com/eliemichel/WebGPU-distribution/archive/refs/heads/wgpu.zip) (a bit heavier as it's a merge of all the above basically)
  - [wgpu-native for Linux](#)
  - [wgpu-native for Windows](#)
  - [wgpu-native for MacOS](#)
- - [wgpu-native for any platform](https://github.com/eliemichel/WebGPU-distribution/archive/refs/heads/wgpu.zip) (a bit heavier as it's a merge of all the above basically)
-
-```{important}
-**WIP:** Use the "any platform" link rather than the platform-specific ones, I haven't automated their generation yet so they are usually behind the main one.
-```
 
 ```{note}
 The pre-compiled binaries are provided by the `wgpu-native` project itself so you can likely trust them. The only thing my distribution adds is a `CMakeLists.txt` that makes it easy to integrate.
@@ -63,12 +63,8 @@ Dawn gives much better error messages, and since it is written in C++ we can bui
 
  - [Dawn for any platform](https://github.com/eliemichel/WebGPU-distribution/archive/refs/heads/dawn.zip)
 
-```{important}
-**WIP:** The first steps of this guide were more intensively tested with `wgpu-native`. Some later parts were tested with both and I tried to includes notes about the differences but for now I recommend using `wgpu-native` at least at the beginning.
-```
-
 ```{note}
-The Dawn-based distribution I provide here fetches the source code of Dawn from its original repository, but builds it without the need for extra dependencies (I include a script that replaces them basically) and by pre-setting some options to avoid building parts that we do not use.
+The Dawn-based distribution I provide here fetches the source code of Dawn from its original repository, but in an as shallow as possible way, and pre-sets some options to avoid building parts that we do not use.
 ```
 
 **Pros**
