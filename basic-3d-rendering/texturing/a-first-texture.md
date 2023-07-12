@@ -15,6 +15,10 @@ Theoretically, a GPU buffer could be used to store the texture data, and the sha
 
 This is why although all types of **resources** live in the VRAM, **buffers**, **textures** and **storage textures** are different objects in the WebGPU API (as well as in all other graphics APIs).
 
+```{admonition} WIP
+From this chapter on, the example WGSL code uses templated types `vec2f` where we can use simpler aliases `vec2f` because when I first wrote this aliases were not supported by `wgpu-native`.
+```
+
 Texture creation
 ----------------
 

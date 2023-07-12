@@ -9,17 +9,13 @@ Loading from file
 *Resulting code:* [`step058-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step058-vanilla)
 ````
 
-This time, we are ready to load **an actual 3D file format**, so that you can play with any model you'd like.
+This time, we are ready to load **an actual 3D file format** instead of the ad-hoc one we have been using so far, so that you can play with any model you'd like.
 
 In this chapter we load 3D models from the [OBJ](https://en.wikipedia.org/wiki/Wavefront_.obj_file) format. This is a very common format for storing 3D meshes with extra attributes (vertex colors, normals, but also texture coordinates and any other arbitrary data). You can for instance create an OBJ file by exporting it from [Blender](https://www.blender.org/).
 
-```{admonition} WIP
-From this chapter on, the example WGSL code uses templated types `vec2f` where we can use simpler aliases `vec2f` because when I first wrote this aliases were not supported by `wgpu-native`.
-```
-
 ## TinyOBJLoader
 
-Instead of manually parsing OBJ files, we use the [TinyOBJLoader](https://github.com/tinyobjloader/tinyobjloader) library. The file format is not that complex, but parsing files is not the main point of this tutorial series, and this library has been intensively tested and has a very small footprint.
+Instead of manually parsing OBJ files, we use the [TinyOBJLoader](https://github.com/tinyobjloader/tinyobjloader) library. The file format is **not that complex**, but parsing files is not the main point of this tutorial series, and this library has been intensively tested and has a very small footprint.
 
 Similarly to [our `webgpu.hpp` wrapper](/getting-started/cpp-idioms.md), TinyOBJLoader is made of a single file [`tiny_obj_loader.h`](https://raw.githubusercontent.com/tinyobjloader/tinyobjloader/release/tiny_obj_loader.h) that you may simply save next to your `main.cpp`. Exactly one of your source files must define `TINYOBJLOADER_IMPLEMENTATION` before including it:
 
@@ -65,14 +61,14 @@ bool loadGeometryFromObj(const fs::path& path, std::vector<VertexAttributes>& ve
 }
 ```
 
-Once the tinyobj-specific structures are filled in (`shape_t`, `attrib_t`), we can extract our vertex array data:
+Once the tinyobj-specific structures are filled in (`shape_t`, `attrib_t`), we can extract our vertex array data, making the code a bit clearer:
 
 ```C++
 // Filling in vertexData:
 const auto& shape = shapes[0]; // look at the first shape only
 
 vertexData.resize(shape.mesh.indices.size());
-for (int i = 0; i < vertexData.size(); ++i) {
+for (int i = 0; i < shape.mesh.indices.size(); ++i) {
 	const tinyobj::index_t& idx = shape.mesh.indices[i];
 
 	vertexData[i].position = {
@@ -113,6 +109,7 @@ for (const auto& shape : shapes) {
 
 We stop using indexed drawing but switch to a vector of `VertexAttributes` rather than a blind vector of `float` for the vertex buffer data:
 
+````{tab} With webgpu.hpp
 ```C++
 std::vector<VertexAttributes> vertexData;
 bool success = loadGeometryFromObj(RESOURCE_DIR "/pyramid.obj", vertexData);
@@ -132,9 +129,44 @@ renderPass.setVertexBuffer(0, vertexBuffer, 0, vertexData.size() * sizeof(Vertex
 // (remove renderPass.setIndexBuffer)
 // [...]
 renderPass.draw(indexCount, 1, 0, 0);
+// [...]
+// (remove indexBuffer destruction)
+```
+````
+
+````{tab} Vanilla webgpu.h
+```C++
+std::vector<VertexAttributes> vertexData;
+bool success = loadGeometryFromObj(RESOURCE_DIR "/pyramid.obj", vertexData);
+if (!success) {
+	std::cerr << "Could not load geometry!" << std::endl;
+	return 1;
+}
+// [...]
+bufferDesc.size = vertexData.size() * sizeof(VertexAttributes);
+// [...]
+wgpuQueueWriteBuffer(queue, vertexBuffer, 0, vertexData.data(), bufferDesc.size);
+// [...]
+int indexCount = static_cast<int>(vertexData.size());
+// (remove 'Create index buffer')
+// [...]
+wgpuRenderPassSetVertexBuffer(renderPass, 0, vertexBuffer, 0, vertexData.size() * sizeof(VertexAttributes));
+// (remove wgpuRenderPassSetIndexBuffer)
+// [...]
+wgpuRenderPassDraw(renderPass, indexCount, 1, 0, 0);
+// [...]
+// (remove indexBuffer destruction)
+```
+````
+
+One last thing we need is to increase the maximum buffer size to be able to load various meshes:
+
+```C++
+// Update max buffer size to allow up to 10000 vertices in the loaded file:
+requiredLimits.limits.maxBufferSize = 10000 * sizeof(VertexAttributes);
 ```
 
-Test this with [pyramid.obj](../../data/pyramid.obj), which is the same pyramid but with beveled (smoothed) edges:
+Test this with [pyramid.obj](../../data/pyramid.obj), which is the same pyramid but with beveled edges (I also set the `T1 = mat4x4(1.0)` and `focalPoint = vec3(0.0, 0.0, -1.0)`):
 
 ```{figure} /images/pyramid-obj-yup.png
 :align: center
@@ -142,9 +174,19 @@ Test this with [pyramid.obj](../../data/pyramid.obj), which is the same pyramid 
 The 3D model is correctly loaded but not oriented as expected.
 ```
 
+````{note}
+If you see a warning about missing material information when loading the OBJ, do not worry:
+
+```
+material [ 'None' ] not found in .mtl
+```
+
+OBJ files may have a companion .mtl file providing information about materials but we do not use this information here.
+````
+
 ## Vertical axis convention
 
-There is **no consensus** among 3D modeling and 3D rendering tools, but file formats usually impose a convention. In the case of the OBJ format, it is specified that **the Y axis represents the upward vertical direction**.
+There is **no consensus** among 3D modeling and 3D rendering tools about which axis should represent the vertical direction. But file formats usually impose a convention. In the case of the OBJ format, it is specified that **the Y axis represents the upward vertical direction**.
 
 Since we have been implicitly following the convention that **Z is the vertical in our code**, we need to either change our convention (by changing the view matrix) or convert upon loading. I chose the latter:
 
