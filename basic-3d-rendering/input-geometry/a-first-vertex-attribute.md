@@ -85,7 +85,8 @@ std::cout << "device.maxVertexAttributes: " << supportedLimits.limits.maxVertexA
 
 ````{tab} Vanilla webgpu.h
 ```C++
-WGPUSupportedLimits supportedLimits;
+WGPUSupportedLimits supportedLimits{};
+supportedLimits.nextInChain = nullptr;
 
 wgpuAdapterGetLimits(adapter, &supportedLimits);
 std::cout << "adapter.maxVertexAttributes: " << supportedLimits.limits.maxVertexAttributes << std::endl;
@@ -263,6 +264,7 @@ pipelineDesc.vertex.buffers = &vertexBufferLayout;
 
 It is important to note that **the same vertex buffer** can contain **multiple vertex attributes**. This is why the `maxVertexAttributes` and `maxVertexBuffers` limits are different concepts. So there is yet another array pointer:
 
+````{tab} With webgpu.hpp
 ```C++
 VertexAttribute vertexAttrib;
 // [...]
@@ -270,6 +272,17 @@ VertexAttribute vertexAttrib;
 vertexBufferLayout.attributeCount = 1;
 vertexBufferLayout.attributes = &vertexAttrib;
 ```
+````
+
+````{tab} Vanilla webgpu.h
+```C++
+WGPUVertexAttribute vertexAttrib;
+// [...]
+
+vertexBufferLayout.attributeCount = 1;
+vertexBufferLayout.attributes = &vertexAttrib;
+```
+````
 
 We can now configure our vertex attribute. The value of `shaderLocation` must be the same than what specifies the WGSL attribute `@location(...)` in the vertex shader. The format `Float32x2` corresponds at the same time to the type `vec2f` in the shader and to the sequence of 2 floats in the vertex buffer data.
 

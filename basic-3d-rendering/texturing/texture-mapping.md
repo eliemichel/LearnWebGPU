@@ -9,6 +9,10 @@ Texture mapping
 *Resulting code:* [`step065-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step065-vanilla)
 ````
 
+```{admonition} WIP
+From this chapter on, the example WGSL code uses templated types `vec2f` where we can use simpler aliases `vec2f` because when I first wrote this aliases were not supported by `wgpu-native`.
+```
+
 In the previous chapter we used the screen pixel coordinate to decide which texel from the image to load (`in.position` in the fragment shader is the fragment's screen coordinates).
 
 If our geometry is no longer a full screen quad, this is not really what we expect. Let us switch back to a perspective projection, and use the handy `glm::lookAt` function to get an interesting point of view:
