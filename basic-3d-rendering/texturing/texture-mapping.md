@@ -9,13 +9,9 @@ Texture mapping
 *Resulting code:* [`step065-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step065-vanilla)
 ````
 
-```{admonition} WIP
-From this chapter on, the example WGSL code uses templated types `vec2f` where we can use simpler aliases `vec2f` because when I first wrote this aliases were not supported by `wgpu-native`.
-```
+In the previous chapter we used the **screen pixel coordinate** (`in.position`) to decide which texel from the image to load.
 
-In the previous chapter we used the screen pixel coordinate to decide which texel from the image to load (`in.position` in the fragment shader is the fragment's screen coordinates).
-
-If our geometry is no longer a full screen quad, this is not really what we expect. Let us switch back to a perspective projection, and use the handy `glm::lookAt` function to get an interesting point of view:
+If our geometry is no longer a full screen quad, this is **not really what we want**. Let us switch back to a perspective projection, and use the handy `glm::lookAt` function to get an interesting point of view:
 
 ```C++
 uniforms.modelMatrix = mat4x4(1.0);
@@ -37,57 +33,67 @@ How to address this? By computing **texel coordinates** in the vertex shader and
 ```rust
 struct VertexOutput {
 	// [...]
-	@location(2) texelCoords: vec2<f32>,
+	@location(2) texelCoords: vec2f,
 };
 
 fn vs_main(in: VertexInput) -> VertexOutput {
 	// [...]
 
 	// In plane.obj, the vertex xy coords range from -1 to 1
-	// and we remap this to (0, 256)
+	// and we remap this to (0, 256), the size of our texture.
 	out.texelCoords = (in.position.xy + 1.0) * 128.0;
 	return out;
 }
 
-fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
-	let color = textureLoad(gradientTexture, vec2<i32>(in.texelCoords), 0).rgb;
+fn fs_main(in: VertexOutput) -> @location(0) vec4f {
+	let color = textureLoad(gradientTexture, vec2i(in.texelCoords), 0).rgb;
 	// [...]
 }
 ```
 
-```{note}
-It is important that the conversion to integers (`vec2<i32>`) is done in the fragment shader rather than in the vertex shader, because integer vertex output do not get interpolated by the rasterizer.
+```{important}
+It is important that the conversion to integers (`vec2i`) is done in the fragment shader rather than in the vertex shader, because integer vertex output do not get interpolated by the rasterizer.
 ```
+
+````{note}
+Since we increase the size of attributes that transit from the vertex to the fragment shader, we need to **update a device limit**:
+
+```C++
+requiredLimits.limits.maxInterStageShaderComponents = 8;
+//                                                    ^ This was a 6
+```
+````
 
 ```{figure} /images/fixed-mapping.png
 :align: center
 :class: with-shadow
-A much better texture mapping.
+A much better texture mapping, consistent when the viewpoint changes.
 ```
 
 UV coordinates
 --------------
 
-The texture coordinates are in practice expressed in the range $(0,1)$, so that they do not depend on the resolution of the texture, instead of explicitly giving texel indices. We call these normalized coordinates the **UV coordinates**.
+The texture coordinates are in practice expressed in the range $(0,1)$, so that they **do not depend on the resolution** of the texture, instead of explicitly giving texel indices. We call these normalized coordinates the **UV coordinates**.
 
 We can make our code independent on the texture size using the `textureDimensions` function:
 
 ```rust
 struct VertexOutput {
 	// [...]
-	@location(2) uv: vec2<f32>,
+	@location(2) uv: vec2f,
 };
 
 fn vs_main(in: VertexInput) -> VertexOutput {
 	// [...]
 	// In plane.obj, the vertex xy coords range from -1 to 1
-	// and we remap this to (0, 1)
+	// and we remap this to the resolution-agnostic (0, 1) range
 	out.uv = in.position.xy * 0.5 + 0.5;
 	return out;
 }
 
-fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
-	let texelCoords = vec2<i32>(in.uv * vec2<f32>(textureDimensions(gradientTexture)));
+fn fs_main(in: VertexOutput) -> @location(0) vec4f {
+	// We remap UV coords to actual texel coordinates
+	let texelCoords = vec2i(in.uv * vec2f(textureDimensions(gradientTexture)));
 	let color = textureLoad(gradientTexture, texelCoords, 0).rgb;
 	// [...]
 }
@@ -96,7 +102,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
 Loading from file
 -----------------
 
-UV coordinates are a very common thing, and there are UVs in the OBJ file I have been sharing with you, including this plane. We can add a **new attribute** like we did with normals to provide the UVs from the OBJ file up to the shader:
+UV coordinates are a very common thing, and **there are UVs in the OBJ file** I have been sharing with you, including this plane. We can add a **new attribute** like we did with normals to provide the UVs from the OBJ file up to the shader:
 
 ```C++
 using glm::vec2;
@@ -111,10 +117,12 @@ struct VertexAttributes {
 // [...]
 
 requiredLimits.limits.maxVertexAttributes = 4;
+//                                          ^ This was a 3
 
 // [...]
 
 std::vector<VertexAttribute> vertexAttribs(4);
+//                                         ^ This was a 3
 
 // [...]
 
@@ -126,7 +134,7 @@ vertexAttribs[3].offset = offsetof(VertexAttributes, uv);
 // [...]
 ```
 
-Note when loading UV coordinates from the file that we need to do a little conversion on the V axis.
+Note that when loading UV coordinates from the file, we need to do **a little conversion** on the V axis.
 
 ```{image} /images/uv-coords-light.svg
 :align: center
@@ -159,10 +167,10 @@ And in the shader:
 
 ```rust
 struct VertexInput {
-	@location(0) position: vec3<f32>,
-	@location(1) normal: vec3<f32>,
-	@location(2) color: vec3<f32>,
-	@location(3) uv: vec2<f32>,
+	@location(0) position: vec3f,
+	@location(1) normal: vec3f,
+	@location(2) color: vec3f,
+	@location(3) uv: vec2f,
 };
 
 // [...]
@@ -175,8 +183,8 @@ fn vs_main(in: VertexInput) -> VertexOutput {
 }
 
 @fragment
-fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
-    let texelCoords = vec2<i32>(in.uv * vec2<f32>(textureDimensions(gradientTexture)));
+fn fs_main(in: VertexOutput) -> @location(0) vec4f {
+    let texelCoords = vec2i(in.uv * vec2f(textureDimensions(gradientTexture)));
     let color = textureLoad(gradientTexture, texelCoords, 0).rgb;
     // [...]
 }

@@ -416,7 +416,7 @@ TextureView textureView = texture.createView(textureViewDesc);
 
 ### Shader
 
-We can now declare a global variable of type `texture_2d<f32>` in our shader, attached to binding 1 in bind group 0. The function `textureLoad` returns the raw texel value at a given coordinate:
+We can now declare a global variable of type `texture_2d<f32>` in our shader, attached to binding 1 in bind group 0. The function `textureLoad` returns the raw texel value at a given coordinate, and the `@builtin(position)` input of the frament shader is the pixel screen coordinate:
 
 ```rust
 @group(0) @binding(1) var gradientTexture: texture_2d<f32>;

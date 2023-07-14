@@ -13,6 +13,10 @@ The `textureLoad` function that we used in our shader accesses the texture data 
 
 To **sample** values from a texture with all these capabilities, we define another resource called a **sampler**. We set it up to query the texture data in the way we'd like and then use the `textureSample` function in our shader.
 
+```{admonition} WIP
+From this chapter on, the example WGSL code uses templated types `vec2f` where we can use simpler aliases `vec2f` because when I first wrote this aliases were not supported by `wgpu-native`.
+```
+
 Sampler setup
 -------------
 
