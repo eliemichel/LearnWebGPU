@@ -64,9 +64,6 @@ auto onQueueWorkDone = [](WGPUQueueWorkDoneStatus status, void* /* pUserData */)
 wgpuQueueOnSubmittedWorkDone(queue, onQueueWorkDone, nullptr /* pUserData */);
 ```
 
-```{error}
-As of now, the `wgpuQueueOnSubmittedWorkDone` is not implemented by our wgpu-native backend. Using it will result in a null pointer exception so do not copy the above code block.
-```
 
 ```{lit} C++, Add queue callback (replace, hidden)
 #ifdef WEBGPU_BACKEND_DAWN
@@ -162,10 +159,6 @@ wgpuCommandBufferRelease(command);
 #endif
 ```
 
-```{admonition} Implementation divergence
-In `wgpu-native`, the `Finish` operation also destroys the `encoder`, so there is no need to call `wgpuCommandEncoderRelease`. Similarly the `wgpuQueueSubmit` takes care of destroying the command buffer. **This is likely to change in the future**.
-```
-
 ```{lit} C++, Test command encoding (hidden)
 {{Get Queue}}
 {{Add queue callback}}
@@ -183,10 +176,6 @@ This should output:
 ```
 Submitting command...
 Queued work finished with status: 0
-```
-
-```{warning}
-Again, on `wgpu-native` you will not see the "finished" line. On Dawn, you need to add an extra non-standard argument set to 0 just after `queue`.
 ```
 
 At this stage, the code works, but submits a command queue that is almost empty. So it is a bit hard to be thrilled about, let's pump it up with some basic buffer manipulation.

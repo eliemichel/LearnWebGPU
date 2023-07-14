@@ -189,7 +189,7 @@ Option C consists in using a counter to keep track of how many different RAII in
 
 One possibility for this is to implement Option B but then use `std::shared_pointer<raii::Buffer>`, because a shared pointer is precisely a (smart) pointer with a reference counter.
 
-Another possibility is to use the `buffer.reference()` (or `wgpuBufferReference`) procedure to increase an internal counter on the WebGPU backend side. This is only provided by Dawn for now, but `wgpu-native` will likely soon adopt it.
+Another possibility is to use the `buffer.reference()` (or `wgpuBufferReference`) procedure to increase an internal counter on the WebGPU backend side.
 
 ### Rule of five
 
