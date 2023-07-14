@@ -11,6 +11,10 @@ Loading from file
 
 The goal of this chapter is to summarize everything we have done to write a utility function `loadTexture` that creates a texture from a file.
 
+```{admonition} WIP
+From this chapter on, the example WGSL code uses templated types `vec2f` where we can use simpler aliases `vec2f` because when I first wrote this aliases were not supported by `wgpu-native`.
+```
+
 ## stb_image
 
 Once again, to load standard file format, we better use existing code than study the specifications ourselves. We use here the `stb_image` single-header library, from the very handy [stb](https://github.com/nothings/stb) set of libraries. It supports all basic image types (png, jpg, bmp, ...).
