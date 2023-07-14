@@ -13,6 +13,10 @@ The goal of this chapter is to add some interactivity to our viewer. From a WebG
 
 However, it is also the occasion to **organize a bit our code base**, which we have not been discussing much until now. It was not the primary topic, and the size of the code was still manageable as mostly a big main function, but this never holds for bigger applications.
 
+```{admonition} WIP
+From this chapter on, the example WGSL code uses templated types `vec2f` where we can use simpler aliases `vec2f` because when I first wrote this aliases were not supported by `wgpu-native`.
+```
+
 An application structure
 ------------------------
 
