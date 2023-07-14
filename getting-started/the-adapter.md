@@ -143,14 +143,8 @@ Like for the WebGPU instance, we must destroy the adapter:
 wgpuAdapterRelease(adapter);
 ```
 
-Here again we face the difference between `wgpu-native` and Dawn, so we need to set up an alias to use the "release" version. To make things easier, I made a little [`webgpu-release.h`](../data/webgpu-release.h) file that defines such an alias for all types of objects. You can save next to your `main.cpp` and include:
-
 ```{lit} C++, Includes (append, hidden)
 #include <webgpu/webgpu.h>
-```
-
-```{lit} C++, Includes (prepend)
-#include "webgpu-release.h"
 ```
 
 ```{lit} C++, file: main.cpp (hidden)
