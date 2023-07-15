@@ -68,7 +68,7 @@ Once the tinyobj-specific structures are filled in (`shape_t`, `attrib_t`), we c
 const auto& shape = shapes[0]; // look at the first shape only
 
 vertexData.resize(shape.mesh.indices.size());
-for (int i = 0; i < shape.mesh.indices.size(); ++i) {
+for (size_t i = 0; i < shape.mesh.indices.size(); ++i) {
 	const tinyobj::index_t& idx = shape.mesh.indices[i];
 
 	vertexData[i].position = {

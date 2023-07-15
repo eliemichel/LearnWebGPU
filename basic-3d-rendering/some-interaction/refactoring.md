@@ -9,25 +9,21 @@ Refactoring
 *Resulting code:* [`step080-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step080-vanilla)
 ````
 
-The goal of this chapter is to add some interactivity to our viewer. From a WebGPU standpoint, we know everything we need for this. For instance enabling the user to turn around the object using the mouse is only about **updating the view matrix**.
+The goal of this chapter is to **add some interactivity** to our viewer. From a WebGPU standpoint, we know everything we need for this. For instance enabling the user to turn around the object using the mouse is only about **updating the view matrix**.
 
 However, it is also the occasion to **organize a bit our code base**, which we have not been discussing much until now. It was not the primary topic, and the size of the code was still manageable as mostly a big main function, but this never holds for bigger applications.
-
-```{admonition} WIP
-From this chapter on, the example WGSL code uses templated types `vec2f` where we can use simpler aliases `vec2f` because when I first wrote this aliases were not supported by `wgpu-native`.
-```
 
 An application structure
 ------------------------
 
-I am going to avoid over-engineering things since each use case is different, so you will customize the details for your needs. Nevertheless it always starts with a class (or struct) that holds all the global state of the application.
+I am going to **avoid over-engineering** things since each use case is different, so you will customize the details for your needs. Nevertheless it always starts with a class (or struct) that holds all the global state of the application.
 
 We implement this in two new files `Application.h` and `Application.cpp`, where the behavior of the application is distributed across **event handlers**. To make this logic clear, handles start with "on", like `onFrame`.
 
 ```C++
 // In Application.h
 #pragma once
-#include <webgpu.hpp>
+#include <webgpu/webgpu.hpp>
 
 class Application {
 public:
@@ -75,7 +71,7 @@ add_executable(App
 )
 ```
 
-When outlining the main function, we realize we also need a fourth method in our application structure: `isRunning` (which basically calls `glfwWindowShouldClose`).
+When outlining the main function, we realize that we also need a fourth method in our application structure: `isRunning` (which basically calls `glfwWindowShouldClose`).
 
 ```C++
 // In main.cpp
@@ -105,7 +101,7 @@ public:
 	// [...]
 
 private:
-	GLFWwindow* window;
+	GLFWwindow* window = nullptr;
 	// [...]
 };
 
@@ -123,8 +119,13 @@ We create a `ResourceManager.h` and `ResourceManager.cpp` files, add them to the
 
 ```C++
 // In ResourceManager.h
+#pragma once
+// [...] Includes
+
 class ResourceManager {
 public:
+	// (Just aliases to make notations lighter)
+	using path = std::filesystem::path;
 	using vec3 = glm::vec3;
 	using vec2 = glm::vec2;
 
@@ -139,9 +140,6 @@ public:
 		vec3 color;
 		vec2 uv;
 	};
-
-	// (Just an alias to make notations lighter)
-	using path = std::filesystem::path;
 
 	// Load a shader from a WGSL file into a new shader module
 	static wgpu::ShaderModule loadShaderModule(const path& path, wgpu::Device device);
@@ -167,7 +165,7 @@ To avoid some unexpected complication, I recommend to create a file `implementat
 #include "tiny_obj_loader.h"
 
 #define WEBGPU_CPP_IMPLEMENTATION
-#include <webgpu.hpp>
+#include <webgpu/webgpu.hpp>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -176,7 +174,13 @@ To avoid some unexpected complication, I recommend to create a file `implementat
 Conclusion
 ----------
 
-I let you move the largest chunks of code by yourself, otherwise this chapter would look like a big listing. You can check it against the reference code from this chapter of course.
+I let you move the largest chunks of code by yourself, otherwise this chapter would look like a big listing. Most parts of the old `main.cpp` should end up in `Application.cpp`.
+
+```{important}
+Don't forget to **initialize** to `nullptr` all the **WebGPU handles** you define as members of the `Application` class, otherwise your compiler will complain about the `Application`'s constructor being deleted!
+```
+
+You can check it against the reference code from this chapter of course.
 
 ````{tab} With webgpu.hpp
 *Resulting code:* [`step080`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step080)

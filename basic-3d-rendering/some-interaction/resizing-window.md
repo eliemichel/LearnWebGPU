@@ -17,6 +17,10 @@ Now that our code is better organized, it becomes easy to **get rid of this limi
 glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 ```
 
+```{admonition} WIP
+From this chapter on, the example WGSL code uses templated types `vec2f` where we can use simpler aliases `vec2f` because when I first wrote this aliases were not supported by `wgpu-native`.
+```
+
 Callback setup
 --------------
 
