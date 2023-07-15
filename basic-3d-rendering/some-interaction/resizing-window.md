@@ -17,10 +17,6 @@ Now that our code is better organized, it becomes easy to **get rid of this limi
 glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 ```
 
-```{admonition} WIP
-From this chapter on, the example WGSL code uses templated types `vec2f` where we can use simpler aliases `vec2f` because when I first wrote this aliases were not supported by `wgpu-native`.
-```
-
 Callback setup
 --------------
 
@@ -56,7 +52,7 @@ It is precisely for this pattern that GLFW provides a **user pointer**, namely a
 
 ```C++
 // The raw GLFW callback
-void onWindowResize(GLFWwindow* window, int width, int height) {
+void onWindowResize(GLFWwindow* window, int /* width */, int /* height */) {
 	// We know that even though from GLFW's point of view this is
 	// "just a pointer", in our case it is always a pointer to an
 	// instance of the class `Application`
@@ -82,6 +78,7 @@ Resize event handler
 We can now focus on the actual content of `onResize()`. Let's extract the steps of `onInit` that creates the swap chain and the depth buffer, so that we can reuse them when resizing:
 
 ```C++
+// In Application.h
 private:
 	void buildSwapChain();
 	void buildDepthBuffer();
@@ -92,13 +89,25 @@ private:
 void Application::buildSwapChain() {
 	int width, height;
 	glfwGetFramebufferSize(window, &width, &height);
-	// [...]
+
+	// Destroy previously allocated swap chain
+	if (swapChain != nullptr) {
+		swapChain.release();
+	}
+
+	// [...] Move here the swap chain creation
 }
 
 void Application::buildDepthBuffer() {
 	// Destroy previously allocated texture
-	if (depthTexture != nullptr) depthTexture.destroy();
-	// [...]
+	if (depthTexture != nullptr) {
+		depthTextureView.release();
+		depthTexture.destroy();
+		depthTexture.release();
+	}
+
+	// [...] Move here the depth buffer creation
+	// (and use the swapChain to get the texture size)
 }
 ```
 ````
@@ -108,16 +117,32 @@ void Application::buildDepthBuffer() {
 void Application::buildSwapChain() {
 	int width, height;
 	glfwGetFramebufferSize(window, &width, &height);
-	// [...]
+
+	// Destroy previously allocated swap chain
+	if (swapChain != nullptr) {
+		wgpuSwapChainRelease(swapChain);
+	}
+	
+	// [...] Move here the swap chain creation
 }
 
 void Application::buildDepthBuffer() {
 	// Destroy previously allocated texture
-	if (depthTexture != nullptr) wgpuTextureDestroy(depthTexture);
-	// [...]
+	if (depthTexture != nullptr) {
+		wgpuTextureViewRelease(depthTextureView);
+		wgpuTextureDestroy(depthTexture);
+		wgpuTextureRelease(depthTexture);
+	}
+	
+	// [...] Move here the depth buffer creation
+	// (and use the swapChain to get the texture size)
 }
 ```
 ````
+
+```{note}
+On this simple example, **managing the lifetime** of WebGPU objects (e.g., destroying before rebuild them, releasing at the end of the application, etc.) can be done manually. But since this is in general quite **error-prone**, the [RAII](../../advanced-techniques/raii) chapter presents a common C++ **design pattern** that makes this easier.
+```
 
 The `onResize` function simply consists in calling these, and updating the uniforms:
 
@@ -129,7 +154,7 @@ void Application::onResize() {
 
 	float ratio = swapChainDesc.width / (float)swapChainDesc.height;
 	uniforms.projectionMatrix = glm::perspective(45 * PI / 180, ratio, 0.01f, 100.0f);
-	device.getQueue().writeBuffer(
+	queue.writeBuffer(
 		uniformBuffer,
 		offsetof(MyUniforms, projectionMatrix),
 		&uniforms.projectionMatrix,
@@ -147,7 +172,6 @@ void Application::onResize() {
 
 	float ratio = swapChainDesc.width / (float)swapChainDesc.height;
 	uniforms.projectionMatrix = glm::perspective(45 * PI / 180, ratio, 0.01f, 100.0f);
-	WGPUQueue queue = wgpuDeviceGetQueue(device);
 	wgpuQueueWriteBuffer(
 		queue,
 		uniformBuffer,

@@ -21,6 +21,10 @@ There are different flavors of *turntable* control depending on how the center o
 
 We focus here on the case of the **turntable** model, which I find the most confortable one for a 3D object viewer. Imho most real-life objects have a notion of "up" and "down", which justifies that the view controllers does as well.
 
+```{admonition} WIP
+From this chapter on, expect the accompanying code to be less up to date, and the WGSL snippets to use `vec3<f32>` instead of the convenient alias `vec3f`. I am actively working on this!
+```
+
 Event handlers
 --------------
 
