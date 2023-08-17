@@ -13,17 +13,13 @@ The very first kind of interaction we usually need with a 3D scene is to **chang
 
  - **First person:** The camera position is fixed, and its orientation follows the mouse cursor. This is what is used in first-person video games like shooters.
  - **Turntable:** This is what modeling tools typically use: the camera **orbits** around a focus point that it remains centered on.
- - **Trackball:** The turntable gives a different meaning to the "up" axis, which can be annoying when one wants to be able to rotate the object without any form of [gimbal lock](https://en.wikipedia.org/wiki/Gimbal_lock).
+ - **Trackball:** Unlike the turntable, the trackball does not give a particular meaning to the "up" axis. This enables one to orbit around an object without any form of [gimbal lock](https://en.wikipedia.org/wiki/Gimbal_lock).
 
 ```{note}
 There are different flavors of *turntable* control depending on how the center of rotation is chosen: it may be fixed, or set as the point of the 3D surface that was clicked at the beginning of each interaction.
 ```
 
-We focus here on the case of the **turntable** model, which I find the most confortable one for a 3D object viewer. Imho most real-life objects have a notion of "up" and "down", which justifies that the view controllers does as well.
-
-```{admonition} WIP
-From this chapter on, expect the accompanying code to be less up to date, and the WGSL snippets to use `vec3<f32>` instead of the convenient alias `vec3f`. I am actively working on this!
-```
+We focus here on the case of the **turntable** model, which I find the most confortable one for a 3D object viewer. Imho most real-life objects have a notion of "up" and "down", which justifies that the view controller does as well.
 
 Event handlers
 --------------
@@ -65,12 +61,17 @@ glfwSetMouseButtonCallback(m_window, onWindowMouseButton);
 glfwSetScrollCallback(m_window, onWindowScroll);
 ```
 
+```{note}
+From this chapter on, I prefix private attribute names with `m_` to better distinguish them from local variables. This is a common practice (some people prefer using only `_`).
+```
+
 Camera state
 ------------
 
 Instead of manipulating the camera view directly as a matrix made of 16 coefficients, we store a camera state that is **closer to what user input affects**:
 
 ```C++
+// (After the definition of struct MyUniforms)
 struct CameraState {
 	// angles.x is the rotation of the camera around the global vertical axis, affected by mouse.x
 	// angles.y is the rotation of the camera around its local horizontal axis, affected by mouse.y
@@ -80,7 +81,7 @@ struct CameraState {
 };
 ```
 
-We add such a state to our `Application` class (note that I now prefix private attributes with `m_` to better distinguish them from local variables).
+We add such a state to our `Application` class.
 
 ```C++
 // In the declaration of class Application
@@ -99,7 +100,7 @@ void Application::updateViewMatrix() {
 	float sy = sin(m_cameraState.angles.y);
 	vec3 position = vec3(cx * cy, sx * cy, sy) * std::exp(-m_cameraState.zoom);
 	m_uniforms.viewMatrix = glm::lookAt(position, vec3(0.0f), vec3(0, 0, 1));
-	m_device.getQueue().writeBuffer(
+	m_queue.writeBuffer(
 		m_uniformBuffer,
 		offsetof(MyUniforms, viewMatrix),
 		&m_uniforms.viewMatrix,
@@ -118,9 +119,8 @@ void Application::updateViewMatrix() {
 	float sy = sin(m_cameraState.angles.y);
 	vec3 position = vec3(cx * cy, sx * cy, sy) * std::exp(-m_cameraState.zoom);
 	m_uniforms.viewMatrix = glm::lookAt(position, vec3(0.0f), vec3(0, 0, 1));
-	WGPUQueue queue = wgpuDeviceGetQueue(m_device);
 	wgpuQueueWriteBuffer(
-		queue,
+		m_queue,
 		m_uniformBuffer,
 		offsetof(MyUniforms, viewMatrix),
 		&m_uniforms.viewMatrix,
@@ -201,8 +201,7 @@ void Application::onMouseButton(int button, int action, int modifiers) {
 We also add a simple interaction when the use scrolls, to zoom in/out:
 
 ```C++
-void Application::onScroll(double xoffset, double yoffset) {
-	(void)xoffset;
+void Application::onScroll([[maybe_unused]] double xoffset, double yoffset) {
 	m_cameraState.zoom += m_drag.scrollSensitivity * (float)yoffset;
 	m_cameraState.zoom = glm::clamp(m_cameraState.zoom, -2.0f, 2.0f);
 	updateViewMatrix();

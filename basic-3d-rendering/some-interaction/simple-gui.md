@@ -25,6 +25,10 @@ ImGui does not try to give a OS-native look to your app. Instead, it focuses on 
 This also comes at the price of redrawing the whole GUI from scratch at each frame while frameworks usually only update what is needed.
 ```
 
+```{admonition} WIP
+From this chapter on, expect the accompanying code to be less up to date, and the WGSL snippets to use `vec3<f32>` instead of the convenient alias `vec3f`. I am actively working on this!
+```
+
 Setting up ImGui
 ----------------
 
