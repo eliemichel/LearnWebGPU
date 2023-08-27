@@ -169,7 +169,7 @@ public:
 };
 ```
 
-How do we implement these copy operations? We have **two options**:
+How do we implement these copy operations? We have **three options**:
 
  - **Option A**: We create a new buffer and copy the content of the previous one.
  - **Option B**: We deactivate the possibility to copy buffers.
