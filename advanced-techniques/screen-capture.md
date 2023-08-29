@@ -20,7 +20,7 @@ while (!glfwWindowShouldClose(window)) {
 	// [...]
 
 	// export video frame
-	saveImage(resolvePath(frame), device, nextTexture, 640, 480);
+	saveTextureView(resolvePath(frame), device, nextTexture, 640, 480);
 	++frame;
 	if (frame >= 100) {
 		break;
@@ -57,7 +57,7 @@ void Application::onFrame() {
 	// [...]
 
 	// export video frame
-	saveImage(resolvePath(frame), m_device, nextTexture, m_swapChainDesc.width, m_swapChainDesc.height);
+	saveTextureView(resolvePath(frame), m_device, nextTexture, m_swapChainDesc.width, m_swapChainDesc.height);
 	++frame;
 	if (frame >= 100) {
 		onFinish();

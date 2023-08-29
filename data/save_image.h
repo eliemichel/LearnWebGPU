@@ -16,9 +16,16 @@ Usage: In the main loop:
 #define __STDC_LIB_EXT1__
 #include "stb_image_write.h"
 
-#include <webgpu.hpp>
+#include <webgpu/webgpu.hpp>
 
 #include <filesystem>
+#include <string>
+
+// Save a texture to disk
+bool saveTexture(const std::filesystem::path path, wgpu::Device device, wgpu::Texture texture);
+
+// Saving a texture view requires to blit it into another texture, because only textures can be retrieved
+bool saveTextureView(const std::filesystem::path path, wgpu::Device device, wgpu::TextureView textureView, uint32_t width, uint32_t height);
 
 std::filesystem::path resolvePath(int frame) {
 	std::filesystem::path base = "render/frame" + std::to_string(frame) + ".png";
@@ -30,6 +37,7 @@ class FileRenderer {
 public:
 	FileRenderer(wgpu::Device device, uint32_t width, uint32_t height);
 	bool render(const std::filesystem::path path, wgpu::TextureView textureView) const;
+	bool render(const std::filesystem::path path, wgpu::Texture texture) const;
 
 private:
 	wgpu::Device m_device;
@@ -105,8 +113,10 @@ fn fs_main(@builtin(position) fragCoord: vec4<f32>) -> @location(0) vec4<f32> {
 }
 )";
 	ShaderModuleDescriptor shaderDesc{};
+#ifdef WEBGPU_BACKEND_WGPU
 	shaderDesc.hintCount = 0;
 	shaderDesc.hints = nullptr;
+#endif
 	shaderDesc.nextInChain = &shaderCodeDesc.chain;
 	ShaderModule shaderModule = device.createShaderModule(shaderDesc);
 
@@ -177,8 +187,6 @@ fn fs_main(@builtin(position) fragCoord: vec4<f32>) -> @location(0) vec4<f32> {
 bool FileRenderer::render(const std::filesystem::path path, wgpu::TextureView textureView) const {
 	using namespace wgpu;
 	auto device = m_device;
-	auto width = m_width;
-	auto height = m_height;
 	auto bindGroupLayout = m_bindGroupLayout;
 	auto pipeline = m_pipeline;
 	auto renderTexture = m_renderTexture;
@@ -222,20 +230,49 @@ bool FileRenderer::render(const std::filesystem::path path, wgpu::TextureView te
 	renderPass.draw(3, 1, 0, 0);
 	renderPass.end();
 
+	// Issue commands
+	Queue queue = device.getQueue();
+	CommandBuffer command = encoder.finish(Default);
+	queue.submit(command);
+
+	encoder.release();
+	command.release();
+	queue.release();
+
+	return render(path, renderTexture);
+}
+
+bool FileRenderer::render(const std::filesystem::path path, wgpu::Texture texture) const {
+	using namespace wgpu;
+	auto device = m_device;
+	auto width = m_width;
+	auto height = m_height;
+	auto bindGroupLayout = m_bindGroupLayout;
+	auto pipeline = m_pipeline;
+	//auto renderTextureDesc = m_renderTextureDesc;
+	auto pixelBuffer = m_pixelBuffer;
+	auto pixelBufferDesc = m_pixelBufferDesc;
+
+	// Start encoding the commands
+	CommandEncoder encoder = device.createCommandEncoder(Default);
+
 	// Get pixels
 	ImageCopyTexture source = Default;
-	source.texture = renderTexture;
+	source.texture = texture;
 	ImageCopyBuffer destination = Default;
 	destination.buffer = pixelBuffer;
 	destination.layout.bytesPerRow = 4 * width;
 	destination.layout.offset = 0;
 	destination.layout.rowsPerImage = height;
-	encoder.copyTextureToBuffer(source, destination, renderTextureDesc.size);
+	encoder.copyTextureToBuffer(source, destination, { width, height, 1 });
 
 	// Issue commands
 	Queue queue = device.getQueue();
 	CommandBuffer command = encoder.finish(Default);
 	queue.submit(command);
+
+	encoder.release();
+	command.release();
 
 	// Map buffer
 	std::vector<uint8_t> pixels;
@@ -247,7 +284,7 @@ bool FileRenderer::render(const std::filesystem::path path, wgpu::TextureView te
 			done = true;
 			return;
 		}
-		unsigned char* pixelData = (unsigned char*)pixelBuffer.getMappedRange(0, pixelBufferDesc.size);
+		unsigned char* pixelData = (unsigned char*)pixelBuffer.getConstMappedRange(0, pixelBufferDesc.size);
 		int bytesPerRow = 4 * width;
 		int success = stbi_write_png(path.string().c_str(), (int)width, (int)height, 4, pixelData, bytesPerRow);
 
@@ -255,17 +292,36 @@ bool FileRenderer::render(const std::filesystem::path path, wgpu::TextureView te
 
 		failed = success == 0;
 		done = true;
-		});
+	});
 
 	// Wait for mapping
 	while (!done) {
+#ifdef WEBGPU_BACKEND_WGPU
 		wgpuQueueSubmit(queue, 0, nullptr);
+#else
+		device.tick();
+#endif
 	}
+
+	queue.release();
 
 	return !failed;
 }
 
-bool saveImage(const std::filesystem::path path, wgpu::Device device, wgpu::TextureView textureView, uint32_t width, uint32_t height) {
+bool saveTexture(const std::filesystem::path path, wgpu::Device device, wgpu::Texture texture) {
+	using namespace wgpu;
+	uint32_t width = texture.getWidth();
+	uint32_t height = texture.getHeight();
+
+	static std::unique_ptr<FileRenderer> renderer = nullptr;
+	if (!renderer) {
+		renderer = std::make_unique<FileRenderer>(device, width, height);
+	}
+
+	return renderer->render(path, texture);
+}
+
+bool saveTextureView(const std::filesystem::path path, wgpu::Device device, wgpu::TextureView textureView, uint32_t width, uint32_t height) {
 	using namespace wgpu;
 	static std::unique_ptr<FileRenderer> renderer = nullptr;
 	if (!renderer) {
