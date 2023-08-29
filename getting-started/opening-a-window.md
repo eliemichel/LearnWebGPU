@@ -17,6 +17,10 @@ Unfortunately, the process to open a window depends a lot on the OS, so we use a
 I try to use as little libraries as I can, but this one is required to make our code cross-platform, which feels even more important to me than writing code from scratch. It is furthermore a very common choice and quite minimal in its design.
 ```
 
+```{admonition} Headless mode
+WebGPU **does not require a window** to work actually, it may also run headless. Since this is not a use case as common as drawing in a window, I leave the details of this option to [a dedicated chapter](../advanced-techniques/headless.md) of the advanced section.
+```
+
 Installation of GLFW
 --------------------
 

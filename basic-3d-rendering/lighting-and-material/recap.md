@@ -11,6 +11,10 @@ Recap
 
 In this first part, we connect the dots that we already have, so that we can focus in the next chapters on the material and lighting models.
 
+```{admonition} 🚧 WIP
+From this chapter on, the guide is not as up to date. I am currently refreshing it chapter by chapter and this is were I am currently working!
+```
+
 Basic shading
 -------------
 

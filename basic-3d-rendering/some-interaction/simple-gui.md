@@ -17,7 +17,7 @@ Multiple solutions exist for writing *graphical user interfaces* (GUI), i.e., bu
 
 For applications that are mostly about these inputs, it is common to use **a whole *framework*** as a base, like [Qt](https://www.qt.io/), [GTK](https://www.gtk.org/), [wxWidgets](https://www.wxwidgets.org/), [WinUI](https://microsoft.github.io/microsoft-ui-xaml/), etc. These usually manage the main application loop by themselves and are heavy dependencies.
 
-In the case of video games or prototypes like ours, one usually turns towards **more lightweights solutions**, among which [Dear ImGui](https://github.com/ocornut/imgui) is a very popular choice.
+But in the case of video games or prototypes like ours, one usually turns towards **more lightweights solutions**, among which [Dear ImGui](https://github.com/ocornut/imgui) is a very popular choice.
 
 ```{note}
 ImGui does not try to give a OS-native look to your app. Instead, it focuses on being very **easy to integrate** to any existing project, and **easy to program with**.
@@ -25,16 +25,12 @@ ImGui does not try to give a OS-native look to your app. Instead, it focuses on 
 This also comes at the price of redrawing the whole GUI from scratch at each frame while frameworks usually only update what is needed.
 ```
 
-```{admonition} WIP
-From this chapter on, expect the accompanying code to be less up to date, and the WGSL snippets to use `vec3<f32>` instead of the convenient alias `vec3f`. I am actively working on this!
-```
-
 Setting up ImGui
 ----------------
 
-Although ImGui supports using WebGPU as a backend, this support is imperfect so I invite you to download [imgui.zip](https://github.com/eliemichel/imgui/archive/refs/tags/portable_wgpu_backend-1.1.0.zip) from my own branch of ImGui (until my [Pull Request](https://github.com/ocornut/imgui/pull/6188) is merged).
+ImGui fully supports using WebGPU as a backend with both wgpu-native and Dawn since its [version 1.89.8](https://github.com/ocornut/imgui/archive/refs/tags/v1.89.8.zip). Unzip it as a `imgui/` directory, remove `examples`, `doc` and `.github` (or keep them but we don't need them).
 
-Unzip it as a `imgui/` directory, remove examples and doc (or keep them but we don't need them). ImGui does not provide a `CMakeLists.txt` but it is straightforward to write it ourselves (still in the `imgui/` directory):
+ImGui does not provide a `CMakeLists.txt` but it is straightforward to write it ourselves (still in the `imgui/` directory):
 
 ```CMake
 # Define an ImGui target that fits our use case
@@ -82,7 +78,7 @@ Usage
 
 ### Overview
 
-ImGui interface is rebuilt at each frame, following a very imperative style:
+ImGui interface is redrawn at each frame, following a very imperative style:
 
 
 ```C++
@@ -108,7 +104,7 @@ Available functions can be found in [`imgui.h`](https://github.com/ocornut/imgui
 
 ### Setup
 
-We however need to set-up some boilerplate, both when starting the application and before/after defining the GUI at each frame.
+We however **need to set-up some boilerplate**, both when starting the application and before/after defining the GUI at each frame.
 
 To make things clearer, we isolate GUI-related code into specific methods (note that we need to access the render pass in `updateGui`):
 
@@ -153,7 +149,7 @@ void Application::initGui() {
 	// Setup Dear ImGui context
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
-	ImGuiIO& io = ImGui::GetIO(); (void)io;
+	ImGui::GetIO();
 
 	// Setup Platform/Renderer backends
 	ImGui_ImplGlfw_InitForOther(m_window, true);
@@ -169,7 +165,10 @@ void Application::updateGui(RenderPassEncoder renderPass) {
 	// [...] Build our UI
 
 	// Draw the UI
+	ImGui::EndFrame();
+	// Convert the UI defined above into low-level drawing commands
 	ImGui::Render();
+	// Execute the low-level drawing commands on the WebGPU backend
 	ImGui_ImplWGPU_RenderDrawData(ImGui::GetDrawData(), renderPass);
 }
 ```
@@ -209,12 +208,12 @@ ImGui::End();
 
 ### Capabilities
 
-Using ImGUI requires to increment `maxBindGroups` by 1.
+Using ImGUI requires `maxBindGroups` to be at least 1.
 
 Misc
 ----
 
-You may have noticed when playing with sliders that while ImGui is reacting to your mouse, the camera controller also receives the events, which is a bit annoying.
+You may have noticed when playing with sliders that while ImGui is reacting to your mouse, **the camera controller also receives the events**, which is a bit annoying.
 
 To prevent this, we can use the `io.WantCaptureMouse` variable that ImGui turns to true when it detected that the user interacts with the widgets. When so, we ignore mouse clicks in the camera controller:
 
@@ -222,6 +221,8 @@ To prevent this, we can use the `io.WantCaptureMouse` variable that ImGui turns 
 void Application::onMouseButton(int button, int action, int mods) {
 	ImGuiIO& io = ImGui::GetIO();
 	if (io.WantCaptureMouse) {
+		// Don't rotate the camera if the mouse is already captured by an ImGui
+		// interaction at this frame.
 		return;
 	}
 

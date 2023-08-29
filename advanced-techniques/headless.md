@@ -1,4 +1,4 @@
-Headless context (🚧WIP)
+Headless context
 ================
 
 ````{tab} With webgpu.hpp
