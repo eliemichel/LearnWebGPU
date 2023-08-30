@@ -208,7 +208,12 @@ ImGui::End();
 
 ### Capabilities
 
-Using ImGUI requires `maxBindGroups` to be at least 1.
+Using ImGUI requires `maxBindGroups` to be at least 2.
+
+```C++
+requiredLimits.limits.maxBindGroups = 2;
+//                                    ^ This was a 1
+```
 
 Misc
 ----

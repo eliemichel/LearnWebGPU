@@ -16,6 +16,8 @@ However, it is also the occasion to **organize a bit our code base**, which we h
 An application structure
 ------------------------
 
+### Main class
+
 I am going to **avoid over-engineering** things since each use case is different, so you will customize the details for your needs. Nevertheless it always starts with a class (or struct) that holds all the global state of the application.
 
 We implement this in two new files `Application.h` and `Application.cpp`, where the behavior of the application is distributed across **event handlers**. To make this logic clear, handles start with "on", like `onFrame`.
@@ -153,6 +155,9 @@ public:
 };
 ```
 
+Other notes
+-----------
+
 ### Library implementation
 
 As we start including our libraries in multiple files, we must remember that the `#define FOO_IMPLEMENTATION` that some of them require **must appear in only one** C++ file, and the include must be placed before any other one that may recursively include it.
@@ -170,6 +175,43 @@ To avoid some unexpected complication, I recommend to create a file `implementat
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 ```
+
+### Callback handles
+
+```{important}
+This section is **specific to the WebGPU C++ wrapper** I provide. When using the raw C API, the callback cannot be a lambda function and must rather be defined in the global scope.
+```
+
+In order to prevent the uncaptured error callback from behing freed too early, we need to store the handle returned by `device.setUncapturedErrorCallback`. So far this was just done by defining a variable `h` that lives for the whole main function:
+
+```C++
+// Until now, we just stored the handle in a variable local to the main function
+auto h = device.setUncapturedErrorCallback([](ErrorType type, char const* message) {
+	std::cout << "Device error: type " << type;
+	if (message) std::cout << " (message: " << message << ")";
+	std::cout << std::endl;
+});
+```
+
+Since we no longer define this in the main function directly but rather in the `Application`'s init, we must store the `h` handle as a class member:
+
+```C++
+// In Application.h
+class Application {
+private:
+	// Keep the error callback alive
+	std::unique_ptr<wgpu::ErrorCallback> errorCallbackHandle;
+}
+
+// In Application.cpp, in onInit()
+errorCallbackHandle = device.setUncapturedErrorCallback([](ErrorType type, char const* message) {
+	std::cout << "Device error: type " << type;
+	if (message) std::cout << " (message: " << message << ")";
+	std::cout << std::endl;
+});
+```
+
+This way, the callback is released only when the Application object is destroyed.
 
 Conclusion
 ----------
