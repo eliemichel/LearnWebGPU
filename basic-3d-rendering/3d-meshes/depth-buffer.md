@@ -222,6 +222,15 @@ wgpuTextureRelease(depthTexture);
 ```
 ````
 
+Lastly, we need to update the required limits to state the maximum texture size:
+
+```C++
+// For the depth buffer, we enable textures (up to the size of the window):
+requiredLimits.limits.maxTextureDimension1D = 480;
+requiredLimits.limits.maxTextureDimension2D = 640;
+requiredLimits.limits.maxTextureArrayLayers = 1;
+```
+
 ```{note}
 Again, more on textures and texture views later!
 ```
