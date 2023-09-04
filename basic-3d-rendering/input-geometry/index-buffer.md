@@ -65,7 +65,7 @@ int indexCount = static_cast<int>(indexData.size());
 The index data must have type `uint16_t` or `uint32_t`. The former is more compact but limited to $2^{16} = 65 536$ vertices.
 
 ````{note}
-I also keep the interleaved color attribute in this example, my vertex shader is:
+I also keep the interleaved color attribute in this example, my vertex data is:
 
 ```C++
 std::vector<float> vertexData = {
