@@ -65,7 +65,7 @@ int indexCount = static_cast<int>(indexData.size());
 The index data must have type `uint16_t` or `uint32_t`. The former is more compact but limited to $2^{16} = 65 536$ vertices.
 
 ````{note}
-I also keep the interleaved color attribute in this example, my vertex shader is:
+I also keep the interleaved color attribute in this example, my vertex data is:
 
 ```C++
 std::vector<float> vertexData = {
@@ -106,8 +106,8 @@ queue.writeBuffer(indexBuffer, 0, indexData.data(), bufferDesc.size);
 // Create index buffer
 // (we reuse the bufferDesc initialized for the vertexBuffer)
 bufferDesc.size = indexData.size() * sizeof(uint16_t);
-bufferDesc.usage = BufferUsage::CopyDst | BufferUsage::Index;
-WGPUBuffer indexBuffer = wgpuDeviceCreateBuffer(device, bufferDesc);
+bufferDesc.usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_Index;;
+WGPUBuffer indexBuffer = wgpuDeviceCreateBuffer(device, &bufferDesc);
 
 wgpuQueueWriteBuffer(queue, indexBuffer, 0, indexData.data(), bufferDesc.size);
 ```
@@ -145,7 +145,7 @@ renderPass.drawIndexed(indexCount, 1, 0, 0, 0);
 wgpuRenderPassEncoderSetVertexBuffer(renderPass, 0, vertexBuffer, 0, pointData.size() * sizeof(float));
 // The second argument must correspond to the choice of uint16_t or uint32_t
 // we've done when creating the index buffer.
-wgpuRenderPassEncoderSetIndexBuffer(renderPass, indexBuffer, IndexFormat::Uint16, 0, indexData.size() * sizeof(uint16_t));
+wgpuRenderPassEncoderSetIndexBuffer(renderPass, indexBuffer, WGPUIndexFormat_Uint16, 0, indexData.size() * sizeof(uint16_t));
 
 // Replace `draw()` with `drawIndexed()` and `vertexCount` with `indexCount`
 // The extra argument is an offset within the index buffer.
