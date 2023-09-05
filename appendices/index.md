@@ -10,8 +10,8 @@ Contents
 
 teaching-native-graphics-in-2023
 feedback-needed
-debugging
 building-for-the-web
+debugging
 memory-model
 custom-extensions
 references

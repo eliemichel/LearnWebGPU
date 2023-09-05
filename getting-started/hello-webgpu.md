@@ -136,6 +136,10 @@ This is given by the `main` branch of my distribution repository:
 
 And of course depending on your choice the pros and cons of *Option A* and *Option B* apply.
 
+### Building for the Web
+
+If you are interested in building your application for the web, you can consult [the dedicated appendix](../appendices/building-for-the-web.md)!
+
 Testing the installation
 ------------------------
 
