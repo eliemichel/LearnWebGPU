@@ -88,6 +88,10 @@ WGPUQuerySet timestampQueries = wgpuDeviceCreateQuerySet(device, &querySetDesc);
 I base this example on [`step095`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step095), from chapter [Simple GUI](../basic-3d-rendering/some-interaction/simple-gui.md)
 ```
 
+```{note}
+I created a `initBenchmark()` method (called in `onInit`) to initialize benchmark-related objects like the query set. I also created a `terminateBenchmark()` to release these resources.
+```
+
 However, if you try to add the code block above to your application, you will face an error:
 
 > **Device error:**
@@ -283,9 +287,99 @@ WGPURenderPassEncoder renderPass = wgpuCommandEncoderBeginRenderPass(encoder, &r
 I initialize the query set only once and store it into an attribute `m_timestampQueries` of the `Application` class.
 ```
 
-#### Retrieving timestamps
+#### Resolving timestamps
 
-Okey, the render pass writes to our first query when it begins, and writes to the second query when it ends. We only need to compute the difference now, right? But the timestamp still **live in the GPU memory**, so we first need to **fetch them back** to the CPU.
+Okey, the render pass writes to our first query when it begins, and writes to the second query when it ends. We only need to compute the difference now, right? But the timestamps still **live in the GPU memory**, so we first need to **fetch them back** to the CPU.
+
+The first step consists in **resolving** the query. This gets the timestamp values from whatever internal representation the WebGPU implementation uses to store query set and write them in a **GPU buffer**.
+
+```C++
+// We create a method dedicated to fetching timestamps
+void Application::fetchTimestamps(CommandEncoder encoder) {
+	// Resolve the timestamp queries (write their result to the resolve buffer)
+	encoder.resolveQuerySet(
+		m_timestampQueries,
+		0, 2, // get queries 0 to 0+2
+		m_timestampResolveBuffer,
+		0 // offset in resolve buffer
+	);
+}
+```
+
+And as you noticed we need to create a dedicated buffer `m_timestampResolveBuffer` with the `QueryResolve` usage:
+
+```C++
+// In Application.h
+wgpu::Buffer m_timestampBuffer = nullptr;
+
+// In Application.cpp
+void Application::initBenchmark() {
+	// [...]
+
+	// Create buffer to store timestamps
+	BufferDescriptor bufferDesc;
+	bufferDesc.label = "timestamp resolve buffer";
+	bufferDesc.size = 2 * sizeof(uint32_t);
+	bufferDesc.usage = BufferUsage::QueryResolve; // important!
+	m_timestampResolveBuffer = m_device.createBuffer(bufferDesc);
+}
+```
+
+```{warning}
+One the Web, the timestamp resolution may include rounding the value, to avoid giving access to precise information that could lead to timing attacks.
+```
+
+We can call `fetchTimestamps` in our main loop, after `renderPass.end()` and before `encoder.finish()`:
+
+```C++
+// in APplication::onFrame()
+renderPass.end();
+
+fetchTimestamps(encoder);
+```
+
+At this stage, if we only process the timestamps on the GPU, this is all we need. We can for instance provide them as uniforms in a shader.
+
+#### Fetching timestamps
+
+But usually we need to read timestamps on the CPU (for instance to display them with ImGui).
+
+We cannot directly map the resolve buffer, because buffers that have the `MapRead` usage can only be used for mapping. We thus create another buffer, namely the `m_timestampMapBuffer`:
+
+```C++
+// In Application.h
+wgpu::Buffer m_timestampMapBuffer = nullptr;
+
+// In Application.cpp
+void Application::initBenchmark() {
+	// [...]
+	// add CopySrc usage here:
+	bufferDesc.usage = BufferUsage::QueryResolve | BufferUsage::CopySrc;
+	m_timestampResolveBuffer = m_device.createBuffer(bufferDesc);
+
+	bufferDesc.label = "timestamp map buffer";
+	bufferDesc.size = 2 * sizeof(uint32_t);
+	bufferDesc.usage = BufferUsage::MapRead | BufferUsage::CopyDst;
+	m_timestampMapBuffer = m_device.createBuffer(bufferDesc);
+}
+```
+
+We then copy to this buffer right after resolution:
+
+```C++
+void Application::fetchTimestamps(CommandEncoder encoder) {
+	// [...] Resolve the timestamp queries (write their result to the resolve buffer)
+	
+	// Copy to the map buffer
+	encoder.copyBufferToBuffer(
+		m_timestampResolveBuffer, 0,
+		m_timestampMapBuffer, 0,
+		2 * sizeof(uint32_t)
+	);
+}
+```
+
+And finally we map this buffer. But remember that **buffer mapping is asynchronous**, so we must be careful when this `fetchTimestamps()` function is called at each frame.
 
 WIP
 
