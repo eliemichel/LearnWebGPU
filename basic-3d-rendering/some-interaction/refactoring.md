@@ -182,7 +182,7 @@ To avoid some unexpected complication, I recommend to create a file `implementat
 This section is **specific to the WebGPU C++ wrapper** I provide. When using the raw C API, the callback cannot be a lambda function and must rather be defined in the global scope.
 ```
 
-In order to prevent the uncaptured error callback from behing freed too early, we need to store the handle returned by `device.setUncapturedErrorCallback`. So far this was just done by defining a variable `h` that lives for the whole main function:
+In order to prevent the uncaptured error callback from being freed too early, we need to store the handle returned by `device.setUncapturedErrorCallback`. So far this was just done by defining a variable `h` that lives for the whole main function:
 
 ```C++
 // Until now, we just stored the handle in a variable local to the main function
