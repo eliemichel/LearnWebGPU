@@ -8,14 +8,14 @@ Contents
 :titlesonly:
 
 raii
+screen-capture
+headless
 hdr-textures
+benchmarking/index
 deferred-shading
-benchmarking
 render-bundles
 multi-sampling
 scene-tree
-screen-capture
-headless
 shadow-maps
 tesselation
 raytracing

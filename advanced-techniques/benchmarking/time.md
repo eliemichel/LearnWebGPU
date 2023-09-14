@@ -1,5 +1,5 @@
-Benchmarking (🚧WIP)
-============
+Time (🚧WIP)
+====
 
 ````{tab} With webgpu.hpp
 *Resulting code:* [`step095-timestamp-queries`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step095-timestamp-queries)
@@ -9,18 +9,16 @@ Benchmarking (🚧WIP)
 *Resulting code:* [`step095-timestamp-queries-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step095-timestamp-queries-vanilla)
 ````
 
-Benchmarking consists in measuring the **resources** needed for different tasks, in order for instance to identify **performance bottlenecks** or to compare two approaches to the same problem.
+We start by **measuring compute time**, which is often the most valuable resource.
 
 ```{warning}
 As of September 6, 2023, wgpu-native does not support timestamp queries yet. I suggest you follow this chapter with Dawn only for now.
 ```
 
-Time
-----
+Asynchronicity
+--------------
 
-### Asynchronicity
-
-We start by **measuring compute time**, which is often the most valuable resource. Importantly, measuring GPU time is **quite different** from measuring CPU time, because as you may recall **we only interact with the GPU through remote calls** issued in our CPU code (C++).
+Importantly, measuring GPU time is **quite different** from measuring CPU time, because as you may recall **we only interact with the GPU through remote calls** issued in our CPU code (C++).
 
 In an imperative CPU code, measuring time looks like this:
 
@@ -44,7 +42,8 @@ ellapsed = end_time - start_time # wrong!
 
 The "something" may not even have started at this point. What we measure is the time it takes to submit instructions, **not to actually execute them**!
 
-### Timestamp Queries
+Timestamp Queries
+-----------------
 
 We must instruct the GPU to run some equivalent of `get_current_time()` on its own timeline. The result of this operation is stored in a dedicated object called a **timestamp query**.
 
@@ -57,7 +56,7 @@ submit_to_do_on_gpu(something)
 submit_to_do_on_gpu(write_current_time, end_timestamp_query)
 ```
 
-We must then **fetch** the timestamp values back to the CPU, through a mapped buffer like we see in [Playing with buffers](../basic-3d-rendering/input-geometry/playing-with-buffers.md#mapping-context).
+We must then **fetch** the timestamp values back to the CPU, through a mapped buffer like we see in [Playing with buffers](../../basic-3d-rendering/input-geometry/playing-with-buffers.md#mapping-context).
 
 > 🫡 Okey, got it, so what about actual C++ code?
 
@@ -85,7 +84,7 @@ WGPUQuerySet timestampQueries = wgpuDeviceCreateQuerySet(device, &querySetDesc);
 ````
 
 ```{note}
-I base this example on [`step095`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step095), from chapter [Simple GUI](../basic-3d-rendering/some-interaction/simple-gui.md)
+I base this example on [`step095`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step095), from chapter [Simple GUI](../../basic-3d-rendering/some-interaction/simple-gui.md)
 ```
 
 ```{note}
@@ -98,9 +97,10 @@ However, if you try to add the code block above to your application, you will fa
 > *(Dawn)* Timestamp queries are disallowed because they may expose precise timing information.
 > *(wgpu-native)* Features(TIMESTAMP_QUERY) are required but not enabled on the device.
 
-### Enabling Timestamp Feature
+Enabling Timestamp Feature
+--------------------------
 
-#### Dawn toggles
+### Dawn toggles
 
 Let us start with Dawn: for **privacy reasons**, Dawn disables timing information. This is relevant when running on the Web, but not in our native application context. Fortunately, **this safeguard can easily be disabled**.
 
@@ -187,7 +187,7 @@ The error message we get is now slightly different:
 
 This is in substance the same error than the one reported by `wgpu-native` above, we treat both in the next section.
 
-#### Feature request
+### Feature request
 
 When creating our WebGPU device, we mentioned already that we can set up specific limits. But we can also **request specific features** from the `WGPUFeatureName` enum. In particular, we need to enable `FeatureName::TimestampQuery`.
 
@@ -243,7 +243,8 @@ if (!wgpuDeviceHasFeature(m_device, WGPUFeatureName_TimestampQuery)) {
 Timestamp queries are specified as an explicit feature because some devices/adapters may not support them.
 ```
 
-#### Writing timestamp queries
+Writing timestamps
+------------------
 
 There are different ways of writing timestamp into queries. The closest one to our pseudocode above is `commandEncoder.writeTimestamp()`, which writes the GPU-side time into a query whenever the command is executed in the **GPU timeline**.
 
@@ -287,12 +288,16 @@ WGPURenderPassEncoder renderPass = wgpuCommandEncoderBeginRenderPass(encoder, &r
 I initialize the query set only once and store it into an attribute `m_timestampQueries` of the `Application` class.
 ```
 
-#### Resolving timestamps
+Reading timestamps
+------------------
+
+### Resolving timestamps
 
 Okey, the render pass writes to our first query when it begins, and writes to the second query when it ends. We only need to compute the difference now, right? But the timestamps still **live in the GPU memory**, so we first need to **fetch them back** to the CPU.
 
 The first step consists in **resolving** the query. This gets the timestamp values from whatever internal representation the WebGPU implementation uses to store query set and write them in a **GPU buffer**.
 
+````{tab} With webgpu.hpp
 ```C++
 // We create a method dedicated to fetching timestamps
 void Application::fetchTimestamps(CommandEncoder encoder) {
@@ -305,9 +310,27 @@ void Application::fetchTimestamps(CommandEncoder encoder) {
 	);
 }
 ```
+````
 
-And as you noticed we need to create a dedicated buffer `m_timestampResolveBuffer` with the `QueryResolve` usage:
+````{tab} Vanilla webgpu.h
+```C++
+// We create a method dedicated to fetching timestamps
+void Application::fetchTimestamps(WGPUCommandEncoder encoder) {
+	// Resolve the timestamp queries (write their result to the resolve buffer)
+	wgpuCommandEncoderResolveQuerySet(
+		encoder,
+		m_timestampQueries,
+		0, 2, // get queries 0 to 0+2
+		m_timestampResolveBuffer,
+		0 // offset in resolve buffer
+	);
+}
+```
+````
 
+And as you noticed we need to create a dedicated buffer `m_timestampResolveBuffer` with the `QueryResolve` usage. This buffers needs to reserve a **64-bit unsigned integer** per timestamp:
+
+````{tab} With webgpu.hpp
 ```C++
 // In Application.h
 wgpu::Buffer m_timestampBuffer = nullptr;
@@ -319,11 +342,32 @@ void Application::initBenchmark() {
 	// Create buffer to store timestamps
 	BufferDescriptor bufferDesc;
 	bufferDesc.label = "timestamp resolve buffer";
-	bufferDesc.size = 2 * sizeof(uint32_t);
+	bufferDesc.size = 2 * sizeof(uint64_t);
 	bufferDesc.usage = BufferUsage::QueryResolve; // important!
 	m_timestampResolveBuffer = m_device.createBuffer(bufferDesc);
 }
 ```
+````
+
+````{tab} Vanilla webgpu.h
+```C++
+// In Application.h
+WGPUBuffer m_timestampBuffer = nullptr;
+
+// In Application.cpp
+void Application::initBenchmark() {
+	// [...]
+
+	// Create buffer to store timestamps
+	WGPUBufferDescriptor bufferDesc;
+	bufferDesc.label = "timestamp resolve buffer";
+	bufferDesc.size = 2 * sizeof(uint64_t);
+	bufferDesc.usage = WGPUBufferUsage_QueryResolve; // important!
+	bufferDesc.mappedAtCreation = false;
+	m_timestampResolveBuffer = wgpuDeviceCreateBuffer(m_device, bufferDesc);
+}
+```
+````
 
 ```{warning}
 One the Web, the timestamp resolution may include rounding the value, to avoid giving access to precise information that could lead to timing attacks.
@@ -331,21 +375,33 @@ One the Web, the timestamp resolution may include rounding the value, to avoid g
 
 We can call `fetchTimestamps` in our main loop, after `renderPass.end()` and before `encoder.finish()`:
 
+````{tab} With webgpu.hpp
 ```C++
-// in APplication::onFrame()
+// in Application::onFrame()
 renderPass.end();
 
 fetchTimestamps(encoder);
 ```
+````
+
+````{tab} Vanilla webgpu.h
+```C++
+// in Application::onFrame()
+wgpuRenderPassEncoderEnd(renderPass);
+
+fetchTimestamps(encoder);
+```
+````
 
 At this stage, if we only process the timestamps on the GPU, this is all we need. We can for instance provide them as uniforms in a shader.
 
-#### Fetching timestamps
+### Fetching timestamps
 
 But usually we need to read timestamps on the CPU (for instance to display them with ImGui).
 
 We cannot directly map the resolve buffer, because buffers that have the `MapRead` usage can only be used for mapping. We thus create another buffer, namely the `m_timestampMapBuffer`:
 
+````{tab} With webgpu.hpp
 ```C++
 // In Application.h
 wgpu::Buffer m_timestampMapBuffer = nullptr;
@@ -358,14 +414,36 @@ void Application::initBenchmark() {
 	m_timestampResolveBuffer = m_device.createBuffer(bufferDesc);
 
 	bufferDesc.label = "timestamp map buffer";
-	bufferDesc.size = 2 * sizeof(uint32_t);
+	bufferDesc.size = 2 * sizeof(uint64_t);
 	bufferDesc.usage = BufferUsage::MapRead | BufferUsage::CopyDst;
 	m_timestampMapBuffer = m_device.createBuffer(bufferDesc);
 }
 ```
+````
+
+````{tab} Vanilla webgpu.h
+```C++
+// In Application.h
+WGPUBuffer m_timestampMapBuffer = nullptr;
+
+// In Application.cpp
+void Application::initBenchmark() {
+	// [...]
+	// add CopySrc usage here:
+	bufferDesc.usage = WGPUBufferUsage_QueryResolve | WGPUBufferUsage_CopySrc;
+	m_timestampResolveBuffer = wgpuDeviceCreateBuffer(m_device, bufferDesc);
+
+	bufferDesc.label = "timestamp map buffer";
+	bufferDesc.size = 2 * sizeof(uint64_t);
+	bufferDesc.usage = WGPUBufferUsage_MapRead | WGPUBufferUsage_CopyDst;
+	m_timestampMapBuffer = wgpuDeviceCreateBuffer(m_device, bufferDesc);
+}
+```
+````
 
 We then copy to this buffer right after resolution:
 
+````{tab} With webgpu.hpp
 ```C++
 void Application::fetchTimestamps(CommandEncoder encoder) {
 	// [...] Resolve the timestamp queries (write their result to the resolve buffer)
@@ -374,14 +452,107 @@ void Application::fetchTimestamps(CommandEncoder encoder) {
 	encoder.copyBufferToBuffer(
 		m_timestampResolveBuffer, 0,
 		m_timestampMapBuffer, 0,
-		2 * sizeof(uint32_t)
+		2 * sizeof(uint64_t)
 	);
 }
 ```
+````
+
+````{tab} Vanilla webgpu.h
+```C++
+void Application::fetchTimestamps(WGPUCommandEncoder encoder) {
+	// [...] Resolve the timestamp queries (write their result to the resolve buffer)
+	
+	// Copy to the map buffer
+	wgpuCommandEncoderCopyBufferToBuffer(
+		encoder,
+		m_timestampResolveBuffer, 0,
+		m_timestampMapBuffer, 0,
+		2 * sizeof(uint64_t)
+	);
+}
+```
+````
 
 And finally we map this buffer. But remember that **buffer mapping is asynchronous**, so we must be careful when this `fetchTimestamps()` function is called at each frame.
 
-WIP
+```{note}
+This part differs slightly in architecture depending on whether you are using the C++ wrapper or the vanilla API, I invite you to pick the right tab below:
+```
+
+```{caution}
+WIP! Not working yet, because mapAsync must be called only after the encoder gets submitted!!
+```
+
+````{tab} With webgpu.hpp
+Overall the mapping operation looks like what we did in the [Playing with buffers](../../basic-3d-rendering/input-geometry/playing-with-buffers.md) chapter:
+
+```C++
+// In Application::fetchTimestamps()
+m_timestampMapBuffer.mapAsync(MapMode::Read, 0, 2 * sizeof(uint64_t), [this](BufferMapAsyncStatus status) {
+	if (status != BufferMapAsyncStatus::Success) {
+		std::cerr << "Could not map buffer! status = " << status << std::endl;
+	}
+	else {
+		uint64_t* timestampData = (uint64_t*)m_timestampMapBuffer.getConstMappedRange(0, 2 * sizeof(uint64_t));
+		// [...] Use timestampData here.
+		m_timestampMapBuffer.unmap();
+	}
+});
+```
+
+However to ensure that the callback **outlives the scope** in which it is defined here, we must maintain its handle in the `Application` class:
+
+```C++
+// In Application.h
+std::unique_ptr<wgpu::BufferMapCallback> m_timestampMapHandle;
+
+// In Application::fetchTimestamps()
+m_timestampMapHandle = m_timestampMapBuffer.mapAsync(/* [...] */);
+```
+
+Lastly, we **do not want to trigger a new mapping operation** if there is already one going on! To check this, we may simply use the handle and **return early** whenever it is not null:
+
+```C++
+void Application::fetchTimestamps(WGPUCommandEncoder encoder) {
+	// If we are already in the middle of a mapping operation,
+	// no need to trigger a new one.
+	if (m_timestampMapHandle) return;
+
+	// [...] Resolve timestamp queries, copy and map buffer
+
+	m_timestampMapHandle = m_timestampMapBuffer.mapAsync(/* [...] */ {
+		// [...] Use timestamp data if mapping is successful
+
+		// Release the callback and signal that there is no longer an
+		// ongoing mapping operation.
+		m_timestampMapHandle.reset();
+	});
+}
+```
+````
+
+````{tab} Vanilla webgpu.h
+TODO:
+ - Define a static method to be used as callback
+ - Add a boolean to check whether there is an ongoing mapping operation
+````
+
+Thanks to this, we can now safely call `fetchTimestamps()` at each frame, right after the end of the render pass.
+
+Using timestamp values
+----------------------
+
+We can finally manipulate timestamp values on the CPU! At first we can **display them** in the terminal: in the map callback, when mapping was successful:
+
+```C++
+// Use timestampData
+uint64_t begin = timestampData[0];
+uint64_t end = timestampData[1];
+uint64_t nanoseconds = (end - begin);
+float milliseconds = (float)nanoseconds * 1e-6;
+std::cout << "Render pass took " << milliseconds << "ms" << std::endl;
+```
 
 ````{tab} With webgpu.hpp
 *Resulting code:* [`step095-timestamp-queries`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step095-timestamp-queries)
