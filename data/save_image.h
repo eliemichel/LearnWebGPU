@@ -47,7 +47,6 @@ private:
 	wgpu::RenderPassDescriptor m_renderPassDesc;
 	wgpu::RenderPipeline m_pipeline = nullptr;
 	wgpu::Texture m_renderTexture = nullptr;
-	wgpu::TextureDescriptor m_renderTextureDesc;
 	wgpu::TextureView m_renderTextureView = nullptr;
 	wgpu::Buffer m_pixelBuffer = nullptr;
 	wgpu::BufferDescriptor m_pixelBufferDesc;
@@ -178,7 +177,6 @@ fn fs_main(@builtin(position) fragCoord: vec4<f32>) -> @location(0) vec4<f32> {
 	m_bindGroupLayout = bindGroupLayout;
 	m_pipeline = pipeline;
 	m_renderTexture = renderTexture;
-	m_renderTextureDesc = renderTextureDesc;
 	m_renderTextureView = renderTextureView;
 	m_pixelBuffer = pixelBuffer;
 	m_pixelBufferDesc = pixelBufferDesc;
@@ -190,10 +188,7 @@ bool FileRenderer::render(const std::filesystem::path path, wgpu::TextureView te
 	auto bindGroupLayout = m_bindGroupLayout;
 	auto pipeline = m_pipeline;
 	auto renderTexture = m_renderTexture;
-	auto renderTextureDesc = m_renderTextureDesc;
 	auto renderTextureView = m_renderTextureView;
-	auto pixelBuffer = m_pixelBuffer;
-	auto pixelBufferDesc = m_pixelBufferDesc;
 
 	// Create binding
 	std::vector<BindGroupEntry> bindings(1);
@@ -247,9 +242,6 @@ bool FileRenderer::render(const std::filesystem::path path, wgpu::Texture textur
 	auto device = m_device;
 	auto width = m_width;
 	auto height = m_height;
-	auto bindGroupLayout = m_bindGroupLayout;
-	auto pipeline = m_pipeline;
-	//auto renderTextureDesc = m_renderTextureDesc;
 	auto pixelBuffer = m_pixelBuffer;
 	auto pixelBufferDesc = m_pixelBufferDesc;
 

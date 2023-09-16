@@ -1,0 +1,976 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="572.04401mm"
+   height="255.70219mm"
+   viewBox="0 0 572.044 255.70219"
+   version="1.1"
+   id="svg5"
+   inkscape:version="1.2 (dc2aedaf03, 2022-05-15)"
+   sodipodi:docname="wgpu-architecture.svg"
+   inkscape:export-filename="wgpu-architecture-plain.svg"
+   inkscape:export-xdpi="491.52"
+   inkscape:export-ydpi="491.52"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview7"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="mm"
+     showgrid="false"
+     inkscape:zoom="0.56520271"
+     inkscape:cx="1081.0281"
+     inkscape:cy="1505.6545"
+     inkscape:window-width="1920"
+     inkscape:window-height="1017"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1">
+    <inkscape:page
+       x="0"
+       y="0"
+       width="572.04401"
+       height="255.70219"
+       id="page7499"
+       inkscape:export-filename="wgpu-architecture-light.svg"
+       inkscape:export-xdpi="491.52"
+       inkscape:export-ydpi="491.52" />
+    <inkscape:page
+       x="7.3242184e-08"
+       y="270.50058"
+       width="572.04401"
+       height="255.70218"
+       id="page7501"
+       inkscape:export-filename="wgpu-architecture-dark.svg"
+       inkscape:export-xdpi="491.52"
+       inkscape:export-ydpi="491.52" />
+  </sodipodi:namedview>
+  <defs
+     id="defs2" />
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(122.5168,-466.66512)">
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.5833px;line-height:1.25;font-family:'Lucida Console';-inkscape-font-specification:'Lucida Console';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+       x="77.777512"
+       y="144.5423"
+       id="text186"><tspan
+         sodipodi:role="line"
+         id="tspan184"
+         x="77.777512"
+         y="144.5423"
+         style="stroke-width:0.264583">wgpu-core</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.5833px;line-height:1.25;font-family:'Lucida Console';-inkscape-font-specification:'Lucida Console';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+       x="77.777512"
+       y="104.96524"
+       id="text348"><tspan
+         sodipodi:role="line"
+         id="tspan346"
+         x="77.777512"
+         y="104.96524"
+         style="stroke-width:0.264583">wgpu-native</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.5833px;line-height:1.25;font-family:'Lucida Console';-inkscape-font-specification:'Lucida Console';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+       x="77.777512"
+       y="193.0672"
+       id="text402"><tspan
+         sodipodi:role="line"
+         id="tspan400"
+         x="77.777512"
+         y="193.0672"
+         style="stroke-width:0.264583">wgpu-hal/vulkan</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.5833px;line-height:1.25;font-family:'Lucida Console';-inkscape-font-specification:'Lucida Console';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+       x="173.79489"
+       y="144.5423"
+       id="text410"><tspan
+         sodipodi:role="line"
+         id="tspan408"
+         x="173.79489"
+         y="144.5423"
+         style="stroke-width:0.264583">wgc::pipeline::RenderPipelineDescriptor (defined in mod.rs)</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.5833px;line-height:1.25;font-family:'Lucida Console';-inkscape-font-specification:'Lucida Console';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+       x="173.79489"
+       y="105.65354"
+       id="text414"><tspan
+         sodipodi:role="line"
+         id="tspan412"
+         x="173.79489"
+         y="105.65354"
+         style="stroke-width:0.264583">native::WGPURenderPipelineDescriptor (defined in ffi/webgpu-headers/webgpu.h)</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.5833px;line-height:1.25;font-family:'Lucida Console';-inkscape-font-specification:'Lucida Console';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+       x="229.89107"
+       y="193.0672"
+       id="text422"><tspan
+         sodipodi:role="line"
+         id="tspan420"
+         x="229.89107"
+         y="193.0672"
+         style="stroke-width:0.264583">super::RenderPipeline (defined in mod.rs)</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.5833px;line-height:1.25;font-family:'Lucida Console';-inkscape-font-specification:'Lucida Console';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+       x="77.777512"
+       y="176.5481"
+       id="text426"><tspan
+         sodipodi:role="line"
+         id="tspan424"
+         x="77.777512"
+         y="176.5481"
+         style="stroke-width:0.264583">wgpu-hal</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.5833px;line-height:1.25;font-family:'Lucida Console';-inkscape-font-specification:'Lucida Console';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+       x="232.9884"
+       y="176.5481"
+       id="text430"><tspan
+         sodipodi:role="line"
+         id="tspan428"
+         x="232.9884"
+         y="176.5481"
+         style="stroke-width:0.264583">hal::RenderPipelineDescriptor</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.5833px;line-height:1.25;font-family:'Lucida Console';-inkscape-font-specification:'Lucida Console';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+       x="77.777512"
+       y="216.42876"
+       id="text434"><tspan
+         sodipodi:role="line"
+         id="tspan432"
+         x="77.777512"
+         y="216.42876"
+         style="stroke-width:0.264583">create_render_pipeline</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.5833px;line-height:1.25;font-family:'Lucida Console';-inkscape-font-specification:'Lucida Console';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+       x="-41.029709"
+       y="129.3002"
+       id="text485"><tspan
+         sodipodi:role="line"
+         id="tspan483"
+         x="-41.029709"
+         y="129.3002"
+         style="stroke-width:0.264583">wgpu</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.5833px;line-height:1.25;font-family:Calibri;-inkscape-font-specification:Calibri;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+       x="21.035301"
+       y="445.66409"
+       id="text513"><tspan
+         sodipodi:role="line"
+         id="tspan511"
+         x="21.035301"
+         y="445.66409"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Calibri;-inkscape-font-specification:Calibri;stroke-width:0.264583">API that user code can use</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.5833px;line-height:1.25;font-family:Calibri;-inkscape-font-specification:Calibri;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+       x="347.88089"
+       y="497.63049"
+       id="text517"><tspan
+         sodipodi:role="line"
+         id="tspan515"
+         x="347.88089"
+         y="497.63049"
+         style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Calibri;-inkscape-font-specification:'Calibri Italic';text-align:center;text-anchor:middle;stroke-width:0.264583">API that backends must implement</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.5833px;line-height:1.25;font-family:'Lucida Console';-inkscape-font-specification:'Lucida Console';text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#7e0b29;fill-opacity:1;stroke:#7e0b29;stroke-width:0.264583;stroke-opacity:1"
+       x="347.65634"
+       y="481.96844"
+       id="text521"><tspan
+         sodipodi:role="line"
+         id="tspan519"
+         x="347.65634"
+         y="481.96844"
+         style="text-align:center;text-anchor:middle;fill:#7e0b29;fill-opacity:1;stroke:#7e0b29;stroke-width:0.264583;stroke-opacity:1">hal::RenderPipelineDescriptor</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.5833px;line-height:1.25;font-family:'Lucida Console';-inkscape-font-specification:'Lucida Console';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+       x="-40.839466"
+       y="398.11258"
+       id="text525"><tspan
+         sodipodi:role="line"
+         id="tspan523"
+         x="-40.839466"
+         y="398.11258"
+         style="stroke-width:0.264583">wgc::pipeline::RenderPipelineDescriptor</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.5833px;line-height:1.25;font-family:Calibri;-inkscape-font-specification:Calibri;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+       x="-290.07477"
+       y="445.66409"
+       id="text529"><tspan
+         sodipodi:role="line"
+         id="tspan527"
+         x="-290.07477"
+         y="445.66409"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Calibri;-inkscape-font-specification:Calibri;stroke-width:0.264583">API generated from the C binding</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.5833px;line-height:1.25;font-family:'Lucida Console';-inkscape-font-specification:'Lucida Console';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+       x="-330.61237"
+       y="398.11258"
+       id="text533"><tspan
+         sodipodi:role="line"
+         id="tspan531"
+         x="-330.61237"
+         y="398.11258"
+         style="stroke-width:0.264583">native::WGPURenderPipelineDescriptor</tspan></text>
+    <path
+       style="fill:#295144;fill-opacity:1;stroke:none;stroke-width:0.294;stroke-dasharray:0.587999, 0.294"
+       id="path587"
+       sodipodi:type="arc"
+       sodipodi:cx="279.10428"
+       sodipodi:cy="592.96753"
+       sodipodi:rx="43.018539"
+       sodipodi:ry="43.018539"
+       sodipodi:start="1.5707963"
+       sodipodi:end="4.712389"
+       sodipodi:arc-type="slice"
+       d="m 279.10428,635.98607 a 43.018539,43.018539 0 0 1 -37.25515,-21.50927 43.018539,43.018539 0 0 1 0,-43.01854 43.018539,43.018539 0 0 1 37.25515,-21.50927 v 43.01854 z" />
+    <path
+       style="fill:#7e0b29;fill-opacity:1;stroke:none;stroke-width:0.294;stroke-dasharray:0.587999, 0.294"
+       id="path2184"
+       sodipodi:type="arc"
+       sodipodi:cx="-283.39392"
+       sodipodi:cy="592.96753"
+       sodipodi:rx="43.018539"
+       sodipodi:ry="43.018539"
+       sodipodi:start="1.5707963"
+       sodipodi:end="4.712389"
+       sodipodi:arc-type="slice"
+       d="m -283.39392,635.98607 a 43.018539,43.018539 0 0 1 -37.25515,-21.50927 43.018539,43.018539 0 0 1 0,-43.01854 43.018539,43.018539 0 0 1 37.25515,-21.50927 v 43.01854 z"
+       transform="scale(-1,1)" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:14.0893px;line-height:1.25;font-family:'Lucida Console';-inkscape-font-specification:'Lucida Console';letter-spacing:0px;word-spacing:0px;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:0.352232"
+       x="240.90547"
+       y="595.60315"
+       id="text2192"><tspan
+         sodipodi:role="line"
+         id="tspan2190"
+         x="240.90547"
+         y="595.60315"
+         style="fill:#ffffff;fill-opacity:1;stroke-width:0.352232">Core</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:14.0893px;line-height:1.25;font-family:'Lucida Console';-inkscape-font-specification:'Lucida Console';letter-spacing:0px;word-spacing:0px;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:0.352232"
+       x="291.211"
+       y="595.60315"
+       id="text2196"><tspan
+         sodipodi:role="line"
+         id="tspan2194"
+         x="291.211"
+         y="595.60315"
+         style="fill:#ffffff;fill-opacity:1;stroke-width:0.352232">HAL</tspan></text>
+    <path
+       style="fill:#295144;fill-opacity:1;stroke:none;stroke-width:0.10584;stroke-dasharray:0.21168, 0.10584"
+       id="path2198"
+       sodipodi:type="arc"
+       sodipodi:cx="-176.20393"
+       sodipodi:cy="537.41199"
+       sodipodi:rx="15.486674"
+       sodipodi:ry="15.486674"
+       sodipodi:start="1.5707963"
+       sodipodi:end="4.712389"
+       sodipodi:arc-type="slice"
+       d="m -176.20393,552.89866 a 15.486674,15.486674 0 0 1 -13.41186,-7.74334 15.486674,15.486674 0 0 1 0,-15.48667 15.486674,15.486674 0 0 1 13.41186,-7.74334 v 15.48668 z"
+       transform="scale(-1,1)" />
+    <path
+       style="fill:#295144;fill-opacity:1;stroke:none;stroke-width:0.10584;stroke-dasharray:0.21168, 0.10584"
+       id="path2200"
+       sodipodi:type="arc"
+       sodipodi:cx="-176.20393"
+       sodipodi:cy="592.96753"
+       sodipodi:rx="15.486674"
+       sodipodi:ry="15.486674"
+       sodipodi:start="1.5707963"
+       sodipodi:end="4.712389"
+       sodipodi:arc-type="slice"
+       d="m -176.20393,608.4542 a 15.486674,15.486674 0 0 1 -13.41186,-7.74333 15.486674,15.486674 0 0 1 0,-15.48668 15.486674,15.486674 0 0 1 13.41186,-7.74334 v 15.48668 z"
+       transform="scale(-1,1)" />
+    <path
+       style="fill:#295144;fill-opacity:1;stroke:none;stroke-width:0.10584;stroke-dasharray:0.21168, 0.10584"
+       id="path2202"
+       sodipodi:type="arc"
+       sodipodi:cx="-176.20393"
+       sodipodi:cy="648.27966"
+       sodipodi:rx="15.486674"
+       sodipodi:ry="15.486674"
+       sodipodi:start="1.5707963"
+       sodipodi:end="4.712389"
+       sodipodi:arc-type="slice"
+       d="m -176.20393,663.76634 a 15.486674,15.486674 0 0 1 -13.41186,-7.74334 15.486674,15.486674 0 0 1 0,-15.48667 15.486674,15.486674 0 0 1 13.41186,-7.74334 v 15.48667 z"
+       transform="scale(-1,1)" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.5833px;line-height:1.25;font-family:'Lucida Console';-inkscape-font-specification:'Lucida Console';text-align:end;letter-spacing:0px;word-spacing:0px;text-anchor:end;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+       x="167.82057"
+       y="539.80981"
+       id="text2214"><tspan
+         sodipodi:role="line"
+         id="tspan2212"
+         x="167.82057"
+         y="539.80981"
+         style="text-align:end;text-anchor:end;stroke-width:0.264583">Rust</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.5833px;line-height:1.25;font-family:'Lucida Console';-inkscape-font-specification:'Lucida Console';text-align:end;letter-spacing:0px;word-spacing:0px;text-anchor:end;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+       x="167.84125"
+       y="596.56982"
+       id="text2218"><tspan
+         sodipodi:role="line"
+         id="tspan2216"
+         x="167.84125"
+         y="596.56982"
+         style="text-align:end;text-anchor:end;stroke-width:0.264583">Native</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.5833px;line-height:1.25;font-family:'Lucida Console';-inkscape-font-specification:'Lucida Console';text-align:end;letter-spacing:0px;word-spacing:0px;text-anchor:end;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+       x="169.43288"
+       y="651.70996"
+       id="text2222"><tspan
+         sodipodi:role="line"
+         id="tspan2220"
+         x="169.43288"
+         y="651.70996"
+         style="text-align:end;text-anchor:end;stroke-width:0.264583">[...]</tspan></text>
+    <g
+       id="g2381"
+       transform="translate(1.2167481,-7.5712662)">
+      <rect
+         style="fill:#7e0b29;fill-opacity:1;stroke:none;stroke-width:0.294;stroke-dasharray:0.587999, 0.294"
+         id="rect2276"
+         width="23.057938"
+         height="23.057938"
+         x="368.23871"
+         y="533.42987"
+         rx="1.118482"
+         ry="1.118482" />
+      <text
+         xml:space="preserve"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.5833px;line-height:1.25;font-family:'Lucida Console';-inkscape-font-specification:'Lucida Console';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+         x="401.78247"
+         y="549.81982"
+         id="text2280"><tspan
+           sodipodi:role="line"
+           id="tspan2278"
+           x="401.78247"
+           y="549.81982"
+           style="stroke-width:0.264583">Vulkan</tspan></text>
+      <rect
+         style="fill:#7e0b29;fill-opacity:1;stroke:none;stroke-width:0.294;stroke-dasharray:0.587999, 0.294"
+         id="rect2282"
+         width="23.057938"
+         height="23.057938"
+         x="368.23871"
+         y="570.48315"
+         rx="1.118482"
+         ry="1.118482" />
+      <text
+         xml:space="preserve"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.5833px;line-height:1.25;font-family:'Lucida Console';-inkscape-font-specification:'Lucida Console';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+         x="401.18301"
+         y="586.40631"
+         id="text2286"><tspan
+           sodipodi:role="line"
+           id="tspan2284"
+           x="401.18301"
+           y="586.40631"
+           style="stroke-width:0.264583">DX12</tspan></text>
+      <rect
+         style="fill:#7e0b29;fill-opacity:1;stroke:none;stroke-width:0.294;stroke-dasharray:0.587999, 0.294"
+         id="rect2288"
+         width="23.057938"
+         height="23.057938"
+         x="368.23871"
+         y="607.5365"
+         rx="1.118482"
+         ry="1.118482" />
+      <text
+         xml:space="preserve"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.5833px;line-height:1.25;font-family:'Lucida Console';-inkscape-font-specification:'Lucida Console';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+         x="401.36905"
+         y="622.9928"
+         id="text2292"><tspan
+           sodipodi:role="line"
+           id="tspan2290"
+           x="401.36905"
+           y="622.9928"
+           style="stroke-width:0.264583">Metal</tspan></text>
+      <rect
+         style="fill:#7e0b29;fill-opacity:1;stroke:none;stroke-width:0.294;stroke-dasharray:0.587999, 0.294"
+         id="rect2300"
+         width="23.057938"
+         height="23.057938"
+         x="368.23871"
+         y="644.58978"
+         rx="1.118482"
+         ry="1.118482" />
+      <text
+         xml:space="preserve"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.5833px;line-height:1.25;font-family:'Lucida Console';-inkscape-font-specification:'Lucida Console';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+         x="399.56039"
+         y="659.57928"
+         id="text2304"><tspan
+           sodipodi:role="line"
+           id="tspan2302"
+           x="399.56039"
+           y="659.57928"
+           style="stroke-width:0.264583">[...]</tspan></text>
+    </g>
+    <g
+       id="g2556"
+       transform="translate(-0.80998638)">
+      <path
+         style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.994;stroke-dasharray:none;stroke-opacity:1"
+         d="m 368.23869,537.38756 h -19.61644 l 2e-5,111.15993 h 19.61644"
+         id="path2501"
+         sodipodi:nodetypes="cccc" />
+      <path
+         style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.994;stroke-dasharray:none;stroke-opacity:1"
+         d="m 329.00583,592.96752 h 19.61644"
+         id="path2552"
+         sodipodi:nodetypes="cc" />
+      <path
+         style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.994;stroke-dasharray:none;stroke-opacity:1"
+         d="m 348.62225,574.44087 h 19.61644"
+         id="path2558"
+         sodipodi:nodetypes="cc" />
+      <path
+         style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.994;stroke-dasharray:none;stroke-opacity:1"
+         d="m 348.62225,611.49418 h 19.61644"
+         id="path2560"
+         sodipodi:nodetypes="cc" />
+    </g>
+    <path
+       style="fill:#7e0b29;fill-opacity:1;stroke:#7e0b29;stroke-width:3.394;stroke-dasharray:none;stroke-opacity:1"
+       d="M 367.4287,520.10973 H 328.18372"
+       id="path2965"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="fill:#7e0b29;fill-opacity:1;stroke:#7e0b29;stroke-width:0.994;stroke-dasharray:none;stroke-opacity:1"
+       d="M 347.80622,520.10973 V 505.55387"
+       id="path3297" />
+    <g
+       id="g3307"
+       transform="matrix(-1,0,0,1,562.971,0)">
+      <path
+         style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.994;stroke-dasharray:none;stroke-opacity:1"
+         d="m 368.23869,537.38756 h -19.61644 l 2e-5,111.15993 h 19.61644"
+         id="path3299"
+         sodipodi:nodetypes="cccc" />
+      <path
+         style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.994;stroke-dasharray:none;stroke-opacity:1"
+         d="m 329.00583,592.96752 h 19.61644"
+         id="path3301"
+         sodipodi:nodetypes="cc" />
+      <path
+         style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.994;stroke-dasharray:none;stroke-opacity:1"
+         d="m 348.62225,592.96752 h 19.61644"
+         id="path3305"
+         sodipodi:nodetypes="cc" />
+    </g>
+    <path
+       style="fill:#7e0b29;fill-opacity:1;stroke:#295144;stroke-width:3.394;stroke-dasharray:none;stroke-opacity:1"
+       d="M 233.97727,666.55536 H 194.73229"
+       id="path3317"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="fill:#7e0b29;fill-opacity:1;stroke:#295144;stroke-width:0.994;stroke-dasharray:none;stroke-opacity:1"
+       d="M 214.35479,681.15634 V 666.60048"
+       id="path3319" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.5833px;line-height:1.25;font-family:Calibri;-inkscape-font-specification:Calibri;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+       x="214.62582"
+       y="713.73926"
+       id="text3323"><tspan
+         sodipodi:role="line"
+         id="tspan3321"
+         x="214.62582"
+         y="713.73926"
+         style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Calibri;-inkscape-font-specification:'Calibri Italic';text-align:center;text-anchor:middle;stroke-width:0.264583">API that user code can use</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.5833px;line-height:1.25;font-family:'Lucida Console';-inkscape-font-specification:'Lucida Console';text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#295144;fill-opacity:1;stroke:#295144;stroke-width:0.264583;stroke-opacity:1"
+       x="214.64417"
+       y="698.07721"
+       id="text3327"><tspan
+         sodipodi:role="line"
+         id="tspan3325"
+         x="214.64417"
+         y="698.07721"
+         style="text-align:center;text-anchor:middle;fill:#295144;fill-opacity:1;stroke:#295144;stroke-width:0.264583;stroke-opacity:1">wgc::pipeline::RenderPipelineDescriptor</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.5833px;line-height:1.25;font-family:Calibri;-inkscape-font-specification:Calibri;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+       x="21.109262"
+       y="520.88232"
+       id="text4248"><tspan
+         sodipodi:role="line"
+         id="tspan4246"
+         x="21.109261"
+         y="520.88232"
+         style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Calibri;-inkscape-font-specification:'Calibri Italic';text-align:center;text-anchor:middle;stroke-width:0.264583">API generated from the C binding</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.5833px;line-height:1.25;font-family:'Lucida Console';-inkscape-font-specification:'Lucida Console';text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#244963;fill-opacity:1;stroke:#244963;stroke-width:0.264583;stroke-opacity:1"
+       x="21.127604"
+       y="505.22025"
+       id="text4252"><tspan
+         sodipodi:role="line"
+         id="tspan4250"
+         x="21.127604"
+         y="505.22025"
+         style="text-align:center;text-anchor:middle;fill:#244963;fill-opacity:1;stroke:#244963;stroke-width:0.264583;stroke-opacity:1">native::WGPURenderPipelineDescriptor</tspan></text>
+    <path
+       style="fill:#244963;fill-opacity:1;stroke:none;stroke-width:0.10584;stroke-dasharray:0.21168, 0.10584"
+       id="path4599"
+       sodipodi:type="arc"
+       sodipodi:cx="122.77491"
+       sodipodi:cy="592.96753"
+       sodipodi:rx="15.486674"
+       sodipodi:ry="15.486674"
+       sodipodi:start="1.5707963"
+       sodipodi:end="4.712389"
+       sodipodi:arc-type="slice"
+       d="m 122.77491,608.4542 a 15.486674,15.486674 0 0 1 -13.41185,-7.74333 15.486674,15.486674 0 0 1 0,-15.48668 15.486674,15.486674 0 0 1 13.41185,-7.74334 v 15.48668 z" />
+    <path
+       style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.994;stroke-dasharray:none;stroke-opacity:1"
+       d="M 102.74616,592.96752 H 63.513297"
+       id="path3305-0"
+       sodipodi:nodetypes="cc" />
+    <rect
+       style="fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.294;stroke-dasharray:0.587999, 0.294"
+       id="rect2282-7"
+       width="23.057938"
+       height="23.057938"
+       x="36.785656"
+       y="581.43854"
+       rx="1.118482"
+       ry="1.118482" />
+    <path
+       style="fill:#7e0b29;fill-opacity:1;stroke:#244963;stroke-width:0.994;stroke-dasharray:none;stroke-opacity:1"
+       d="M 149.48942,579.17786 106.79426,516.45377"
+       id="path5023"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="fill:#244963;fill-opacity:1;stroke:#244963;stroke-width:3.394;stroke-dasharray:none;stroke-opacity:1"
+       d="M 173.54535,579.17786 H 125.43349"
+       id="path5356"
+       sodipodi:nodetypes="cc" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.5833px;line-height:1.25;font-family:'Lucida Console';-inkscape-font-specification:'Lucida Console';text-align:end;letter-spacing:0px;word-spacing:0px;text-anchor:end;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:0.264583;stroke-opacity:1"
+       x="74.010651"
+       y="616.27356"
+       id="text5360"><tspan
+         sodipodi:role="line"
+         id="tspan5358"
+         x="74.010651"
+         y="616.27356"
+         style="text-align:end;text-anchor:end;stroke:#000000;stroke-width:0.264583;stroke-opacity:1">Your App</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.5833px;line-height:1.25;font-family:Calibri;-inkscape-font-specification:Calibri;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:0.264583"
+       x="347.88089"
+       y="768.13104"
+       id="text7379"><tspan
+         sodipodi:role="line"
+         id="tspan7377"
+         x="347.88089"
+         y="768.13104"
+         style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Calibri;-inkscape-font-specification:'Calibri Italic';text-align:center;text-anchor:middle;stroke-width:0.264583;fill:#ffffff;fill-opacity:1">API that backends must implement</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.5833px;line-height:1.25;font-family:'Lucida Console';-inkscape-font-specification:'Lucida Console';text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#c0113f;fill-opacity:1;stroke:#c0113f;stroke-width:0.264583;stroke-opacity:1"
+       x="347.65634"
+       y="752.46899"
+       id="text7383"><tspan
+         sodipodi:role="line"
+         id="tspan7381"
+         x="347.65634"
+         y="752.46899"
+         style="text-align:center;text-anchor:middle;fill:#c0113f;fill-opacity:1;stroke:#c0113f;stroke-width:0.264583;stroke-opacity:1">hal::RenderPipelineDescriptor</tspan></text>
+    <path
+       style="fill:#54a68b;fill-opacity:1;stroke:none;stroke-width:0.294;stroke-dasharray:0.587999, 0.294"
+       id="path7385"
+       sodipodi:type="arc"
+       sodipodi:cx="279.10428"
+       sodipodi:cy="863.46808"
+       sodipodi:rx="43.018539"
+       sodipodi:ry="43.018539"
+       sodipodi:start="1.5707963"
+       sodipodi:end="4.712389"
+       sodipodi:arc-type="slice"
+       d="m 279.10428,906.48662 a 43.018539,43.018539 0 0 1 -37.25515,-21.50927 43.018539,43.018539 0 0 1 0,-43.01854 43.018539,43.018539 0 0 1 37.25515,-21.50927 v 43.01854 z" />
+    <path
+       style="fill:#c0113f;fill-opacity:1;stroke:none;stroke-width:0.294;stroke-dasharray:0.587999, 0.294"
+       id="path7387"
+       sodipodi:type="arc"
+       sodipodi:cx="-283.39392"
+       sodipodi:cy="863.46808"
+       sodipodi:rx="43.018539"
+       sodipodi:ry="43.018539"
+       sodipodi:start="1.5707963"
+       sodipodi:end="4.712389"
+       sodipodi:arc-type="slice"
+       d="m -283.39392,906.48662 a 43.018539,43.018539 0 0 1 -37.25515,-21.50927 43.018539,43.018539 0 0 1 0,-43.01854 43.018539,43.018539 0 0 1 37.25515,-21.50927 v 43.01854 z"
+       transform="scale(-1,1)" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:14.0893px;line-height:1.25;font-family:'Lucida Console';-inkscape-font-specification:'Lucida Console';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.352232"
+       x="240.90547"
+       y="866.1037"
+       id="text7391"><tspan
+         sodipodi:role="line"
+         id="tspan7389"
+         x="240.90547"
+         y="866.1037"
+         style="fill:#000000;fill-opacity:1;stroke-width:0.352232">Core</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:14.0893px;line-height:1.25;font-family:'Lucida Console';-inkscape-font-specification:'Lucida Console';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.352232"
+       x="291.211"
+       y="866.1037"
+       id="text7395"><tspan
+         sodipodi:role="line"
+         id="tspan7393"
+         x="291.211"
+         y="866.1037"
+         style="fill:#000000;fill-opacity:1;stroke-width:0.352232">HAL</tspan></text>
+    <path
+       style="fill:#54a68b;fill-opacity:1;stroke:none;stroke-width:0.10584;stroke-dasharray:0.21168, 0.10584"
+       id="path7397"
+       sodipodi:type="arc"
+       sodipodi:cx="-176.20393"
+       sodipodi:cy="807.91254"
+       sodipodi:rx="15.486674"
+       sodipodi:ry="15.486674"
+       sodipodi:start="1.5707963"
+       sodipodi:end="4.712389"
+       sodipodi:arc-type="slice"
+       d="m -176.20393,823.39921 a 15.486674,15.486674 0 0 1 -13.41186,-7.74334 15.486674,15.486674 0 0 1 0,-15.48667 15.486674,15.486674 0 0 1 13.41186,-7.74334 v 15.48668 z"
+       transform="scale(-1,1)" />
+    <path
+       style="fill:#54a68b;fill-opacity:1;stroke:none;stroke-width:0.10584;stroke-dasharray:0.21168, 0.10584"
+       id="path7399"
+       sodipodi:type="arc"
+       sodipodi:cx="-176.20393"
+       sodipodi:cy="863.46808"
+       sodipodi:rx="15.486674"
+       sodipodi:ry="15.486674"
+       sodipodi:start="1.5707963"
+       sodipodi:end="4.712389"
+       sodipodi:arc-type="slice"
+       d="m -176.20393,878.95475 a 15.486674,15.486674 0 0 1 -13.41186,-7.74333 15.486674,15.486674 0 0 1 0,-15.48668 15.486674,15.486674 0 0 1 13.41186,-7.74334 v 15.48668 z"
+       transform="scale(-1,1)" />
+    <path
+       style="fill:#54a68b;fill-opacity:1;stroke:none;stroke-width:0.10584;stroke-dasharray:0.21168, 0.10584"
+       id="path7401"
+       sodipodi:type="arc"
+       sodipodi:cx="-176.20393"
+       sodipodi:cy="918.78021"
+       sodipodi:rx="15.486674"
+       sodipodi:ry="15.486674"
+       sodipodi:start="1.5707963"
+       sodipodi:end="4.712389"
+       sodipodi:arc-type="slice"
+       d="m -176.20393,934.26689 a 15.486674,15.486674 0 0 1 -13.41186,-7.74334 15.486674,15.486674 0 0 1 0,-15.48667 15.486674,15.486674 0 0 1 13.41186,-7.74334 v 15.48667 z"
+       transform="scale(-1,1)" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.5833px;line-height:1.25;font-family:'Lucida Console';-inkscape-font-specification:'Lucida Console';text-align:end;letter-spacing:0px;word-spacing:0px;text-anchor:end;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:0.264583"
+       x="167.82057"
+       y="810.31036"
+       id="text7405"><tspan
+         sodipodi:role="line"
+         id="tspan7403"
+         x="167.82057"
+         y="810.31036"
+         style="text-align:end;text-anchor:end;stroke-width:0.264583;fill:#ffffff;fill-opacity:1">Rust</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.5833px;line-height:1.25;font-family:'Lucida Console';-inkscape-font-specification:'Lucida Console';text-align:end;letter-spacing:0px;word-spacing:0px;text-anchor:end;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:0.264583"
+       x="167.84125"
+       y="867.07037"
+       id="text7409"><tspan
+         sodipodi:role="line"
+         id="tspan7407"
+         x="167.84125"
+         y="867.07037"
+         style="text-align:end;text-anchor:end;stroke-width:0.264583;fill:#ffffff;fill-opacity:1">Native</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.5833px;line-height:1.25;font-family:'Lucida Console';-inkscape-font-specification:'Lucida Console';text-align:end;letter-spacing:0px;word-spacing:0px;text-anchor:end;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:0.264583"
+       x="169.43288"
+       y="922.21051"
+       id="text7413"><tspan
+         sodipodi:role="line"
+         id="tspan7411"
+         x="169.43288"
+         y="922.21051"
+         style="text-align:end;text-anchor:end;stroke-width:0.264583;fill:#ffffff;fill-opacity:1">[...]</tspan></text>
+    <g
+       id="g7439"
+       transform="translate(1.2167481,262.92931)">
+      <rect
+         style="fill:#c0113f;fill-opacity:1;stroke:none;stroke-width:0.294;stroke-dasharray:0.587999, 0.294"
+         id="rect7415"
+         width="23.057938"
+         height="23.057938"
+         x="368.23871"
+         y="533.42987"
+         rx="1.118482"
+         ry="1.118482" />
+      <text
+         xml:space="preserve"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.5833px;line-height:1.25;font-family:'Lucida Console';-inkscape-font-specification:'Lucida Console';letter-spacing:0px;word-spacing:0px;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:0.264583"
+         x="401.78247"
+         y="549.81982"
+         id="text7419"><tspan
+           sodipodi:role="line"
+           id="tspan7417"
+           x="401.78247"
+           y="549.81982"
+           style="stroke-width:0.264583;fill:#ffffff;fill-opacity:1">Vulkan</tspan></text>
+      <rect
+         style="fill:#c0113f;fill-opacity:1;stroke:none;stroke-width:0.294;stroke-dasharray:0.587999, 0.294"
+         id="rect7421"
+         width="23.057938"
+         height="23.057938"
+         x="368.23871"
+         y="570.48315"
+         rx="1.118482"
+         ry="1.118482" />
+      <text
+         xml:space="preserve"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.5833px;line-height:1.25;font-family:'Lucida Console';-inkscape-font-specification:'Lucida Console';letter-spacing:0px;word-spacing:0px;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:0.264583"
+         x="401.18301"
+         y="586.40631"
+         id="text7425"><tspan
+           sodipodi:role="line"
+           id="tspan7423"
+           x="401.18301"
+           y="586.40631"
+           style="stroke-width:0.264583;fill:#ffffff;fill-opacity:1">DX12</tspan></text>
+      <rect
+         style="fill:#c0113f;fill-opacity:1;stroke:none;stroke-width:0.294;stroke-dasharray:0.587999, 0.294"
+         id="rect7427"
+         width="23.057938"
+         height="23.057938"
+         x="368.23871"
+         y="607.5365"
+         rx="1.118482"
+         ry="1.118482" />
+      <text
+         xml:space="preserve"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.5833px;line-height:1.25;font-family:'Lucida Console';-inkscape-font-specification:'Lucida Console';letter-spacing:0px;word-spacing:0px;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:0.264583"
+         x="401.36905"
+         y="622.9928"
+         id="text7431"><tspan
+           sodipodi:role="line"
+           id="tspan7429"
+           x="401.36905"
+           y="622.9928"
+           style="stroke-width:0.264583;fill:#ffffff;fill-opacity:1">Metal</tspan></text>
+      <rect
+         style="fill:#c0113f;fill-opacity:1;stroke:none;stroke-width:0.294;stroke-dasharray:0.587999, 0.294"
+         id="rect7433"
+         width="23.057938"
+         height="23.057938"
+         x="368.23871"
+         y="644.58978"
+         rx="1.118482"
+         ry="1.118482" />
+      <text
+         xml:space="preserve"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.5833px;line-height:1.25;font-family:'Lucida Console';-inkscape-font-specification:'Lucida Console';letter-spacing:0px;word-spacing:0px;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:0.264583"
+         x="399.56039"
+         y="659.57928"
+         id="text7437"><tspan
+           sodipodi:role="line"
+           id="tspan7435"
+           x="399.56039"
+           y="659.57928"
+           style="stroke-width:0.264583;fill:#ffffff;fill-opacity:1">[...]</tspan></text>
+    </g>
+    <g
+       id="g7449"
+       transform="translate(-0.80998638,270.50058)"
+       style="stroke:#ffffff;stroke-opacity:1">
+      <path
+         style="fill:none;fill-opacity:1;stroke:#ffffff;stroke-width:0.994;stroke-dasharray:none;stroke-opacity:1"
+         d="m 368.23869,537.38756 h -19.61644 l 2e-5,111.15993 h 19.61644"
+         id="path7441"
+         sodipodi:nodetypes="cccc" />
+      <path
+         style="fill:none;fill-opacity:1;stroke:#ffffff;stroke-width:0.994;stroke-dasharray:none;stroke-opacity:1"
+         d="m 329.00583,592.96752 h 19.61644"
+         id="path7443"
+         sodipodi:nodetypes="cc" />
+      <path
+         style="fill:none;fill-opacity:1;stroke:#ffffff;stroke-width:0.994;stroke-dasharray:none;stroke-opacity:1"
+         d="m 348.62225,574.44087 h 19.61644"
+         id="path7445"
+         sodipodi:nodetypes="cc" />
+      <path
+         style="fill:none;fill-opacity:1;stroke:#ffffff;stroke-width:0.994;stroke-dasharray:none;stroke-opacity:1"
+         d="m 348.62225,611.49418 h 19.61644"
+         id="path7447"
+         sodipodi:nodetypes="cc" />
+    </g>
+    <path
+       style="fill:#7e0b29;fill-opacity:1;stroke:#c0113f;stroke-width:3.394;stroke-dasharray:none;stroke-opacity:1"
+       d="M 367.4287,790.61031 H 328.18372"
+       id="path7451"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="fill:#7e0b29;fill-opacity:1;stroke:#c0113f;stroke-width:0.994;stroke-dasharray:none;stroke-opacity:1"
+       d="M 347.80622,790.61031 V 776.05445"
+       id="path7453" />
+    <g
+       id="g7461"
+       transform="matrix(-1,0,0,1,562.971,270.50058)"
+       style="stroke:#ffffff;stroke-opacity:1">
+      <path
+         style="fill:none;fill-opacity:1;stroke:#ffffff;stroke-width:0.994;stroke-dasharray:none;stroke-opacity:1"
+         d="m 368.23869,537.38756 h -19.61644 l 2e-5,111.15993 h 19.61644"
+         id="path7455"
+         sodipodi:nodetypes="cccc" />
+      <path
+         style="fill:none;fill-opacity:1;stroke:#ffffff;stroke-width:0.994;stroke-dasharray:none;stroke-opacity:1"
+         d="m 329.00583,592.96752 h 19.61644"
+         id="path7457"
+         sodipodi:nodetypes="cc" />
+      <path
+         style="fill:none;fill-opacity:1;stroke:#ffffff;stroke-width:0.994;stroke-dasharray:none;stroke-opacity:1"
+         d="m 348.62225,592.96752 h 19.61644"
+         id="path7459"
+         sodipodi:nodetypes="cc" />
+    </g>
+    <path
+       style="fill:#7e0b29;fill-opacity:1;stroke:#54a68b;stroke-width:3.394;stroke-dasharray:none;stroke-opacity:1"
+       d="M 233.97727,937.05594 H 194.73229"
+       id="path7463"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="fill:#7e0b29;fill-opacity:1;stroke:#54a68b;stroke-width:0.994;stroke-dasharray:none;stroke-opacity:1"
+       d="M 214.35479,951.65692 V 937.10106"
+       id="path7465" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.5833px;line-height:1.25;font-family:Calibri;-inkscape-font-specification:Calibri;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:0.264583"
+       x="214.62582"
+       y="984.23981"
+       id="text7469"><tspan
+         sodipodi:role="line"
+         id="tspan7467"
+         x="214.62582"
+         y="984.23981"
+         style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Calibri;-inkscape-font-specification:'Calibri Italic';text-align:center;text-anchor:middle;stroke-width:0.264583;fill:#ffffff;fill-opacity:1">API that user code can use</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.5833px;line-height:1.25;font-family:'Lucida Console';-inkscape-font-specification:'Lucida Console';text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#54a68b;fill-opacity:1;stroke:#54a68b;stroke-width:0.264583;stroke-opacity:1"
+       x="214.64417"
+       y="968.57776"
+       id="text7473"><tspan
+         sodipodi:role="line"
+         id="tspan7471"
+         x="214.64417"
+         y="968.57776"
+         style="text-align:center;text-anchor:middle;fill:#54a68b;fill-opacity:1;stroke:#54a68b;stroke-width:0.264583;stroke-opacity:1">wgc::pipeline::RenderPipelineDescriptor</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.5833px;line-height:1.25;font-family:Calibri;-inkscape-font-specification:Calibri;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:0.264583"
+       x="21.109262"
+       y="791.38287"
+       id="text7477"><tspan
+         sodipodi:role="line"
+         id="tspan7475"
+         x="21.109261"
+         y="791.38287"
+         style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Calibri;-inkscape-font-specification:'Calibri Italic';text-align:center;text-anchor:middle;stroke-width:0.264583;fill:#ffffff;fill-opacity:1">API generated from the C binding</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.5833px;line-height:1.25;font-family:'Lucida Console';-inkscape-font-specification:'Lucida Console';text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#4e9ed6;fill-opacity:1;stroke:#4e9ed6;stroke-width:0.264583;stroke-opacity:1"
+       x="21.127604"
+       y="775.72083"
+       id="text7481"><tspan
+         sodipodi:role="line"
+         id="tspan7479"
+         x="21.127604"
+         y="775.72083"
+         style="text-align:center;text-anchor:middle;fill:#4e9ed6;fill-opacity:1;stroke:#4e9ed6;stroke-width:0.264583;stroke-opacity:1">native::WGPURenderPipelineDescriptor</tspan></text>
+    <path
+       style="fill:#4e9ed6;fill-opacity:1;stroke:none;stroke-width:0.10584;stroke-dasharray:0.21168, 0.10584"
+       id="path7483"
+       sodipodi:type="arc"
+       sodipodi:cx="122.77491"
+       sodipodi:cy="863.46808"
+       sodipodi:rx="15.486674"
+       sodipodi:ry="15.486674"
+       sodipodi:start="1.5707963"
+       sodipodi:end="4.712389"
+       sodipodi:arc-type="slice"
+       d="m 122.77491,878.95475 a 15.486674,15.486674 0 0 1 -13.41185,-7.74333 15.486674,15.486674 0 0 1 0,-15.48668 15.486674,15.486674 0 0 1 13.41185,-7.74334 v 15.48668 z" />
+    <path
+       style="fill:none;fill-opacity:1;stroke:#ffffff;stroke-width:0.994;stroke-dasharray:none;stroke-opacity:1"
+       d="M 102.74616,863.4681 H 63.513297"
+       id="path7485"
+       sodipodi:nodetypes="cc" />
+    <rect
+       style="fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:0.294;stroke-dasharray:0.587999, 0.294"
+       id="rect7487"
+       width="23.057938"
+       height="23.057938"
+       x="36.785656"
+       y="851.93909"
+       rx="1.118482"
+       ry="1.118482" />
+    <path
+       style="fill:#7e0b29;fill-opacity:1;stroke:#4e9ed6;stroke-width:0.994;stroke-dasharray:none;stroke-opacity:1"
+       d="M 149.48942,849.67844 106.79426,786.95435"
+       id="path7489"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="fill:#4892c6;fill-opacity:1;stroke:#4e9ed6;stroke-width:3.394;stroke-dasharray:none;stroke-opacity:1"
+       d="M 173.54535,849.67844 H 125.43349"
+       id="path7491"
+       sodipodi:nodetypes="cc" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.5833px;line-height:1.25;font-family:'Lucida Console';-inkscape-font-specification:'Lucida Console';text-align:end;letter-spacing:0px;word-spacing:0px;text-anchor:end;fill:#ffffff;fill-opacity:1;stroke:#ffffff;stroke-width:0.264583;stroke-opacity:1"
+       x="74.010651"
+       y="886.77411"
+       id="text7495"><tspan
+         sodipodi:role="line"
+         id="tspan7493"
+         x="74.010651"
+         y="886.77411"
+         style="text-align:end;text-anchor:end;stroke:#ffffff;stroke-width:0.264583;stroke-opacity:1;fill:#ffffff;fill-opacity:1">Your App</tspan></text>
+  </g>
+</svg>

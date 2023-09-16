@@ -102,21 +102,21 @@ Do not forget the `WGPUNativeSType_Force32 = 0x7FFFFFFF`, which is used to ensur
 
 Let us follow the logic of the WebGPU device when it receives a descriptor:
 
-  1. Look at `nextInChain` if it is not null. This has type `WGPUChainedStructOut`, which means its first field is another chain pointer `next`, and its second field is an integer called `sType`.
+  1. Look at `nextInChain` if it is not null. This has type `WGPUChainedStruct`, which means its first field is another chain pointer `next`, and its second field is an integer called `sType`.
   2. Look at the value `nextInChain->sType` and check that it knows this value.
-  3. If it does know it, the device is aware that `nextInChain` actually point to a structure that is **more than just** `WGPUChainedStructOut`, but instead a structure that starts in the same way but has **extra fields**.
+  3. If it does know it, the device is aware that `nextInChain` actually point to a structure that is **more than just** `WGPUChainedStruct`, but instead a structure that starts in the same way but has **extra fields**.
   4. The device **casts** `nextInChain` to this known structure and reads the extra fields.
   5. Repeat from step 1. by replacing `nextInChain` by `nextInChain->next`.
 
-The heart of the extension lies in step 3. Our extension must provide the definition of this structure that starts like a `WGPUChainedStructOut`, that both the user code and the backend code agree on.
+The heart of the extension lies in step 3. Our extension must provide the definition of this structure that starts like a `WGPUChainedStruct`, that both the user code and the backend code agree on.
 
-To start like `WGPUChainedStructOut`, we use the C-idiomatic inheritance mechanism: have **the first attribute** of your struct be of type `WGPUChainedStructOut`. This ensure that an instance of your struct can be cast to a `WGPUChainedStructOut`:
+To start like `WGPUChainedStruct`, we use the C-idiomatic inheritance mechanism: have **the first attribute** of your struct be of type `WGPUChainedStruct`. This ensure that an instance of your struct can be cast to a `WGPUChainedStruct`:
 
 ```C++
 // In file webgpu-ext-foo.h
 typedef struct WGPUFooRenderPipelineDescriptor {
 	// This first field is conventionally called 'chain'
-	WGPUChainedStructOut chain;
+	WGPUChainedStruct chain;
 
 	// Your custom fields here
 	uint32_t foo;
@@ -206,6 +206,8 @@ The `webgpu-ext-foo.h` file that we have is all we need as an interface between 
 With `wgpu-native`
 ------------------
 
+*Resulting code:* [`wgpu`](https://github.com/eliemichel/wgpu/tree/eliemichel/foo), [`wgpu-native`](https://github.com/eliemichel/wgpu-native/tree/eliemichel/foo) and [`step030-test-foo-extension`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step030-test-foo-extension)
+
 ### Building `wgpu-native`
 
 Start by building a "regular" `wgpu-native` using [the instructions from their repository](https://github.com/gfx-rs/wgpu-native/wiki/Getting-Started). You need in particular [rust](https://www.rust-lang.org/) and [LLVM/Clang](https://rust-lang.github.io/rust-bindgen/requirements.html). With these installed, building looks like this:
@@ -285,32 +287,46 @@ pub struct RenderPipelineDescriptor<'a> {
 }
 ```
 
-### Extending core
+````{note}
+When trying to build from the `wgpu` root, do not try to build the whole project, we only use `wgpu-core` and `wgpu-types` (which the former depends on), so try building with:
 
-If your extension is shallow enough not to affect the backends, you should only have to modify `wgpu/wgpu-core`. But if you take the time to write a custom extension, it likely requires to modify one or multiple backends.
+```bash
+wgpu$ cargo build --package wgpu-core
+```
 
-Conversion utilities to link rust-side types defined in `wgpu/wgpu-types` with the `native` defines that follow the C header. Add your feature name to `features_to_native` and `map_feature`:
+But more likely you will build from the `wgpu-native` projects:
+
+```bash
+wgpu-native$ cargo build
+```
+
+If you want your extension to also be available to rust users, you must also adapt the `wgpu` package, but I will not cover it here.
+````
+
+### Extending native wrapper
+
+Conversion utilities to link rust-side types defined in `wgpu/wgpu-types` with the `native` defines that follow the C header. Add your feature name to `features_to_native` and `map_feature` in `wgpu-native/src/conv.rs`:
 
 ```rust
 pub fn features_to_native(features: wgt::Features) -> Vec<native::WGPUFeatureName> {
-	// [...]
-	if features.contains(wgt::Features::FOO) {
+    // [...]
+    if features.contains(wgt::Features::FOO) {
         temp.push(native::WGPUFeatureName_Foo);
     }
     temp
 }
 
 pub fn map_feature(feature: native::WGPUFeatureName) -> Option<wgt::Features> {
-	use wgt::Features;
-	match feature {
-		// [...]
-		native::WGPUFeatureName_Foo => Some(Features::FOO),
+    use wgt::Features;
+    match feature {
         // [...]
-	}
+        native::WGPUFeatureName_Foo => Some(Features::FOO),
+        // [...]
+    }
 }
 ```
 
-In order to recognize our `SType` when it is passed in the extension chain of a `RenderPipelineDescriptor`, we modify the `wgpuDeviceCreateRenderPipeline` procedure in `wgpu-native/src/device.rs`:
+In order to recognize our `SType` when it is passed in the extension chain of a `RenderPipelineDescriptor`, we modify the `wgpuDeviceCreateRenderPipeline` procedure in `wgpu-native/src/lib.rs`:
 
 ```rust
 pub unsafe extern "C" fn wgpuDeviceCreateRenderPipeline(
@@ -320,17 +336,17 @@ pub unsafe extern "C" fn wgpuDeviceCreateRenderPipeline(
     let (device, context) = device.unwrap_handle();
     let descriptor = descriptor.expect("invalid descriptor");
 
-    let foo_config = follow_chain!(
-        map_render_pipeline_descriptor(
-            descriptor,
-            WGPUFooSType_FooRenderPipelineDescriptor => native::WGPUFooRenderPipelineDescriptor)
-    );
-
-    // [...]
-
     let desc = wgc::pipeline::RenderPipelineDescriptor {
-    	// [...]
-    	foo: foo_config,
+        // [...]
+
+        // Iteratively explore the extension chain until it finds an extension
+        // of our type, cast to WGPUFooRenderPipelineDescriptor and retrieve
+        // the value of foo.
+        foo: follow_chain!(
+            map_render_pipeline_descriptor(
+                descriptor,
+                WGPUFooSType_FooRenderPipelineDescriptor => native::WGPUFooRenderPipelineDescriptor)
+        ),
     };
 }
 ```
@@ -347,8 +363,12 @@ pub unsafe fn map_render_pipeline_descriptor<'a>(
 ```
 
 ```{note}
-In this case, the whole `let desc = ...` part could also be moved inside of `map_render_pipeline_descriptor`.
+Do not forget to add `map_render_pipeline_descriptor` to the `use conv::{...}` line at the beginning of `lib.rs`.
 ```
+
+### Extending core
+
+If your extension is shallow enough not to affect the backends, you should only have to modify `wgpu/wgpu-core`. But if you take the time to write a custom extension, it likely requires to modify one or multiple backends.
 
 ### Extending backends
 
@@ -363,6 +383,202 @@ We implement backends one by one, maybe only for the ones that interest us in pr
 ```C++
 TODO
 ```
+
+Let's start with the Vulkan backend. We first advertise that the adapter (a.k.a. *physical device* in Vulkan wording) supports our feature.
+
+```{note}
+Of course you may inspect the actual physical device properties to conditionally list the `FOO` feature only if the mechanism you want to implement is indeed supported.
+```
+
+```rust
+// in wgpu/wgpu-hal/src/vulkan/adapter.rs
+impl PhysicalDeviceFeatures {
+    // [...]
+    fn to_wgpu(
+        /* [...] */
+    ) -> (wgt::Features, wgt::DownlevelFlags) {
+        // [...]
+        let mut features = F::empty()
+            | F::SPIRV_SHADER_PASSTHROUGH
+            | F::MAPPABLE_PRIMARY_BUFFERS
+            // [...]
+            | F::FOO; // our extension here!
+    }
+    // [...]
+}
+```
+
+Now in DirectX 12 backend:
+
+```rust
+// in wgpu/wgpu-hal/src/dx12/adapter.rs
+impl super::Adapter {
+    // [...]
+    pub(super) fn expose(
+        /* [...] */
+    ) -> Option<crate::ExposedAdapter<super::Api>> {
+        // [...]
+        let mut features = wgt::Features::empty()
+            | wgt::Features::DEPTH_CLIP_CONTROL
+            | wgt::Features::DEPTH32FLOAT_STENCIL8
+            // [...]
+            | wgt::Features::FOO; // our extension here!
+    }
+    // [...]
+}
+```
+
+```{note}
+We focus only on the Vulkan backend in the remainder of this section.
+```
+
+We can now check that the feature is correctly made available in our application code. I start from the [`step030-headless`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step030-headless) branch.
+
+```C++
+if (wgpuAdapterHasFeature(adapter, (WGPUFeatureName)WGPUFeatureName_Foo)) {
+    std::cout << "Feature 'Foo' supported by adapter" << std::endl;
+}
+else {
+    std::cout << "Feature 'Foo' NOT supported by adapter" << std::endl;
+}
+```
+
+After you copy the DLL and headers of your custom `wgpu-native`, you should see the Foo feature supported.
+
+````{note}
+You can force a particular backend by playing with the **instance extras** extension of `wgpu-native` in the instance descriptor:
+
+```C++
+WGPUInstanceExtras instanceExtras = {};
+instanceExtras.chain.next = nullptr;
+instanceExtras.chain.sType = (WGPUSType)WGPUSType_InstanceExtras;
+instanceExtras.backends = WGPUInstanceBackend_Vulkan; // We only accept Vulkan adapters here!
+WGPUInstanceDescriptor instanceDesc = {};
+instanceDesc.nextInChain = &instanceExtras.chain;
+
+Instance instance = createInstance(instanceDesc);
+```
+````
+
+Do not forget to also request the feature when creating your device:
+
+```C++
+WGPUFeatureName featureFoo = (WGPUFeatureName)WGPUFeatureName_Foo;
+deviceDesc.requiredFeaturesCount = 1;
+deviceDesc.requiredFeatures = &featureFoo;
+// [...]
+
+if (wgpuDeviceHasFeature(device, (WGPUFeatureName)WGPUFeatureName_Foo)) {
+    std::cout << "Feature 'Foo' supported by device" << std::endl;
+}
+else {
+    std::cout << "Feature 'Foo' NOT supported by device" << std::endl;
+}
+```
+
+We can then try extending the render pipeline:
+
+```C++
+RenderPipelineDescriptor pipelineDesc;
+// [...]
+
+WGPUFooRenderPipelineDescriptor fooRenderPipelineDesc;
+fooRenderPipelineDesc.chain.next = nullptr;
+fooRenderPipelineDesc.chain.sType = (WGPUSType)WGPUFooSType_FooRenderPipelineDescriptor;
+fooRenderPipelineDesc.foo = 42; // some test value here.
+pipelineDesc.nextInChain = &fooRenderPipelineDesc.chain;
+
+RenderPipeline pipeline = device.createRenderPipeline(pipelineDesc);
+```
+
+In order to test that the value is correctly propagated, we just print a log line whenever `setPipeline` is called for this pipeline:
+
+```rust
+// In wgpu/wgpu-hal/src/vulkan/command.rs
+unsafe fn set_render_pipeline(&mut self, pipeline: &super::RenderPipeline) {
+    // Debug print
+    if let Some(foo) = pipeline.foo {
+        println!("DEBUG of FOO feature: foo={:?}", foo);
+    }
+
+    // [...]
+}
+```
+
+We need for this to add a `foo` field to the RenderPipeline (we only added it to the descriptor for now):
+
+```rust
+// In wgpu/wgpu-hal/src/vulkan/mod.rs
+#[derive(Debug)]
+pub struct RenderPipeline {
+    raw: vk::Pipeline,
+    foo: Option<u32>, // add this
+}
+```
+
+And we propagate from the descriptor when creating the render pipeline:
+
+```rust
+// In wgpu/wgpu-hal/src/vulkan/device.rs
+unsafe fn create_render_pipeline(
+    &self,
+    desc: &crate::RenderPipelineDescriptor<super::Api>,
+) -> Result<super::RenderPipeline, crate::PipelineError> {
+    // [...]
+    let foo = desc.foo;
+
+    Ok(super::RenderPipeline { raw, foo })
+}
+```
+
+But, as you may notice, this is **yet another** taste of `RenderPipelineDescriptor` type (defined in `wgpu-hal/lib.rs`). As this is getting quite confusing, let me summarize with a figure:
+
+```{image} /images/extension/wgpu-architecture-light.svg
+:align: center
+:class: only-light
+```
+
+```{image} /images/extension/wgpu-architecture-dark.svg
+:align: center
+:class: only-dark
+```
+
+<p class="align-center">
+    <span class="caption-text"><em>The architecture of the wgpu-native project.</em></span>
+</p>
+
+```rust
+// In wgpu/wgpu-hal/lib.rs
+#[derive(Clone, Debug)]
+pub struct RenderPipelineDescriptor<'a, A: Api> {
+    // [...]
+    /// Our custom FOO extension
+    pub foo: Option<u32>,
+}
+
+// In wgpu/wgpu-core/src/device/resource.rs
+pub(super) fn create_render_pipeline<G: GlobalIdentityHandlerFactory>(
+    /* [...] */
+) -> Result<pipeline::RenderPipeline<A>, pipeline::CreateRenderPipelineError> {
+    // [...]
+    let pipeline_desc = hal::RenderPipelineDescriptor {
+        // [...]
+        multiview: desc.multiview,
+        foo: desc.foo, // forward our custom member here
+    };
+    // [...]
+}
+```
+
+At this stage, if you build `wgpu-native`, update the DLL in your C++ application and run that application, it should eventually display the test log line:
+
+```
+DEBUG of FOO feature: foo=42
+```
+
+**Congratulation**, you have your first extension of `wgpu-native`! Of course it does not do much, and it only does so on the Vulkan backend. But we have explored the architecture of the project. What remains now depends highly on what exact extension you want to implement!
+
+*Resulting code:* [`wgpu`](https://github.com/eliemichel/wgpu/tree/eliemichel/foo), [`wgpu-native`](https://github.com/eliemichel/wgpu-native/tree/eliemichel/foo) and [`step030-test-foo-extension`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step030-test-foo-extension)
 
 With Dawn
 ---------
