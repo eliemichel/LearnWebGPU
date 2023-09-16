@@ -1,4 +1,4 @@
-Time (🚧WIP)
+Time
 ====
 
 ````{tab} With webgpu.hpp
@@ -300,7 +300,7 @@ The first step consists in **resolving** the query. This gets the timestamp valu
 ````{tab} With webgpu.hpp
 ```C++
 // We create a method dedicated to fetching timestamps
-void Application::fetchTimestamps(CommandEncoder encoder) {
+void Application::resolveTimestamps(CommandEncoder encoder) {
 	// Resolve the timestamp queries (write their result to the resolve buffer)
 	encoder.resolveQuerySet(
 		m_timestampQueries,
@@ -315,7 +315,7 @@ void Application::fetchTimestamps(CommandEncoder encoder) {
 ````{tab} Vanilla webgpu.h
 ```C++
 // We create a method dedicated to fetching timestamps
-void Application::fetchTimestamps(WGPUCommandEncoder encoder) {
+void Application::resolveTimestamps(WGPUCommandEncoder encoder) {
 	// Resolve the timestamp queries (write their result to the resolve buffer)
 	wgpuCommandEncoderResolveQuerySet(
 		encoder,
@@ -373,14 +373,14 @@ void Application::initBenchmark() {
 One the Web, the timestamp resolution may include rounding the value, to avoid giving access to precise information that could lead to timing attacks.
 ```
 
-We can call `fetchTimestamps` in our main loop, after `renderPass.end()` and before `encoder.finish()`:
+We can call `resolveTimestamps` in our main loop, after `renderPass.end()` and before `encoder.finish()`:
 
 ````{tab} With webgpu.hpp
 ```C++
 // in Application::onFrame()
 renderPass.end();
 
-fetchTimestamps(encoder);
+resolveTimestamps(encoder);
 ```
 ````
 
@@ -389,7 +389,7 @@ fetchTimestamps(encoder);
 // in Application::onFrame()
 wgpuRenderPassEncoderEnd(renderPass);
 
-fetchTimestamps(encoder);
+resolveTimestamps(encoder);
 ```
 ````
 
@@ -445,7 +445,7 @@ We then copy to this buffer right after resolution:
 
 ````{tab} With webgpu.hpp
 ```C++
-void Application::fetchTimestamps(CommandEncoder encoder) {
+void Application::resolveTimestamps(CommandEncoder encoder) {
 	// [...] Resolve the timestamp queries (write their result to the resolve buffer)
 	
 	// Copy to the map buffer
@@ -460,7 +460,7 @@ void Application::fetchTimestamps(CommandEncoder encoder) {
 
 ````{tab} Vanilla webgpu.h
 ```C++
-void Application::fetchTimestamps(WGPUCommandEncoder encoder) {
+void Application::resolveTimestamps(WGPUCommandEncoder encoder) {
 	// [...] Resolve the timestamp queries (write their result to the resolve buffer)
 	
 	// Copy to the map buffer
@@ -474,31 +474,50 @@ void Application::fetchTimestamps(WGPUCommandEncoder encoder) {
 ```
 ````
 
-And finally we map this buffer. But remember that **buffer mapping is asynchronous**, so we must be careful when this `fetchTimestamps()` function is called at each frame.
+And finally we map this buffer. But we must take care of doing this **after the encoder has been submitted**, because it is not allowed to copy to a buffer while it is being mapped. We thus create a new `fetchTimestamps()` method, called after `queue.submit()`:
+
+````{tab} With webgpu.hpp
+```C++
+m_queue.submit(command);
+
+fetchTimestamps();
+
+m_swapChain.present();
+```
+````
+
+````{tab} Vanilla webgpu.h
+```C++
+wgpuQueueSubmit(m_queue, 1, &command);
+
+fetchTimestamps();
+
+wgpuSwapChainPresent(m_swapChain);
+```
+````
+
+Also, remember that **buffer mapping is asynchronous**, so we must be careful when this `fetchTimestamps()` function is called at each frame.
 
 ```{note}
 This part differs slightly in architecture depending on whether you are using the C++ wrapper or the vanilla API, I invite you to pick the right tab below:
-```
-
-```{caution}
-WIP! Not working yet, because mapAsync must be called only after the encoder gets submitted!!
 ```
 
 ````{tab} With webgpu.hpp
 Overall the mapping operation looks like what we did in the [Playing with buffers](../../basic-3d-rendering/input-geometry/playing-with-buffers.md) chapter:
 
 ```C++
-// In Application::fetchTimestamps()
-m_timestampMapBuffer.mapAsync(MapMode::Read, 0, 2 * sizeof(uint64_t), [this](BufferMapAsyncStatus status) {
-	if (status != BufferMapAsyncStatus::Success) {
-		std::cerr << "Could not map buffer! status = " << status << std::endl;
-	}
-	else {
-		uint64_t* timestampData = (uint64_t*)m_timestampMapBuffer.getConstMappedRange(0, 2 * sizeof(uint64_t));
-		// [...] Use timestampData here.
-		m_timestampMapBuffer.unmap();
-	}
-});
+void Application::fetchTimestamps() {
+	m_timestampMapBuffer.mapAsync(MapMode::Read, 0, 2 * sizeof(uint64_t), [this](BufferMapAsyncStatus status) {
+		if (status != BufferMapAsyncStatus::Success) {
+			std::cerr << "Could not map buffer! status = " << status << std::endl;
+		}
+		else {
+			uint64_t* timestampData = (uint64_t*)m_timestampMapBuffer.getConstMappedRange(0, 2 * sizeof(uint64_t));
+			// [...] Use timestampData here.
+			m_timestampMapBuffer.unmap();
+		}
+	});
+}
 ```
 
 However to ensure that the callback **outlives the scope** in which it is defined here, we must maintain its handle in the `Application` class:
@@ -519,8 +538,6 @@ void Application::fetchTimestamps(WGPUCommandEncoder encoder) {
 	// no need to trigger a new one.
 	if (m_timestampMapHandle) return;
 
-	// [...] Resolve timestamp queries, copy and map buffer
-
 	m_timestampMapHandle = m_timestampMapBuffer.mapAsync(/* [...] */ {
 		// [...] Use timestamp data if mapping is successful
 
@@ -538,10 +555,64 @@ TODO:
  - Add a boolean to check whether there is an ongoing mapping operation
 ````
 
-Thanks to this, we can now safely call `fetchTimestamps()` at each frame, right after the end of the render pass.
+Overall the mapping operation looks like what we did in the [Playing with buffers](../../basic-3d-rendering/input-geometry/playing-with-buffers.md) chapter:
+
+```C++
+void Application::fetchTimestamps() {
+	wgpuBufferMapAsync(
+		m_timestampMapBuffer,
+		WGPUMapMode_Read,
+		0, 2 * sizeof(uint64_t),
+		[](WGPUBufferMapAsyncStatus status, void *that){
+			reinterpret_cast<Application*>(that)->onTimestampBufferMapped(status);
+		},
+		(void*)this
+	);
+}
+
+// Create a new callback method in the Application class:
+void Application::onTimestampBufferMapped(WGPUBufferMapAsyncStatus status) {
+	if (status != WGPUBufferMapAsyncStatus_Success) {
+		std::cerr << "Could not map buffer! status = " << status << std::endl;
+	}
+	else {
+		uint64_t* timestampData = (uint64_t*)wgpuBufferGetConstMappedRange(m_timestampMapBuffer, 0, 2 * sizeof(uint64_t));
+		// [...] Use timestampData here.
+		wgpuBufferUnmap(m_timestampMapBuffer);
+	}
+}
+```
+
+However, we **do not want to trigger a new mapping operation** if there is already one going on! To check this, we add a simple boolean attribute and **return early** whenever a mapping operation is already in flight:
+
+```C++
+// In Application.h
+bool m_timestampMapOngoing = false;
+
+// In Application::fetchTimestamps()
+m_timestampMapHandle = m_timestampMapBuffer.mapAsync(/* [...] */);
+
+void Application::fetchTimestamps(WGPUCommandEncoder encoder) {
+	// If we are already in the middle of a mapping operation,
+	// no need to trigger a new one.
+	if (m_timestampMapOngoing) return;
+
+	m_timestampMapOngoing = true;
+	wgpuBufferMapAsync(m_timestampMapBuffer, /* [...] */);
+}
+
+void Application::onTimestampBufferMapped(WGPUBufferMapAsyncStatus status) {
+	m_timestampMapOngoing = false;
+	// [...]
+}
+```
+
+Thanks to this, we can now safely call `fetchTimestamps()` at each frame, right after submitting the command buffer.
 
 Using timestamp values
 ----------------------
+
+### Display
 
 We can finally manipulate timestamp values on the CPU! At first we can **display them** in the terminal: in the map callback, when mapping was successful:
 
@@ -552,6 +623,74 @@ uint64_t end = timestampData[1];
 uint64_t nanoseconds = (end - begin);
 float milliseconds = (float)nanoseconds * 1e-6;
 std::cout << "Render pass took " << milliseconds << "ms" << std::endl;
+```
+
+You get in the end a little less than 1 log line per frame:
+
+```
+Render pass took 0.484128ms
+Render pass took 0.538624ms
+Render pass took 0.49056ms
+Render pass took 0.490912ms
+Render pass took 0.504864ms
+Render pass took 0.491872ms
+Render pass took 0.487808ms
+Render pass took 0.587872ms
+Render pass took 0.493504ms
+Render pass took 0.498112ms
+Render pass took 0.547136ms
+Render pass took 0.452928ms
+```
+
+### Statistics
+
+Usually, I am not interested in one line per frame, but rather in showing in the UI the **mean** and **standard deviation** of my measure. I use for this my [`TinyTimer.h`](https://gist.github.com/eliemichel/54912bdafb8d16b21b0e7d9fce73a845):
+
+```C++
+// In Application.h
+#include "TinyTimer.h"
+
+class Application {
+	// [...]
+	TinyTimer::PerformanceCounter m_perf;
+};
+
+// In fetch timestamp callback
+m_perf.add_sample(milliseconds * 1e-3);
+
+// In Application::updateGui()
+ImGui::Text("Application average [...]", /* [...] */);
+ImGui::Text("Render pass duration on GPU: %s", m_perf.summary().c_str());
+ImGui::End();
+```
+
+```{figure} /images/benchmark/render-pass-timer.png
+:align: center
+:class: with-shadow
+Our GPU timer displayed in the application.
+```
+
+```{note}
+In this example, we can see that the render pass takes much less time than a frame. This is because the limiting factor here is the **VSync** that caps the number of frames per second to 60 (the maximum refresh rate of my display).
+```
+
+```{important}
+When reporting and comparing benchmark values, and statistics in general, it is important to look at the **standard deviation**, but also at the **number of samples** on which this standard value is estimated.
+```
+
+Conclusion
+----------
+
+You are now able to use precise GPU-side timers, which is essential to evaluate the performances of your application and identify the bottlenecks. Remember that:
+
+ - GPU timers don't live on the same **timeline** as CPU timers.
+ - You need to create timestamp queries, then **write** to them, **resolve** them, and finally **fetch** them back asynchronously.
+ - You must pay attention not to fetch before the resolve/copy operations are not only encoded by **submitted** to the GPU.
+
+I would suggest to create a little class responsible solely for managing the timers in your application, so that the boilerplate is isolated to your application's logic.
+
+```{note}
+If you want to measure performances for events that do **not happen at each frame**, you should keep for each such counter a **boolean** telling whether the counter has been updated, so that you `add_sample` upon fetch callback only when the timestamps were **actually updated**.
 ```
 
 ````{tab} With webgpu.hpp
