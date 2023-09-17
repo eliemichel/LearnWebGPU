@@ -11,9 +11,10 @@ Contents
 teaching-native-graphics-in-2023
 feedback-needed
 building-for-the-web
+custom-extensions/index
 debugging
 memory-model
-custom-extensions
 references
+dawn-vs-wgpu-native
 tmp
 ```
