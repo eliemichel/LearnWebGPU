@@ -174,16 +174,17 @@ If your extension is shallow enough not to affect the backends, you should only 
 ### Extending backends
 
 ```{warning}
-TODO: I still need to learn better how the code is organized.
+TODO: I still need to learn better how the code is organized. So far I noticed that:
+
+- `wgpu-native` maps C entry points to the rust API of `wgpu-core`
+- `wgpu-core` maintains the common user API, that application based on wgpu use, either through the native wrapper or through `wgpu-rs` (a.k.a. just `wgpu`). Behinds the scenes, it maps instructions to `wgpu-hal`
+- `wgpu-hal` is the backend/hardware abstraction layer, it defines the internal API that each backend (Vulkan, Metal, DX12, etc.) must implement
+- `wgpu-hal/vulkan` is the Vulkan backend, that implements all of the HAL's requirements
 ```
 
 The file `wgpu/wgpu-hal/src/lib.rs` defines the interface that each backend must implement. Backends are the subdirectories of `wgpu/wgpu-hal/src` as well as the `empty.rs` file that defines a default behavior that does nothing.
 
 We implement backends one by one, maybe only for the ones that interest us in practice. We must thus make sure that the `Foo` feature is advertised by the adapter only for the backend that we implemented.
-
-```C++
-TODO
-```
 
 Let's start with the Vulkan backend. We first advertise that the adapter (a.k.a. *physical device* in Vulkan wording) supports our feature.
 

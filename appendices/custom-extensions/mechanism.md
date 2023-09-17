@@ -1,6 +1,12 @@
 The extension mechanism (🚧WIP)
 =======================
 
+```{admonition} Disclaimer
+This section of the guide explores **internal APIs** running behinds the scenes of the official `webgpu.h`. These are highly **subject to changes**, as they are conventions of the developers with themselves, not meant to be documented.
+
+I do my best to update this section from time to time, but the example code **may not work as is** on newer versions. **The overall idea should still hold** anyways, and I invite you to share your experiments on the [Discord server](https://discord.gg/2Tar4Kt564) if you run into trouble!
+```
+
 Descriptor extensions
 ---------------------
 
@@ -30,6 +36,10 @@ typedef enum WGPUSType {
 ```
 
 Each backend picked its own range of values, as far as possible to avoid collisions: `wgpu-native` starts at `0x60000001` (`1610612737`) and Dawn starts at `0x000003E8` (`1000`).
+
+```{note}
+In the near future, Dawn will move to `0x20000` (`131072`) and wgpu-native to `0x3000` (`12288`).
+```
 
 ```C++
 // Extensions specific to wgpu-native, defined in wgpu.h

@@ -1,4 +1,4 @@
-With Dawn
+With Dawn (🚧WIP)
 =========
 
 *Resulting code:* [`dawn:eliemichel/foo`](https://github.com/eliemichel/Dawn/tree/eliemichel/foo) and [`step030-test-foo-extension-dawn`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step030-test-foo-extension-dawn)
@@ -99,6 +99,10 @@ enum class Feature {
     InvalidEnum = EnumCount,
     FeatureMin = TextureCompressionBC,
 };
+```
+
+```{admonition} Update
+I wrote this on an earlier version of Dawn, lately this has been moved to the auto-generated version so no need to worry about it!
 ```
 
 We then specify in `Features.cpp` how to convert back and forth between the public and internal APIs:
