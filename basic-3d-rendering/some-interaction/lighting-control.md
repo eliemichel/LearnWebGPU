@@ -1,5 +1,5 @@
-Recap
-=====
+Lighting control
+================
 
 ````{tab} With webgpu.hpp
 *Resulting code:* [`step100`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step100)
@@ -9,7 +9,7 @@ Recap
 *Resulting code:* [`step100-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step100-vanilla)
 ````
 
-In this first part, we connect the dots that we already have, so that we can focus in the next chapters on the material and lighting models.
+Now that we have elements of GUI, we can use them to expose for instance the **lighting settings** to the user. We want them to be able to **live tweak** the direction and color of our light sources.
 
 ```{admonition} 🚧 WIP
 From this chapter on, the guide is not as up to date. I am currently refreshing it chapter by chapter and this is where I am currently working!
@@ -18,7 +18,7 @@ From this chapter on, the guide is not as up to date. I am currently refreshing 
 Basic shading
 -------------
 
-Let's recap what we have seen in the [Basic shading](../3d-meshes/basic-shading.md) chapter.
+Let's first recap what we have seen in the [Basic shading](../3d-meshes/basic-shading.md) chapter.
 
  - The shaded look of a surface element depends on its **normal**.
  - This look also depends on **light sources**, and in particular on their direction.
@@ -32,13 +32,13 @@ We can plug this with the texture sampling, by using the texture as the base col
 
 ```rust
 @fragment
-fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
+fn fs_main(in: VertexOutput) -> @location(0) vec4f {
 	// Compute shading
 	let normal = normalize(in.normal);
-	let lightDirection1 = vec3<f32>(0.5, -0.9, 0.1);
-	let lightDirection2 = vec3<f32>(0.2, 0.4, 0.3);
-	let lightColor1 = vec3<f32>(1.0, 0.9, 0.6);
-	let lightColor2 = vec3<f32>(0.6, 0.9, 1.0);
+	let lightDirection1 = vec3f(0.5, -0.9, 0.1);
+	let lightDirection2 = vec3f(0.2, 0.4, 0.3);
+	let lightColor1 = vec3f(1.0, 0.9, 0.6);
+	let lightColor2 = vec3f(0.6, 0.9, 1.0);
 	let shading1 = max(0.0, dot(lightDirection1, normal));
 	let shading2 = max(0.0, dot(lightDirection2, normal));
 	let shading = shading1 * lightColor1 + shading2 * lightColor2;
@@ -50,9 +50,13 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
 	let color = baseColor * shading;
 
 	// Gamma-correction
-	let corrected_color = pow(color, vec3<f32>(2.2));
-	return vec4<f32>(corrected_color, uMyUniforms.color.a);
+	let corrected_color = pow(color, vec3f(2.2));
+	return vec4f(corrected_color, uMyUniforms.color.a);
 }
+```
+
+```{note}
+I renamed what was called `gradientTexture` into `baseColorTexture`.
 ```
 
 ```{figure} /images/lit-boat.png
@@ -64,7 +68,7 @@ The boat model with some basic lighting.
 Interaction
 -----------
 
-To facilitate the further testing of lighting and materials, let's make the light sources dynamic and connect them to our GUI.
+To facilitate the further testing of lighting and materials in the next chatpers, let's **make the light sources dynamic** and connect them to our GUI.
 
 ### Lighting uniforms
 
@@ -72,6 +76,8 @@ We are going to create 2 private methods to contain all the light-related code. 
 
 ````{tab} With webgpu.hpp
 ```C++
+#include <array>
+
 // In class Application:
 
 // Private methods
@@ -91,6 +97,8 @@ LightingUniforms m_lightingUniforms;
 
 ````{tab} Vanilla webgpu.h
 ```C++
+#include <array>
+
 // In class Application:
 
 // Private methods
@@ -107,6 +115,10 @@ WGPUBuffer m_lightingUniformBuffer = nullptr;
 LightingUniforms m_lightingUniforms;
 ```
 ````
+
+```{caution}
+Note how I turned the direction and color to `vec4` instead of `vec3`. This is because of [alignment rules](https://www.w3.org/TR/WGSL/#alignment-and-size): a `vec3` is aligned as if it was a `vec4`.
+```
 
 The `initLighting()` method must be called **after** all the basic WebGPU objects have been initialized (e.g., the device) **but before** finalizing the bind group and its layout.
 
@@ -128,7 +140,7 @@ std::vector<WGPUBindGroupEntry> m_bindings;
 ```
 ````
 
-Overall the order in `onInit()` should look like:
+Rework the order in `onInit()` so that it look like:
 
 ```C++
 bool Application::onInit() {
@@ -140,10 +152,6 @@ bool Application::onInit() {
 	// [...] Init GUI
 	return true;
 }
-```
-
-```{caution}
-Note how I turned the direction and color to `vec4` instead of `vec3`. This is because of [alignment rules](https://www.w3.org/TR/WGSL/#alignment-and-size): a `vec3` is aligned as if it was a `vec4`.
 ```
 
 We can now reproduces the initialization of `MyUniform` to prepare our new `LightingUniforms` buffer:
@@ -252,17 +260,17 @@ On the shader side, we reorganize to use this new uniform buffer and make the co
  * A structure holding the lighting settings
  */
 struct LightingUniforms {
-	directions: array<vec4<f32>, 2>,
-	colors: array<vec4<f32>, 2>,
+	directions: array<vec4f, 2>,
+	colors: array<vec4f, 2>,
 }
 
 @group(0) @binding(3) var<uniform> uLighting: LightingUniforms;
 
 @fragment
-fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
+fn fs_main(in: VertexOutput) -> @location(0) vec4f {
 	// Compute shading
 	let normal = normalize(in.normal);
-	var shading = vec3<f32>(0.0);
+	var shading = vec3f(0.0);
 	for (var i: i32 = 0; i < 2; i++) {
 		let direction = normalize(uLighting.directions[i].xyz);
 		let color = uLighting.colors[i].rgb;
@@ -276,12 +284,12 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
 	let color = baseColor * shading;
 
 	// Gamma-correction
-	let corrected_color = pow(color, vec3<f32>(2.2));
-	return vec4<f32>(corrected_color, uMyUniforms.color.a);
+	let corrected_color = pow(color, vec3f(2.2));
+	return vec4f(corrected_color, uMyUniforms.color.a);
 }
 ```
 
-Finally, let's connect the GUI by replacing the "Hello, world" panel in `updateGui()`:
+Let us now connect the GUI by replacing the "Hello, world" panel in `updateGui()`:
 
 ```C++
 // In Application::updateGui:
@@ -297,13 +305,12 @@ ImGui::End();
 The `glm::value_ptr` function returns a pointer to where the glm object's raw data is stored, which is what ImGui needs to operate. In practice for vectors it is equivalent to using the address of the vector object itself.
 ```
 
-And at each frame we copy the values that the GUI manipulates to the GPU-side buffer.
+And finally at each frame we copy the values that the GUI manipulates to the GPU-side buffer.
 
 ````{tab} With webgpu.hpp
 ```C++
 void Application::updateLighting() {
-	Queue queue = m_device.getQueue();
-	queue.writeBuffer(m_lightingUniformBuffer, 0, &m_lightingUniforms, sizeof(LightingUniforms));
+	m_queue.writeBuffer(m_lightingUniformBuffer, 0, &m_lightingUniforms, sizeof(LightingUniforms));
 }
 ```
 ````
@@ -311,11 +318,14 @@ void Application::updateLighting() {
 ````{tab} Vanilla webgpu.h
 ```C++
 void Application::updateLighting() {
-	WGPUQueue queue = wgpuDeviceGetQueue(m_device);
-	wgpuQueueWriteBuffer(queue, m_lightingUniformBuffer, 0, &m_lightingUniforms, sizeof(LightingUniforms));
+	wgpuQueueWriteBuffer(m_queue, m_lightingUniformBuffer, 0, &m_lightingUniforms, sizeof(LightingUniforms));
 }
 ```
 ````
+
+```{caution}
+Make sure to call `updateLighting()` in `Application::onFrame()`!
+```
 
 ```{figure} /images/light-color-ui.png
 :align: center
@@ -331,6 +341,8 @@ We move the texture loading and associated binding in a dedicated method:
 
 ````{tab} With webgpu.hpp
 ```C++
+#include <filesystem>
+
 bool Application::initTexture(const std::filesystem::path &path) {
 	// Create a texture
 	TextureView textureView = nullptr;
@@ -362,6 +374,8 @@ bool Application::initTexture(const std::filesystem::path &path) {
 
 ````{tab} Vanilla webgpu.h
 ```C++
+#include <filesystem>
+
 bool Application::initTexture(const std::filesystem::path &path) {
 	// Create a texture
 	WGPUTextureView textureView = nullptr;
@@ -406,11 +420,16 @@ Note that this also assumes that the `m_texture` attribute is replaced by a vect
 ```C++
 // In Application class:
 std::vector<wgpu::Texture> m_textures;
+std::vector<wgpu::TextureView> m_textureViews;
 
 // In Application.cpp
 void Application::onFinish() {
+	for (auto textureView : m_textureViews) {
+		textureView.release();
+	}
 	for (auto texture : m_textures) {
 		texture.destroy();
+		texture.release();
 	}
 	// [...]
 }
@@ -421,11 +440,16 @@ void Application::onFinish() {
 ```C++
 // In Application class:
 std::vector<WGPUTexture> m_textures;
+std::vector<WGPUTextureView> m_textureViews;
 
 // In Application.cpp
 void Application::onFinish() {
+	for (auto textureView : m_textureViews) {
+		wgpuTextureViewRelease(textureView);
+	}
 	for (auto texture : m_textures) {
 		wgpuTextureDestroy(texture);
+		wgpuTextureRelease(texture);
 	}
 	// [...]
 }

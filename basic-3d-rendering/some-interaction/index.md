@@ -11,4 +11,5 @@ refactoring
 resizing-window
 camera-control
 simple-gui
+lighting-control
 ```

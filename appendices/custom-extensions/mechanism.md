@@ -38,7 +38,7 @@ typedef enum WGPUSType {
 Each backend picked its own range of values, as far as possible to avoid collisions: `wgpu-native` starts at `0x60000001` (`1610612737`) and Dawn starts at `0x000003E8` (`1000`).
 
 ```{note}
-In the near future, Dawn will move to `0x20000` (`131072`) and wgpu-native to `0x3000` (`12288`).
+In the near future, Dawn will move to `0x20000` (`131072`) and wgpu-native to `0x30000` (`196608`).
 ```
 
 ```C++
@@ -81,7 +81,7 @@ Do **not** use values close **after the ones that already exist**. Each backend 
 
 There is no recommended range in particular yet (I guess there will eventually be more guidance but there is little feedback on this extensions mechanism for now). Just pick a base value far enough from others and sequentially add you extensions there.
 
-For the sake of the example, I use `0x00001000` (`4096`). In a custom `webgpu-ext-foo.h` I define my extension `SType`. To introduce our new feature "Foo" we may need to add extension to multiple descriptors.
+For the sake of the example, I use `0x40000` (`262144`). In a custom `webgpu-ext-foo.h` I define my extension `SType`. To introduce our new feature "Foo" we may need to add extension to multiple descriptors.
 
 ```C++
 // In file webgpu-ext-foo.h we define the API of our extension "Foo"
@@ -89,7 +89,7 @@ For the sake of the example, I use `0x00001000` (`4096`). In a custom `webgpu-ex
 // We give our enum a name that is a variant of WGPUSType
 typedef enum WGPUFooSType {
 	// Our new extension, for instance to extend the Render Pipeline
-	WGPUFooSType_FooRenderPipelineDescriptor = 0x00001001,
+	WGPUFooSType_FooRenderPipelineDescriptor = 0x00040001,
 
 	// Force the enum value to be represented on 32-bit integers
 	WGPUFooSType_Force32 = 0x7FFFFFFF
@@ -201,7 +201,7 @@ We can add our own "Foo" feature, still in our `webgpu-ext-foo.h` file:
 // We give our enum a name that is a variant of WGPUFeatureName
 typedef enum WGPUFooFeatureName {
 	// Our new feature name
-	WGPUFooFeatureName_Foo = 0x00001001,
+	WGPUFooFeatureName_Foo = 0x00040001,
 
 	// Force the enum value to be represented on 32-bit integers
 	WGPUFooFeatureName_Force32 = 0x7FFFFFFF
@@ -209,3 +209,5 @@ typedef enum WGPUFooFeatureName {
 ```
 
 The `webgpu-ext-foo.h` file that we have is all we need as an interface between the user code and our modified backend. For the implementation of this header, we need to chose what backend to edit.
+
+The next 2 chapters focus respectively on [`wgpu-native`](with-wgpu-native.md), then [Dawn](with-dawn.md), to show more **internal details** of how to implement this basic Foo extension.

@@ -6,6 +6,8 @@ With `wgpu-native` (🚧WIP)
 Setup
 -----
 
+Before modifying any code, we need to set up the **2 repositories** that `wgpu-native` relies on.
+
 ### Building `wgpu-native`
 
 Start by building a "regular" `wgpu-native` using [the instructions from their repository](https://github.com/gfx-rs/wgpu-native/wiki/Getting-Started). You need in particular [rust](https://www.rust-lang.org/) and [LLVM/Clang](https://rust-lang.github.io/rust-bindgen/requirements.html). With these installed, building looks like this:
@@ -17,11 +19,15 @@ set LIBCLANG_PATH=E:/Libraries/libclang/bin
 cargo build --release
 ```
 
+```{important}
+Adapt the value of `LIBCLANG_PATH` above to your actual installation of LLVM/Clang.
+```
+
 You then find the binaries in `target\release`. If you use the `wgpu-native` based [WebGPU-distribution](https://github.com/eliemichel/WebGPU-distribution/tree/wgpu) in your end project, simply replace the relevant files in `webgpu/bin`.
 
 ### Building `wgpu`
 
-The `wgpu-native` repository is a thin layer exposing as a C interface the actual `wgpu` backend. When creating a custom extension, we need to change the backend, and instruct the `wgpu-native` layer to use our custom `wgpu` branch.
+The `wgpu-native` repository is a **thin layer** exposing as a C interface the actual `wgpu` backend. When creating a custom extension, we need to change the backend, and instruct the `wgpu-native` layer to use our custom `wgpu` branch.
 
 ```bash
 git clone https://github.com/gfx-rs/wgpu
@@ -29,7 +35,7 @@ cd wgpu
 cargo build --release
 ```
 
-To point `wgpu-native` to our custom `wgpu`, we can modify its `Cargo.toml` and add:
+To point `wgpu-native` to our custom `wgpu`, we can modify its `wgpu-native/Cargo.toml` and add:
 
 ```toml
 [patch."https://github.com/gfx-rs/wgpu"]
@@ -47,6 +53,8 @@ git checkout 011a4e26d04f388ef40e3baee3f19a255b9b5148
 
 But since you are writing an extension you may want to use the last version of `wgpu` instead.
 ````
+
+You may also need to update the rev hash of `[dependencies.naga]` to match what your version of `wgpu` uses.
 
 The Foo Extension
 -----------------
