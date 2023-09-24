@@ -28,7 +28,6 @@ Similarly to what we did for the resize, we wire up 3 new GLFW window events:
 
 ```C++
 class Application {
-public:
 	// Mouse events
 	void onMouseMove(double xpos, double ypos);
 	void onMouseButton(int button, int action, int mods);
@@ -38,31 +37,21 @@ public:
 ```
 
 ```C++
-void onWindowMouseMove(GLFWwindow* window, double xpos, double ypos) {
-	auto pApp = reinterpret_cast<Application*>(glfwGetWindowUserPointer(window));
-	if (pApp != nullptr) pApp->onMouseMove(xpos, ypos);
-}
-void onWindowMouseButton(GLFWwindow* window, int button, int action, int mods) {
-	auto pApp = reinterpret_cast<Application*>(glfwGetWindowUserPointer(window));
-	if (pApp != nullptr) pApp->onMouseButton(button, action, mods);
-}
-void onWindowScroll(GLFWwindow* window, double xoffset, double yoffset) {
-	auto pApp = reinterpret_cast<Application*>(glfwGetWindowUserPointer(window));
-	if (pApp != nullptr) pApp->onScroll(xoffset, yoffset);
-}
-```
-
-```C++
 // Add window callbacks
 glfwSetWindowUserPointer(m_window, this);
-glfwSetFramebufferSizeCallback(m_window, onWindowResize);
-glfwSetCursorPosCallback(m_window, onWindowMouseMove);
-glfwSetMouseButtonCallback(m_window, onWindowMouseButton);
-glfwSetScrollCallback(m_window, onWindowScroll);
-```
-
-```{note}
-From this chapter on, I prefix private attribute names with `m_` to better distinguish them from local variables. This is a common practice (some people prefer using only `_`).
+glfwSetFramebufferSizeCallback(m_window, /* [...] */);
+glfwSetCursorPosCallback(m_window, [](GLFWwindow* window, double xpos, double ypos) {
+	auto that = reinterpret_cast<Application*>(glfwGetWindowUserPointer(window));
+	if (that != nullptr) that->onMouseMove(xpos, ypos);
+});
+glfwSetMouseButtonCallback(m_window, [](GLFWwindow* window, int button, int action, int mods) {
+	auto that = reinterpret_cast<Application*>(glfwGetWindowUserPointer(window));
+	if (that != nullptr) that->onMouseButton(button, action, mods);
+});
+glfwSetScrollCallback(m_window, [](GLFWwindow* window, double xoffset, double yoffset) {
+	auto that = reinterpret_cast<Application*>(glfwGetWindowUserPointer(window));
+	if (that != nullptr) that->onScroll(xoffset, yoffset);
+});
 ```
 
 Camera state
@@ -130,6 +119,10 @@ void Application::updateViewMatrix() {
 ```
 ````
 
+```{note}
+You may invoke `updateViewMatrix()` at the end of `initUniforms()` to ensure that the original view matrix is consistent with the camera state.
+```
+
 Controller
 ----------
 
@@ -176,11 +169,7 @@ void Application::onMouseMove(double xpos, double ypos) {
 	}
 }
 
-void Application::onMouseButton(int button, int action, int modifiers) {
-	// NB: This tells "I know we never use this variable" to the compiler
-	// so that it does not issue warnings about it.
-	(void)modifiers;
-
+void Application::onMouseButton(int button, int action, int /* modifiers */) {
 	if (button == GLFW_MOUSE_BUTTON_LEFT) {
 		switch(action) {
 		case GLFW_PRESS:
@@ -201,8 +190,8 @@ void Application::onMouseButton(int button, int action, int modifiers) {
 We also add a simple interaction when the use scrolls, to zoom in/out:
 
 ```C++
-void Application::onScroll([[maybe_unused]] double xoffset, double yoffset) {
-	m_cameraState.zoom += m_drag.scrollSensitivity * (float)yoffset;
+void Application::onScroll(double /* xoffset */, double yoffset) {
+	m_cameraState.zoom += m_drag.scrollSensitivity * static_cast<float>(yoffset);
 	m_cameraState.zoom = glm::clamp(m_cameraState.zoom, -2.0f, 2.0f);
 	updateViewMatrix();
 }
