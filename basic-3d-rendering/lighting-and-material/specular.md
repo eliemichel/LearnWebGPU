@@ -1,4 +1,4 @@
-Specularity
+Specularity (🚧 WIP)
 ===========
 
 ````{tab} With webgpu.hpp
@@ -8,6 +8,10 @@ Specularity
 ````{tab} Vanilla webgpu.h
 *Resulting code:* [`step105-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step105-vanilla)
 ````
+
+```{admonition} 🚧 WIP
+From this chapter on, the guide is not as up to date. I am currently refreshing it chapter by chapter and this is where I am currently working!
+```
 
 A first thing that our material model lacks is **specular highlight**. This is a visual effect that can be seen on any shiny object, namely any object that is not 100% rough:
 

@@ -11,12 +11,8 @@ Lighting control
 
 Now that we have elements of GUI, we can use them to expose for instance the **lighting settings** to the user. We want them to be able to **live tweak** the direction and color of our light sources.
 
-```{admonition} 🚧 WIP
-From this chapter on, the guide is not as up to date. I am currently refreshing it chapter by chapter and this is where I am currently working!
-```
-
-Basic shading
--------------
+Recap on basic shading
+----------------------
 
 Let's first recap what we have seen in the [Basic shading](../3d-meshes/basic-shading.md) chapter.
 
@@ -65,195 +61,12 @@ I renamed what was called `gradientTexture` into `baseColorTexture`.
 The boat model with some basic lighting.
 ```
 
-Interaction
------------
+Lighting uniforms
+-----------------
 
 To facilitate the further testing of lighting and materials in the next chatpers, let's **make the light sources dynamic** and connect them to our GUI.
 
-### Lighting uniforms
-
-We are going to create 2 private methods to contain all the light-related code. We also create a new independent uniform buffer:
-
-````{tab} With webgpu.hpp
-```C++
-#include <array>
-
-// In class Application:
-
-// Private methods
-void initLighting();
-void updateLighting();
-
-// Private attributes
-struct LightingUniforms {
-	std::array<glm::vec4, 2> directions;
-	std::array<glm::vec4, 2> colors;
-};
-static_assert(sizeof(LightingUniforms) % 16 == 0);
-wgpu::Buffer m_lightingUniformBuffer = nullptr;
-LightingUniforms m_lightingUniforms;
-```
-````
-
-````{tab} Vanilla webgpu.h
-```C++
-#include <array>
-
-// In class Application:
-
-// Private methods
-void initLighting();
-void updateLighting();
-
-// Private attributes
-struct LightingUniforms {
-	std::array<glm::vec4, 2> directions;
-	std::array<glm::vec4, 2> colors;
-};
-static_assert(sizeof(LightingUniforms) % 16 == 0);
-WGPUBuffer m_lightingUniformBuffer = nullptr;
-LightingUniforms m_lightingUniforms;
-```
-````
-
-```{caution}
-Note how I turned the direction and color to `vec4` instead of `vec3`. This is because of [alignment rules](https://www.w3.org/TR/WGSL/#alignment-and-size): a `vec3` is aligned as if it was a `vec4`.
-```
-
-The `initLighting()` method must be called **after** all the basic WebGPU objects have been initialized (e.g., the device) **but before** finalizing the bind group and its layout.
-
-Since this init needs to modify the `bindingLayoutEntries` and `bindings` vectors, we make them attributes instead of variables local to `onInit()`.
-
-````{tab} With webgpu.hpp
-```C++
-// Private attributes
-std::vector<wgpu::BindGroupLayoutEntry> m_bindingLayoutEntries;
-std::vector<wgpu::BindGroupEntry> m_bindings;
-```
-````
-
-````{tab} Vanilla webgpu.h
-```C++
-// Private attributes
-std::vector<WGPUBindGroupLayoutEntry> m_bindingLayoutEntries;
-std::vector<WGPUBindGroupEntry> m_bindings;
-```
-````
-
-Rework the order in `onInit()` so that it look like:
-
-```C++
-bool Application::onInit() {
-	// [...] Init window, device, swap chain
-	// [...] Init resources (shader, geometry, texture, sampler, depth buffer)
-	// [...] Init binding entries and their layout
-	initLighting();
-	// [...] Create render pipeline and bind group
-	// [...] Init GUI
-	return true;
-}
-```
-
-We can now reproduces the initialization of `MyUniform` to prepare our new `LightingUniforms` buffer:
-
-````{tab} With webgpu.hpp
-```C++
-void Application::initLighting() {
-	Queue queue = m_device.getQueue();
-
-	// Create uniform buffer
-	BufferDescriptor bufferDesc;
-	bufferDesc.size = sizeof(LightingUniforms);
-	bufferDesc.usage = BufferUsage::CopyDst | BufferUsage::Uniform;
-	bufferDesc.mappedAtCreation = false;
-	m_lightingUniformBuffer = m_device.createBuffer(bufferDesc);
-
-	// Upload the initial value of the uniforms
-	m_lightingUniforms.directions = {
-		vec4{0.5, -0.9, 0.1, 0.0},
-		vec4{0.2, 0.4, 0.3, 0.0}
-	};
-	m_lightingUniforms.colors = {
-		vec4{1.0, 0.9, 0.6, 1.0},
-		vec4{0.6, 0.9, 1.0, 1.0}
-	};
-
-	queue.writeBuffer(m_lightingUniformBuffer, 0, &m_lightingUniforms, sizeof(LightingUniforms));
-
-	// Setup binding
-	uint32_t bindingIndex = (uint32_t)m_bindingLayoutEntries.size();
-	BindGroupLayoutEntry bindingLayout = Default;
-	bindingLayout.binding = bindingIndex;
-	bindingLayout.visibility = ShaderStage::Fragment;
-	bindingLayout.buffer.type = BufferBindingType::Uniform;
-	bindingLayout.buffer.minBindingSize = sizeof(LightingUniforms);
-	m_bindingLayoutEntries.push_back(bindingLayout);
-
-	BindGroupEntry binding = Default;
-	binding.binding = bindingIndex;
-	binding.buffer = m_lightingUniformBuffer;
-	binding.offset = 0;
-	binding.size = sizeof(LightingUniforms);
-	m_bindings.push_back(binding);
-}
-```
-````
-
-````{tab} Vanilla webgpu.h
-```C++
-void Application::initLighting() {
-	WGPUQueue queue = wgpuDeviceGetQueue(m_device);
-
-	// Create uniform buffer
-	WGPUBufferDescriptor bufferDesc;
-	bufferDesc.nextInChain = nullptr;
-	bufferDesc.size = sizeof(LightingUniforms);
-	bufferDesc.usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_Uniform;
-	bufferDesc.mappedAtCreation = false;
-	m_lightingUniformBuffer = wgpuDeviceCreateBuffer(m_device, &bufferDesc);
-
-	// Upload the initial value of the uniforms
-	m_lightingUniforms.directions = {
-		vec4{0.5, -0.9, 0.1, 0.0},
-		vec4{0.2, 0.4, 0.3, 0.0}
-	};
-	m_lightingUniforms.colors = {
-		vec4{1.0, 0.9, 0.6, 1.0},
-		vec4{0.6, 0.9, 1.0, 1.0}
-	};
-
-	wgpuQueueWriteBuffer(queue, m_lightingUniformBuffer, 0, &m_lightingUniforms, sizeof(LightingUniforms));
-
-	// Setup binding
-	uint32_t bindingIndex = (uint32_t)m_bindingLayoutEntries.size();
-	WGPUBindGroupLayoutEntry bindingLayout;
-	setDefaults(bindingLayout);
-	bindingLayout.binding = bindingIndex;
-	bindingLayout.visibility = WGPUShaderStage_Fragment;
-	bindingLayout.buffer.type = WGPUBufferBindingType_Uniform;
-	bindingLayout.buffer.minBindingSize = sizeof(LightingUniforms);
-	m_bindingLayoutEntries.push_back(bindingLayout);
-
-	WGPUBindGroupEntry binding;
-	setDefaults(binding);
-	binding.binding = bindingIndex;
-	binding.buffer = m_lightingUniformBuffer;
-	binding.offset = 0;
-	binding.size = sizeof(LightingUniforms);
-	m_bindings.push_back(binding);
-}
-```
-````
-
-````{note}
-Since we are adding a new uniform buffer, don't forget to update the required limits:
-
-```C++
-requiredLimits.limits.maxUniformBuffersPerShaderStage = 2;
-```
-````
-
-On the shader side, we reorganize to use this new uniform buffer and make the code more flexible to the introduction of more light sources:
+Instead of hardcoding the light settings, we would like to pass them through a uniform:
 
 ```rust
 /**
@@ -289,6 +102,199 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
 }
 ```
 
+For this, we need to:
+
+ - Create a new **uniform buffer**.
+ - Create a new **binding** in the bind group for this uniform.
+ - Add this binding to the **bind group layout**.
+
+### Uniforms
+
+Before anything, we replicate the `LightingUniforms` struct in the C++ code:
+
+```C++
+#include <array>
+
+// Before Application's private attributes
+struct LightingUniforms {
+	std::array<vec4, 2> directions;
+	std::array<vec4, 2> colors;
+};
+static_assert(sizeof(LightingUniforms) % 16 == 0);
+```
+
+```{caution}
+Note how I turned the direction and color to `vec4` instead of `vec3`. This is because of [alignment rules](https://www.w3.org/TR/WGSL/#alignment-and-size): a `vec3` is aligned as if it was a `vec4`.
+```
+
+We then use this structure to create an attribute, and define its GPU-side counterpart:
+
+````{tab} With webgpu.hpp
+```C++
+wgpu::Buffer m_lightingUniformBuffer = nullptr;
+LightingUniforms m_lightingUniforms;
+```
+````
+
+````{tab} Vanilla webgpu.h
+```C++
+WGPUBuffer m_lightingUniformBuffer = nullptr;
+LightingUniforms m_lightingUniforms;
+```
+````
+
+And we create 3 methods to manage this new uniform buffer:
+
+```C++
+// In class Application:
+bool initLightingUniforms(); // called in onInit()
+void terminateLightingUniforms(); // called in onFinish()
+void updateLightingUniforms(); // called when GUI is tweaked
+```
+
+These are very similar to our other uniforms:
+
+````{tab} With webgpu.hpp
+```C++
+bool Application::initLightingUniforms() {
+	// Create uniform buffer
+	BufferDescriptor bufferDesc;
+	bufferDesc.size = sizeof(LightingUniforms);
+	bufferDesc.usage = BufferUsage::CopyDst | BufferUsage::Uniform;
+	bufferDesc.mappedAtCreation = false;
+	m_lightingUniformBuffer = m_device.createBuffer(bufferDesc);
+
+	// Initial values
+	m_lightingUniforms.directions[0] = { 0.5f, -0.9f, 0.1f, 0.0f };
+	m_lightingUniforms.directions[1] = { 0.2f, 0.4f, 0.3f, 0.0f };
+	m_lightingUniforms.colors[0] = { 1.0f, 0.9f, 0.6f, 1.0f };
+	m_lightingUniforms.colors[1] = { 0.6f, 0.9f, 1.0f, 1.0f };
+
+	updateLightingUniforms();
+
+	return m_lightingUniformBuffer != nullptr;
+}
+
+void Application::terminateLightingUniforms() {
+	m_lightingUniformBuffer.destroy();
+	m_lightingUniformBuffer.release();
+}
+
+void Application::updateLightingUniforms() {
+	m_queue.writeBuffer(m_lightingUniformBuffer, 0, &m_lightingUniforms, sizeof(LightingUniforms));
+}
+```
+````
+
+````{tab} Vanilla webgpu.h
+```C++
+bool Application::initLightingUniforms() {
+	// Create uniform buffer
+	WGPUBufferDescriptor bufferDesc = {};
+	bufferDesc.size = sizeof(LightingUniforms);
+	bufferDesc.usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_Uniform;
+	bufferDesc.mappedAtCreation = false;
+	m_lightingUniformBuffer = wgpuDeviceCreateBuffer(m_device, bufferDesc);
+
+	// Initial values
+	m_lightingUniforms.directions[0] = { 0.5f, -0.9f, 0.1f, 0.0f };
+	m_lightingUniforms.directions[1] = { 0.2f, 0.4f, 0.3f, 0.0f };
+	m_lightingUniforms.colors[0] = { 1.0f, 0.9f, 0.6f, 1.0f };
+	m_lightingUniforms.colors[1] = { 0.6f, 0.9f, 1.0f, 1.0f };
+
+	updateLightingUniforms();
+
+	return m_lightingUniformBuffer != nullptr;
+}
+
+void Application::terminateLightingUniforms() {
+	wgpuBufferDestroy(m_lightingUniformBuffer);
+	wgpuBufferRelease(m_lightingUniformBuffer);
+}
+
+void Application::updateLightingUniforms() {
+	wgpuQueueWriteBuffer(m_queue, m_lightingUniformBuffer, 0, &m_lightingUniforms, sizeof(LightingUniforms));
+}
+```
+````
+
+We will see later when to call `updateLightingUniforms()`, but before that we need to add bindings for this new uniform buffer.
+
+### Bindings
+
+In `initBindGroup`, add the new binding:
+
+````{tab} With webgpu.hpp
+```C++
+std::vector<BindGroupEntry> bindings(4);
+//                                   ^ This was a 3
+// [...]
+
+bindings[3].binding = 3;
+bindings[3].buffer = m_lightingUniformBuffer;
+bindings[3].offset = 0;
+bindings[3].size = sizeof(LightingUniforms);
+```
+````
+
+````{tab} Vanilla webgpu.h
+```C++
+std::vector<WGPUBindGroupEntry> bindings(4);
+//                                       ^ This was a 3
+// [...]
+
+bindings[3].binding = 3;
+bindings[3].buffer = m_lightingUniformBuffer;
+bindings[3].offset = 0;
+bindings[3].size = sizeof(LightingUniforms);
+```
+````
+
+Of course we must also add this to the bind group **layout**! Since is is very common to change both the bind group and its layout, I like to create a `initBindGroupLayout()` method that sits next to the `initBindGroup()` in the code, althrough it is not called exactly before:
+
+```C++
+bool Application::onInit() {
+	// [...]
+	// Bind group layout is init before the pipeline
+	if (!initBindGroupLayout()) return false;
+	if (!initRenderPipeline()) return false;
+	// [...]
+	// Bind group is init after the resources it binds
+	if (!initBindGroup()) return false;
+	// [...]
+}
+```
+
+Extract this from `initRenderPipeline()`, then add our new lighting uniform buffer:
+
+```C++
+bool Application::initBindGroupLayout() {
+	std::vector<BindGroupLayoutEntry> bindingLayoutEntries(4, Default);
+	//                                                     ^ This was a 3
+
+	// [...]
+
+	// The lighting uniform buffer binding
+	BindGroupLayoutEntry& lightingUniformLayout = bindingLayoutEntries[3];
+	lightingUniformLayout.binding = 3;
+	lightingUniformLayout.visibility = ShaderStage::Fragment; // only Fragment is needed
+	lightingUniformLayout.buffer.type = BufferBindingType::Uniform;
+	lightingUniformLayout.buffer.minBindingSize = sizeof(LightingUniforms);
+
+	// [...]
+}
+```
+
+````{note}
+Since we are adding a new uniform buffer, don't forget to update the required limits:
+
+```C++
+requiredLimits.limits.maxUniformBuffersPerShaderStage = 2;
+```
+````
+
+### GUI
+
 Let us now connect the GUI by replacing the "Hello, world" panel in `updateGui()`:
 
 ```C++
@@ -305,164 +311,19 @@ ImGui::End();
 The `glm::value_ptr` function returns a pointer to where the glm object's raw data is stored, which is what ImGui needs to operate. In practice for vectors it is equivalent to using the address of the vector object itself.
 ```
 
-And finally at each frame we copy the values that the GUI manipulates to the GPU-side buffer.
+This changes the value of `m_lightingUniforms` when the user tweaks sliders. In order to reflect these changes in the GPU-side uniforms, we copy at each frame the values that the GUI manipulates to the GPU-side buffer.
 
-````{tab} With webgpu.hpp
 ```C++
-void Application::updateLighting() {
-	m_queue.writeBuffer(m_lightingUniformBuffer, 0, &m_lightingUniforms, sizeof(LightingUniforms));
+void Application::onFrame() {
+	updateLightingUniforms();
+	// [...]
 }
-```
-````
-
-````{tab} Vanilla webgpu.h
-```C++
-void Application::updateLighting() {
-	wgpuQueueWriteBuffer(m_queue, m_lightingUniformBuffer, 0, &m_lightingUniforms, sizeof(LightingUniforms));
-}
-```
-````
-
-```{caution}
-Make sure to call `updateLighting()` in `Application::onFrame()`!
 ```
 
 ```{figure} /images/light-color-ui.png
 :align: center
 :class: with-shadow
 The UI is connected to the lighting uniforms.
-```
-
-### Multiple textures
-
-We are soon going to use more than one texture. Since we are doing a bit of a refactoring in this chapter, let us also make our code flexible to the addition of new textures.
-
-We move the texture loading and associated binding in a dedicated method:
-
-````{tab} With webgpu.hpp
-```C++
-#include <filesystem>
-
-bool Application::initTexture(const std::filesystem::path &path) {
-	// Create a texture
-	TextureView textureView = nullptr;
-	Texture texture = ResourceManager::loadTexture(path, m_device, &textureView);
-	if (!texture) {
-		std::cerr << "Could not load texture!" << std::endl;
-		return false;
-	}
-	m_textures.push_back(texture);
-
-	// Setup binding
-	uint32_t bindingIndex = (uint32_t)m_bindingLayoutEntries.size();
-	BindGroupLayoutEntry bindingLayout = Default;
-	bindingLayout.binding = bindingIndex;
-	bindingLayout.visibility = ShaderStage::Fragment;
-	bindingLayout.texture.sampleType = TextureSampleType::Float;
-	bindingLayout.texture.viewDimension = TextureViewDimension::_2D;
-	m_bindingLayoutEntries.push_back(bindingLayout);
-
-	BindGroupEntry binding = Default;
-	binding.binding = bindingIndex;
-	binding.textureView = textureView;
-	m_bindings.push_back(binding);
-
-	return true;
-}
-```
-````
-
-````{tab} Vanilla webgpu.h
-```C++
-#include <filesystem>
-
-bool Application::initTexture(const std::filesystem::path &path) {
-	// Create a texture
-	WGPUTextureView textureView = nullptr;
-	WGPUTexture texture = ResourceManager::loadTexture(path, m_device, &textureView);
-	if (!texture) {
-		std::cerr << "Could not load texture!" << std::endl;
-		return false;
-	}
-	m_textures.push_back(texture);
-
-	// Setup binding
-	uint32_t bindingIndex = (uint32_t)m_bindingLayoutEntries.size();
-	WGPUBindGroupLayoutEntry bindingLayout;
-	setDefaults(bindingLayout);
-	bindingLayout.binding = bindingIndex;
-	bindingLayout.visibility = WGPUShaderStage_Fragment;
-	bindingLayout.texture.sampleType = WGPUTextureSampleType_Float;
-	bindingLayout.texture.viewDimension = WGPUTextureViewDimension_2D;
-	m_bindingLayoutEntries.push_back(bindingLayout);
-
-	WGPUBindGroupEntry binding;
-	setDefaults(binding)
-	binding.binding = bindingIndex;
-	binding.textureView = textureView;
-	m_bindings.push_back(binding);
-
-	return true;
-}
-```
-````
-
-The init simply becomes, just before `initLighting()`:
-
-```C++
-// In onInit()
-if (!initTexture(RESOURCE_DIR "/fourareen2K_albedo.jpg")) return false;
-```
-
-Note that this also assumes that the `m_texture` attribute is replaced by a vector:
-
-````{tab} With webgpu.hpp
-```C++
-// In Application class:
-std::vector<wgpu::Texture> m_textures;
-std::vector<wgpu::TextureView> m_textureViews;
-
-// In Application.cpp
-void Application::onFinish() {
-	for (auto textureView : m_textureViews) {
-		textureView.release();
-	}
-	for (auto texture : m_textures) {
-		texture.destroy();
-		texture.release();
-	}
-	// [...]
-}
-```
-````
-
-````{tab} Vanilla webgpu.h
-```C++
-// In Application class:
-std::vector<WGPUTexture> m_textures;
-std::vector<WGPUTextureView> m_textureViews;
-
-// In Application.cpp
-void Application::onFinish() {
-	for (auto textureView : m_textureViews) {
-		wgpuTextureViewRelease(textureView);
-	}
-	for (auto texture : m_textures) {
-		wgpuTextureDestroy(texture);
-		wgpuTextureRelease(texture);
-	}
-	// [...]
-}
-```
-````
-
-And I swapped the binding of the sampler and the texture, so that textures can be consecutive (not that it is a technical requirements, but it was easier to organize this way).
-
-```rust
-@group(0) @binding(1) var textureSampler: sampler;
-//                 ^ Was 2
-@group(0) @binding(2) var baseColorTexture: texture_2d<f32>;
-//                 ^ Was 1
 ```
 
 Complement
@@ -488,14 +349,13 @@ bool DragDirection(const char* label, vec4& direction) {
 It can be used as follows:
 
 ```C++
-changed = ImGui::DragDirection("Direction #0", m_lightingUniforms.directions[0]) || changed;
+ImGui::DragDirection("Direction #0", m_lightingUniforms.directions[0]);
 ```
 
 ### Slight optimization
 
 Instead of uploading the lighting uniform buffer at each frame even when nothing changes, we can get from ImGui the information of whether the fields changed:
 
-````{tab} With webgpu.hpp
 ```C++
 // In class Application
 bool m_lightingUniformsChanged = false;
@@ -503,8 +363,8 @@ bool m_lightingUniformsChanged = false;
 // In Application.cpp
 void Application::updateLighting() {
 	if (m_lightingUniformsChanged) {
-		Queue queue = m_device.getQueue();
-		queue.writeBuffer(m_lightingUniformBuffer, 0, &m_lightingUniforms, sizeof(LightingUniforms));
+		// [...] Update uniforms
+		m_lightingUniformsChanged = false;
 	}
 }
 
@@ -512,38 +372,12 @@ void Application::updateLighting() {
 bool changed = false;
 ImGui::Begin("Lighting");
 changed = ImGui::ColorEdit3("Color #0", glm::value_ptr(m_lightingUniforms.colors[0])) || changed;
-changed = ImGui::DragFloat3("Direction #0", glm::value_ptr(m_lightingUniforms.directions[0])) || changed;
+changed = ImGui::DragDirection("Direction #0", m_lightingUniforms.directions[0]) || changed;
 changed = ImGui::ColorEdit3("Color #1", glm::value_ptr(m_lightingUniforms.colors[1])) || changed;
-changed = ImGui::DragFloat3("Direction #1", glm::value_ptr(m_lightingUniforms.directions[1])) || changed;
+changed = ImGui::DragDirection("Direction #1", m_lightingUniforms.directions[1]) || changed;
 ImGui::End();
 m_lightingUniformsChanged = changed;
 ```
-````
-
-````{tab} Vanilla webgpu.h
-```C++
-// In class Application
-bool m_lightingUniformsChanged = false;
-
-// In Application.cpp
-void Application::updateLighting() {
-	if (m_lightingUniformsChanged) {
-		WGPUQueue queue = wgpuDeviceGetQueue(m_device);
-		wgpuQueueWriteBuffer(queue, m_lightingUniformBuffer, 0, &m_lightingUniforms, sizeof(LightingUniforms));
-	}
-}
-
-// In Application::updateGui:
-bool changed = false;
-ImGui::Begin("Lighting");
-changed = ImGui::ColorEdit3("Color #0", glm::value_ptr(m_lightingUniforms.colors[0])) || changed;
-changed = ImGui::DragFloat3("Direction #0", glm::value_ptr(m_lightingUniforms.directions[0])) || changed;
-changed = ImGui::ColorEdit3("Color #1", glm::value_ptr(m_lightingUniforms.colors[1])) || changed;
-changed = ImGui::DragFloat3("Direction #1", glm::value_ptr(m_lightingUniforms.directions[1])) || changed;
-ImGui::End();
-m_lightingUniformsChanged = changed;
-```
-````
 
 Conclusion
 ----------
@@ -553,9 +387,8 @@ In this chapter we have:
  - Connected diffuse shading with textures,
  - Connected lighting with GUI.
  - Created a custom GUI.
- - Refactored a bit the code to make room for more textures.
 
-Okey, this was again a bit about organizing things... but we can now dive into material models for real!
+Okey, we are now ready to dive into material models for real!
 
 ````{tab} With webgpu.hpp
 *Resulting code:* [`step100`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step100)
