@@ -11,11 +11,13 @@ Resizing the window
 
 When we introduced the swap chain, **we prevented the window from resizing** by setting the `GLFW_RESIZABLE` window "hint" to false, because the swap chained is tied to a specific size.
 
-Now that our code is better organized, it becomes easy to **get rid of this limitation**: we add a `onResize` handler that we call when the window is resized, and rebuild the swap chain with the new resolution. And we also need to resize the **depth buffer** by the way.
+Now that our code is better organized, it becomes easy to **get rid of this limitation**: in this chapter, we restore the possibility to resize the window:
 
 ```C++
 glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 ```
+
+To do so, we add a `onResize` handler that we call when the window is resized, and **rebuild the swap chain** with the new resolution. And we also need to resize the **depth buffer** by the way.
 
 Callback setup
 --------------
@@ -34,11 +36,13 @@ GLFW provides a mechanism for setting a callback to be invoked each time the win
 
 ```C++
 // DON'T (this will not work)
-Application::onInit() {
+bool Application::initWindowAndDevice() {
 	// [...]
 
 	// Add window callbacks
-	glfwSetFramebufferSizeCallback(window, Application::onResize);
+	glfwSetFramebufferSizeCallback(m_window, Application::onResize);
+
+	return /* [...] */;
 }
 ```
 
@@ -51,7 +55,8 @@ The usual trick here is to define a simple callback function that does nothing b
 It is precisely for this pattern that GLFW provides a **user pointer**, namely an arbitrary value that can be associated to a window. Since the callback receives the window as first argument, we can get the user pointer back and use it:
 
 ```C++
-// The raw GLFW callback
+// The raw GLFW callback, that must always have the same signature
+// even though we do not use the 'width' and 'height' arguments here.
 void onWindowResize(GLFWwindow* window, int /* width */, int /* height */) {
 	// We know that even though from GLFW's point of view this is
 	// "just a pointer", in our case it is always a pointer to an
@@ -62,102 +67,114 @@ void onWindowResize(GLFWwindow* window, int /* width */, int /* height */) {
 	if (that != nullptr) that->onResize();
 }
 
-Application::onInit() {
+bool Application::initWindowAndDevice() {
 	// [...]
 
 	// Set the user pointer to be "this"
-	glfwSetWindowUserPointer(window, this);
+	glfwSetWindowUserPointer(m_window, this);
 	// Add the raw `onWindowResize` as resize callback
-	glfwSetFramebufferSizeCallback(window, onWindowResize);
+	glfwSetFramebufferSizeCallback(m_window, onWindowResize);
+
+	return /* [...] */;
 }
+```
+
+If we want to make this more compact and avoid creating a dedicated function, we can use a **lambda** when calling `glfwSetFramebufferSizeCallback`:
+
+```C++
+bool Application::initWindowAndDevice() {
+	// [...]
+
+	// Set the user pointer to be "this"
+	glfwSetWindowUserPointer(m_window, this);
+	// Use a non-capturing lambda as resize callback
+	glfwSetFramebufferSizeCallback(m_window, [](GLFWwindow* window, int, int){
+		auto that = reinterpret_cast<Application*>(glfwGetWindowUserPointer(window));
+		if (that != nullptr) that->onResize();
+	});
+
+	return /* [...] */;
+}
+```
+
+```{important}
+I did not show the lambda version right away because it is slightly misleading: **it is tempting** to use the **capturing context** of the lambda (the `[]` before the lambda's arguments) to provide `this` to the callback.
+
+However, **only non-capturing lambdas** may be casted to the raw function pointer that GLFW expects for a callback. This remark goes for any C API by the way.
 ```
 
 Resize event handler
 --------------------
 
-We can now focus on the actual content of `onResize()`. Let's extract the steps of `onInit` that creates the swap chain and the depth buffer, so that we can reuse them when resizing:
+### Swap Chain and Depth Buffer
+
+With our new design, the content of `onResize()` is pretty simple:
 
 ```C++
-// In Application.h
-private:
-	void buildSwapChain();
-	void buildDepthBuffer();
-```
+void Application::onResize() {
+	// Terminate in reverse order
+	terminateDepthBuffer();
+	terminateSwapChain();
 
-````{tab} With webgpu.hpp
-```C++
-void Application::buildSwapChain() {
-	int width, height;
-	glfwGetFramebufferSize(window, &width, &height);
-
-	// Destroy previously allocated swap chain
-	if (swapChain != nullptr) {
-		swapChain.release();
-	}
-
-	// [...] Move here the swap chain creation
-}
-
-void Application::buildDepthBuffer() {
-	// Destroy previously allocated texture
-	if (depthTexture != nullptr) {
-		depthTextureView.release();
-		depthTexture.destroy();
-		depthTexture.release();
-	}
-
-	// [...] Move here the depth buffer creation
-	// (and use the swapChain to get the texture size)
+	// Re-init
+	initSwapChain();
+	initDepthBuffer();
 }
 ```
-````
-
-````{tab} Vanilla webgpu.h
-```C++
-void Application::buildSwapChain() {
-	int width, height;
-	glfwGetFramebufferSize(window, &width, &height);
-
-	// Destroy previously allocated swap chain
-	if (swapChain != nullptr) {
-		wgpuSwapChainRelease(swapChain);
-	}
-	
-	// [...] Move here the swap chain creation
-}
-
-void Application::buildDepthBuffer() {
-	// Destroy previously allocated texture
-	if (depthTexture != nullptr) {
-		wgpuTextureViewRelease(depthTextureView);
-		wgpuTextureDestroy(depthTexture);
-		wgpuTextureRelease(depthTexture);
-	}
-	
-	// [...] Move here the depth buffer creation
-	// (and use the swapChain to get the texture size)
-}
-```
-````
 
 ```{note}
 On this simple example, **managing the lifetime** of WebGPU objects (e.g., destroying before rebuild them, releasing at the end of the application, etc.) can be done manually. But since this is in general quite **error-prone**, the [RAII](../../advanced-techniques/raii) chapter presents a common C++ **design pattern** that makes this easier.
 ```
 
-The `onResize` function simply consists in calling these, and updating the uniforms:
+However, we need to **update** `initSwapChain()` and `initDepthBuffer()` to take into account **the actual size of the window**, rather than the hardcoded $(640,480)$.
+
+```C++
+bool Application::initSwapChain() {
+	// Get the current size of the window's framebuffer:
+	int width, height;
+	glfwGetFramebufferSize(m_window, &width, &height);
+
+	// [...]
+	swapChainDesc.width = static_cast<uint32_t>(width);
+	swapChainDesc.height = static_cast<uint32_t>(height);
+	// [...]
+}
+
+bool Application::initDepthBuffer() {
+	// Get the current size of the window's framebuffer:
+	int width, height;
+	glfwGetFramebufferSize(m_window, &width, &height);
+
+	// [...]
+	depthTextureDesc.size = { static_cast<uint32_t>(width), static_cast<uint32_t>(height), 1 };
+	// [...]
+}
+```
+
+### Camera Projection
+
+If you look for "640" in your code to ensure nothing relies any more on the original window size, you'll find that **we use the size when defining the camera projection**. Thus the `onResize` function must also update the projection matrix uniform:
+
+```C++
+void Application::onResize() {
+	// [...] Rebuild swap chain and depth buffer
+	updateProjectionMatrix();
+}
+```
+
+Where `updateProjectionMatrix` is a new private method:
 
 ````{tab} With webgpu.hpp
 ```C++
-void Application::onResize() {
-	buildSwapChain();
-	buildDepthBuffer();
-
-	float ratio = swapChainDesc.width / (float)swapChainDesc.height;
-	uniforms.projectionMatrix = glm::perspective(45 * PI / 180, ratio, 0.01f, 100.0f);
-	queue.writeBuffer(
-		uniformBuffer,
+void Application::updateProjectionMatrix() {
+	int width, height;
+	glfwGetFramebufferSize(m_window, &width, &height);
+	float ratio = width / (float)height;
+	m_uniforms.projectionMatrix = glm::perspective(45 * PI / 180, ratio, 0.01f, 100.0f);
+	m_queue.writeBuffer(
+		m_uniformBuffer,
 		offsetof(MyUniforms, projectionMatrix),
-		&uniforms.projectionMatrix,
+		&m_uniforms.projectionMatrix,
 		sizeof(MyUniforms::projectionMatrix)
 	);
 }
@@ -166,17 +183,16 @@ void Application::onResize() {
 
 ````{tab} Vanilla webgpu.h
 ```C++
-void Application::onResize() {
-	buildSwapChain();
-	buildDepthBuffer();
-
-	float ratio = swapChainDesc.width / (float)swapChainDesc.height;
-	uniforms.projectionMatrix = glm::perspective(45 * PI / 180, ratio, 0.01f, 100.0f);
+void Application::updateProjectionMatrix() {
+	int width, height;
+	glfwGetFramebufferSize(m_window, &width, &height);
+	float ratio = width / (float)height;
+	m_uniforms.projectionMatrix = glm::perspective(45 * PI / 180, ratio, 0.01f, 100.0f);
 	wgpuQueueWriteBuffer(
-		queue,
-		uniformBuffer,
+		m_queue,
+		m_uniformBuffer,
 		offsetof(MyUniforms, projectionMatrix),
-		&uniforms.projectionMatrix,
+		&m_uniforms.projectionMatrix,
 		sizeof(MyUniforms::projectionMatrix)
 	);
 }
