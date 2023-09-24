@@ -112,15 +112,21 @@ To make things clearer, we isolate GUI-related code into specific methods (note 
 // In Application.h
 class Application {
 private:
-	void initGui(); // called in onInit
+	bool initGui(); // called in onInit
+	void terminateGui(); // called in onFinish
 	void updateGui(wgpu::RenderPassEncoder renderPass); // called in onFrame
 };
 
 // In Application.cpp
 void Application::onInit() {
 	// [...]
-	initGui();
+	if (!initGui()) return false;
 	return true;
+}
+
+void Application::onFinish() {
+	terminateGui();
+	// [...]
 }
 
 void Application::onFrame() {
@@ -145,7 +151,7 @@ Here comes the boilerplate itself. For each step (global init, frame init, frame
 #include <backends/imgui_impl_wgpu.h>
 #include <backends/imgui_impl_glfw.h>
 
-void Application::initGui() {
+bool Application::initGui() {
 	// Setup Dear ImGui context
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
@@ -154,6 +160,12 @@ void Application::initGui() {
 	// Setup Platform/Renderer backends
 	ImGui_ImplGlfw_InitForOther(m_window, true);
 	ImGui_ImplWGPU_Init(m_device, 3, m_swapChainFormat, m_depthTextureFormat);
+	return true;
+}
+
+void Application::terminateGui() {
+	ImGui_ImplGlfw_Shutdown();
+	ImGui_ImplWGPU_Shutdown();
 }
 
 void Application::updateGui(RenderPassEncoder renderPass) {
