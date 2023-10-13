@@ -275,7 +275,7 @@ vertexBufferLayouts[0].attributes = &positionAttrib;
 vertexBufferLayouts[0].arrayStride = 2 * sizeof(float); // stride = size of position
 vertexBufferLayouts[0].stepMode = VertexStepMode::Vertex;
 
-// Position attribute
+// Color attribute
 VertexAttribute colorAttrib;
 colorAttrib.shaderLocation = 1;
 colorAttrib.format = VertexFormat::Float32x3; // size of color
