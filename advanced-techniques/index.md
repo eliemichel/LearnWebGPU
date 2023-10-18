@@ -7,6 +7,7 @@ Contents
 ```{toctree}
 :titlesonly:
 
+instanced-drawing
 raii
 screen-capture
 headless
