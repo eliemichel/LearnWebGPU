@@ -9,6 +9,10 @@ Normal mapping (🚧WIP)
 *Resulting code:* [`step110-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step110-vanilla)
 ````
 
+```{admonition} 🚧 WIP
+From this chapter on, the guide is not as up to date. I am currently refreshing it chapter by chapter and this is where I am currently working!
+```
+
 We have seen that the **normal** of a surface (i.e., the direction perpendicular to it) plays a key role in the way the light bounces on it. **Normal mapping** consists in locally perturbing this normal depending on an input map (texture file) to **model the effect of very small geometric details**.
 
 ```{note}
