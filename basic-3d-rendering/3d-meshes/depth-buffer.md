@@ -51,16 +51,16 @@ pipelineDesc.depthStencil = &depthStencilState;
 ````{tab} Vanilla webgpu.h
 ```C++
 void setDefault(WGPUStencilFaceState &stencilFaceState); {
-	stencilFaceState.compare = CompareFunction::Always;
-	stencilFaceState.failOp = StencilOperation::Keep;
-	stencilFaceState.depthFailOp = StencilOperation::Keep;
-	stencilFaceState.passOp = StencilOperation::Keep;
+	stencilFaceState.compare = WGPUCompareFunction_Always;
+	stencilFaceState.failOp = WGPUStencilOperation_Keep;
+	stencilFaceState.depthFailOp = WGPUStencilOperation_Keep;
+	stencilFaceState.passOp = WGPUStencilOperation_Keep;
 }
 
 void setDefault(WGPUDepthStencilState &depthStencilState); {
-	depthStencilState.format = TextureFormat::Undefined;
+	depthStencilState.format = WGPUTextureFormat_Undefined;
 	depthStencilState.depthWriteEnabled = false;
-	depthStencilState.depthCompare = CompareFunction::Always;
+	depthStencilState.depthCompare = WGPUCompareFunction_Always;
 	depthStencilState.stencilReadMask = 0xFFFFFFFF;
 	depthStencilState.stencilWriteMask = 0xFFFFFFFF;
 	depthStencilState.depthBias = 0;
