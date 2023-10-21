@@ -9,6 +9,13 @@ Scene tree (🛑TODO)
 *Resulting code:* [`step100-gltf-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step100-gltf-vanilla)
 ````
 
+Multiple objects
+----------------
+
+Before moving on to a whole scene tree, let us start organizing our code to draw **more than a single mesh**.
+
+TODO
+
 Loading GLTF
 ------------
 
