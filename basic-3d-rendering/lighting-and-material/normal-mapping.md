@@ -38,9 +38,13 @@ Normal map
 
 There are different ways to provide the perturbed normals:
 
- - Specify a perturbed normal at each vertex, and interpolate across the face. This is used to smooth out the boundaries between faces and thus create smooth surfaces, and we already have this.
+ - Specify a perturbed normal **at each vertex**, and interpolate across the face. This is used to **smooth out** the boundaries between faces and thus create smooth surfaces, and we already have this.
 
- - Provide a texture that gives the perturbed normal. This is heavier but can bring a lot more details. This texture is called the **normal map**.
+ - Provide a **texture** that gives the perturbed normal. This is heavier but can bring a lot more details. This texture is called the **normal map**, and is what this chapter is about!
+
+In a normal map, **the color of each vertex represents a little vector** of length 1. Values of red, green and blue are interpreted as components X, Y and Z and **encode values in range $(-1, 1)$**.
+
+The very meaning of these X, Y and Z axes depends on the **convention**; what matters is to be consistent between your files and your shader code:
 
 ```{image} /images/normal-map-light.png
 :align: center
@@ -62,39 +66,141 @@ The conventions "DirectX" and "OpenGL" are no longer constraints from the graphi
 For the rest of this document, **we will follow the OpenGL convention.**
 ```
 
-In order to use such a normal map, we need to:
+In practice in order to use such a normal map, we need to:
 
- 1. Load the file as a texture and bind it to the shader.
- 2. Sample the texel and decode it into a normal vector
- 3. Transform this normal with respect to the orientation of the face
+ 1. **Load** the file as a texture and bind it to the shader.
+ 2. **Sample** the texel and decode it into a normal vector
+ 3. **Transform** this normal with respect to the orientation of the face
 
 On a plane
 ----------
 
-Let us first focus on steps 1. and 2. by using a simple plane (so that there is no need for step 3.).
+Let us first focus on steps 1. **Load** and 2. **Sample** by using a simple plane (so that there is no need for step 3. **Transform** for now).
 
-### Setup
+### Loading the normal map
 
-Switch the loaded object to the plane:
+Switch the loaded object to the [`plane.obj`](../../data/plane.obj) mesh:
 
 ```C++
 bool success = ResourceManager::loadGeometryFromObj(RESOURCE_DIR "/plane.obj", m_vertexData);
 ```
 
-For this example we use the `cobblestone_floor_08` material from [PolyHaven](https://polyhaven.com/a/cobblestone_floor_08) (a nice source of materials that can be freely used by the way). We only look at the [diffuse](../../images/cobblestone_floor_08_diff_2k.jpg) and [normal](../../images/cobblestone_floor_08_nor_gl_2k.png) maps for now, and load them as textures:
+For this example we use the `cobblestone_floor_08` material from [PolyHaven](https://polyhaven.com/a/cobblestone_floor_08) (a nice source of materials that can be freely used by the way). We only look at the [diffuse](../../images/cobblestone_floor_08_diff_2k.jpg) and [normal](../../images/cobblestone_floor_08_nor_gl_2k.png) maps for now, and load them as textures.
+
+Since we have more than one texture, we add attributes to our `Application` class:
+
+````{tab} With webgpu.hpp
+```C++
+// In Application.h, replace:
+wgpu::Texture m_texture = nullptr;
+wgpu::TextureView m_textureView = nullptr;
+// with:
+wgpu::Texture m_baseColorTexture = nullptr;
+wgpu::TextureView m_baseColorTextureView = nullptr;
+wgpu::Texture m_normalTexture = nullptr;
+wgpu::TextureView m_normalTextureView = nullptr;
+```
+````
+
+````{tab} Vanilla webgpu.h
+```C++
+// In Application.h, replace:
+WGPUTexture m_texture = nullptr;
+WGPUTextureView m_textureView = nullptr;
+// with:
+WGPUTexture m_baseColorTexture = nullptr;
+WGPUTextureView m_baseColorTextureView = nullptr;
+WGPUTexture m_normalTexture = nullptr;
+WGPUTextureView m_normalTextureView = nullptr;
+```
+````
+
+We can now update `initTexture()` (which I rename `initTextures()` then), as well as `terminateTextures()`:
 
 ```C++
-if (!initTexture(RESOURCE_DIR "/cobblestone_floor_08_diff_2k.jpg")) return false;
-if (!initTexture(RESOURCE_DIR "/cobblestone_floor_08_nor_gl_2k.png")) return false;
+m_baseColorTexture = ResourceManager::loadTexture(RESOURCE_DIR "/cobblestone_floor_08_diff_2k.jpg", m_device, &m_baseColorTextureView);
+m_normalTexture = ResourceManager::loadTexture(RESOURCE_DIR "/cobblestone_floor_08_nor_gl_2k.png", m_device, &m_normalTextureView);
+// [...] Check errors
 ```
 
-We also add this new binding to the shader (that `initTexture` set up on the C++ side), and note that this offsets the lighting uniform:
+We add this new texture to our bindings, both on the C++ side and the shader side (I chose to insert it next to the base color one):
 
 ```rust
+@group(0) @binding(0) var<uniform> uMyUniforms: MyUniforms;
+@group(0) @binding(1) var baseColorTexture: texture_2d<f32>;
+@group(0) @binding(2) var normalTexture: texture_2d<f32>;
+//                        ^^^^^^^^^^^^^ New binding!
+@group(0) @binding(3) var textureSampler: sampler;
+//                 ^ This was a 2
 @group(0) @binding(4) var<uniform> uLighting: LightingUniforms;
 //                 ^ This was a 3
-// [...]
-@group(0) @binding(3) var normalTexture: texture_2d<f32>;
+```
+
+Update `initBindGroup()` and `initBindGroupLayout()` accordingly.
+
+````{tab} With webgpu.hpp
+```C++
+bool Application::initBindGroupLayout() {
+	std::vector<BindGroupLayoutEntry> bindingLayoutEntries(5, Default);
+	//                                                     ^ This was a 4
+	// [...]
+	// The normal map binding
+	BindGroupLayoutEntry& normalTextureBindingLayout = bindingLayoutEntries[2];
+	normalTextureBindingLayout.binding = 2;
+	normalTextureBindingLayout.visibility = ShaderStage::Fragment;
+	normalTextureBindingLayout.texture.sampleType = TextureSampleType::Float;
+	normalTextureBindingLayout.texture.viewDimension = TextureViewDimension::_2D;
+	// [...] Don't forget to offset bindings after the normal map!
+}
+
+bool Application::initBindGroup() {
+	std::vector<BindGroupEntry> bindings(5);
+	//                                   ^ This was a 4
+	// [...]
+	bindings[1].binding = 1;
+	bindings[1].textureView = m_baseColorTextureView;
+
+	bindings[2].binding = 2;
+	bindings[2].textureView = m_normalTextureView;
+	// [...] Don't forget to offset bindings after the normal map!
+}
+```
+````
+
+````{tab} Vanilla webgpu.h
+```C++
+bool Application::initBindGroupLayout() {
+	std::vector<WGPUBindGroupLayoutEntry> bindingLayoutEntries(5, Default);
+	//                                                         ^ This was a 4
+	// [...]
+	// The normal map binding
+	WGPUBindGroupLayoutEntry& normalTextureBindingLayout = bindingLayoutEntries[2];
+	normalTextureBindingLayout.binding = 2;
+	normalTextureBindingLayout.visibility = WGPUShaderStage_Fragment;
+	normalTextureBindingLayout.texture.sampleType = WGPUTextureSampleType_Float;
+	normalTextureBindingLayout.texture.viewDimension = WGPUTextureViewDimension_2D;
+	// [...] Don't forget to offset bindings after the normal map!
+}
+
+bool Application::initBindGroup() {
+	std::vector<WGPUBindGroupEntry> bindings(5);
+	//                                   ^ This was a 4
+	// [...]
+	bindings[1].binding = 1;
+	bindings[1].textureView = m_baseColorTextureView;
+
+	bindings[2].binding = 2;
+	bindings[2].textureView = m_normalTextureView;
+	// [...] Don't forget to offset bindings after the normal map!
+}
+```
+````
+
+Lastly, this new texture requires to update our device limits:
+
+```C++
+requiredLimits.limits.maxSampledTexturesPerShaderStage = 2;
+//                                                       ^ This was 1
 ```
 
 Increase the specular hardness and play with the view point so that you can highlight the problem with this texture:
@@ -133,12 +239,12 @@ If you are using the **DirectX** convention, you also need to **flip** the $Y$ v
 With normal mapping, the cobblestone material looks like it has a much more realistic relief.
 ```
 
-Normal mapping is **a powerful trick**, but of course it is not fully equivalent to refining geometry. In particular, it **cannot change the silhouette** of the shape, so the illusion falls at grazing angles:
+Normal mapping is **a powerful trick**, but of course it is not fully equivalent to refining geometry. In particular, it **cannot change the silhouette** of the shape, so the illusion fails at grazing angles:
 
 ```{figure} /images/with-normal-mapping-grazing-angle.png
 :align: center
 :class: with-shadow
-At grazing angles, the normal mapping is not enough to give the feeling of relief to the material. More complex methods like **relief mapping** are needed here.
+At **grazing angles**, the normal mapping is not enough to give the feeling of relief to the material. More complex methods like **relief mapping** are needed here.
 ```
 
 ````{note}
@@ -180,7 +286,13 @@ let color = N * 0.5 + 0.5;
 Wrong normals: The direction sampled from the normal map (right) should be rotated to be centered around the original surface normal (left).
 ```
 
-Our key requirement for the rotation is that when the sampled normal is $(0,0,1)$, the end normal vector corresponds to `in.normal`. We thus know what the $Z$ axis of the normal space is, but still need to define a $X$ and a $Y$ to fully get a rotation.
+### Local frame
+
+To fix this, we need to properly define the **local frame** (i.e., a local $X$, $Y$ and $Z$ axes) in which normal maps expresses normal perturbations.
+
+Our key requirement for the rotation is that when the sampled normal is $(0,0,1)$, it should mean "no perturbation". In other words, the end normal vector $N$ must corresponds to `in.normal` in that case.
+
+We thus know what the $Z$ axis of the normal space is, but still need to define a $X$ and a $Y$ to fully get a rotation. These axes are called respectively **tangent** and **bitangent** directions.
 
 ### Tangents and bitangents
 

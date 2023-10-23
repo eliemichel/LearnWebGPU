@@ -288,7 +288,7 @@ for (var i: i32 = 0; i < 2; i++) {
 The constants `kd` and `ks` are properties of the material telling whether it is more or less glossy. I suggest you expose these in the GUI so that you can play with them!
 
 ```C++
-changed = ImGui::SliderFloat("Hardness", &m_lightingUniforms.hardness, 0.0f, 1.0f) || changed;
+changed = ImGui::SliderFloat("Hardness", &m_lightingUniforms.hardness, 1.0f, 100.0f) || changed;
 changed = ImGui::SliderFloat("K Diffuse", &m_lightingUniforms.kd, 0.0f, 1.0f) || changed;
 changed = ImGui::SliderFloat("K Specular", &m_lightingUniforms.ks, 0.0f, 1.0f) || changed;
 ```
