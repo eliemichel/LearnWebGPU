@@ -69,7 +69,7 @@ The Dawn-based distribution I provide here fetches the source code of Dawn from 
 
 **Pros**
 
- - Dawn is much more comfortable to develop with, because it gives more detailed error messages
+ - Dawn is much more comfortable to develop with, because it gives more detailed error messages.
  - It is in general ahead of `wgpu-native` regarding the progress of implementation (but `wgpu-native` will catch up eventually).
 
 **Cons**
@@ -202,7 +202,7 @@ This should display something like `WGPU instance: 000001C0D2637720` at startup.
 
 ### Destruction and lifetime management
 
-All the entities that can be **created** using WebGPU entities must eventually be **released**. A procedure that creates an object always looks like `wgpuCreateSomething`, and its equivalent for releasing it is `wgpuSomethingRelease`.
+All the entities that can be **created** using WebGPU must eventually be **released**. A procedure that creates an object always looks like `wgpuCreateSomething`, and its equivalent for releasing it is `wgpuSomethingRelease`.
 
 Note that each object internally holds a reference counter, and releasing it only frees related memory if no other part of your code still references it (i.e., the counter falls to 0):
 
