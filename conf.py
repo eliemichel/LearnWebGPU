@@ -149,4 +149,4 @@ lit_use_default_style = True
 # -- Internationalization ---------------------------------------------------
 
 locale_dirs = ['locale/']
-gettext_compact = False
+gettext_compact = "guide"
