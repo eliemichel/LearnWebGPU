@@ -232,7 +232,7 @@ WGPUSurface surface = glfwGetWGPUSurface(instance, window);
 #include <glfw3webgpu.h>
 ```
 
-Also don't forget to release the texture at the end:
+Also don't forget to release the surface at the end:
 
 ```{lit} C++, Destroy surface
 wgpuSurfaceRelease(surface);

@@ -19,7 +19,7 @@ There exists many such APIs, for instance you may have heard of OpenGL, DirectX,
 In theory anyone can invent their own graphics API. Each GPU vendor has its own low-level protocol for their driver to dialog with the hardware, on top of which the more common APIs are implemented (often provided with the driver).
 ```
 
-In this documentation, we learn a graphics API called [WebGPU](https://www.w3.org/TR/webgpu/). This API has been designed to provided a **unified access** to GPUs whichever the GPU vendor and operating system the application runs with.
+In this documentation, we learn a graphics API called [WebGPU](https://www.w3.org/TR/webgpu/). This API has been designed to provide a **unified access** to GPUs whichever the GPU vendor and operating system the application runs with.
 
 ```{figure} /images/rhi.png
 :align: center
