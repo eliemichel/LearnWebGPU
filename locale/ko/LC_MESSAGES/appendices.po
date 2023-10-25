@@ -1,0 +1,1875 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2022-2023, Élie Michel and contributors
+# This file is distributed under the same license as the Learn WebGPU for
+# C++ package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2023.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Learn WebGPU for C++ \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2023-10-25 09:12+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ko\n"
+"Language-Team: ko <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.11.0\n"
+
+#: ../../appendices/building-for-the-web.md:1
+msgid "Building for the Web"
+msgstr ""
+
+#: ../../appendices/building-for-the-web.md:4
+#: ../../appendices/building-for-the-web.md:317
+msgid ""
+"*Resulting code:* [`step095-emscripten`](https://github.com/eliemichel"
+"/LearnWebGPU-Code/tree/step095-emscripten)"
+msgstr ""
+
+#: ../../appendices/building-for-the-web.md:6
+msgid ""
+"Even if this guide focuses on native application development, a nice "
+"byproduct of using WebGPU it to be able to compile our code as a Web "
+"page."
+msgstr ""
+
+#: ../../appendices/building-for-the-web.md:8
+msgid ""
+"In such a case, we no longer need a distribution (wgpu-native or Dawn), "
+"we rather have the compiler map our calls to WebGPU symbols to calls to "
+"the actual JavaScript WebGPU API."
+msgstr ""
+
+#: ../../appendices/building-for-the-web.md:10
+msgid "Build system"
+msgstr ""
+
+#: ../../appendices/building-for-the-web.md:13
+msgid "Emscripten toolchain"
+msgstr ""
+
+#: ../../appendices/building-for-the-web.md:15
+msgid ""
+"Building C++ code into a web page requires a **specific compiler** that "
+"can target **WebAssembly** instead of native binaries. The typical choice"
+" is *Emcripten*, and I invite you to **follow the [installation "
+"instructions](https://emscripten.org/docs/getting_started/downloads.html)**."
+msgstr ""
+
+#: ../../appendices/building-for-the-web.md:17
+msgid ""
+"Open a terminal and activate `emsdk` (see installation instruction), such"
+" that **the command `emcmake` is available** in the `PATH` (you may check"
+" with `where emcmake` on Windows `which emcmake` on others)."
+msgstr ""
+
+#: ../../appendices/building-for-the-web.md:19
+msgid "Configuration"
+msgstr ""
+
+#: ../../appendices/building-for-the-web.md:21
+msgid ""
+"This is a command provided by Emcripten to ease the compilation of CMake-"
+"based into WebAssembly. It must simply be used **as a prefix** of the "
+"`cmake` configuration call:"
+msgstr ""
+
+#: ../../appendices/building-for-the-web.md:30
+msgid ""
+"Prefixing with `emcmake` is **only needed for the first call** to CMake. "
+"Relevant information are then properly stored in the `CMakeCache.txt`, "
+"such that you can use CMake as usual afterwards."
+msgstr ""
+
+#: ../../appendices/building-for-the-web.md:33
+msgid ""
+"Note however that it won't correctly run as is, we need to change a few "
+"things in the CMakeLists."
+msgstr ""
+
+#: ../../appendices/building-for-the-web.md:35
+msgid "Dependencies"
+msgstr ""
+
+#: ../../appendices/building-for-the-web.md:37
+msgid ""
+"Emscripten provides its own version of GLFW, because drawing on a Web "
+"page is very different from drawing on a native window. We thus tell "
+"CMake to include our own `glfw` directory only when **not** using "
+"Emscripten:"
+msgstr ""
+
+#: ../../appendices/building-for-the-web.md:46
+msgid ""
+"Other dependencies (`webgpu`, `glfw3webgpu` and `imgui`) are not affected"
+" or already handle Emscripten internally."
+msgstr ""
+
+#: ../../appendices/building-for-the-web.md:48
+msgid ""
+"However, in order to have Emscripten use its own GLFW when **linking** "
+"the application, we must tell it to use the `-sUSE_GLFW=3` argument. We "
+"also use `-sUSE_WEBGPU` to tell the linker that it must **handle WebGPU "
+"symbols** (and replace them with calls to the JavaScript API):"
+msgstr ""
+
+#: ../../appendices/building-for-the-web.md:63
+msgid ""
+"The `-sASYNCIFY` option is needed when using `Instance::requestAdapter` "
+"or `Instance::requestDevice` in the wrapper. It makes these functions "
+"work as **sync** operations while in JavaScript they are async (which "
+"would require one to write our whole application in callbacks)."
+msgstr ""
+
+#: ../../appendices/building-for-the-web.md:66
+msgid ""
+"A last change to the `CMakeLists.txt` before we can build: **by default**"
+" Emscripten generates a **WebAssembly module**, but not a web page. In "
+"order to get a default web page around it, we must change the extension "
+"of the `App` target to `.html`:"
+msgstr ""
+
+#: ../../appendices/building-for-the-web.md:75
+msgid ""
+"We see below how to customize the HTML part of this web page (a.k.a. the "
+"*shell*)."
+msgstr ""
+
+#: ../../appendices/building-for-the-web.md:78
+msgid "Build"
+msgstr ""
+
+#: ../../appendices/building-for-the-web.md:80
+msgid "Building the project is then simply the following, as usual with CMake:"
+msgstr ""
+
+#: ../../appendices/building-for-the-web.md:86
+msgid "Run"
+msgstr ""
+
+#: ../../appendices/building-for-the-web.md:88
+msgid ""
+"Once the build is ready, it creates an `App.html` page. In order to "
+"circumvent browser safety rules, you **must not** open it directly but "
+"rather run a **local server**, for instance using Python:"
+msgstr ""
+
+#: ../../appendices/building-for-the-web.md:94
+msgid ""
+"You may now browse to "
+"[`http://localhost:8000/App.html`](http://localhost:8000/App.html)! Note "
+"that **only Chromium/Google Chrome** has WebGPU support enabled for now."
+msgstr ""
+
+#: ../../appendices/building-for-the-web.md:97
+msgid ""
+"At this stage, the project should build successfully, but the web page "
+"**will not run correctly**."
+msgstr ""
+
+#: ../../appendices/building-for-the-web.md:100
+msgid "Code changes"
+msgstr ""
+
+#: ../../appendices/building-for-the-web.md:103
+msgid "Get limits"
+msgstr ""
+
+#: ../../appendices/building-for-the-web.md:105
+msgid ""
+"The first error we face (as of September 4, 2023) is a missing feature of"
+" Chromium:"
+msgstr ""
+
+#: ../../appendices/building-for-the-web.md:111
+#, python-format
+msgid ""
+"No choice here, we must hard-code some values. We only use supported "
+"limits for the two \"min\" limits. Turns out that according to "
+"[web3dsurvey](https://web3dsurvey.com/webgpu), setting them to 256 "
+"enables us to **support 99.95% of users**!"
+msgstr ""
+
+#: ../../appendices/building-for-the-web.md:140
+msgid ""
+"The WebAssembly module may be cached by your browser, so when reloading "
+"the page use Ctrl/Cmd+F5 instead of just F5."
+msgstr ""
+
+#: ../../appendices/building-for-the-web.md:143
+msgid "Resources"
+msgstr ""
+
+#: ../../appendices/building-for-the-web.md:145
+msgid "The next issue we face occurs when trying to create our render pipeline:"
+msgstr ""
+
+#: ../../appendices/building-for-the-web.md:151
+msgid ""
+"If you pay attention to the log lines above, you may see that the shader "
+"module is set to a null value: `<wgpu::ShaderModule 0>`. Indeed, the "
+"program has **no way to access the shader on your local file system**!"
+msgstr ""
+
+#: ../../appendices/building-for-the-web.md:153
+msgid ""
+"Fortunately there is a way to tell Emscripten **what data to package** "
+"together with the WebAssembly module. We thus add a new option to the "
+"`target_link_options` line of the CMakeLists:"
+msgstr ""
+
+#: ../../appendices/building-for-the-web.md:162
+msgid ""
+"This makes the content of the `resource` directory available to the Web "
+"page."
+msgstr ""
+
+#: ../../appendices/building-for-the-web.md:165
+msgid ""
+"The whole content of the `resource` directory will be downloaded by your "
+"end user. Make sure to **only include what is needed** here so that your "
+"web page is not too heavy! You may instead enumerate the required files "
+"individually."
+msgstr ""
+
+#: ../../appendices/building-for-the-web.md:168
+msgid "Maximum memory"
+msgstr ""
+
+#: ../../appendices/building-for-the-web.md:170
+msgid "We are now facing an **out-of-memory** (OOM) error:"
+msgstr ""
+
+#: ../../appendices/building-for-the-web.md:176
+msgid ""
+"As detailed in the error message, a WebAssembly module only gets a "
+"**limited amount of memory by default**. We may either increase this "
+"default amount, or allow the browser to incrementally allocate more "
+"memory as it gets needed. We go for the second option here as we did not "
+"settle for a specific use case."
+msgstr ""
+
+#: ../../appendices/building-for-the-web.md:178
+msgid "Once again, it is solved by an extra linker option:"
+msgstr ""
+
+#: ../../appendices/building-for-the-web.md:187
+msgid "Main loop"
+msgstr ""
+
+#: ../../appendices/building-for-the-web.md:189
+msgid ""
+"Now the application gets initialized correctly, but after stalling a "
+"little bit and displaying a first frame, it fails again:"
+msgstr ""
+
+#: ../../appendices/building-for-the-web.md:195
+msgid ""
+"This actually hides a more general issue of Emscripten-built "
+"applications: it is **not possible** to have **an explicit main loop**!"
+msgstr ""
+
+#: ../../appendices/building-for-the-web.md:197
+msgid ""
+"A web application **must not stall** the browser in which it is running, "
+"so it cannot just loop forever. Instead in JavaScript one typically uses "
+"[`requestAnimationFrame`](https://developer.mozilla.org/en-"
+"US/docs/Web/API/window/requestAnimationFrame) to have the browser call "
+"**the body** of the main loop at each frame."
+msgstr ""
+
+#: ../../appendices/building-for-the-web.md:199
+msgid ""
+"When building C++ code using Emscripten, the later provides in the "
+"[`emscripten/html5.h`](https://emscripten.org/docs/api_reference/html5.h.html)"
+" header some utility functions interfacing with the browser's animation "
+"frames."
+msgstr ""
+
+#: ../../appendices/building-for-the-web.md:201
+msgid ""
+"We use in particular "
+"[`emscripten_set_main_loop_arg`](https://emscripten.org/docs/api_reference/emscripten.h.html#c.emscripten_set_main_loop_arg),"
+" which acts like a main loop except **the body** of the loop is given by "
+"a **function pointer**:"
+msgstr ""
+
+#: ../../appendices/building-for-the-web.md:213
+msgid ""
+"The type `em_arg_callback_func` is a function pointer taking a `void*` as"
+" argument and returning nothing. Like raw WebGPU callbacks, this void "
+"pointer is just a **blind forwarding** of the `void *arg` argument, which"
+" we can use to pass any data to the body."
+msgstr ""
+
+#: ../../appendices/building-for-the-web.md:215
+msgid ""
+"In our case, we use this `arg` user pointer to pass a pointer to the "
+"application:"
+msgstr ""
+
+#: ../../appendices/building-for-the-web.md:230
+msgid ""
+"The `func` argument can be given as a [C++ "
+"lambda](https://en.cppreference.com/w/cpp/language/lambda) **only if** it"
+" is not capturing any variable. This is why we need to use `arg`."
+msgstr ""
+
+#: ../../appendices/building-for-the-web.md:233
+msgid "In the end, our `main.cpp` file remains rather simple:"
+msgstr ""
+
+#: ../../appendices/building-for-the-web.md:271
+msgid ""
+"As for the initial issue of the swap chain, we may simply ignore the call"
+" to `wgpuSwapChainPresent` in the emscripten version:"
+msgstr ""
+
+#: ../../appendices/building-for-the-web.md:283
+msgid "Our interactive application, finally running in the browser."
+msgstr ""
+
+#: ../../appendices/building-for-the-web.md:286
+msgid "Bonus: Shell"
+msgstr ""
+
+#: ../../appendices/building-for-the-web.md:289
+msgid ""
+"If you want to change the HTML template in which Emscripten wraps your "
+"application, you can specify **yet another link option** to set a **shell"
+" file**: `--shell-file`."
+msgstr ""
+
+#: ../../appendices/building-for-the-web.md:291
+msgid ""
+"For instance download [`shell_minimal.html`](https://github.com"
+"/emscripten-core/emscripten/blob/main/src/shell_minimal.html) from "
+"Emscripten's repository."
+msgstr ""
+
+#: ../../appendices/building-for-the-web.md:293
+msgid ""
+"I also add in the snippet below a `LINK_DEPENDS` property to the `App` "
+"target that ensures that **whenever the shell file is edited**, the build"
+" systems knows that it must re-link the app (even if nothing changed in "
+"the code)."
+msgstr ""
+
+#: ../../appendices/building-for-the-web.md:312
+msgid "Conclusion"
+msgstr ""
+
+#: ../../appendices/building-for-the-web.md:315
+msgid ""
+"You are now able to port pretty much any step of this guide! There are "
+"also many advanced options of Emscripten that you can explore, but I do "
+"not detail them here because they are not specific to WebGPU."
+msgstr ""
+
+#: ../../appendices/custom-extensions/index.md:1
+msgid "Custom Extensions"
+msgstr ""
+
+#: ../../appendices/custom-extensions/index.md:4
+msgid ""
+"When using WebGPU in a non-Web context, there is no reason to be limited "
+"by the Web requirements. This chapter gives an overview of how to add "
+"support for new device features through WebGPU's extension mechanism."
+msgstr ""
+
+#: ../../appendices/custom-extensions/index.md:7
+msgid ""
+"I do not use the [`webgpu.hpp`](https://github.com/eliemichel/WebGPU-Cpp)"
+" helper here as the extension file must define a C API. The `webgpu.hpp` "
+"wrapper can then easily be generalized to your own custom extension by "
+"using [`generator.py`](https://github.com/eliemichel/WebGPU-Cpp#custom-"
+"generation)."
+msgstr ""
+
+#: ../../appendices/custom-extensions/index.md:10 ../../appendices/index.md:5
+msgid "Contents"
+msgstr ""
+
+#: ../../appendices/custom-extensions/mechanism.md:1
+msgid "The extension mechanism (🚧WIP)"
+msgstr ""
+
+#: ../../appendices/custom-extensions/mechanism.md:4
+msgid "Disclaimer"
+msgstr ""
+
+#: ../../appendices/custom-extensions/mechanism.md:5
+msgid ""
+"This section of the guide explores **internal APIs** running behinds the "
+"scenes of the official `webgpu.h`. These are highly **subject to "
+"changes**, as they are conventions of the developers with themselves, not"
+" meant to be documented."
+msgstr ""
+
+#: ../../appendices/custom-extensions/mechanism.md:7
+msgid ""
+"I do my best to update this section from time to time, but the example "
+"code **may not work as is** on newer versions. **The overall idea should "
+"still hold** anyways, and I invite you to share your experiments on the "
+"[Discord server](https://discord.gg/2Tar4Kt564) if you run into trouble!"
+msgstr ""
+
+#: ../../appendices/custom-extensions/mechanism.md:10
+msgid "Descriptor extensions"
+msgstr ""
+
+#: ../../appendices/custom-extensions/mechanism.md:13
+msgid ""
+"You must have noticed this `nextInChain` pointer present in all "
+"descriptors. This is a way to **add extra fields to the descriptor**, "
+"that may or may not be read by the backend depending on whether they "
+"recognize the extension."
+msgstr ""
+
+#: ../../appendices/custom-extensions/mechanism.md:15
+msgid "Structure type"
+msgstr ""
+
+#: ../../appendices/custom-extensions/mechanism.md:17
+msgid ""
+"When creating a new extension, we first need to pick an extension `SType`"
+" (\"structure type\") identifier. This identifier can be any value that "
+"fits in a 32-bit integer, but **some values are reserved**. For instance,"
+" the first values correspond to official extensions:"
+msgstr ""
+
+#: ../../appendices/custom-extensions/mechanism.md:38
+msgid ""
+"Each backend picked its own range of values, as far as possible to avoid "
+"collisions: `wgpu-native` starts at `0x60000001` (`1610612737`) and Dawn "
+"starts at `0x000003E8` (`1000`)."
+msgstr ""
+
+#: ../../appendices/custom-extensions/mechanism.md:41
+msgid ""
+"In the near future, Dawn will move to `0x20000` (`131072`) and wgpu-"
+"native to `0x30000` (`196608`)."
+msgstr ""
+
+#: ../../appendices/custom-extensions/mechanism.md:78
+msgid "😐 How should I pick a value for my extension then?"
+msgstr ""
+
+#: ../../appendices/custom-extensions/mechanism.md:80
+msgid ""
+"Do **not** use values close **after the ones that already exist**. Each "
+"backend and the standard header may add new values just after the ones "
+"they already use, so if you used one you will run into a **collision**."
+msgstr ""
+
+#: ../../appendices/custom-extensions/mechanism.md:82
+msgid ""
+"There is no recommended range in particular yet (I guess there will "
+"eventually be more guidance but there is little feedback on this "
+"extensions mechanism for now). Just pick a base value far enough from "
+"others and sequentially add you extensions there."
+msgstr ""
+
+#: ../../appendices/custom-extensions/mechanism.md:84
+msgid ""
+"For the sake of the example, I use `0x40000` (`262144`). In a custom "
+"`webgpu-ext-foo.h` I define my extension `SType`. To introduce our new "
+"feature \"Foo\" we may need to add extension to multiple descriptors."
+msgstr ""
+
+#: ../../appendices/custom-extensions/mechanism.md:100
+msgid ""
+"Do not forget the `WGPUNativeSType_Force32 = 0x7FFFFFFF`, which is used "
+"to ensure that the C++ compiler does not optimize the representation of "
+"the enum's value on less than 32 bits."
+msgstr ""
+
+#: ../../appendices/custom-extensions/mechanism.md:104
+msgid ""
+"Throughout the next sections, we present here **a very simple and "
+"uninteresting extension**, called **foo**, which adds an optional `foo` "
+"integer member to the `RenderPipeline` and display it in a debug line "
+"whenever `setPipeline` is called on a render pass encoder."
+msgstr ""
+
+#: ../../appendices/custom-extensions/mechanism.md:107
+msgid "Structure fields"
+msgstr ""
+
+#: ../../appendices/custom-extensions/mechanism.md:109
+msgid ""
+"Let us follow the logic of the WebGPU device when it receives a "
+"descriptor:"
+msgstr ""
+
+#: ../../appendices/custom-extensions/mechanism.md:111
+msgid ""
+"Look at `nextInChain` if it is not null. This has type "
+"`WGPUChainedStruct`, which means its first field is another chain pointer"
+" `next`, and its second field is an integer called `sType`."
+msgstr ""
+
+#: ../../appendices/custom-extensions/mechanism.md:112
+msgid "Look at the value `nextInChain->sType` and check that it knows this value."
+msgstr ""
+
+#: ../../appendices/custom-extensions/mechanism.md:113
+msgid ""
+"If it does know it, the device is aware that `nextInChain` actually point"
+" to a structure that is **more than just** `WGPUChainedStruct`, but "
+"instead a structure that starts in the same way but has **extra fields**."
+msgstr ""
+
+#: ../../appendices/custom-extensions/mechanism.md:114
+msgid ""
+"The device **casts** `nextInChain` to this known structure and reads the "
+"extra fields."
+msgstr ""
+
+#: ../../appendices/custom-extensions/mechanism.md:115
+msgid "Repeat from step 1. by replacing `nextInChain` by `nextInChain->next`."
+msgstr ""
+
+#: ../../appendices/custom-extensions/mechanism.md:117
+msgid ""
+"The heart of the extension lies in step 3. Our extension must provide the"
+" definition of this structure that starts like a `WGPUChainedStruct`, "
+"that both the user code and the backend code agree on."
+msgstr ""
+
+#: ../../appendices/custom-extensions/mechanism.md:119
+msgid ""
+"To start like `WGPUChainedStruct`, we use the C-idiomatic inheritance "
+"mechanism: have **the first attribute** of your struct be of type "
+"`WGPUChainedStruct`. This ensure that an instance of your struct can be "
+"cast to a `WGPUChainedStruct`:"
+msgstr ""
+
+#: ../../appendices/custom-extensions/mechanism.md:132
+msgid "In the end user code, this would be used as follows:"
+msgstr ""
+
+#: ../../appendices/custom-extensions/mechanism.md:151
+msgid "Adapter features"
+msgstr ""
+
+#: ../../appendices/custom-extensions/mechanism.md:154
+msgid ""
+"When introducing a new extension, we must advertise its availability to "
+"the user code by adding a new **feature** in the adapter. Thus at startup"
+" when checking adapter capabilities the end user code can figure out "
+"whether it is allowed to use the extension of not."
+msgstr ""
+
+#: ../../appendices/custom-extensions/mechanism.md:156
+msgid ""
+"The logic is very similar to `SType`: there are standard ones, and "
+"backend-specific ones starting at the same indices than STypes."
+msgstr ""
+
+#: ../../appendices/custom-extensions/mechanism.md:198
+msgid "We can add our own \"Foo\" feature, still in our `webgpu-ext-foo.h` file:"
+msgstr ""
+
+#: ../../appendices/custom-extensions/mechanism.md:211
+msgid ""
+"The `webgpu-ext-foo.h` file that we have is all we need as an interface "
+"between the user code and our modified backend. For the implementation of"
+" this header, we need to chose what backend to edit."
+msgstr ""
+
+#: ../../appendices/custom-extensions/mechanism.md:213
+msgid ""
+"The next 2 chapters focus respectively on [`wgpu-native`](with-wgpu-"
+"native.md), then [Dawn](with-dawn.md), to show more **internal details** "
+"of how to implement this basic Foo extension."
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-dawn.md:1
+msgid "With Dawn (🚧WIP)"
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-dawn.md:4
+#: ../../appendices/custom-extensions/with-dawn.md:340
+msgid ""
+"*Resulting code:* "
+"[`dawn:eliemichel/foo`](https://github.com/eliemichel/Dawn/tree/eliemichel/foo)"
+" and [`step030-test-foo-extension-dawn`](https://github.com/eliemichel"
+"/LearnWebGPU-Code/tree/step030-test-foo-extension-dawn)"
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-dawn.md:7
+msgid ""
+"If you have not already, don't forget to read the introduction of the "
+"[Extension Mechanism](mechanism.md)."
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-dawn.md:10
+#: ../../appendices/custom-extensions/with-wgpu-native.md:6
+msgid "Setup"
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-dawn.md:13
+msgid ""
+"Instead of fetching Dawn source at configuration time and have it lost in"
+" `build/_deps`, we clone Dawn as a git submodule (or just copy it) in our"
+" source tree."
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-dawn.md:16
+msgid ""
+"I start from the [`step030-headless`](https://github.com/eliemichel"
+"/LearnWebGPU-Code/tree/step030-headless) branch to have a minimalistic "
+"version of the test app (and strip down the `save_image` part)."
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-dawn.md:33
+msgid ""
+"Update `webgpu/webgpu.cmake` to use the local Dawn submodule (simply copy"
+" from [here](https://github.com/eliemichel/LearnWebGPU-Code/blob/step030"
+"-test-foo-extension-dawn/webgpu/webgpu.cmake))."
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-dawn.md:36
+msgid ""
+"I also copied [`webgpu.hpp`](https://github.com/eliemichel/WebGPU-"
+"Cpp/blob/main/dawn/webgpu.hpp) into `webgpu/include/webgpu/`."
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-dawn.md:39
+msgid "New feature"
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-dawn.md:42
+#: ../../appendices/custom-extensions/with-dawn.md:193
+msgid "Public API"
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-dawn.md:44
+msgid ""
+"We start by updating the descriptor structs to handle our new Foo "
+"extension. Contrary to `wgpu-native`, we do **not directly write the "
+"extension header** (that we called `webgpu-ext-foo.h`), because Dawn's "
+"`webgpu.h` is **auto-generated**."
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-dawn.md:46
+msgid ""
+"The source of this generation is the large `dawn.json` file, at the root "
+"of Dawn's repo. Locate for instance `\"feature name\": {` to add our Foo "
+"feature:"
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-dawn.md:63
+msgid ""
+"We add the tag `native` to mean that this feature must only be generated "
+"for native builds, not for web-based setups."
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-dawn.md:67
+msgid ""
+"Do not forget to add a comma (`,`) at the end of the previous line, "
+"before our custom one."
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-dawn.md:70
+msgid "We can now check that the feature is indeed supported:"
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-dawn.md:81
+msgid "😡 It is **not** supported here!"
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-dawn.md:83
+msgid ""
+"The code that was auto-generated from the json file above describes the "
+"**public API** of the Dawn library. We now need to manually modify the "
+"**internal `dawn::native` API** that is used to dialog with the different"
+" backends (Vulkan, DirectX, Metal, etc.)."
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-dawn.md:85
+#: ../../appendices/custom-extensions/with-dawn.md:262
+msgid "Internal API"
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-dawn.md:87
+msgid "We add our feature to the internal `Feature` enum:"
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-dawn.md:104
+msgid "Update"
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-dawn.md:105
+msgid ""
+"I wrote this on an earlier version of Dawn, lately this has been moved to"
+" the auto-generated version so no need to worry about it!"
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-dawn.md:108
+msgid ""
+"We then specify in `Features.cpp` how to convert back and forth between "
+"the public and internal APIs:"
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-dawn.md:136
+msgid "Finally, we add some information about this feature:"
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-dawn.md:151
+msgid ""
+"I leave the feature state to `Stable` for the sake of simplicity. If you "
+"want to set it to `Experimental`, you must make sure to enable the "
+"`allow_unsafe_apis` toggle in your application code."
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-dawn.md:154
+msgid "Backend change (Vulkan)"
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-dawn.md:156
+msgid ""
+"Okey now our feature is correctly wired up in the internal API, but so "
+"far **none of the backends support it**! At this stage we must focus on "
+"**a single one at a time**."
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-dawn.md:158
+msgid ""
+"We start with **Vulkan**, looking inside `dawn/src/dawn/native/vulkan`. "
+"So let's first force the Vulkan backend in our application:"
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-dawn.md:167
+msgid ""
+"In Vulkan wording (and also in Dawn's internal), the available feature "
+"set is provided by a `PhysicalDevice`."
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-dawn.md:169
+msgid ""
+"In `vulkan/PhysicalDeviceVk.h`, we can see that the `PhysicalDevice` "
+"class, specific to this backend, inherits from the `PhysicalDeviceBase` "
+"class, defined by the internal backend-agnostic `dawn::native` API."
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-dawn.md:171
+msgid ""
+"This base class contains a protected method `void EnableFeature(Feature "
+"feature)`, that the child class may call to enable a particular feature. "
+"**In practice** this is done in `InitializeSupportedFeaturesImpl()`, "
+"where we add our feature:"
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-dawn.md:182
+msgid "You should now see the feature supported:"
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-dawn.md:188
+msgid ""
+"Add it to the list of `requiredFeatures` of the **device descriptor** and"
+" you can then check that `wgpuDeviceHasFeature(device, "
+"WGPUFeatureName_Foo)` is true!"
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-dawn.md:190
+msgid "Render pipeline"
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-dawn.md:195
+msgid ""
+"Let us now actually add some behavior to this extension. We create an "
+"extension of the `RenderPipelineDescriptor`, thus we create a type that "
+"can be chained to this descriptor."
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-dawn.md:197
+msgid ""
+"The **public API** is handled in `dawn.json`: we define the extension "
+"chained struct by adding anywhere in the root scope (at the end for "
+"instance), the following entry:"
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-dawn.md:211
+msgid "And we must also add **the very name of this struct** to the SType enum:"
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-dawn.md:228
+msgid "We can now try to use this new struct in our application:"
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-dawn.md:245
+msgid ""
+"Since so far the render pipeline descriptor was not extended by any "
+"feature, a sanity check in `ValidateRenderPipelineDescriptor` ensures "
+"that there is no chained data in the descriptor. We must remove that and "
+"check instead the validity of the chain:"
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-dawn.md:260
+msgid "Our application now runs correctly, but does nothing special."
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-dawn.md:264
+msgid ""
+"This time, the internal version of `RenderPipelineDescriptor` is "
+"identical to the public one (it has a different type name, but is "
+"`reinterpret_cast`-ed). So we can directly proceed to the backend change."
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-dawn.md:266
+msgid "Backend change (agnostic)"
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-dawn.md:268
+msgid ""
+"Our example feature is **so simple** that it can actually be implemented "
+"in the `RenderPipelineBase` class, which is **agnostic to the backend**!"
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-dawn.md:270
+msgid ""
+"We add in the struct **two private attributes**, storing the value of "
+"\"foo\" provided by our extension of the descriptor, and a boolean "
+"telling whether it was provided:"
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-dawn.md:283
+msgid ""
+"We then **modify the constructor** to read these values from the "
+"descriptor. The handy `FindInChain` utility function **recursively "
+"inspects the extension chain**, looking for the right SType:"
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-dawn.md:300
+msgid "We also define a `DoTestFoo` method that emits our test log line:"
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-dawn.md:318
+msgid ""
+"In order to trigger this line whenever `setPipeline` is called, we go to "
+"the definition of the `RenderEncoderBase` class:"
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-dawn.md:329
+msgid ""
+"Method names that start with `API` directly correspond to calls to the "
+"public API. The mapping is auto-generated."
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-dawn.md:332
+msgid ""
+"And tadam! We were able to create a custom extension, and propagate the "
+"extra \"foo\" information from our application code all the way to Dawn's"
+" internals."
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-dawn.md:338
+msgid ""
+"Of course this was only a basic example, but from there on changes highly"
+" depend on the actual extension you want to implement!"
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-wgpu-native.md:1
+msgid "With `wgpu-native` (🚧WIP)"
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-wgpu-native.md:4
+#: ../../appendices/custom-extensions/with-wgpu-native.md:391
+msgid ""
+"*Resulting code:* "
+"[`wgpu`](https://github.com/eliemichel/wgpu/tree/eliemichel/foo), [`wgpu-"
+"native`](https://github.com/eliemichel/wgpu-native/tree/eliemichel/foo) "
+"and [`step030-test-foo-extension`](https://github.com/eliemichel"
+"/LearnWebGPU-Code/tree/step030-test-foo-extension)"
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-wgpu-native.md:9
+msgid ""
+"Before modifying any code, we need to set up the **2 repositories** that "
+"`wgpu-native` relies on."
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-wgpu-native.md:11
+msgid "Building `wgpu-native`"
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-wgpu-native.md:13
+msgid ""
+"Start by building a \"regular\" `wgpu-native` using [the instructions "
+"from their repository](https://github.com/gfx-rs/wgpu-native/wiki"
+"/Getting-Started). You need in particular [rust](https://www.rust-"
+"lang.org/) and [LLVM/Clang](https://rust-lang.github.io/rust-"
+"bindgen/requirements.html). With these installed, building looks like "
+"this:"
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-wgpu-native.md:23
+msgid ""
+"Adapt the value of `LIBCLANG_PATH` above to your actual installation of "
+"LLVM/Clang."
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-wgpu-native.md:26
+msgid ""
+"You then find the binaries in `target\\release`. If you use the `wgpu-"
+"native` based [WebGPU-distribution](https://github.com/eliemichel/WebGPU-"
+"distribution/tree/wgpu) in your end project, simply replace the relevant "
+"files in `webgpu/bin`."
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-wgpu-native.md:28
+msgid "Building `wgpu`"
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-wgpu-native.md:30
+msgid ""
+"The `wgpu-native` repository is a **thin layer** exposing as a C "
+"interface the actual `wgpu` backend. When creating a custom extension, we"
+" need to change the backend, and instruct the `wgpu-native` layer to use "
+"our custom `wgpu` branch."
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-wgpu-native.md:38
+msgid ""
+"To point `wgpu-native` to our custom `wgpu`, we can modify its `wgpu-"
+"native/Cargo.toml` and add:"
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-wgpu-native.md:47
+msgid ""
+"To make sure to reproduce the very same binaries, check out in the `wgpu`"
+" directory the commit specified after `rev =` in the `Cargo.toml` of "
+"`wgpu-native`."
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-wgpu-native.md:54
+msgid ""
+"But since you are writing an extension you may want to use the last "
+"version of `wgpu` instead."
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-wgpu-native.md:57
+msgid ""
+"You may also need to update the rev hash of `[dependencies.naga]` to "
+"match what your version of `wgpu` uses."
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-wgpu-native.md:59
+msgid "The Foo Extension"
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-wgpu-native.md:62
+msgid "Extending types"
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-wgpu-native.md:64
+msgid ""
+"We can copy our `webgpu-ext-foo.h` header in the `wgpu-native/ffi/` "
+"directory, next to `wgpu.h`. In order to have rust's build system parse "
+"these files, we add our custom header to `build.rs`:"
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-wgpu-native.md:74
+msgid ""
+"This defines in rust's `native` namespace symbols that are equivalent to "
+"what the C header files expose. We must also modify some existing types "
+"in `wgpu-types/src/lib.rs`. At least to add our new adapter feature:"
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-wgpu-native.md:89
+msgid ""
+"In our running example, we want to add a field `foo` to the render "
+"pipeline. We thus modify the `RenderPipelineDescriptor` in `wgpu/wgpu-"
+"core/src/pipeline.rs`:"
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-wgpu-native.md:100
+msgid ""
+"When trying to build from the `wgpu` root, do not try to build the whole "
+"project, we only use `wgpu-core` and `wgpu-types` (which the former "
+"depends on), so try building with:"
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-wgpu-native.md:106
+msgid "But more likely you will build from the `wgpu-native` projects:"
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-wgpu-native.md:112
+msgid ""
+"If you want your extension to also be available to rust users, you must "
+"also adapt the `wgpu` package, but I will not cover it here."
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-wgpu-native.md:115
+msgid "Extending native wrapper"
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-wgpu-native.md:117
+msgid ""
+"Conversion utilities to link rust-side types defined in `wgpu/wgpu-types`"
+" with the `native` defines that follow the C header. Add your feature "
+"name to `features_to_native` and `map_feature` in `wgpu-"
+"native/src/conv.rs`:"
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-wgpu-native.md:138
+msgid ""
+"In order to recognize our `SType` when it is passed in the extension "
+"chain of a `RenderPipelineDescriptor`, we modify the "
+"`wgpuDeviceCreateRenderPipeline` procedure in `wgpu-native/src/lib.rs`:"
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-wgpu-native.md:163
+msgid "This calls a `map_render_pipeline_descriptor` that we create in `conv.rs`:"
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-wgpu-native.md:175
+msgid ""
+"Do not forget to add `map_render_pipeline_descriptor` to the `use "
+"conv::{...}` line at the beginning of `lib.rs`."
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-wgpu-native.md:178
+msgid "Extending core"
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-wgpu-native.md:180
+msgid ""
+"If your extension is shallow enough not to affect the backends, you "
+"should only have to modify `wgpu/wgpu-core`. But if you take the time to "
+"write a custom extension, it likely requires to modify one or multiple "
+"backends."
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-wgpu-native.md:182
+msgid "Extending backends"
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-wgpu-native.md:185
+msgid ""
+"TODO: I still need to learn better how the code is organized. So far I "
+"noticed that:"
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-wgpu-native.md:187
+msgid "`wgpu-native` maps C entry points to the rust API of `wgpu-core`"
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-wgpu-native.md:188
+msgid ""
+"`wgpu-core` maintains the common user API, that application based on wgpu"
+" use, either through the native wrapper or through `wgpu-rs` (a.k.a. just"
+" `wgpu`). Behinds the scenes, it maps instructions to `wgpu-hal`"
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-wgpu-native.md:189
+msgid ""
+"`wgpu-hal` is the backend/hardware abstraction layer, it defines the "
+"internal API that each backend (Vulkan, Metal, DX12, etc.) must implement"
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-wgpu-native.md:190
+msgid ""
+"`wgpu-hal/vulkan` is the Vulkan backend, that implements all of the HAL's"
+" requirements"
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-wgpu-native.md:193
+msgid ""
+"The file `wgpu/wgpu-hal/src/lib.rs` defines the interface that each "
+"backend must implement. Backends are the subdirectories of `wgpu/wgpu-"
+"hal/src` as well as the `empty.rs` file that defines a default behavior "
+"that does nothing."
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-wgpu-native.md:195
+msgid ""
+"We implement backends one by one, maybe only for the ones that interest "
+"us in practice. We must thus make sure that the `Foo` feature is "
+"advertised by the adapter only for the backend that we implemented."
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-wgpu-native.md:197
+msgid ""
+"Let's start with the Vulkan backend. We first advertise that the adapter "
+"(a.k.a. *physical device* in Vulkan wording) supports our feature."
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-wgpu-native.md:200
+msgid ""
+"Of course you may inspect the actual physical device properties to "
+"conditionally list the `FOO` feature only if the mechanism you want to "
+"implement is indeed supported."
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-wgpu-native.md:221
+msgid "Now in DirectX 12 backend:"
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-wgpu-native.md:242
+msgid "We focus only on the Vulkan backend in the remainder of this section."
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-wgpu-native.md:245
+msgid ""
+"We can now check that the feature is correctly made available in our "
+"application code. I start from the "
+"[`step030-headless`](https://github.com/eliemichel/LearnWebGPU-"
+"Code/tree/step030-headless) branch."
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-wgpu-native.md:256
+msgid ""
+"After you copy the DLL and headers of your custom `wgpu-native`, you "
+"should see the Foo feature supported."
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-wgpu-native.md:259
+msgid ""
+"You can force a particular backend by playing with the **instance "
+"extras** extension of `wgpu-native` in the instance descriptor:"
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-wgpu-native.md:273
+msgid "Do not forget to also request the feature when creating your device:"
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-wgpu-native.md:289
+msgid "We can then try extending the render pipeline:"
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-wgpu-native.md:304
+msgid ""
+"In order to test that the value is correctly propagated, we just print a "
+"log line whenever `setPipeline` is called for this pipeline:"
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-wgpu-native.md:318
+msgid ""
+"We need for this to add a `foo` field to the RenderPipeline (we only "
+"added it to the descriptor for now):"
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-wgpu-native.md:329
+msgid "And we propagate from the descriptor when creating the render pipeline:"
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-wgpu-native.md:344
+msgid ""
+"But, as you may notice, this is **yet another** taste of "
+"`RenderPipelineDescriptor` type (defined in `wgpu-hal/lib.rs`). As this "
+"is getting quite confusing, let me summarize with a figure:"
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-wgpu-native.md:383
+msgid ""
+"At this stage, if you build `wgpu-native`, update the DLL in your C++ "
+"application and run that application, it should eventually display the "
+"test log line:"
+msgstr ""
+
+#: ../../appendices/custom-extensions/with-wgpu-native.md:389
+msgid ""
+"**Congratulation**, you have your first extension of `wgpu-native`! Of "
+"course it does not do much, and it only does so on the Vulkan backend. "
+"But we have explored the architecture of the project. What remains now "
+"depends highly on what exact extension you want to implement!"
+msgstr ""
+
+#: ../../appendices/dawn-vs-wgpu-native.md:1
+msgid "Dawn vs wgpu-native"
+msgstr ""
+
+#: ../../appendices/dawn-vs-wgpu-native.md:4
+msgid ""
+"Despite the kind of click-bait title, this page does not intend to tell "
+"which implementation is better, but rather to list the key divergence "
+"that it is important to be aware of while reading the guide because I did"
+" not update all examples and chapters to support both backend yet (I'm "
+"waiting for the API to settle before taking the time to review all code "
+"examples)."
+msgstr ""
+
+#: ../../appendices/dawn-vs-wgpu-native.md:6
+msgid "Most annoying divergences are:"
+msgstr ""
+
+#: ../../appendices/dawn-vs-wgpu-native.md:8
+msgid "Drop vs Release"
+msgstr ""
+
+#: ../../appendices/dawn-vs-wgpu-native.md:9
+msgid "Drop on finish()"
+msgstr ""
+
+#: ../../appendices/dawn-vs-wgpu-native.md:10
+msgid "Poll vs Tick"
+msgstr ""
+
+#: ../../appendices/dawn-vs-wgpu-native.md:12
+msgid "Another limiting issue:"
+msgstr ""
+
+#: ../../appendices/dawn-vs-wgpu-native.md:14
+msgid "GLFW did not merge https://github.com/glfw/glfw/pull/2333 yet"
+msgstr ""
+
+#: ../../appendices/dawn-vs-wgpu-native.md:15
+msgid "Dawn uses size_t vs uint32_t everywhere in standard header"
+msgstr ""
+
+#: ../../appendices/dawn-vs-wgpu-native.md:16
+msgid ""
+"With Dawn, stencilLoadOp and stencilStoreOp must be set to respectively "
+"LoadOp::Undefined and StoreOp::Undefined."
+msgstr ""
+
+#: ../../appendices/debugging.md:1
+msgid "Debugging (🚧WIP)"
+msgstr ""
+
+#: ../../appendices/debugging.md:4
+msgid ""
+"It is important to get familiar with some basic debugging tips as early "
+"as possible."
+msgstr ""
+
+#: ../../appendices/debugging.md:6
+msgid "Graphics debugger"
+msgstr ""
+
+#: ../../appendices/debugging.md:9
+msgid ""
+"There is a particular challenge when it comes to graphics debugging: the "
+"usual debugging tools **can only see what happens on the CPU**, because "
+"that's where they live."
+msgstr ""
+
+#: ../../appendices/debugging.md:11
+msgid ""
+"We hence need a dedicated tool, called a **graphics debugger**. This "
+"debugger still runs on the CPU, but it gets **injected between your "
+"application and the GPU command queue**, and monitors everything that "
+"passes so that it can **replay** all your commands. Kind of a [man-in-"
+"the-middle](https://en.wikipedia.org/wiki/Man-in-the-middle_attack), if "
+"you will."
+msgstr ""
+
+#: ../../appendices/debugging.md:13
+msgid ""
+"A graphics debugger really help a lot at debugging shaders, buffers, "
+"textures, etc. by enabling us to inspect the GPU memory and state. And it"
+" can also give performance hints."
+msgstr ""
+
+#: ../../appendices/debugging.md:15
+msgid "I use two graphics debuggers:"
+msgstr ""
+
+#: ../../appendices/debugging.md:17
+msgid ""
+"[RenderDoc](https://renderdoc.org/) is really great for **debugging**, it"
+" is actively and very accurately maintained."
+msgstr ""
+
+#: ../../appendices/debugging.md:19
+msgid ""
+"[Nsight Graphics](https://developer.nvidia.com/nsight-graphics) also has "
+"a debugger, but I use it mostly for its **frame profiler** that gives "
+"detailed insights about the time spent by various GPU units."
+msgstr ""
+
+#: ../../appendices/debugging.md:21
+msgid "Debugging textures"
+msgstr ""
+
+#: ../../appendices/debugging.md:24
+msgid ""
+"This first example of debugging is inspired by a real bug encountered by "
+"a reader[^iazalong] when following the [texture loading](../basic-3d-"
+"rendering/texturing/loading-from-file.md) chapter."
+msgstr ""
+
+#: ../../appendices/debugging.md:28
+msgid "Clearly, something was wrong with the texture:"
+msgstr ""
+
+#: ../../appendices/debugging.md:33
+msgid "Something is wrong with the texture."
+msgstr ""
+
+#: ../../appendices/debugging.md:36
+msgid ""
+"First reflex before touching at the code is to **diagnose** a little "
+"better the issue with RenderDoc. In the *Launch Application* tab of "
+"RenderDoc, browse to your application in *Executable Path*, maybe adapt "
+"the *Working Directory* if you load resources from relative paths, and "
+"you should see your program start with a **debug overlay** on the top:"
+msgstr ""
+
+#: ../../appendices/debugging.md:41
+msgid "The application launched from RenderDoc."
+msgstr ""
+
+#: ../../appendices/debugging.md:44
+msgid ""
+"This overlay confirms that RenderDoc was able to inject itself between "
+"your program and the GPU, and as it suggests, press F12 to capture a "
+"frame. This records everything that transits to the GPU and creates a "
+"**Capture**."
+msgstr ""
+
+#: ../../appendices/debugging.md:47
+msgid ""
+"You may then close your program, the capture contains everything it needs"
+" to replay your very frame."
+msgstr ""
+
+#: ../../appendices/debugging.md:50
+msgid ""
+"Double click on the capture to open it. The *Event Browser* shows all the"
+" events (i.e., commands) that were intercepted by the debugger, and "
+"clicking on one goes to the state of the GPU as it was at that time. "
+"Locate for instance the main draw call:"
+msgstr ""
+
+#: ../../appendices/debugging.md:55
+msgid "The list of events in RenderDoc."
+msgstr ""
+
+#: ../../appendices/debugging.md:58
+msgid ""
+"You can use the *Outputs* tab of the *Texture Viewer* to help you "
+"navigate through the events."
+msgstr ""
+
+#: ../../appendices/debugging.md:61
+msgid ""
+"The captured events do not exactly match the WebGPU commands, because "
+"RenderDoc captures the low-level API that is hidden behind it. In my "
+"example, WebGPU runs on a Vulkan backend so what we see is Vulkan events."
+" On a different platform, you may see a different API such as Metal or "
+"DirectX, but you should anyway recognize the overall structure."
+msgstr ""
+
+#: ../../appendices/debugging.md:64
+msgid ""
+"Since something seems wrong the input texture, let's go to the *Inputs* "
+"tab and look at it (make sure you are on the right draw call in the event"
+" browser):"
+msgstr ""
+
+#: ../../appendices/debugging.md:69
+msgid "The input texture inspected in RenderDoc."
+msgstr ""
+
+#: ../../appendices/debugging.md:72
+msgid ""
+"So far so good, so what is wrong? Mmh, let's now inspect the different "
+"mip levels:"
+msgstr ""
+
+#: ../../appendices/debugging.md:77
+msgid "The mip levels inspected in RenderDoc."
+msgstr ""
+
+#: ../../appendices/debugging.md:80
+msgid ""
+"Here we are, the mip levels are not built correctly! We now know that we "
+"should focus our debugging effort on the part of `loadTexture` that "
+"builds and upload the mip levels."
+msgstr ""
+
+#: ../../appendices/debugging.md:83
+msgid ""
+"As it turns out, the problem was that the `writeTexture` call was "
+"pointing to the original pixel buffer for all mip levels."
+msgstr ""
+
+#: ../../appendices/debugging.md:86
+msgid "Debugging geometry"
+msgstr ""
+
+#: ../../appendices/debugging.md:89
+msgid ""
+"Another typical use case of RenderDoc is to inspect the geometry. And "
+"more generally, the *Pipeline State* tab gives precious information about"
+" draw calls:"
+msgstr ""
+
+#: ../../appendices/debugging.md:94
+msgid "The graphics pipeline tab in RenderDoc."
+msgstr ""
+
+#: ../../appendices/debugging.md:97
+msgid ""
+"We can see here the whole **render pipeline**, with both its fixed-"
+"function and programmable stages. In the *Vertex Input* stage, there is "
+"in particular a *Mesh View* that is very insightful:"
+msgstr ""
+
+#: ../../appendices/debugging.md:102
+msgid "The mesh view in RenderDoc."
+msgstr ""
+
+#: ../../appendices/debugging.md:105
+msgid ""
+"You can see, both as a table and in a 3D viewer, the assembled input "
+"geometry and the post vertex shader one."
+msgstr ""
+
+#: ../../appendices/debugging.md:107
+msgid "Debugging in browser"
+msgstr ""
+
+#: ../../appendices/debugging.md:110
+msgid ""
+"If you are compiling your project as a web page using emscripten, you "
+"should check out [the `webgpu-devtools` Chrome "
+"extension](https://chrome.google.com/webstore/detail/webgpu-"
+"devtools/ckabpgjkjmbkfmichbbgcgbelkbbpopi), it provides advanced WebGPU-"
+"specific debugging tools!"
+msgstr ""
+
+#: ../../appendices/debugging.md:26
+msgid "Thanks *Iazalong*!"
+msgstr ""
+
+#: ../../appendices/feedback-needed.md:1
+msgid "Feedback needed"
+msgstr ""
+
+#: ../../appendices/feedback-needed.md:4
+msgid ""
+"This guide is still a Work in Progress. Because it is not finished, to "
+"begin with, but also importantly because to feel satisfied I need more "
+"feedback about the following points."
+msgstr ""
+
+#: ../../appendices/feedback-needed.md:6
+msgid ""
+"Any suggestion? [**Please fill this feedback "
+"form!**](https://forms.gle/SUHKuogBRMMnXf7PA)"
+msgstr ""
+
+#: ../../appendices/feedback-needed.md:8
+msgid ""
+"You may also contact me on Twitter [@exppad](https://twitter.com/exppad) "
+"and join the support Discord server: "
+"[https://discord.gg/2Tar4Kt564](https://discord.gg/2Tar4Kt564)."
+msgstr ""
+
+#: ../../appendices/feedback-needed.md:10
+msgid "Is it easy to follow?"
+msgstr ""
+
+#: ../../appendices/feedback-needed.md:13
+msgid ""
+"*Where you able to follow the different steps. Is there anything that "
+"blocked you, that took you more time than expected, that was "
+"frustrating?*"
+msgstr ""
+
+#: ../../appendices/feedback-needed.md:15
+msgid ""
+"Even if it is something that is actually mentioned and that you missed, "
+"the fact that you missed it is a sign that I may need to rephrase."
+msgstr ""
+
+#: ../../appendices/feedback-needed.md:17
+msgid ""
+"*Is it engaging enough? Did you stop reading it at some point? Where "
+"exactly? Do you plan on continuing the lecture?*"
+msgstr ""
+
+#: ../../appendices/feedback-needed.md:19
+msgid "Is level of detail right?"
+msgstr ""
+
+#: ../../appendices/feedback-needed.md:22
+msgid ""
+"Give too many details, and people get lost, or bored, because they'd like"
+" to go to the point faster. Don't give enough, and people don't get "
+"things right, or miss important concepts."
+msgstr ""
+
+#: ../../appendices/feedback-needed.md:24
+msgid ""
+"*Is the level of detail right for your case? What is your use case by the"
+" way? Is the level of detail constant enough, or did you feel that "
+"sometimes it's too fast and sometimes it's too slow?*"
+msgstr ""
+
+#: ../../appendices/feedback-needed.md:26
+msgid "Is it up to date?"
+msgstr ""
+
+#: ../../appendices/feedback-needed.md:29
+msgid ""
+"Writing a guide about a moving not-standard-yet API requires to follow "
+"tightly new development, which I may fail at. Or I followed but forgot to"
+" update some corners of this guide."
+msgstr ""
+
+#: ../../appendices/feedback-needed.md:31
+msgid ""
+"*Was any information outdated? Did you spot any inconsistency from one "
+"chapter to another?*"
+msgstr ""
+
+#: ../../appendices/feedback-needed.md:33
+msgid "Are things introduced in the right order?"
+msgstr ""
+
+#: ../../appendices/feedback-needed.md:36
+msgid ""
+"*Did you feel you had to go through chapter that don't interest you to "
+"reach the ones that do?*"
+msgstr ""
+
+#: ../../appendices/feedback-needed.md:38
+msgid ""
+"The potential audience of this guide is made of various profiles. Some "
+"people already know another graphics API and want to learn what is "
+"different with WebGPU. Some people already know WebGPU and want to know "
+"what is different in native and/or C++ programming. Some people are "
+"newcomers to real-time graphics and want to learn how to create a little "
+"video game."
+msgstr ""
+
+#: ../../appendices/feedback-needed.md:40
+msgid ""
+"I wish I can provide a comfortable reading route to all of these readers "
+"but it requires some organization."
+msgstr ""
+
+#: ../../appendices/feedback-needed.md:42
+msgid "Is it accurate?"
+msgstr ""
+
+#: ../../appendices/feedback-needed.md:45
+msgid ""
+"The answer to this would come from people who already know WebGPU before "
+"reading this guide, and in particular people who drafted the standard: "
+"*Do they agree with what is said? Did I do mistakes?*"
+msgstr ""
+
+#: ../../appendices/feedback-needed.md:47
+msgid "Is it complete?"
+msgstr ""
+
+#: ../../appendices/feedback-needed.md:50
+msgid ""
+"Wherever I put \"WIP\" in the title it means that I know it is missing "
+"something, but what else?"
+msgstr ""
+
+#: ../../appendices/feedback-needed.md:52
+msgid ""
+"*Do you think this guide misses something important? Or are they advanced"
+" techniques that you would love to see included?*"
+msgstr ""
+
+#: ../../appendices/feedback-needed.md:54
+msgid ""
+"Again, if you want to tell something about any of these points, [**here "
+"is the feedback form!**](https://forms.gle/SUHKuogBRMMnXf7PA)"
+msgstr ""
+
+#: ../../appendices/index.md:1
+msgid "Appendices"
+msgstr ""
+
+#: ../../appendices/memory-model.md:1
+msgid "Memory Model (🛑TODO)"
+msgstr ""
+
+#: ../../appendices/memory-model.md:4
+msgid "Here we summarize how memory is laid out in a GPU."
+msgstr ""
+
+#: ../../appendices/references.md:1
+msgid "References (🚧WIP)"
+msgstr ""
+
+#: ../../appendices/references.md:4
+msgid "*This list is highly WIP*"
+msgstr ""
+
+#: ../../appendices/references.md:6
+msgid "[WebGPU Official Specification](https://www.w3.org/TR/webgpu)"
+msgstr ""
+
+#: ../../appendices/references.md:7
+msgid "[Learn wgpu for Rust](https://sotrh.github.io/learn-wgpu)"
+msgstr ""
+
+#: ../../appendices/references.md:8
+msgid ""
+"[WebGPU Buffer upload best practices](https://toji.github.io/webgpu-best-"
+"practices/buffer-uploads.html)"
+msgstr ""
+
+#: ../../appendices/references.md:9
+msgid "[WebGPU Explainer](https://gpuweb.github.io/gpuweb/explainer)"
+msgstr ""
+
+#: ../../appendices/references.md:10
+msgid ""
+"[Efficiently rendering glTF models - A WebGPU Case "
+"Study](https://toji.github.io/webgpu-gltf-case-study)"
+msgstr ""
+
+#: ../../appendices/references.md:11
+msgid ""
+"[Awesome WebGPU: A curated list of WebGPU ressources, libraries and "
+"tools](https://github.com/mikbry/awesome-webgpu)"
+msgstr ""
+
+#: ../../appendices/references.md:12
+msgid ""
+"[Another list of WebGPU ressources](https://wiki.nikiv.dev/computer-"
+"graphics/webgpu)"
+msgstr ""
+
+#: ../../appendices/references.md:13
+#, python-format
+msgid ""
+"[WebGPU is Not Just About the "
+"Web](../data/2023-03_WebGPU%20is%20not%20just%20about%20the%20Web.pdf), "
+"an introduction to this guide that was given at *QCon London 2023* (and "
+"[another ref](http://kvark.github.io/web/gpu/native/2020/05/03/point-of-"
+"webgpu-native.html) backing this claim)."
+msgstr ""
+
+#: ../../appendices/references.md:14
+msgid ""
+"[A detailed introduction to Computer "
+"Graphics](https://www.scratchapixel.com)"
+msgstr ""
+
+#: ../../appendices/references.md:15
+msgid ""
+"Filament's [material "
+"guide](https://google.github.io/filament/Materials.html) and [design "
+"document](https://google.github.io/filament/Filament.html)"
+msgstr ""
+
+#: ../../appendices/references.md:16
+msgid ""
+"A simple playground for testing WGSL shaders: "
+"[https://takahirox.github.io/online-wgsl-"
+"editor](https://takahirox.github.io/online-wgsl-editor)"
+msgstr ""
+
+#: ../../appendices/references.md:17
+msgid ""
+"A guide to get started with the WebGPU Shader Language [Tour of "
+"WGSL](https://google.github.io/tour-of-wgsl/)"
+msgstr ""
+
+#: ../../appendices/references.md:18
+msgid ""
+"Examples of AI tool based on WebGPU: https://mlc.ai/web-llm/ and "
+"https://mlc.ai/web-stable-diffusion/"
+msgstr ""
+
+#: ../../appendices/references.md:19
+msgid "[WebGPU fundamentals](https://webgpufundamentals.org/)"
+msgstr ""
+
+#: ../../appendices/references.md:20
+msgid ""
+"[A blog post with nice diagrams about WebGPU "
+"usage](https://cohost.org/mcc/post/1406157-i-want-to-talk-about-webgpu)"
+msgstr ""
+
+#: ../../appendices/references.md:21
+msgid ""
+"[WebGPU Bind Group best practices](https://toji.dev/webgpu-best-practices"
+"/bind-groups.html)"
+msgstr ""
+
+#: ../../appendices/references.md:22
+msgid ""
+"A blog post to get started with WebGPU C++ targeting the web: [WebGPU: "
+"the cross-platform graphics API of "
+"tomorrow](https://developer.chrome.com/blog/webgpu-cross-platform/)"
+msgstr ""
+
+#: ../../appendices/references.md:23
+msgid ""
+"[A Technical report on WebGPU's "
+"safety](https://chromium.googlesource.com/chromium/src/+/main/docs/security/research/graphics/webgpu_technical_report.md)"
+msgstr ""
+
+#: ../../appendices/teaching-native-graphics-in-2023.md:1
+msgid "Teaching native graphics in 2023"
+msgstr ""
+
+#: ../../appendices/teaching-native-graphics-in-2023.md:4
+msgid ""
+"*This is a more detailed explaination of the section [Why "
+"WebGPU](../introduction.md#why-webgpu) of the lecture's introduction.*"
+msgstr ""
+
+#: ../../appendices/teaching-native-graphics-in-2023.md:6
+msgid ""
+"My interest for using WebGPU for native development grew while looking "
+"for **the best graphics API to teach** in a computer graphics curriculum."
+msgstr ""
+
+#: ../../appendices/teaching-native-graphics-in-2023.md:9
+msgid ""
+"Graphics API evolved very quickly over the last 20 years (think of how "
+"OpenGL 1.1 looked like for those of you who know it), so it is important "
+"lectures follow at a reasonable pace this evolution."
+msgstr ""
+
+#: ../../appendices/teaching-native-graphics-in-2023.md:12
+msgid ""
+"For a long time, I had been teaching **OpenGL**. This was a perfectly "
+"standard and cross-platform API for interacting with GPUs. But over the "
+"years this API and its idioms started to become **legacy**. First, Apple "
+"stopped supporting it after version 4.1 (leaving me with the frustration "
+"of not being able to use "
+"[DSA](https://www.khronos.org/opengl/wiki/Direct_State_Access) in the "
+"lectures, among other things), and **deprecated** it all together from "
+"macOS 10.14 onward (since 2018). Basically, they could drop it at any "
+"time, so teaching OpenGL now is really **not a future-proof bet**."
+msgstr ""
+
+#: ../../appendices/teaching-native-graphics-in-2023.md:15
+msgid ""
+"Secondly, it is clear that there will be no new version of OpenGL "
+"anyways. Its steering consortium is now working on **Vulkan**. Vulkan was"
+" meant to remain a cross-platform API, despite its whole new design, and "
+"even unify desktop and mobile platforms, thus being able to fully "
+"**replace OpenGL** on the long run. **But**... here comes Apple again."
+msgstr ""
+
+#: ../../appendices/teaching-native-graphics-in-2023.md:17
+msgid ""
+"Like many actors of the graphics world, **Apple** felt in the early 2010s"
+" the need to evolve from the design of OpenGL (which had diverged too "
+"much from the way the hardware had evolved), and started their own API "
+"called **Metal**. Unlike the others though, they **refused to join** "
+"efforts into the Vulkan initiative. So, although there are [ways to use "
+"Vulkan on Apple devices](https://www.lunarg.com/wp-"
+"content/uploads/2021/06/The-State-of-Vulkan-on-Apple-03June-2021.pdf), we"
+" cannot really consider Vulkan as cross-platform enough. I don't want my "
+"lecture to feel a bit of a hack to macOS users."
+msgstr ""
+
+#: ../../appendices/teaching-native-graphics-in-2023.md:19
+msgid ""
+"This scattered state of the graphics APIs is a **source of concern** for "
+"all software vendors who try to support both Linux, Windows and macOS "
+"(not to mention mobile platforms). They are forced to implement the same "
+"processes in different APIs, and while factorizing these parallel "
+"implementations, a lot of them spontaneously end up writing **custom "
+"graphics abstraction** libraries."
+msgstr ""
+
+#: ../../appendices/teaching-native-graphics-in-2023.md:21
+msgid ""
+"**Should we teach such an abstraction library?** I am quite reluctant at "
+"doing this. A lot of them make domain-specific choices related to the "
+"context in which they have been developed. And they are very often "
+"incomplete because not enough time can be invested into making them "
+"reusable. The longevity of these libraries is likely much shorter than "
+"the one of more standardized APIs (which are themselves dying too fast "
+"already). They might enforce specific idioms that are uncommon, making "
+"the transition to other graphics APIs harder."
+msgstr ""
+
+#: ../../appendices/teaching-native-graphics-in-2023.md:23
+msgid ""
+"The **Web consortium** faced the same issue when trying to expose a "
+"unified GPU abstraction to JavaScript code, and they drafted "
+"[WebGPU](https://gpuweb.github.io/gpuweb)."
+msgstr ""
+
+#: ../../appendices/teaching-native-graphics-in-2023.md:25
+msgid ""
+"This API has a growing developer/documentation base, is general purpose, "
+"cross-platform and future-oriented, which thus makes it a good candidate "
+"even for desktop applications! This is why Google Chrome's implementation"
+" of this API has been designed as a separate code base, called "
+"[Dawn](https://dawn.googlesource.com/dawn), and that can be linked by "
+"other applications."
+msgstr ""
+
+#: ../../appendices/tmp.md:1
+msgid "Temporary page"
+msgstr ""
+
+#: ../../appendices/tmp.md:4 ../../appendices/tmp.md:8
+msgid "youp"
+msgstr ""
+
+#: ../../appendices/tmp.md:5
+msgid "topic"
+msgstr ""
+
+#: ../../appendices/tmp.md:9
+msgid "admonition"
+msgstr ""
+
+#: ../../appendices/tmp.md:13
+msgid "attention"
+msgstr ""
+
+#: ../../appendices/tmp.md:17
+msgid "caution"
+msgstr ""
+
+#: ../../appendices/tmp.md:21
+msgid "danger"
+msgstr ""
+
+#: ../../appendices/tmp.md:25
+msgid "error"
+msgstr ""
+
+#: ../../appendices/tmp.md:29
+msgid "hint"
+msgstr ""
+
+#: ../../appendices/tmp.md:33
+msgid "important"
+msgstr ""
+
+#: ../../appendices/tmp.md:37
+msgid "note"
+msgstr ""
+
+#: ../../appendices/tmp.md:41
+msgid "seealso"
+msgstr ""
+
+#: ../../appendices/tmp.md:45
+msgid "tip"
+msgstr ""
+
+#: ../../appendices/tmp.md:49
+msgid "warning"
+msgstr ""
+
+#: ../../appendices/tmp.md:52
+msgid "Known Limitations"
+msgstr ""
+
+#: ../../appendices/tmp.md:55
+msgid ""
+"The window's ratio should be applied to the x coord instead of y to match"
+" the behavior of GLM from the very beginning of the lecture."
+msgstr ""
+

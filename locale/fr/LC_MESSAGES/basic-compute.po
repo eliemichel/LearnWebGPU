@@ -1,0 +1,1704 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2022-2023, Élie Michel and contributors
+# This file is distributed under the same license as the Learn WebGPU for
+# C++ package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2023.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Learn WebGPU for C++ \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2023-10-25 09:12+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: fr\n"
+"Language-Team: fr <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.11.0\n"
+
+#: ../../basic-compute/compute-pipeline.md:1
+msgid "Compute Pipeline"
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:4
+#: ../../basic-compute/compute-pipeline.md:523
+msgid ""
+"*Resulting code:* [`step201`](https://github.com/eliemichel/LearnWebGPU-"
+"Code/tree/step201)"
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:6
+msgid ""
+"Rendering 3D data is the original use of GPUs, but it is far from being "
+"the only one nowadays. And even for 3D application, we sometimes use the "
+"GPU for non-rendering things, such as simulation, image processing, etc."
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:8
+msgid ""
+"When using the GPU for **general purpose** computation (GPGPU), we "
+"usually **do not need to call the 3D-specific fixed parts** of the render"
+" pipeline, like the rasterization."
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:10
+msgid ""
+"This chapter introduces the skeleton for running **compute shaders**, "
+"which are shaders run outside of the fixed-function pipeline."
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:13
+msgid ""
+"We do not expect you to have read the whole 3D rendering part of the "
+"guide, but at least up to the end of the [Shader Uniforms](../basic-3d-"
+"rendering/shader-uniforms/index.md) part."
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:16
+msgid "Set-up"
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:19
+msgid "A simple example"
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:21
+msgid ""
+"Let us start with a very **simple problem**: we have a GPU-side buffer "
+"and want to evaluate a simple function `f` for each element of this "
+"buffer:"
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:30
+msgid ""
+"A **naive solution** would be to copy this buffer back to the CPU, "
+"evaluate the function here, and upload the result to the GPU again. But "
+"this is **very inefficient** for two reasons:"
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:32
+msgid "The CPU-GPU **copies** are expansive, especially for large buffers."
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:33
+msgid ""
+"Since `f` is applied independently to each values, the problem is very "
+"**parallel**, and the GPU is much better than the CPU at this type of "
+"*Single Instruction Multiple Data* (SIMD) parallelism."
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:35
+msgid ""
+"So we set up a compute shader that evaluates `f` directly on the GPU, and"
+" save the result in a second buffer."
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:37
+msgid "Architecture"
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:39
+msgid ""
+"For the sake of the examples throughout this chapter, we create a "
+"`onCompute` function that we call once after `onInit`. You may also "
+"remove the main loop is `main.cpp` because we won't need the interactive "
+"part."
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:41
+msgid "We reuse the same outline as when submitting our render pass on `onFrame`:"
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:65
+msgid ""
+"In the initialization method, we mostly keep the initialization of the "
+"device and create (private) methods to organize the different steps:"
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:78
+msgid ""
+"Each `initSomething` step comes with a `terminateSomething` that is "
+"called at the end in reverse order:"
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:90
+msgid "Compute Pass"
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:93
+msgid ""
+"Remember how we drew [our first color](../getting-started/first-"
+"color.md)? We submitted to the command queue a particular render-specific"
+" sequence of instructions called a `RenderPass`. The approach to run "
+"compute-only shaders is similar, and uses a `ComputePass` instead."
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:95
+msgid ""
+"The creation of the compute pass is **much simpler** than the one of the "
+"render pass, because since we do **not use any fixed-function stage**, "
+"there is almost nothing to configure! The only option if the timestamp "
+"writes that will be described in the benchmarking chapter."
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:115
+msgid "Compute pipeline"
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:118
+msgid ""
+"Once created, the use of the compute pass looks a lot like the use of the"
+" render pass. The main difference is that `draw` is replaced by "
+"`dispatchWorkgroups`, which calls our compute shader, and there is no "
+"such thing as a vertex buffer."
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:127
+msgid "The compute pipeline first defines the shader to be used:"
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:142
+msgid ""
+"The file `compute-shader.wsl` defines a function named like the entry "
+"point `computeStuff` and signal that it is a `@compute`. It must also "
+"indicate a **workgroup size**, more on this soon!"
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:152
+msgid ""
+"We can totally use the same shader module and file as for the other "
+"shaders, I just avoid mixing unrelated parts of code."
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:155
+msgid ""
+"At this point, it is possible to invoke our shader as long as we have no "
+"bind group:"
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:164
+msgid ""
+"Yey! Except... it does virtually nothing, because without accessing any "
+"resource, the compute shader cannot communicate any output."
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:166
+msgid "Resources"
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:169
+msgid ""
+"For our shader to actually communicate with an input and output buffer, "
+"we need to setup a **pipeline layout** that tells how the shader "
+"resources should be bound, and a **bind group** that actually connects "
+"the resources for a given shader invocation."
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:171
+msgid "Pipeline layout"
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:173
+msgid ""
+"We add in the compute shader the two buffer bindings as variables defined"
+" in the `storage`address space. It is important to specify the **access "
+"mode**, which is `read` for the input and `read_write` for the output "
+"(there is no \"write only\" mode):"
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:181
+msgid ""
+"The [`array`](https://gpuweb.github.io/gpuweb/wgsl/#array-types) type of "
+"WGSL is very similar to the "
+"[`std::array`](https://en.cppreference.com/w/cpp/container/array) type of"
+" C++."
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:184
+msgid ""
+"And we create on the C++ side a **bind group layout** that matches these "
+"bindings:"
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:208
+msgid ""
+"In `initComputePipeline()` we simply assign this to the compute pipeline "
+"through the **pipeline layout**:"
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:220
+msgid ""
+"The objects `m_bindGroupLayout` and `m_pipelineLayout` are attributes of "
+"the `Application` class (hence the `m_` prefix) so that they can be used "
+"in different methods. Do not forget to destroy them in the terminate "
+"functions by the way."
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:223
+msgid "Buffers"
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:225
+msgid ""
+"Before binding the buffers, we must of course create them (in "
+"`initBuffers`). An important point is to mark their usage with the "
+"`Storage` flag, so that we can read/write them from shaders:"
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:244
+msgid ""
+"Buffers that have the `Storage` usage are confronted to specific device "
+"limits:"
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:255
+msgid "We can already fill in the input buffer with some values:"
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:266
+msgid "Bind Group"
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:268
+msgid ""
+"Remember: the bind group **layout** was telling *how* to bind resources "
+"to the shader. Once we effectively have created these resources (the "
+"buffers), we can define a **bind group** to tell *what* to bind:"
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:295
+msgid ""
+"Once the bind group is created, it can be bound to the pipeline in "
+"`onCompute()`:"
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:304
+msgid "Invocation"
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:307
+msgid "Concurrent calls"
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:309
+msgid ""
+"Now that the the `dispatchWorkgroups` call actually does something, let "
+"us explain a little more what it does."
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:311
+msgid ""
+"A compute shader (and more generally a GPU) is **good at doing the same "
+"thing multiple times in parallel**, so built in this *dispatch* operation"
+" is the possibility to call the shader's entry point multiple times."
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:313
+msgid ""
+"Instead of providing a single number of concurrent calls, we express this"
+" number as a **grid** (a.k.a. **dispatch**) of $x \\times y \\times z$ "
+"**workgroups**:"
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:319
+msgid ""
+"Beware that this launches $x \\times y \\times z$ **workgroups**, i.e., "
+"groups of calls. Each workgroup is itself a little block of $w \\times h "
+"\\times d$ **threads**, each of which runs the entry point. The workgroup"
+" size is set by the shader's entry point:"
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:330
+msgid "The workgroup sizes must be constant expressions."
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:333
+msgid "Workgroup size vs count"
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:335
+msgid ""
+"😟 Okey, that makes a lot of variables just to set a number of jobs that "
+"is just the product of them in the end, doesn't it?"
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:337
+msgid ""
+"The thing is: **all combinations are not equivalent**, even if they "
+"multiply to the same number of threads."
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:339
+msgid ""
+"The jobs are **not really all launched at once**: under the hood a "
+"scheduler organizes the execution of individual workgroups. What we can "
+"now is that the jobs from the **same workgroup** are launched together, "
+"but two **different workgroup** might get executed at significantly "
+"different times."
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:341
+msgid ""
+"The appropriate size for a workgroup **depends a lot on the task** that "
+"threads run. Here are some rules of thumb about the **workgroup size "
+"versus workgroup count**:"
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:343
+msgid ""
+"The number $w \\times h \\times d$ of threads per workgroup should be a "
+"multiple of 32, because within a workgroup threads are launched by "
+"**warps** of (usually a multiple of) 32 threads."
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:345
+msgid ""
+"The total resource usage of a workgroup should be kept to a **minimum**, "
+"so that the scheduler has more freedom in organizing things."
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:347
+msgid ""
+"When threads **share memory** with each others, it is cheaper if they are"
+" in the same workgroup (and even cheaper if they are in the same warp)."
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:349
+msgid ""
+"Group threads that are likely to have the **same branching path**. "
+"Threads from the same warp share the same instruction pointer, so threads"
+" are idling when one of their neighbors follows a different branch of an "
+"`if` or loop condition."
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:351
+msgid "Try to have workgroup sizes be powers of two."
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:354
+msgid ""
+"These rules are somehow contradictory. Only a benchmark on your specific "
+"use case can tell you what the best trade-off is."
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:357
+msgid "Workgroup dimensions"
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:359
+msgid ""
+"😟 Ok I see better now, but what about the different axes $w$, $h$ and "
+"$d$? Is a workgroup size of $2 \\times 2 \\times 4$ different from $16 "
+"\\times 1 \\times 1$?"
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:361
+msgid ""
+"It is different indeed, because this size **give hints to the hardware** "
+"about the potential **consistency of memory access** across threads."
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:363
+msgid ""
+"Both the CPU and the GPU try in general to guess patterns in the way "
+"consecutive and/or concurrent operations use memory, in order for "
+"instance to [prefetch](https://en.wikipedia.org/wiki/Cache_prefetching) "
+"memory in caches or to group (a.k.a. \"coalesce\") concurrent read/writes"
+" into a single memory access."
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:365
+msgid ""
+"Since a very common task of the GPU is to process **data organized as a "
+"2D or 3D grid**, a graphics API provides grid-based data storage "
+"(**textures**) and grid-based concurrency model. When neighbor threads "
+"access neighbor pixels/voxels in a similar way, the hardware can better "
+"anticipate what is happening."
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:367
+msgid ""
+"So the main rule of thumb here is that although the $x$, $y$ and $z$ axes"
+" are at first glance abstract values that are \"just\" multiplied "
+"together, you should really use them as the $x$, $y$ and $z$ axes of your"
+" data grid."
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:369
+msgid "Example"
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:371
+msgid ""
+"In our simple example, we process data laid out in 1D buffers, so our "
+"dispatch is also a one dimensional series of workgroups: $(x, y, z) = (x,"
+" 1, 1)$ and $(w, h, d) = (w, 1, 1)$."
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:373
+msgid ""
+"The workgroup size $w$ should be at least 32, and there is no apparent "
+"reason for it to be more than that. So in the end, we dispatch workgroups"
+" of `32 * 1 * 1` threads:"
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:382
+msgid "And we infer the number of workgroups from the expected invocation calls:"
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:393
+msgid ""
+"Be careful about ceiling the `invocationCount / workgroupSize` division "
+"instead of flooring it, otherwise when `workgroupSize` does not exactly "
+"divide `invocationCount` the last threads will be missing."
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:396
+msgid ""
+"All we need now is to now in which thread of which workgroup we are, to "
+"figure out which index of the buffer we need to process. This is given by"
+" [built-in shader inputs](https://gpuweb.github.io/gpuweb/wgsl/#built-in-"
+"values-global_invocation_id), and in particular the **invocation id** "
+"provided as the `global_invocation_id` built-in:"
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:406
+msgid "Device limits"
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:408
+msgid ""
+"There are a bunch of device limits associated to the choice of workgroup "
+"size/count:"
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:424
+msgid "Read-back"
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:427
+msgid ""
+"After dispatching all parallel compute threads, the output buffer is "
+"populated with the result. So naturally now we want to **read this output"
+" buffer** back."
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:430
+msgid ""
+"One of the point of computing things on the GPU is to avoid CPU-GPU "
+"copies, because maybe the output buffer is only used in a subsequent "
+"operation on the GPU. But in our example case we still want to check that"
+" the computation went well."
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:433
+msgid "Map Buffer"
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:435
+msgid ""
+"We have seen already how to use the Buffer's `mapAsync` method to read a "
+"buffer back, but this won't work directly:"
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:442
+msgid ""
+"Why not? This requires the output buffer to be created with the `MapRead`"
+" usage flag. But unfortunately **this flag is incompatible** with "
+"`Storage`, that is needed for the shader to be allowed to write in the "
+"output."
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:444
+msgid ""
+"The solution is to **create a 3rd buffer**, responsible for the transport"
+" back on CPU. In the `initBuffers()` method we create this new \"map "
+"buffer\" and add the `CopySrc` usage to the output:"
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:457
+msgid ""
+"After the `computePass.end()`, and before `encoder.finish(...)`, we add a"
+" copy command:"
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:465
+msgid "Callback"
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:467
+msgid ""
+"We are now ready to read from the map buffer on the CPU, through a "
+"callback provided to `mapAsync`:"
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:484
+msgid ""
+"Do not forget to call `Instance::processEvents` in the loop that waits "
+"that the map is done afterwards:"
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:494
+msgid ""
+"As of April 23, 2023, `wgpu-native` does not implement `processEvent` "
+"yet, but its behavior can be mimicked by submitting an empty queue:"
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:505
+msgid "And you should finally see something like this in the output console:"
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:516
+#: ../../basic-compute/image-processing/convolution-filters.md:300
+#: ../../basic-compute/image-processing/cubemap-conversion.md:111
+#: ../../basic-compute/image-processing/cubemap-prefiltering.md:198
+#: ../../basic-compute/image-processing/mipmap-generation.md:491
+msgid "Conclusion"
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:519
+msgid ""
+"Some parts of this chapters were reminders of what has been done with the"
+" render pass, the **most important news** here is the "
+"dispatch/workgroup/thread hierarchy. Make sure to come back to the list "
+"of rules regularly to check that the choice of workgroup size is relevant"
+" (and benchmark whenever possible)."
+msgstr ""
+
+#: ../../basic-compute/compute-pipeline.md:521
+msgid ""
+"We are now ready to focus on the content of the compute shader itself, "
+"and the different ways it can manipulate resources and memory!"
+msgstr ""
+
+#: ../../basic-compute/image-processing/convolution-filters.md:1
+msgid "Convolution Filters"
+msgstr ""
+
+#: ../../basic-compute/image-processing/convolution-filters.md:4
+#: ../../basic-compute/image-processing/convolution-filters.md:305
+msgid ""
+"*Resulting code:* [`step215`](https://github.com/eliemichel/LearnWebGPU-"
+"Code/tree/step215)"
+msgstr ""
+
+#: ../../basic-compute/image-processing/convolution-filters.md:6
+msgid ""
+"Many **image processing algorithms** are based on convolution filter "
+"operations somewhere in their pipeline."
+msgstr ""
+
+#: ../../basic-compute/image-processing/convolution-filters.md:8
+msgid ""
+"The concept is simple: the new value of each pixel is computed by looking"
+" at a **sliding window** centered around the pixel, multiplying it by a "
+"fixed **kernel** and summing up."
+msgstr ""
+
+#: ../../basic-compute/image-processing/convolution-filters.md:24
+msgid ""
+"The **kernel** defines the way each neighbor of the pixel of interest "
+"influences its output value. In particular, a kernel that is $1$ in its "
+"center and $0$ everywhere else defines a filter that does nothing."
+msgstr ""
+
+#: ../../basic-compute/image-processing/convolution-filters.md:26
+msgid ""
+"By changing the kernel, we can create a wide variety of filters. Some of "
+"them are **well known**, like the **Sobel** filter in the figure above or"
+" the **Gaussian blur** filter. Some others are **algorithmically "
+"discovered**, like the layers of [Convolutional Neural "
+"Networks](https://en.wikipedia.org/wiki/Convolutional_neural_network)."
+msgstr ""
+
+#: ../../basic-compute/image-processing/convolution-filters.md:28
+msgid "Sobel filter"
+msgstr ""
+
+#: ../../basic-compute/image-processing/convolution-filters.md:31
+msgid ""
+"We can start with the Sobel filter from the figure above. A Sobel filter "
+"is meant to **detect edges**, either vertical ones or horizontal ones "
+"depending on how we orient the kernel. For vertical edges, the kernel is:"
+msgstr ""
+
+#: ../../basic-compute/image-processing/convolution-filters.md:33
+msgid ""
+"\n"
+"K =\n"
+"\\left[\\begin{array}{ccc}\n"
+"-1 & 0 & +1 \\\\\n"
+"-2 & 0 & +2 \\\\\n"
+"-1 & 0 & +1 \\\\\n"
+"\\end{array}\\right]\n"
+msgstr ""
+
+#: ../../basic-compute/image-processing/convolution-filters.md:42
+msgid "Let us write the shader first, and then connect the dots:"
+msgstr ""
+
+#: ../../basic-compute/image-processing/convolution-filters.md:62
+msgid ""
+"Simple, right? All we need is the input and output textures. **I leave it"
+" as an exercise**, as it is very similar to the setup of the first part "
+"of the [Mipmap Generation](mipmap-generation.md) chapter, except that the"
+" output is a view of a different texture instead of being a different MIP"
+" level of the same one."
+msgstr ""
+
+#: ../../basic-compute/image-processing/convolution-filters.md:65
+msgid "Don't forget to change the entry point of the compute pipeline:"
+msgstr ""
+
+#: ../../basic-compute/image-processing/convolution-filters.md:72
+msgid ""
+"On [this input image](../../images/pexels-petr-ganaj-4121222.jpg), you "
+"should get the following result:"
+msgstr ""
+
+#: ../../basic-compute/image-processing/convolution-filters.md:77
+msgid "The result of our vertical Sobel filter"
+msgstr ""
+
+#: ../../basic-compute/image-processing/convolution-filters.md:81
+msgid ""
+"It is interesting to apply this filter to the different MIP levels "
+"independently, to detect edges at different scales."
+msgstr ""
+
+#: ../../basic-compute/image-processing/convolution-filters.md:84
+msgid "GUI"
+msgstr ""
+
+#: ../../basic-compute/image-processing/convolution-filters.md:87
+msgid "Optional section"
+msgstr ""
+
+#: ../../basic-compute/image-processing/convolution-filters.md:88
+msgid ""
+"If you are only interested in the convolution filters themselves and that"
+" making a non-interactive command line tool is fine, you may skip this "
+"section."
+msgstr ""
+
+#: ../../basic-compute/image-processing/convolution-filters.md:91
+msgid "Setup"
+msgstr ""
+
+#: ../../basic-compute/image-processing/convolution-filters.md:93
+msgid ""
+"In order to quickly experiment with our filters, we reuse the GUI "
+"elements from the [Simple GUI](../../basic-3d-rendering/some-interaction"
+"/simple-gui.md) chapter."
+msgstr ""
+
+#: ../../basic-compute/image-processing/convolution-filters.md:95
+msgid "In a nutshell, we must:"
+msgstr ""
+
+#: ../../basic-compute/image-processing/convolution-filters.md:97
+msgid ""
+"Add the `glfw`, `glfw3webgpu` and `imgui` library as dependencies (don't "
+"forget to add a CMakeLists in the `imgui` directory)."
+msgstr ""
+
+#: ../../basic-compute/image-processing/convolution-filters.md:98
+msgid ""
+"Add an `initWindow`, `initSwapChain` and `initGui` init steps (and "
+"matching teminate steps)."
+msgstr ""
+
+#: ../../basic-compute/image-processing/convolution-filters.md:99
+msgid "Add a main application loop."
+msgstr ""
+
+#: ../../basic-compute/image-processing/convolution-filters.md:101
+msgid ""
+"I also add a `m_shouldCompute` boolean to instruct the main loop to call "
+"onCompute only when needed (i.e., when an input parameter changes):"
+msgstr ""
+
+#: ../../basic-compute/image-processing/convolution-filters.md:114
+msgid "Displaying textures"
+msgstr ""
+
+#: ../../basic-compute/image-processing/convolution-filters.md:116
+msgid ""
+"To **avoid building our own render pipeline**, we can use ImGui to draw "
+"texture views, by manually adding instructions to the `ImDrawList`:"
+msgstr ""
+
+#: ../../basic-compute/image-processing/convolution-filters.md:135
+msgid ""
+"The red rectangle and the image are drawn by ImGui, no need for us to "
+"care about a render pipeline!"
+msgstr ""
+
+#: ../../basic-compute/image-processing/convolution-filters.md:138
+msgid "In the end our render pass in `onFrame` is simple:"
+msgstr ""
+
+#: ../../basic-compute/image-processing/convolution-filters.md:147
+msgid ""
+"What ImGui calls `ImTextureID` depends on the drawing backend. In the "
+"case of our WebGPU-based backend, it must correspond to a valid "
+"`TextureView` object. Using a `Texture` instead leads to crashes."
+msgstr ""
+
+#: ../../basic-compute/image-processing/convolution-filters.md:150
+msgid "Uniforms"
+msgstr ""
+
+#: ../../basic-compute/image-processing/convolution-filters.md:152
+msgid ""
+"We can add uniforms in order to drive the behavior of the filter from the"
+" UI."
+msgstr ""
+
+#: ../../basic-compute/image-processing/convolution-filters.md:154
+msgid ""
+"Note that all ImGui functions return a boolean telling whether the value "
+"they represent has been modified, we can use it to update our "
+"`m_shouldCompute` and **run the compute shader only when needed**:"
+msgstr ""
+
+#: ../../basic-compute/image-processing/convolution-filters.md:165
+msgid ""
+"You can then add a uniform for the **kernel**. Be careful with [alignment"
+" rules](https://gpuweb.github.io/gpuweb/wgsl/#structure-member-layout) "
+"when using a `mat3x3`, because padding is needed between columns of the "
+"matrix:"
+msgstr ""
+
+#: ../../basic-compute/image-processing/convolution-filters.md:189
+msgid ""
+"To assist you with this tedious alignment, I have started writing [a "
+"little online tool](https://eliemichel.github.io/WebGPU-AutoLayout)!"
+msgstr ""
+
+#: ../../basic-compute/image-processing/convolution-filters.md:192
+msgid ""
+"You can now dynamically play with the filter! Try for instance the Sobel "
+"filter on a different axis:"
+msgstr ""
+
+#: ../../basic-compute/image-processing/convolution-filters.md:197
+msgid ""
+"The kernel is exposed as a uniform in the UI. Here we show an horizontal "
+"Sobel filter (left: input, right: output)."
+msgstr ""
+
+#: ../../basic-compute/image-processing/convolution-filters.md:200
+msgid "Blur filters"
+msgstr ""
+
+#: ../../basic-compute/image-processing/convolution-filters.md:203
+msgid "Box blur"
+msgstr ""
+
+#: ../../basic-compute/image-processing/convolution-filters.md:205
+msgid "If we set all the weights of the kernel to $1/9$, we get a blur effect."
+msgstr ""
+
+#: ../../basic-compute/image-processing/convolution-filters.md:207
+msgid ""
+"\n"
+"K = \\frac{1}{9}\n"
+"\\left[\\begin{array}{ccc}\n"
+"1 & 1 & 1 \\\\\n"
+"1 & 1 & 1 \\\\\n"
+"1 & 1 & 1 \\\\\n"
+"\\end{array}\\right]\n"
+msgstr ""
+
+#: ../../basic-compute/image-processing/convolution-filters.md:219
+msgid "A **box blur** is obtained by convolving with a **uniform kernel**."
+msgstr ""
+
+#: ../../basic-compute/image-processing/convolution-filters.md:223
+msgid ""
+"When the kernel is all non-negative, it is common to need to "
+"**normalize** its weights, i.e., to divide them by the total sum of "
+"weights. You may want to add **a checkbox in the UI** to do so."
+msgstr ""
+
+#: ../../basic-compute/image-processing/convolution-filters.md:226
+msgid "Separability"
+msgstr ""
+
+#: ../../basic-compute/image-processing/convolution-filters.md:228
+msgid ""
+"If we want a **stronger blur**, we can simply use a **larger kernel**. "
+"However, this quickly reaches an unreasonable number of old texel fetch "
+"per new texel."
+msgstr ""
+
+#: ../../basic-compute/image-processing/convolution-filters.md:230
+msgid ""
+"Fortunately, the box filter is **separable**: it can be applied on **one "
+"axis first**, and on the second axis then, using non-square kernel of "
+"size $r \\times 1$ and $1 \\times r$. This requires $2r$ operations "
+"instead of $r^2$, huge savings! For instance for $r = 5$:"
+msgstr ""
+
+#: ../../basic-compute/image-processing/convolution-filters.md:232
+msgid ""
+"\n"
+"K_1 = \\frac{1}{5}\n"
+"\\left[\\begin{array}{c}\n"
+"1 \\\\\n"
+"1 \\\\\n"
+"1 \\\\\n"
+"1 \\\\\n"
+"1 \\\\\n"
+"\\end{array}\\right]\n"
+"\\quad\n"
+"\\text{then}\n"
+"\\quad\n"
+"K_2 = \\frac{1}{5}\n"
+"\\left[\\begin{array}{ccccc}\n"
+"1 & 1 & 1 & 1 & 1 \\\\\n"
+"\\end{array}\\right]\n"
+msgstr ""
+
+#: ../../basic-compute/image-processing/convolution-filters.md:250
+msgid ""
+"The box blur is fine, but if you apply it with large kernels you will "
+"quickly see **why it is called \"box\" blur**. It transforms spikes in "
+"the signal into very noticeable squares."
+msgstr ""
+
+#: ../../basic-compute/image-processing/convolution-filters.md:252
+msgid "Gaussian blur"
+msgstr ""
+
+#: ../../basic-compute/image-processing/convolution-filters.md:254
+msgid ""
+"The Gaussian blur is the most natural type of blur (a.k.a. low-pass "
+"filter), it is found in a lot of different contexts and you have likely "
+"seen at least once its 1D kernel:"
+msgstr ""
+
+#: ../../basic-compute/image-processing/convolution-filters.md:259
+msgid ""
+"Single-dimensional Gaussian kernels (a.k.a. normal distributions) of "
+"standard deviation $\\sigma = 1.0$ (red), $\\sigma = 0.5$ (green) and "
+"$\\sigma = 0.25$ (blue)."
+msgstr ""
+
+#: ../../basic-compute/image-processing/convolution-filters.md:262
+msgid ""
+"In theory a Gaussian blur requires an **infinite kernel**. But the "
+"influence of neighbors decreases exponentially, so we can quickly round "
+"weight to 0 and thus **bound the size** of the kernel. Here is a simple "
+"approximation of a 2D Gaussian kernel:"
+msgstr ""
+
+#: ../../basic-compute/image-processing/convolution-filters.md:264
+msgid ""
+"\n"
+"K = \\frac{1}{16}\n"
+"\\left[\\begin{array}{ccc}\n"
+"1 & 2 & 1 \\\\\n"
+"2 & 4 & 2 \\\\\n"
+"1 & 2 & 1 \\\\\n"
+"\\end{array}\\right]\n"
+msgstr ""
+
+#: ../../basic-compute/image-processing/convolution-filters.md:273
+msgid ""
+"And **good news**: the Gaussian blur is also separable! It is actually "
+"the only blur that is **both separable and circularly symmetric** "
+"([proof](https://www.sciencedirect.com/science/article/pii/089396599090151Z))."
+msgstr ""
+
+#: ../../basic-compute/image-processing/convolution-filters.md:275
+msgid ""
+"To calculate the coefficients of a Gaussian blur (separated) kernel, you "
+"can use [this blur coefficients "
+"generator](https://lisyarus.github.io/blog/graphics/2023/02/24/blur-"
+"coefficients-generator.html): the `WEIGHTS` array it creates can directly"
+" be used in `writeBuffer` to communicate it to the compute shader."
+msgstr ""
+
+#: ../../basic-compute/image-processing/convolution-filters.md:278
+msgid ""
+"In order to save some texture reads, this generator assumes that you are "
+"using a linear **sampler** to get values from the input texture. In other"
+" terms, use `textureSample` rather than `textureLoad`."
+msgstr ""
+
+#: ../../basic-compute/image-processing/convolution-filters.md:281
+msgid "Morphological filters"
+msgstr ""
+
+#: ../../basic-compute/image-processing/convolution-filters.md:284
+msgid ""
+"Morphological filters are also based on a **sliding window**, except that"
+" after multiplying by the kernel, **instead of summing** the different "
+"neighbors, we collect the **maximum** or **minimum** (or yet another non-"
+"linear operations)."
+msgstr ""
+
+#: ../../basic-compute/image-processing/convolution-filters.md:286
+msgid ""
+"A maximum tends to **dilate** the bright areas and inversely a minimum "
+"**erodes** the white pixels."
+msgstr ""
+
+#: ../../basic-compute/image-processing/convolution-filters.md:288
+msgid ""
+"The kernel is generally defined by a binary mask called the **structuring"
+" element** of the morphological operation. When the structuring element "
+"is a **rectangle**, the filter is **separable**."
+msgstr ""
+
+#: ../../basic-compute/image-processing/convolution-filters.md:293
+msgid "Morphological filters applied to an RGB image."
+msgstr ""
+
+#: ../../basic-compute/image-processing/convolution-filters.md:297
+msgid ""
+"It is common to use morphological filters on black and white masks, for "
+"instance to filter out imperfection on contour detection."
+msgstr ""
+
+#: ../../basic-compute/image-processing/convolution-filters.md:303
+msgid ""
+"Convolution filters are a good example of use of compute shaders (even "
+"though they can easily be emulated by drawing a full screen triangle and "
+"then using a fragment shader). They are also a building block for a lot "
+"of image processing tools."
+msgstr ""
+
+#: ../../basic-compute/image-processing/cubemap-conversion.md:1
+msgid "Cubemap Conversion (🚧WIP)"
+msgstr ""
+
+#: ../../basic-compute/image-processing/cubemap-conversion.md:4
+#: ../../basic-compute/image-processing/cubemap-conversion.md:114
+msgid ""
+"*Resulting code:* [`step220`](https://github.com/eliemichel/LearnWebGPU-"
+"Code/tree/step220)"
+msgstr ""
+
+#: ../../basic-compute/image-processing/cubemap-conversion.md:6
+#: ../../basic-compute/image-processing/cubemap-prefiltering.md:6
+msgid "Problem"
+msgstr ""
+
+#: ../../basic-compute/image-processing/cubemap-conversion.md:9
+msgid ""
+"Remember the cube maps from the [Image-Based Lighting](../../basic-3d-"
+"rendering/lighting-and-material/ibl.md) chapter? We can actually build "
+"them from the equirectangular environment maps found for instance on "
+"[PolyHaven](https://polyhaven.com/hdris) or "
+"[ambientCG](https://ambientcg.com/list?type=HDRI)."
+msgstr ""
+
+#: ../../basic-compute/image-processing/cubemap-conversion.md:11
+msgid "**Input:**"
+msgstr ""
+
+#: ../../basic-compute/image-processing/cubemap-conversion.md:16
+msgid ""
+"An environment map is a 360° image in high-dynamic range that we use as "
+"an omnidirectional light source."
+msgstr ""
+
+#: ../../basic-compute/image-processing/cubemap-conversion.md:19
+msgid "**Parameterization:**"
+msgstr ""
+
+#: ../../basic-compute/image-processing/cubemap-conversion.md:23
+msgid ""
+"The equirectangular map is parameterized with a latitude and longitude "
+"graduation, like the Earth."
+msgstr ""
+
+#: ../../basic-compute/image-processing/cubemap-conversion.md:26
+msgid "**Output:**"
+msgstr ""
+
+#: ../../basic-compute/image-processing/cubemap-conversion.md:30
+msgid ""
+"A cubemap is made of 6 squared textures, or rather 1 texture with 6 "
+"layers. Each layer corresponds to one face of a cube that wraps the "
+"scene."
+msgstr ""
+
+#: ../../basic-compute/image-processing/cubemap-conversion.md:33
+msgid ""
+"Since it is easier to find equirectangular images, but a cubemap is "
+"faster to query (because it is accelerated by the hardware), our goal is "
+"to convert an equirectangular image to a cubemap."
+msgstr ""
+
+#: ../../basic-compute/image-processing/cubemap-conversion.md:35
+msgid "Implementation"
+msgstr ""
+
+#: ../../basic-compute/image-processing/cubemap-conversion.md:38
+#: ../../basic-compute/image-processing/cubemap-conversion.md:109
+#: ../../basic-compute/image-processing/cubemap-prefiltering.md:16
+#: ../../basic-compute/image-processing/cubemap-prefiltering.md:79
+#: ../../basic-compute/image-processing/cubemap-prefiltering.md:84
+#: ../../basic-compute/image-processing/cubemap-prefiltering.md:196
+#: ../../basic-compute/procedural-geometry/deformation.md:46
+msgid "TODO"
+msgstr ""
+
+#: ../../basic-compute/image-processing/cubemap-conversion.md:76
+msgid "In the bind group layout, we switch the texture dimension to `2DArray`:"
+msgstr ""
+
+#: ../../basic-compute/image-processing/cubemap-conversion.md:83
+msgid "In the shader, we must change the type or `outputTexture`:"
+msgstr ""
+
+#: ../../basic-compute/image-processing/cubemap-conversion.md:90
+msgid ""
+"The call to `textureStore` then takes a new argument, the layer in which "
+"we write:"
+msgstr ""
+
+#: ../../basic-compute/image-processing/cubemap-conversion.md:97
+msgid "We launch `4 * 4 * 6 = 96 = 3 * 32` threads:"
+msgstr ""
+
+#: ../../basic-compute/image-processing/cubemap-prefiltering.md:1
+msgid "Cubemap Prefiltering (🚧WIP)"
+msgstr ""
+
+#: ../../basic-compute/image-processing/cubemap-prefiltering.md:4
+#: ../../basic-compute/image-processing/cubemap-prefiltering.md:201
+msgid ""
+"*Resulting code:* [`step222`](https://github.com/eliemichel/LearnWebGPU-"
+"Code/tree/step222)"
+msgstr ""
+
+#: ../../basic-compute/image-processing/cubemap-prefiltering.md:9
+msgid ""
+"In the [Physically-Based Materials](../../basic-3d-rendering/lighting-"
+"and-material/pbr.md) chapter, we loaded a **prefiltered** cube map, where"
+" **MIP levels** correspond to radiance pre-integrated for **different "
+"roughness** rather than being a simple average."
+msgstr ""
+
+#: ../../basic-compute/image-processing/cubemap-prefiltering.md:11
+msgid "We see in this section how to generate these MIP levels."
+msgstr ""
+
+#: ../../basic-compute/image-processing/cubemap-prefiltering.md:13
+msgid "Multiple MIP levels"
+msgstr ""
+
+#: ../../basic-compute/image-processing/cubemap-prefiltering.md:81
+msgid "Multiple Dispatches"
+msgstr ""
+
+#: ../../basic-compute/image-processing/cubemap-prefiltering.md:86
+msgid ""
+"Create one bind group per MIP level. Bind group #0 is the one we used to "
+"have, and others are used to compute the prefiltered version of MIP level"
+" 0 at different levels."
+msgstr ""
+
+#: ../../basic-compute/image-processing/cubemap-prefiltering.md:128
+msgid "We need to define `m_prefilteringBindGroupLayout`:"
+msgstr ""
+
+#: ../../basic-compute/image-processing/cubemap-prefiltering.md:153
+msgid "In `onCompute`, after dispatching the first work group:"
+msgstr ""
+
+#: ../../basic-compute/image-processing/cubemap-prefiltering.md:172
+msgid ""
+"We also need to define this `m_prefilteringPipeline`. It uses the same "
+"shader, but a different entry point."
+msgstr ""
+
+#: ../../basic-compute/image-processing/index.md:1
+msgid "Image Processing"
+msgstr ""
+
+#: ../../basic-compute/image-processing/index.md:4
+#: ../../basic-compute/index.md:4
+#: ../../basic-compute/procedural-geometry/index.md:4
+msgid "Contents"
+msgstr ""
+
+#: ../../basic-compute/image-processing/mipmap-generation.md:1
+msgid "Mipmap Generation"
+msgstr ""
+
+#: ../../basic-compute/image-processing/mipmap-generation.md:4
+#: ../../basic-compute/image-processing/mipmap-generation.md:498
+msgid ""
+"*Resulting code:* [`step211`](https://github.com/eliemichel/LearnWebGPU-"
+"Code/tree/step211)"
+msgstr ""
+
+#: ../../basic-compute/image-processing/mipmap-generation.md:6
+msgid ""
+"A first application that I suggest for our newly learnt compute shaders "
+"is the **generation of mipmaps**. In the chapter about [Texture Sampling"
+"](../../basic-3d-rendering/texturing/sampler.md#filtering) we saw that "
+"before applying a texture on a 3D mesh, we pre-compute different "
+"downsampled versions of it."
+msgstr ""
+
+#: ../../basic-compute/image-processing/mipmap-generation.md:22
+msgid ""
+"At the time, **we were building the pyramid on the CPU**, prior to "
+"uploading the texture data to the GPU texture object. But this problem is"
+" actually **a very good fit for compute shaders**!"
+msgstr ""
+
+#: ../../basic-compute/image-processing/mipmap-generation.md:24
+msgid "A very parallel problem"
+msgstr ""
+
+#: ../../basic-compute/image-processing/mipmap-generation.md:27
+msgid ""
+"The problem of MIP level generation boils down to the following: given a "
+"MIP level $n - 1$, we compute a texel $(i,j)$ of the MIP level $n$ by "
+"averaging the for texels from MIP level $n - 1$ with coordinates $(2 i + "
+"u,2j + v)$, where $u$ and $v$ span in $\\{0,1\\}$."
+msgstr ""
+
+#: ../../basic-compute/image-processing/mipmap-generation.md:29
+msgid ""
+"A **good property** of this problem is that processing is **very local**:"
+" a given texel of MIP level $n$ only depend on a small fixed number of "
+"texels from the previous level $n - 1$, and only contributes to one texel"
+" of next level $n + 1$."
+msgstr ""
+
+#: ../../basic-compute/image-processing/mipmap-generation.md:31
+msgid ""
+"There might seem to be two ways of treating this problem as a dispatch of"
+" parallel jobs:"
+msgstr ""
+
+#: ../../basic-compute/image-processing/mipmap-generation.md:33
+msgid ""
+"**Option A** One thread per pixel of level $n$, each texel $(i,j)$ of "
+"this level fetches 4 texels from the MIP level $n - 1$ and averages them."
+msgstr ""
+
+#: ../../basic-compute/image-processing/mipmap-generation.md:35
+msgid ""
+"**Option B** One thread per pixel of level $n - 1$, each texel $(i',j')$ "
+"of this level is divided by $4$ (total number of averaged texels) and "
+"accumulated in the texel $(i'/2, j'/2)$ of the MIP level $n$."
+msgstr ""
+
+#: ../../basic-compute/image-processing/mipmap-generation.md:37
+msgid ""
+"Option A has 4 times less threads, but each thread does 4 texture reads "
+"instead of 1 for Option B. Both options do 1 write per thread."
+msgstr ""
+
+#: ../../basic-compute/image-processing/mipmap-generation.md:40
+msgid ""
+"The limiting factor in the case of such a simple mathematical operation "
+"is memory access, we do not really care about the computation of the "
+"average itself."
+msgstr ""
+
+#: ../../basic-compute/image-processing/mipmap-generation.md:43
+msgid ""
+"**Spoiler alert:** Option A is the best one in this case, for multiple "
+"reasons:"
+msgstr ""
+
+#: ../../basic-compute/image-processing/mipmap-generation.md:45
+msgid ""
+"Option B requires an **extra pass to initialize** all texels of the the "
+"output 0."
+msgstr ""
+
+#: ../../basic-compute/image-processing/mipmap-generation.md:46
+msgid ""
+"Option B leads to **race conditions** because accumulating values "
+"requires to read the current average, then write the updated one, and if "
+"multiple threads do the same the **parallel write operations will "
+"conflict**."
+msgstr ""
+
+#: ../../basic-compute/image-processing/mipmap-generation.md:47
+msgid ""
+"Actually, it is **not even possible to read and write from the same "
+"texture** in a single compute shader dispatch."
+msgstr ""
+
+#: ../../basic-compute/image-processing/mipmap-generation.md:49
+msgid "For all these reasons, we will implement **Option A**."
+msgstr ""
+
+#: ../../basic-compute/image-processing/mipmap-generation.md:51
+msgid "Input/Output"
+msgstr ""
+
+#: ../../basic-compute/image-processing/mipmap-generation.md:54
+msgid ""
+"We first need to load an input texture and save the output to check that "
+"the process worked well. For our test, we use **a single texture with 2 "
+"MIP levels**: MIP level 0 is the input image, MIP level 1 is the output "
+"of the compute shader."
+msgstr ""
+
+#: ../../basic-compute/image-processing/mipmap-generation.md:56
+msgid "Loading"
+msgstr ""
+
+#: ../../basic-compute/image-processing/mipmap-generation.md:58
+msgid ""
+"As an example, we are going to load the following "
+"[`input.jpg`](../../images/mipmap-generation/input.jpg):"
+msgstr ""
+
+#: ../../basic-compute/image-processing/mipmap-generation.md:63
+msgid "Our example input image."
+msgstr ""
+
+#: ../../basic-compute/image-processing/mipmap-generation.md:66
+msgid ""
+"Add new init steps and texture-related attributes to the `Application` "
+"class:"
+msgstr ""
+
+#: ../../basic-compute/image-processing/mipmap-generation.md:84
+msgid ""
+"The `initTexture()` method starts like [our texture loading procedure"
+"](../../basic-3d-rendering/texturing/loading-from-file.md), only we do "
+"not include the mipmap generation:"
+msgstr ""
+
+#: ../../basic-compute/image-processing/mipmap-generation.md:125
+msgid ""
+"We use the "
+"[`stb_image.h`](https://raw.githubusercontent.com/nothings/stb/master/stb_image.h)"
+" file to load the image. DO not forget to include it and add in "
+"`implementations.cpp` the following:"
+msgstr ""
+
+#: ../../basic-compute/image-processing/mipmap-generation.md:133
+msgid "Once we have the texture, we only populate the MIP level 0:"
+msgstr ""
+
+#: ../../basic-compute/image-processing/mipmap-generation.md:155
+msgid ""
+"The `initTextureViews()` is pretty straightforward, the only difference "
+"between the input and output view is the MIP level:"
+msgstr ""
+
+#: ../../basic-compute/image-processing/mipmap-generation.md:179
+msgid "Saving"
+msgstr ""
+
+#: ../../basic-compute/image-processing/mipmap-generation.md:181
+msgid ""
+"To save the output image, we use "
+"[`stb_image_write.h`](https://raw.githubusercontent.com/nothings/stb/master/stb_image_write.h),"
+" the companion of `stb_image.h` for writing files, and add to "
+"`implementations.cpp` the following:"
+msgstr ""
+
+#: ../../basic-compute/image-processing/mipmap-generation.md:189
+msgid ""
+"The high-level process for reading a texture back to the CPU is the "
+"following:"
+msgstr ""
+
+#: ../../basic-compute/image-processing/mipmap-generation.md:191
+msgid ""
+"Create a GPU buffer with the same byte size as the MIP level you want to "
+"save."
+msgstr ""
+
+#: ../../basic-compute/image-processing/mipmap-generation.md:192
+msgid "Copy the texture to this buffer using `encoder.copyTextureToBuffer(...)`."
+msgstr ""
+
+#: ../../basic-compute/image-processing/mipmap-generation.md:193
+msgid "Map this buffer like we did with the `mapBuffer` in the previous chapter."
+msgstr ""
+
+#: ../../basic-compute/image-processing/mipmap-generation.md:194
+msgid "In the map callback, use `stbi_write_png` to write the image to disk."
+msgstr ""
+
+#: ../../basic-compute/image-processing/mipmap-generation.md:196
+msgid ""
+"I leave the details as an exercise, you may simply include this "
+"[`save_texture.h "
+"`](https://gist.github.com/eliemichel/0a94203fd518c70f3c528f3b2c7f73c8) "
+"file into your project, and at the end of `onCompute()`:"
+msgstr ""
+
+#: ../../basic-compute/image-processing/mipmap-generation.md:203
+msgid "Everything related to the buffers of the previous chapter can be removed."
+msgstr ""
+
+#: ../../basic-compute/image-processing/mipmap-generation.md:206
+msgid "Bindings"
+msgstr ""
+
+#: ../../basic-compute/image-processing/mipmap-generation.md:208
+msgid ""
+"In `initBindGroupLayout` and `initBindGroup`, we replace the buffer "
+"bindings with bindings for our texture views."
+msgstr ""
+
+#: ../../basic-compute/image-processing/mipmap-generation.md:210
+msgid ""
+"The layout for **input binding** is similar to texture bindings used in "
+"3D rendering, the only difference being the `visibility`:"
+msgstr ""
+
+#: ../../basic-compute/image-processing/mipmap-generation.md:221
+msgid "Define a corresponding binding in the **shader**:"
+msgstr ""
+
+#: ../../basic-compute/image-processing/mipmap-generation.md:227
+msgid ""
+"The **output binding** is different, because a `texture` binding is "
+"always ready-only. What we need here is a **storage texture** binding:"
+msgstr ""
+
+#: ../../basic-compute/image-processing/mipmap-generation.md:239
+msgid "This corresponds in the **shader** to the following variable declaration:"
+msgstr ""
+
+#: ../../basic-compute/image-processing/mipmap-generation.md:245
+msgid ""
+"A texture storage has **more detailed format information** than a "
+"texture: the `rgba8unorm` means that the underlying format of the texture"
+" is 4 channels of 8 bits, and that we manipulate texels in the shader as "
+"\"unsigned normalized\" values, i.e., floats in range $(0, 1)$."
+msgstr ""
+
+#: ../../basic-compute/image-processing/mipmap-generation.md:248
+msgid ""
+"Only the `write` access is allowed for `texture_storage_2d`. Other "
+"accesses may be introduced in later versions of WebGPU."
+msgstr ""
+
+#: ../../basic-compute/image-processing/mipmap-generation.md:251
+msgid "In `initBindGroup`, the entries are very simple:"
+msgstr ""
+
+#: ../../basic-compute/image-processing/mipmap-generation.md:263
+msgid ""
+"Great, everything is in place here, we can now focus on the actual "
+"compute shader."
+msgstr ""
+
+#: ../../basic-compute/image-processing/mipmap-generation.md:265
+msgid "Computation"
+msgstr ""
+
+#: ../../basic-compute/image-processing/mipmap-generation.md:268
+msgid "Dispatch"
+msgstr ""
+
+#: ../../basic-compute/image-processing/mipmap-generation.md:270
+msgid ""
+"I suggest we use a workgroup size of $8 \\times 8$: this treats both $X$ "
+"and $Y$ axes symmetrically and sums up to 64 threads, which is a "
+"reasonable multiple of a typical warp size."
+msgstr ""
+
+#: ../../basic-compute/image-processing/mipmap-generation.md:276
+msgid ""
+"We then need to compute the number of workgroup to dispatch. This depends"
+" on the expected number of thread. In our so called Option A, we launch "
+"**1 thread per texel** of the **output** MIP level:"
+msgstr ""
+
+#: ../../basic-compute/image-processing/mipmap-generation.md:292
+msgid ""
+"The input image I provided above has a size that is a **power of 2**, "
+"which always makes things easier as there is no wasted thread."
+msgstr ""
+
+#: ../../basic-compute/image-processing/mipmap-generation.md:295
+msgid "Shader"
+msgstr ""
+
+#: ../../basic-compute/image-processing/mipmap-generation.md:297
+msgid ""
+"For each texel, we use `textureLoad` 4 times to average corresponding "
+"texels from the previous MIP level, then `textureStore` to write in the "
+"new MIP level:"
+msgstr ""
+
+#: ../../basic-compute/image-processing/mipmap-generation.md:314
+msgid ""
+"The last argument of `textureLoad` is a MIP level **relative to the "
+"texture view** that we bound. So in both cases here we look at the first "
+"(and only) MIP level available in the view."
+msgstr ""
+
+#: ../../basic-compute/image-processing/mipmap-generation.md:317
+msgid ""
+"And this is it! Most of the work was about binding inputs/outputs, the "
+"compute shader itself is very simple."
+msgstr ""
+
+#: ../../basic-compute/image-processing/mipmap-generation.md:319
+msgid "Result"
+msgstr ""
+
+#: ../../basic-compute/image-processing/mipmap-generation.md:321
+msgid ""
+"We can inspect the result to check that it matches a "
+"[reference](../../images/mipmap-generation/reference.png), downsampled "
+"with a regular image editing tool like GIMP or Photoshop:"
+msgstr ""
+
+#: ../../basic-compute/image-processing/mipmap-generation.md:337
+msgid ""
+"*Intermediary resulting code:* [`step210`](https://github.com/eliemichel"
+"/LearnWebGPU-Code/tree/step210)"
+msgstr ""
+
+#: ../../basic-compute/image-processing/mipmap-generation.md:339
+msgid "Application to all MIP levels"
+msgstr ""
+
+#: ../../basic-compute/image-processing/mipmap-generation.md:342
+msgid "Loop over MIP levels"
+msgstr ""
+
+#: ../../basic-compute/image-processing/mipmap-generation.md:344
+msgid ""
+"We know how to compute the MIP level $1$, given the MIP level $0$. "
+"Generalizing this to be called in a loop is rather straightforward. We "
+"move our dispatch into a loop over all MIP levels:"
+msgstr ""
+
+#: ../../basic-compute/image-processing/mipmap-generation.md:361
+msgid ""
+"The loop starts at level 1, because more generally it is responsible for "
+"computing level `nextLevel` given level `nextLevel - 1`."
+msgstr ""
+
+#: ../../basic-compute/image-processing/mipmap-generation.md:364
+msgid ""
+"The `getMaxMipLevels()` utility function is the same one we were using "
+"for texture loading when computing mipmaps on CPU:"
+msgstr ""
+
+#: ../../basic-compute/image-processing/mipmap-generation.md:378
+msgid "We also use this function when creating the texture by the way:"
+msgstr ""
+
+#: ../../basic-compute/image-processing/mipmap-generation.md:385
+msgid "One view per MIP level"
+msgstr ""
+
+#: ../../basic-compute/image-processing/mipmap-generation.md:387
+msgid "Two things differ from one iteration of dispatch to another:"
+msgstr ""
+
+#: ../../basic-compute/image-processing/mipmap-generation.md:389
+msgid "The number of thread (i.e., the number of texels for the next MIP level)"
+msgstr ""
+
+#: ../../basic-compute/image-processing/mipmap-generation.md:390
+msgid "The bind group"
+msgstr ""
+
+#: ../../basic-compute/image-processing/mipmap-generation.md:392
+msgid ""
+"In order to build a different bind group at each iteration, we create in "
+"`initTextureViews` not just 2 views but one per MIP level. We also "
+"compute at the same time the size of each such level."
+msgstr ""
+
+#: ../../basic-compute/image-processing/mipmap-generation.md:421
+msgid ""
+"The views bound as writable storage and as readable texture must not "
+"share any MIP level!"
+msgstr ""
+
+#: ../../basic-compute/image-processing/mipmap-generation.md:424
+msgid ""
+"We also make sure to initialize the size `m_textureMipSizes[0]` for the "
+"first level:"
+msgstr ""
+
+#: ../../basic-compute/image-processing/mipmap-generation.md:435
+msgid "Bind group"
+msgstr ""
+
+#: ../../basic-compute/image-processing/mipmap-generation.md:437
+msgid ""
+"Finally we can add a MIP level parameter to the `initBindGroup()` method "
+"and call it the compute loop. Don't forget to also call "
+"`terminateBindGroup()` at the end of each iteration."
+msgstr ""
+
+#: ../../basic-compute/image-processing/mipmap-generation.md:453
+msgid "The main dispatch loop thus becomes:"
+msgstr ""
+
+#: ../../basic-compute/image-processing/mipmap-generation.md:475
+msgid ""
+"After the commands are submitted, we can save the texture's MIP levels in"
+" individual files:"
+msgstr ""
+
+#: ../../basic-compute/image-processing/mipmap-generation.md:488
+msgid "The resulting MIP levels, computed directly on GPU."
+msgstr ""
+
+#: ../../basic-compute/image-processing/mipmap-generation.md:494
+msgid ""
+"In this chapter we have seen how to play with textures in compute shader,"
+" and in particular how reading and writing require different bindings, "
+"which **must not overlap**. We are going to keep on playing with this in "
+"the next chapter."
+msgstr ""
+
+#: ../../basic-compute/image-processing/mipmap-generation.md:496
+msgid ""
+"Also, remember how we had two options A and B at the beginning? It is "
+"common that **multiple parallelization schemes seem possible**, but that "
+"in practice one of them is a much better idea! So **think twice** before "
+"implementing the first idea that comes to your mind."
+msgstr ""
+
+#: ../../basic-compute/index.md:1
+msgid "Basic Compute"
+msgstr ""
+
+#: ../../basic-compute/neural-networks.md:1
+msgid "Neural Networks (🛑TODO)"
+msgstr ""
+
+#: ../../basic-compute/neural-networks.md:5
+msgid ""
+"[WONNX](https://github.com/webonnx/wonnx) and [ONNX "
+"Runtime](https://github.com/microsoft/onnxruntime) support the Web "
+"through WebGPU."
+msgstr ""
+
+#: ../../basic-compute/procedural-geometry/deformation.md:1
+msgid "Deformation (🚧WIP)"
+msgstr ""
+
+#: ../../basic-compute/procedural-geometry/deformation.md:4
+#: ../../basic-compute/procedural-geometry/deformation.md:48
+msgid ""
+"*Resulting code:* [`step240`](https://github.com/eliemichel/LearnWebGPU-"
+"Code/tree/step240)"
+msgstr ""
+
+#: ../../basic-compute/procedural-geometry/deformation.md:6
+msgid ""
+"**Procedural geometry** plays is a very important role in 3D modeling "
+"tools. They usually take the form of a **stack of post-effects** and/or "
+"**a graph of nodes** where procedural operations are connected to each "
+"others. For instance Blender calls these respectively *Modifiers* and "
+"*Geometry Nodes*:"
+msgstr ""
+
+#: ../../basic-compute/procedural-geometry/deformation.md:11
+msgid ""
+"Modifiers and Geometry Nodes are two examples of procedural (a.k.a. non-"
+"destructive) mesh effects in Blender."
+msgstr ""
+
+#: ../../basic-compute/procedural-geometry/deformation.md:14
+msgid "Motivation"
+msgstr ""
+
+#: ../../basic-compute/procedural-geometry/deformation.md:17
+msgid ""
+"These effects are powerful, but can only be used during the creation of "
+"3D models, **not at runtime** during a game or application. We thus need "
+"to program ourselves the procedural effects that we intend to run live."
+msgstr ""
+
+#: ../../basic-compute/procedural-geometry/deformation.md:20
+msgid ""
+"The impossibility to exchange procedural effects (also known as \"non-"
+"destructive effects\") is something that I have been trying to address "
+"for some time with [OpenMfx](https://openmfx.org/). This \"standard\" is "
+"not really adopted by anybody yet but I still believe we need such an "
+"API, and would be happy to discuss about it if you are interested!"
+msgstr ""
+
+#: ../../basic-compute/procedural-geometry/deformation.md:23
+msgid ""
+"We could reproduce mesh effects on CPU, but since this guide is about GPU"
+" programming, **let's try to write them in shaders**! Not all effects are"
+" a good fit for GPU programming, but a lot of them are. Furthermore, some"
+" operations are much easier to parallelize on a GPU than others."
+msgstr ""
+
+#: ../../basic-compute/procedural-geometry/deformation.md:25
+msgid ""
+"The **simplest case** of procedural geometry effect consists in "
+"**deforming an existing mesh**, by just moving the existing vertices, not"
+" affecting the connectivity."
+msgstr ""
+
+#: ../../basic-compute/procedural-geometry/deformation.md:27
+msgid ""
+"First of all, if you just need to **move vertices**, you might be able to"
+" do it **in the vertex shader**! But there may be multiple reasons for "
+"which you should rather use a compute shader:"
+msgstr ""
+
+#: ../../basic-compute/procedural-geometry/deformation.md:29
+msgid ""
+"If the deformation process is a **heavy task** that you don't want to run"
+" at each frame."
+msgstr ""
+
+#: ../../basic-compute/procedural-geometry/deformation.md:30
+msgid "If you want to **read the deformed mesh back** to the CPU."
+msgstr ""
+
+#: ../../basic-compute/procedural-geometry/deformation.md:31
+msgid ""
+"If you need to **access connectivity** information such as the neighbors'"
+" vertices/faces of a vertex when processing a mesh."
+msgstr ""
+
+#: ../../basic-compute/procedural-geometry/deformation.md:32
+msgid "If you want to **share information across vertices**."
+msgstr ""
+
+#: ../../basic-compute/procedural-geometry/deformation.md:34
+msgid "Example case"
+msgstr ""
+
+#: ../../basic-compute/procedural-geometry/deformation.md:37
+msgid ""
+"Our first example is a \"squarification\" effect, that takes a quad mesh "
+"as input and try to make its faces be as square as possible by "
+"iteratively moving vertices."
+msgstr ""
+
+#: ../../basic-compute/procedural-geometry/deformation.md:41
+msgid "Our input mesh is made solely of quads, but they are quite distorted."
+msgstr ""
+
+#: ../../basic-compute/procedural-geometry/deformation.md:44
+msgid "Input file: [`quad-input.obj`](../../data/procgen/quad-input.obj)"
+msgstr ""
+
+#: ../../basic-compute/procedural-geometry/index.md:1
+msgid "Procedural Geometry"
+msgstr ""
+
