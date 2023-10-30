@@ -19,12 +19,12 @@ We have seen that the **normal** of a surface (i.e., the direction perpendicular
 These **micro details** could in theory be represented by subdividing the mesh a lot and slightly moving some vertices, but for the scale that normal maps model, this approach is really not tractable.
 ```
 
-```{image} /images/normal-mapping-equiv-light.svg
+```{image} /images/normal-mapping/equiv-light.svg
 :align: center
 :class: only-light
 ```
 
-```{image} /images/normal-mapping-equiv-dark.svg
+```{image} /images/normal-mapping/equiv-dark.svg
 :align: center
 :class: only-dark
 ```
@@ -46,12 +46,12 @@ In a normal map, **the color of each vertex represents a little vector** of leng
 
 The very meaning of these X, Y and Z axes depends on the **convention**; what matters is to be consistent between your files and your shader code:
 
-```{image} /images/normal-map-light.png
+```{image} /images/normal-mapping/normal-map-light.png
 :align: center
 :class: only-light
 ```
 
-```{image} /images/normal-map-dark.png
+```{image} /images/normal-mapping/normal-map-dark.png
 :align: center
 :class: only-dark
 ```
@@ -267,6 +267,10 @@ In the case of the plane, we could completely ignore the original normal `in.nor
 
 You can for instance test with this [`cylinder.obj`](../../data/cylinder.obj) model:
 
+```C++
+bool success = ResourceManager::loadGeometryFromObj(RESOURCE_DIR "/cylinder.obj", vertexData);
+```
+
 ```{figure} /images/wrong-normals.png
 :align: center
 :class: with-shadow
@@ -290,11 +294,51 @@ Wrong normals: The direction sampled from the normal map (right) should be rotat
 
 To fix this, we need to properly define the **local frame** (i.e., a local $X$, $Y$ and $Z$ axes) in which normal maps expresses normal perturbations.
 
-Our key requirement for the rotation is that when the sampled normal is $(0,0,1)$, it should mean "no perturbation". In other words, the end normal vector $N$ must corresponds to `in.normal` in that case.
+#### In 2D
 
-We thus know what the $Z$ axis of the normal space is, but still need to define a $X$ and a $Y$ to fully get a rotation. These axes are called respectively **tangent** and **bitangent** directions.
+The issue may be easier to visualize in 2D first:
 
-### Tangents and bitangents
+```{image} /images/normal-mapping/wrong-mapping-light.svg
+:align: center
+:class: only-light
+```
+
+```{image} /images/normal-mapping/wrong-mapping-dark.svg
+:align: center
+:class: only-dark
+```
+
+<p class="align-center">
+	<span class="caption-text"><em>A normal texture contains normal vectors relative to the global frame <strong>(left)</strong>. Simply using these sampled normals in lieu of the mesh normals leads to wrong shading <strong>(middle)</strong>. We must instead combine the face's normal with the sampled normal <strong>(right)</strong>.</em></span>
+</p>
+
+In this 2D example, the correct mapping would simply consist in **summing up orientation angles** (of the macroscopic face and the microscopic normal texture element). But 3D is a bit trickier.
+
+#### In 3D
+
+The problem in 3D is also to interpret the normal coming from the normal texture as a **local perturbation** of the face normal. Only in this case, the notion of orientation is given by a 3 axes $X$, $Y$ and $Z$ rather than a single angle.
+
+```{image} /images/normal-mapping/local-frame-light.png
+:align: center
+:class: only-light
+```
+
+```{image} /images/normal-mapping/local-frame-dark.png
+:align: center
+:class: only-dark
+```
+
+<p class="align-center">
+	<span class="caption-text"><em>Like in 2D, the correct way to evaluate perturbed normals is to <strong>combine</strong> the microscopic normal sampled from the normal texture with the local face orientation. In 3D, this face orientation is not just an angle but rather <strong>a whole XYZ frame</strong>.</em></span>
+</p>
+
+If the normal sampled from the texture is $n = (n_x, n_y, n_z)$, the end normal vector $N$ is built as $n_x X + n_y Y + n_z Z$ (which we could write as a matrix vector product $M n$ where the columns of $M$ are $XYZ$).
+
+**How to build this local normal frame XYZ?** Our key requirement for the rotation is that when the sampled normal is $(0,0,1)$, it should mean "no perturbation". In other words, the end normal vector $N$ must corresponds to `in.normal` in that case. We thus conclude that the $Z$ axis of the normal space is the normal of the face.
+
+We still need to define a $X$ and a $Y$ to fully get a rotation. These axes are called respectively **tangent** and **bitangent** directions.
+
+### Tangents and bitangents (TODO)
 
 TODO
 
