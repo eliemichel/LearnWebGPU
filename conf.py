@@ -35,6 +35,7 @@ extensions = [
     "sphinx_inline_tabs",
     "style",
     "sphinx_literate",
+    "translation",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
