@@ -21,6 +21,10 @@ The goal of this chapter is to **draw a solid color** all over our window. This 
 Swap Chain
 ----------
 
+```{Warning}
+In very recent versions of WebGPU, the explicit manipulation of the Swap Chain has been removed. Concepts are still relevant but tuned through the surface's capabilities. **The code presented here still works** with the corresponding WebGPU distribution but will change a lot at the next update of this guide!
+```
+
 ### Drawing process
 
 To understand the notion of **Swap Chain**, we need to know a little more about how the window's surface is drawn.
