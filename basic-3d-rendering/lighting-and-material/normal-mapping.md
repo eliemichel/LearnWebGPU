@@ -338,15 +338,100 @@ If the normal sampled from the texture is $n = (n_x, n_y, n_z)$, the end normal 
 
 We still need to define a $X$ and a $Y$ to fully get a rotation. These axes are called respectively **tangent** and **bitangent** directions.
 
-### Tangents and bitangents (TODO)
+```{image} /images/normal-mapping/bitangent-light.svg
+:align: center
+:class: only-light
+```
 
-TODO
+```{image} /images/normal-mapping/bitangent-dark.svg
+:align: center
+:class: only-dark
+```
+
+<p class="align-center">
+	<span class="caption-text"><em>Setting Z to be the surface normal N is not enough to fully define the local frame, as shown by these multiple possibilities for X and Y.</em></span>
+</p>
+
+There are many ways to define the tangent $X$ and bitangent $Y$, but it is important to **define it the same way the authoring tool does** in order to get the same interpretation of the normal texture.
+
+As a consequence, the definition we use is a **convention** rather than a mathematical need.
+
+### Tangents and bitangents
+
+#### Computation
+
+The local frame for normal mapping is called $TBN$ (Tangent, Bitangent, Normal) and **conventionally** defined using **both 3D and UV coordinates** of the corners of the triangular face on which we map a normal texture:
+
+```{image} /images/normal-mapping/local-frame-convention-light.svg
+:align: center
+:class: only-light
+```
+
+```{image} /images/normal-mapping/local-frame-convention-dark.svg
+:align: center
+:class: only-dark
+```
+
+<p class="align-center">
+	<span class="caption-text"><em>By convention, the directions <span class="math notranslate nohighlight">\(T\)</span> and <span class="math notranslate nohighlight">\(B\)</span> are defined such that this equation holds.</em></span>
+</p>
+
+In particular, if an edge $\bar e_1$ is horizontal in UV space, then $e_1$ is used as the tangent direction $T$. This formula also ensures that $T$ and $B$ are always orthogonal.
+
+In practice, we need to compute the invert of the UV-space matrix:
+
+```{image} /images/normal-mapping/local-frame-computation-light.svg
+:align: center
+:class: only-light
+```
+
+```{image} /images/normal-mapping/local-frame-computation-dark.svg
+:align: center
+:class: only-dark
+```
+
+<p class="align-center">
+	<span class="caption-text"><em>The UV-space matrix is inverted like any <span class="math notranslate nohighlight">\(2 \times 2\)</span> matrix by computing its determinant <span class="math notranslate nohighlight">\(\Delta\)</span>.</em></span>
+</p>
+
+In practice, we do not really need to care about the global multiplicative factor $\Delta$ because we just normalize the directions in the end. This leads us to the following code:
+
+```C++
+// Compute the TBN local to a triangle face from its corners and return it as
+// a matrix whose columns are the T, B and N vectors.
+mat3x3 ResourceManager::computeTBN(const VertexAttributes corners[3]) {
+	// What we call e in the figure
+	vec3 ePos1 = corners[1].position - corners[0].position;
+	vec3 ePos2 = corners[2].position - corners[0].position;
+
+	// What we call \bar e in the figure
+	vec2 eUV1 = corners[1].uv - corners[0].uv;
+	vec2 eUV2 = corners[2].uv - corners[0].uv;
+
+	vec3 T = normalize(ePos1 * eUV2.y - ePos2 * eUV1.y);
+	vec3 B = normalize(ePos2 * eUV1.x - ePos1 * eUV2.x);
+	vec3 N = cross(T, B);
+
+	return mat3x3(T, B, N);
+}
+```
+
+We can put this function in `ResourceManager` because we will use it when loading meshes:
+
+```C++
+// In ResourceManager.h
+	using mat3x3 = glm::mat3x3;
+	// [...]
+
+private:
+	// Compute the TBN local to a triangle face from its corners and return it as
+	// a matrix whose columns are the T, B and N vectors.
+	static mat3x3 computeTBN(const VertexAttributes corners[3]);
+```
 
 #### Vertex attributes
 
-TODO
-
-We add vertex attributes:
+In order to provide these tangent and bitangent attributes to the fragment shader, we store them as **extra vertex attributes**.
 
 ```C++
 // In ResourceManager.h
@@ -355,14 +440,18 @@ struct VertexAttributes {
 
 	// Texture mapping attributes represent the local frame in which
 	// normals sampled from the normal map are expressed.
-	vec3 tangent; // X axis
-	vec3 bitangent; // Y axis
-	vec3 normal; // Z axis
+	vec3 tangent; // T = local X axis
+	vec3 bitangent; // B = local Y axis
+	vec3 normal; // N = local Z axis
 
 	vec3 color;
 	vec2 uv;
 };
 ```
+
+This is **a bit redundant** because all 3 corners of the same triangle will have the very same value, but it is easy to set up and opens the possibility to combine normal mapping with per vertex normal perturbation.
+
+As usual when adding new vertex attributes, we must update the list of vertex attributes in `initRenderPipeline()`:
 
 ```C++
 // In Application.cpp
@@ -382,65 +471,59 @@ vertexAttribs[5].format = VertexFormat::Float32x3;
 vertexAttribs[5].offset = offsetof(VertexAttributes, bitangent);
 ```
 
-```rust
-struct VertexInput {
-	// [...]
-	@location(4) tangent: vec3<f32>,
-	@location(5) bitangent: vec3<f32>,
-}
-```
-
-Don't forget to bump up the limits:
+For this we also need to bump up the limits:
 
 ```C++
 requiredLimits.limits.maxVertexAttributes = 6;
 //                                          ^ This was a 4
 ```
 
-#### Computation
+And finally we update the shader vertex input:
 
-TODO
+```rust
+struct VertexInput {
+	// [...]
+	@location(4) tangent: vec3f,
+	@location(5) bitangent: vec3f,
+}
+```
 
-We compute these tangent and bitangent vectors when loading the mesh, in a new `computeTextureFrameAttributes` private method of the `ResourceManager`:
+We populate these new attributes at the end of `loadGeometryFromObj`. I chose to isolate this in a dedicated private function:
+
+```C++
+bool ResourceManager::loadGeometryFromObj(const path& path, std::vector<VertexAttributes>& vertexData) {
+	// [...]
+	populateTextureFrameAttributes(vertexData);
+	return true;
+}
+```
+
+
+This new `populateTextureFrameAttributes` function is a private static method of the `ResourceManager`:
 
 ```C++
 // In ResourceManager.h
 private:
 	// Compute Tangent and Bitangent attributes from the normal and UVs.
-	static void computeTextureFrameAttributes(std::vector<VertexAttributes>& vertexData);
+	static void populateTextureFrameAttributes(std::vector<VertexAttributes>& vertexData);
 ```
 
-```C++
-// At the end of loadGeometryFromObj
-computeTextureFrameAttributes(vertexData);
-return true;
-```
-
-The exact procedure is once again a matter of **convention**, to be aligned to what authoring tools export.
+And it simply consists in calling `computeTBN` for each triangle:
 
 ```C++
-void ResourceManager::computeTextureFrameAttributes(std::vector<VertexAttributes>& vertexData) {
+void ResourceManager::populateTextureFrameAttributes(std::vector<VertexAttributes>& vertexData) {
 	size_t triangleCount = vertexData.size() / 3;
 	// We compute the local texture frame per triangle
 	for (int t = 0; t < triangleCount; ++t) {
 		VertexAttributes* v = &vertexData[3 * t];
 
-		// Formulas from http://www.opengl-tutorial.org/intermediate-tutorials/tutorial-13-normal-mapping/
+		mat3x3 TBN = computeTBN(v);
 
-		vec3 deltaPos1 = v[1].position - v[0].position;
-		vec3 deltaPos2 = v[2].position - v[0].position;
-
-		vec2 deltaUV1 = v[1].uv - v[0].uv;
-		vec2 deltaUV2 = v[2].uv - v[0].uv;
-
-		float r = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV1.y * deltaUV2.x);
-		vec3 tangent = (deltaPos1 * deltaUV2.y - deltaPos2 * deltaUV1.y) * r;
-		vec3 bitangent = (deltaPos2 * deltaUV1.x - deltaPos1 * deltaUV2.x) * r;
-		
 		// We assign these to the 3 corners of the triangle
 		for (int k = 0; k < 3; ++k) {
-			vertexData[3 * t + k].tangent = tangent;
-			vertexData[3 * t + k].bitangent = bitangent;
+			v[k].tangent = TBN[0];
+			v[k].bitangent = TBN[1];
+			v[k].normal = TBN[2];
 		}
 	}
 }
@@ -448,43 +531,54 @@ void ResourceManager::computeTextureFrameAttributes(std::vector<VertexAttributes
 
 #### Usage
 
-TODO
+We now have access to this local TBN frame in the shader. A first step is to forward it from the vertex to the fragment shader:
 
 ```rust
+// Add tangent and bitangent as output of the vertex stage
 struct VertexOutput {
 	// [...]
-	@location(4) tangent: vec3<f32>,
-	@location(5) bitangent: vec3<f32>,
+	@location(4) tangent: vec3f,
+	@location(5) bitangent: vec3f,
 }
 ```
 
-In the vertex shader:
+In the vertex shader, we only apply the model matrix to these attributes, like we did for the normal, because the lighting is then computed in world space:
 
 ```rust
-out.tangent = (uMyUniforms.modelMatrix * vec4<f32>(in.tangent, 0.0)).xyz;
-out.bitangent = (uMyUniforms.modelMatrix * vec4<f32>(in.bitangent, 0.0)).xyz;
-out.normal = (uMyUniforms.modelMatrix * vec4<f32>(in.normal, 0.0)).xyz;
+out.tangent = (uMyUniforms.modelMatrix * vec4f(in.tangent, 0.0)).xyz;
+out.bitangent = (uMyUniforms.modelMatrix * vec4f(in.bitangent, 0.0)).xyz;
+out.normal = (uMyUniforms.modelMatrix * vec4f(in.normal, 0.0)).xyz;
 ```
 
-In the fragment shader:
+Note that here again there is a limit to update, adding 2 times 3 float to the inter shader component count:
+
+```C++
+requiredLimits.limits.maxInterStageShaderComponents = 17;
+//                                                    ^^ This was a 11
+```
+
+Finally, in the fragment shader we can fix the way we sample the normal $N$ used for shading:
 
 ```rust
 // Sample normal
 let encodedN = textureSample(normalTexture, textureSampler, in.uv).rgb;
 let localN = encodedN - 0.5;
-let rotation = mat3x3<f32>(
+// The TBN matrix converts directions from the local space to the world space
+let localToWorld = mat3x3f(
 	normalize(in.tangent),
 	normalize(in.bitangent),
 	normalize(in.normal),
 );
-let rotatedN = normalize(rotation * localN);
-let N = mix(in.normal, rotatedN, uLighting.normalMapStrength);
+let worldN = localToWorld * localN;
+let N = mix(in.normal, worldN, normalMapStrength);
 ```
+
+TODO
 
 ```{figure} /images/fixed-normal-map.png
 :align: center
 :class: with-shadow
-Fixed normal maps.
+Fixed normal maps. TODO: With the code above you should not obtain this but rather something with hard angles on face edges because we ignored the original mesh vertex normals.
 ```
 
 You can try with the fourareen boat using [`fourareen2K_normals.png`](../../data/fourareen2K_normals.png):
