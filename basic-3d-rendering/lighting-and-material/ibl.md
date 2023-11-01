@@ -23,6 +23,10 @@ For each camera ray (i.e., each pixel) we compute the direction reflected by the
 IBL Sampling
 ------------
 
+```{admonition} 🚧 WIP
+From this chapter on, the guide is not as up to date. I am currently refreshing it chapter by chapter and this is where I am currently working!
+```
+
 TODO
 
 Add the environment map [`autumn_park_4k.jpg`](../../data/autumn_park_4k.jpg) to the list of loaded textures:

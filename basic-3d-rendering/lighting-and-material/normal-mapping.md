@@ -1,4 +1,4 @@
-Normal mapping (🚧WIP)
+Normal mapping
 ==============
 
 ````{tab} With webgpu.hpp
@@ -8,10 +8,6 @@ Normal mapping (🚧WIP)
 ````{tab} Vanilla webgpu.h
 *Resulting code:* [`step110-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step110-vanilla)
 ````
-
-```{admonition} 🚧 WIP
-From this chapter on, the guide is not as up to date. I am currently refreshing it chapter by chapter and this is where I am currently working!
-```
 
 We have seen that the **normal** of a surface (i.e., the direction perpendicular to it) plays a key role in the way the light bounces on it. **Normal mapping** consists in locally perturbing this normal depending on an input map (texture file) to **model the effect of very small geometric details**.
 
@@ -271,7 +267,7 @@ You can for instance test with this [`cylinder.obj`](../../data/cylinder.obj) mo
 bool success = ResourceManager::loadGeometryFromObj(RESOURCE_DIR "/cylinder.obj", vertexData);
 ```
 
-```{figure} /images/wrong-normals.png
+```{figure} /images/normal-mapping/wrong-normals.png
 :align: center
 :class: with-shadow
 Wrong normals: When sampling normals from texture (right), the overall lighting is off and very different from the effect of the input normal (left).
@@ -284,7 +280,7 @@ The problem becomes even clearer when we display the computed normals:
 let color = N * 0.5 + 0.5;
 ```
 
-```{figure} /images/wrong-normals-debug.png
+```{figure} /images/normal-mapping/wrong-normals-debug.png
 :align: center
 :class: with-shadow
 Wrong normals: The direction sampled from the normal map (right) should be rotated to be centered around the original surface normal (left).
@@ -355,6 +351,10 @@ We still need to define a $X$ and a $Y$ to fully get a rotation. These axes are 
 There are many ways to define the tangent $X$ and bitangent $Y$, but it is important to **define it the same way the authoring tool does** in order to get the same interpretation of the normal texture.
 
 As a consequence, the definition we use is a **convention** rather than a mathematical need.
+
+```{note}
+This local frame defines what is usually called the **tangent space** of the surface at the shaded point.
+```
 
 ### Tangents and bitangents
 
@@ -562,7 +562,7 @@ Finally, in the fragment shader we can fix the way we sample the normal $N$ used
 ```rust
 // Sample normal
 let encodedN = textureSample(normalTexture, textureSampler, in.uv).rgb;
-let localN = encodedN - 0.5;
+let localN = encodedN * 2.0 - 1.0;
 // The TBN matrix converts directions from the local space to the world space
 let localToWorld = mat3x3f(
 	normalize(in.tangent),
@@ -573,12 +573,72 @@ let worldN = localToWorld * localN;
 let N = mix(in.normal, worldN, normalMapStrength);
 ```
 
-TODO
+#### Combining with vertex normals
+
+If we try to run our program now, we can be a bit disappointed:
+
+```{figure} /images/normal-mapping/flat-mapping.png
+:align: center
+:class: with-shadow
+Computing the tangent space only from the face corners is not enough to get a fully correct normal mapping.
+```
+
+We can see two problems here:
+
+ - Hard edges where we wanted the cylinder to be smooth.
+ - Face are oriented towards the inside of the object in this example (because of the order in which triangle corners were given).
+
+Both issues are due to a common problem: we completely ignore the vertex normals provided by the original OBJ file!
+
+In order to use this precious information, we provide an expected normal to the `computeTBN` function:
+
+```C++
+glm::mat3x3 ResourceManager::computeTBN(const VertexAttributes corners[3], const vec3& expectedN) {
+	// [...] Compute T, B, N like before
+
+	// Fix overall orientation
+	if (dot(N, expectedN) < 0.0) {
+		T = -T;
+		B = -B;
+		N = -N;
+	}
+
+	// Ortho-normalize the (T, B, expectedN) frame
+	// a. "Remove" the part of T that is along expected N
+	N = expectedN;
+	T = normalize(T - dot(T, N) * N);
+	// b. Recompute B from N and T
+	B = cross(N, T);
+
+	return mat3x3(T, B, N);
+}
+```
+
+And this time we compute a TBN frame that is different for each corner:
+
+```C++
+// In populateTextureFrameAttributes
+for (int k = 0; k < 3; ++k) {
+	mat3x3 TBN = computeTBN(v, v[k].normal);
+	v[k].tangent = TBN[0];
+	v[k].bitangent = TBN[1];
+}
+```
+
+This time we get a much better result!
 
 ```{figure} /images/fixed-normal-map.png
 :align: center
 :class: with-shadow
-Fixed normal maps. TODO: With the code above you should not obtain this but rather something with hard angles on face edges because we ignored the original mesh vertex normals.
+Normal mapping is now fully working.
+```
+
+Looking at the normals confirms that we got it right:
+
+```{figure} /images/normal-mapping/fixed-normals.png
+:align: center
+:class: with-shadow
+Fixed normal maps.
 ```
 
 You can try with the fourareen boat using [`fourareen2K_normals.png`](../../data/fourareen2K_normals.png):
@@ -588,8 +648,6 @@ You can try with the fourareen boat using [`fourareen2K_normals.png`](../../data
 :class: with-shadow
 The Fourareen boat with normal mapping.
 ```
-
-(TODO: investigate why we still see some cracks and fireflies)
 
 Conclusion
 ----------
