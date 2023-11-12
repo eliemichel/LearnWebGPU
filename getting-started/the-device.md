@@ -189,7 +189,7 @@ For now we will initialize this to a very minimal option:
 ```{lit} C++, Build device descriptor
 deviceDesc.nextInChain = nullptr;
 deviceDesc.label = "My Device"; // anything works here, that's your call
-deviceDesc.requiredFeaturesCount = 0; // we do not require any specific feature
+deviceDesc.requiredFeatureCount = 0; // we do not require any specific feature
 deviceDesc.requiredLimits = nullptr; // we do not require any specific limit
 deviceDesc.defaultQueue.nextInChain = nullptr;
 deviceDesc.defaultQueue.label = "The default queue";
