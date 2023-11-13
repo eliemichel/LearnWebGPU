@@ -41,7 +41,7 @@ Since `wgpu-native` is written in rust, we cannot easily build it from scratch s
 **WIP:** Use the "for any platform" link rather than the platform-specific ones, I haven't automated their generation yet so they are usually behind the main one.
 ```
 
- - [wgpu-native for any platform](https://github.com/eliemichel/WebGPU-distribution/archive/refs/heads/wgpu.zip) (a bit heavier as it's a merge of all the above basically)
+ - [wgpu-native for any platform](https://github.com/eliemichel/WebGPU-distribution/archive/refs/tags/wgpu-5433868.zip) (a bit heavier as it's a merge of all the above basically)
  - [wgpu-native for Linux](#)
  - [wgpu-native for Windows](#)
  - [wgpu-native for MacOS](#)
@@ -61,7 +61,7 @@ The pre-compiled binaries are provided by the `wgpu-native` project itself so yo
 
 Dawn gives much better error messages, and since it is written in C++ we can build it from source and thus inspect more deeply the stack trace in case of crash:
 
- - [Dawn for any platform](https://github.com/eliemichel/WebGPU-distribution/archive/refs/heads/dawn.zip)
+ - [Dawn for any platform](https://github.com/eliemichel/WebGPU-distribution/archive/refs/tags/dawn-5869.zip)
 
 ```{note}
 The Dawn-based distribution I provide here fetches the source code of Dawn from its original repository, but in an as shallow as possible way, and pre-sets some options to avoid building parts that we do not use.

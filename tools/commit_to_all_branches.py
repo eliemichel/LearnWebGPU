@@ -2,12 +2,10 @@ import subprocess
 
 # Config
 clone_root = r"G:\SourceCode\LearnWebGPU-Code-folded"
-cherry_picked_commit = "71a9ab4a020f88d46f2c869dde8b873b10d75671"
+cherry_picked_commit = "792900f33b9167113bf374e2e5bc8cce8873840a"
 all_branches = [
-'step058',
-'step060',
-'step065',
-'step070',
+    'step005',
+    'step010',
 ]
 excluded_branches = [
     'main',
