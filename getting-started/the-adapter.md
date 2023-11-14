@@ -126,7 +126,8 @@ WGPUAdapter requestAdapter(WGPUInstance instance, WGPURequestAdapterOptions cons
 
 In the main function, after opening the window, we can get the adapter:
 
-```{lit} C++, Request adapter
+````{tab} with webgpu.h
+```{lit} C++, -Vanilla Request adapter
 std::cout << "Requesting adapter..." << std::endl;
 
 WGPURequestAdapterOptions adapterOpts = {};
@@ -134,6 +135,18 @@ WGPUAdapter adapter = requestAdapter(instance, &adapterOpts);
 
 std::cout << "Got adapter: " << adapter << std::endl;
 ```
+````
+
+````{tab} with webgpu.hpp
+```{lit} C++, Request adapter
+std::cout << "Requesting adapter..." << std::endl;
+
+wgpu::RequestAdapterOptions adapterOpts = {};
+WGPUAdapter adapter = requestAdapter(instance, &adapterOpts);
+
+std::cout << "Got adapter: " << adapter << std::endl;
+```
+````
 
 ### Destruction
 
@@ -192,8 +205,8 @@ The Surface
 ```
 
 We actually need to pass an option to the adapter request: the **surface** onto which we draw.
-
-```{lit} C++, Request adapter (replace)
+````{tab} with webgpu.h
+```{lit} C++, -Vanilla Request adapter (replace)
 {{Get the surface}}
 
 WGPURequestAdapterOptions adapterOpts = {};
@@ -202,6 +215,19 @@ adapterOpts.compatibleSurface = surface;
 
 WGPUAdapter adapter = requestAdapter(instance, &adapterOpts);
 ```
+````
+
+````{tab} with webgpu.hpp
+```{lit} C++, Request adapter (replace)
+{{Get the surface}}
+
+wgpu::RequestAdapterOptions adapterOpts = {};
+adapterOpts.nextInChain = nullptr;
+adapterOpts.compatibleSurface = surface;
+
+WGPUAdapter adapter = requestAdapter(instance, &adapterOpts);
+```
+````
 
 How do we get the surface? This depends on the OS, and GLFW does not handle this for us, for it does not know WebGPU (yet?). So I provide you this function, in a little extension to GLFW3 called [`glfw3webgpu`](https://github.com/eliemichel/glfw3webgpu).
 

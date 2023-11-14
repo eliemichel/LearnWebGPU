@@ -140,8 +140,8 @@ webgpu-utils.cpp
 ```
 
 In the main function, after getting the adapter, we can request the device:
-
-```{lit} C++, Request device
+````{tab} with webgpu.h
+```{lit} C++, -Vanilla Request device
 std::cout << "Requesting device..." << std::endl;
 
 WGPUDeviceDescriptor deviceDesc = {};
@@ -150,6 +150,20 @@ WGPUDevice device = requestDevice(adapter, &deviceDesc);
 
 std::cout << "Got device: " << device << std::endl;
 ```
+````
+
+````{tab} with webgpu.hpp
+```{lit} C++, Request device
+std::cout << "Requesting device..." << std::endl;
+
+wgpu::DeviceDescriptor deviceDesc = {};
+{{Build device descriptor}}
+WGPUDevice device = requestDevice(adapter, &deviceDesc);
+
+std::cout << "Got device: " << device << std::endl;
+```
+````
+
 
 ```{lit} C++, Create things (append, hidden)
 {{Request device}}

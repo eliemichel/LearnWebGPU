@@ -127,12 +127,24 @@ Command encoder
 
 A command encoder is created following the usual object creation idiom of WebGPU:
 
-```{lit} C++, Create Command Encoder
+````{tab} with webgpu.h
+```{lit} C++, -Vanilla Create Command Encoder
 WGPUCommandEncoderDescriptor encoderDesc = {};
 encoderDesc.nextInChain = nullptr;
 encoderDesc.label = "My command encoder";
 WGPUCommandEncoder encoder = wgpuDeviceCreateCommandEncoder(device, &encoderDesc);
 ```
+````
+
+````{tab} with webgpu.hpp
+```{lit} C++, Create Command Encoder
+wgpu::CommandEncoderDescriptor encoderDesc = {};
+encoderDesc.nextInChain = nullptr;
+encoderDesc.label = "My command encoder";
+WGPUCommandEncoder encoder = wgpuDeviceCreateCommandEncoder(device, &encoderDesc);
+```
+````
+
 
 We can now use the encoder to write instructions (debug placeholder for now).
 
@@ -143,13 +155,26 @@ wgpuCommandEncoderInsertDebugMarker(encoder, "Do another thing");
 
 And then finally generating the command from the encoder also requires an extra descriptor:
 
-```{lit} C++, Finish encoding and submit
+````{tab} with webgpu.h
+```{lit} C++, -Vanilla Finish encoding and submit
 WGPUCommandBufferDescriptor cmdBufferDescriptor = {};
 cmdBufferDescriptor.nextInChain = nullptr;
 cmdBufferDescriptor.label = "Command buffer";
 WGPUCommandBuffer command = wgpuCommandEncoderFinish(encoder, &cmdBufferDescriptor);
+```
+````
+
+````{tab} with webgpu.hpp
+```{lit} C++, Finish encoding and submit
+wgpu::CommandBufferDescriptor cmdBufferDescriptor = {};
+cmdBufferDescriptor.nextInChain = nullptr;
+cmdBufferDescriptor.label = "Command buffer";
+WGPUCommandBuffer command = wgpuCommandEncoderFinish(encoder, &cmdBufferDescriptor);
+```
+````
 
 // Finally submit the command queue
+```
 std::cout << "Submitting command..." << std::endl;
 wgpuQueueSubmit(queue, 1, &command);
 

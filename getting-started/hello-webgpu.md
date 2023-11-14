@@ -164,7 +164,8 @@ int main (int, char**) {
 
 The instance is created using the `wgpuCreateInstance` function. Like all WebGPU functions meant to **create** an entity, it takes as argument a **descriptor**, which we can use to specify options regarding how to set up this object.
 
-```{lit} C++, Create WebGPU instance
+````{tab} with webgpu.h
+```{lit} C, -Vanilla Create WebGPU instance
 // 1. We create a descriptor
 WGPUInstanceDescriptor desc = {};
 desc.nextInChain = nullptr;
@@ -172,6 +173,17 @@ desc.nextInChain = nullptr;
 // 2. We create the instance using this descriptor
 WGPUInstance instance = wgpuCreateInstance(&desc);
 ```
+````
+
+````{tab} with webgpu.hpp
+```{lit} C++, Create WebGPU instance
+// 1. We create a descriptor
+wgpu::DeviceDescriptor desc = {};
+
+// 2. We create the instance using this descriptor
+wgpu::Instance instance = wgpu::createInstance(desc);
+```
+````
 
 ```{note}
 The descriptor is a kind of way to pack many function arguments together, because some descriptors really have a lot of fields. It can also be used to write utility functions that take care of populating the arguments, to ease the program's architecture.
@@ -226,10 +238,20 @@ wgpuSomethingRelease(sth);
 
 In particular, we need to release the global WebGPU instance:
 
+
+````{tab} with webgpu.h
+```{lit} C++, -Vanilla Destroy WebGPU instance
+// 5. We clean up the WebGPU instance
+wgpuInstanceRelease(instance);
+```
+````
+
+`````{tab} with webgpu.hpp
 ```{lit} C++, Destroy WebGPU instance
 // 5. We clean up the WebGPU instance
 wgpuInstanceRelease(instance);
 ```
+`````
 
 ````{note}
 In older versions of `wgpu-native`, the Release and Reference functions did not exist, and a Drop function was used to immediately free an object. See details in [this GitHub issue](https://github.com/webgpu-native/webgpu-headers/issues/9).
