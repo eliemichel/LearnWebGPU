@@ -22,7 +22,7 @@ Start by removing the `glfw` and `glfw3webgpu` directories. We replace them with
 
  1. Download the source code of [the latest release of SDL](https://github.com/libsdl-org/SDL/releases/latest) (tested with 2.28.5), unzip it so that you have a file `SDL2/README-SDL.txt`.
 
- 2. Download the equivalent of `glfw3webgpu` for SDL2, namely [`sdl2webgpu`](#TODO).
+ 2. Download the equivalent of `glfw3webgpu` for SDL2, namely [`sdl2webgpu`](https://github.com/eliemichel/sdl2webgpu/archive/refs/heads/main.zip). Unzip it so that you have a file `sdl2webgpu/CMakeLists.txt`.
 
 In the main `CMakeLists.txt`, replace GLFW with SDL2:
 
