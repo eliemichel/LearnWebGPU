@@ -21,6 +21,10 @@ I try to use as little libraries as I can, but this one is required to make our 
 WebGPU **does not require a window** to work actually, it may also run headless. Since this is not a use case as common as drawing in a window, I leave the details of this option to [a dedicated chapter](../advanced-techniques/headless.md) of the advanced section.
 ```
 
+```{admonition} SDL
+Another popular choice for window management is the SDL library. It is not as lightweight as GLFW but provides more features, like support for sound and Android/iOS targets. [A dedicated appendix](../appendices/using-sdl.md) shows what to change to the main guide when using SDL.
+```
+
 Installation of GLFW
 --------------------
 

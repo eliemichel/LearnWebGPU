@@ -59,6 +59,10 @@ becomes:
 #include <SDL2/SDL.h>
 ```
 
+```{note}
+Defining `SDL_MAIN_HANDLED` prevents SDL from creating its own `main` function, which would conflict with yours.
+```
+
 In the `main` function, replace call to `glfwInit()`:
 
 ```C++
@@ -78,6 +82,10 @@ if (SDL_Init(SDL_INIT_VIDEO) < 0) {
 	std::cerr << "Could not initialize SDL! Error: " << SDL_GetError() << std::endl;
 	return 1;
 }
+```
+
+```{note}
+Calling `SDL_SetMainReady()` is needed when using `SDL_MAIN_HANDLED` instead of letting SDL automatically manage the main function.
 ```
 
 Change the creation of the window:
