@@ -1,30 +1,36 @@
-.theme-language-selector {
+.language-selector {
   position: relative;
 }
 
-.theme-language-selector > button {
-  background: transparent;
-  border: none;
+.language-selector-icon {
   cursor: pointer;
-  padding: 0;
 }
 
-.theme-language-selector svg {
-  display: block;
-  color: var(--color-foreground-primary);
-  vertical-align: middle;
-  height: 1rem;
-  width: 1rem;
+.language-selector-icon:hover {
+  color: var(--color-link);
 }
 
-.theme-language-selector .theme-language-list-container {
+
+#__language:not(:checked) + .language-list-container {
+  display: none;
+}
+
+.language-selector .language-list-container {
   margin: 0;
   right: 0;
   width: 100vw;
   position: absolute;
 }
 
-.theme-language-selector .theme-language-list-container > ul {
+.language-selector .language-list-underlay {
+  left: 0;
+  top: 0;
+  width: 100vw;
+  height: 100vh;
+  position: fixed;
+}
+
+.language-selector .language-list-container > ul {
   padding: 0;
   margin: 0;
   position: absolute;
@@ -36,21 +42,23 @@
   border-radius: .2rem;
 }
 
-.theme-language-selector .theme-language-list-container > ul li a {
+.language-selector .language-list-container > ul li a {
   display: block;
   padding: 0.5rem 0.8rem;
   color: var(--color-foreground-primary);
   text-decoration: none;
 }
-.theme-language-selector .theme-language-list-container > ul li a.theme-current {
+.language-selector .language-list-container > ul li a.current,
+.language-selector .language-list-container > ul li a.current:hover {
   color: var(--color-foreground-muted);
-  background-color: var(--color-foreground-secondary);
+  background-color: var(--color-background-secondary);
+  cursor: default;
 }
-.theme-language-selector .theme-language-list-container > ul li a:hover {
+.language-selector .language-list-container > ul li a:hover {
   background-color: var(--color-background-hover);
   color: var(--color-foreground-primary);
   text-decoration: none;
 }
-.theme-language-selector .theme-language-list-container > ul li a .theme-en {
+.language-selector .language-list-container > ul li a .en {
   color: var(--color-sidebar-link-text);
 }
