@@ -42,6 +42,10 @@
   color: var(--color-foreground-primary);
   text-decoration: none;
 }
+.theme-language-selector .theme-language-list-container > ul li a.theme-current {
+  color: var(--color-foreground-muted);
+  background-color: var(--color-foreground-secondary);
+}
 .theme-language-selector .theme-language-list-container > ul li a:hover {
   background-color: var(--color-background-hover);
   color: var(--color-foreground-primary);
