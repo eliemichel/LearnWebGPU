@@ -35,6 +35,7 @@ def on_doctree_resolved(app: Sphinx, doctree, fromdocname: str):
 def on_build_finished(app: Sphinx, exc):
     asset_files = [
         "css/diff-admonition.css",
+        "css/translation.css",
         "js/diff-admonition.js",
     ]
     if app.builder.format == 'html' and not exc:

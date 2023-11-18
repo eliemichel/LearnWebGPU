@@ -25,6 +25,8 @@ def getLastChange(filepath):
         hash, timestamp = info.split(";")
         return hash, int(timestamp)
 
+#############################################################
+
 class TranslationWarningDirective(SphinxDirective):
     """
     A warning that is displayed only when a page is older than the one it is
@@ -43,7 +45,8 @@ class TranslationWarningDirective(SphinxDirective):
         
         _, original_file = self.env.relfn2path(original_file_relative, self.env.docname)
         _, translated_file = self.env.relfn2path(self.env.docname, self.env.docname)
-        original_url = self.arguments[0]
+        original_url = original_file_relative
+        contribute_url = f"https://github.com/eliemichel/LearnWebGPU/edit/main/{self.env.docname}.md"
 
         original_hash, original_timestamp = getLastChange(original_file)
         _, translated_timestamp = getLastChange(translated_file)
@@ -58,6 +61,7 @@ class TranslationWarningDirective(SphinxDirective):
         container = nodes.container()
         block_text = f"``````{{admonition}} {title}\n{self.block_text}\n{diff_block}\n``````"
         block_text = block_text.replace("%original%", original_url)
+        block_text = block_text.replace("%contribute%", contribute_url)
         source = StringList(block_text.splitlines())
         self.state.nested_parse(source, 0, container)
         return [container]

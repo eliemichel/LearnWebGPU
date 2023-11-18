@@ -1,0 +1,52 @@
+.theme-language-selector {
+  position: relative;
+}
+
+.theme-language-selector > button {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.theme-language-selector svg {
+  display: block;
+  color: var(--color-foreground-primary);
+  vertical-align: middle;
+  height: 1rem;
+  width: 1rem;
+}
+
+.theme-language-selector .theme-language-list-container {
+  margin: 0;
+  right: 0;
+  width: 100vw;
+  position: absolute;
+}
+
+.theme-language-selector .theme-language-list-container > ul {
+  padding: 0;
+  margin: 0;
+  position: absolute;
+  right: 0;
+  list-style-type: none;
+  
+  background-color: var(--color-background-primary);
+  box-shadow: 0 .2rem .5rem rgba(128,128,128,.1), 0 0 .0625rem rgba(128,128,128,.2);
+  border-radius: .2rem;
+}
+
+.theme-language-selector .theme-language-list-container > ul li a {
+  display: block;
+  padding: 0.5rem 0.8rem;
+  color: var(--color-foreground-primary);
+  text-decoration: none;
+}
+.theme-language-selector .theme-language-list-container > ul li a:hover {
+  background-color: var(--color-background-hover);
+  color: var(--color-foreground-primary);
+  text-decoration: none;
+}
+.theme-language-selector .theme-language-list-container > ul li a .theme-en {
+  color: var(--color-sidebar-link-text);
+}
