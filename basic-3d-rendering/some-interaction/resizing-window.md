@@ -199,6 +199,10 @@ void Application::updateProjectionMatrix() {
 ```
 ````
 
+```{note}
+If your screen is larger than the 2048 limit we set for texture dimensions, you need to use [`glfwGetMonitors`](https://www.glfw.org/docs/3.3/group__monitor.html#ga70b1156d5d24e9928f145d6c864369d2) and then [`glfwGetMonitorWorkarea`](https://www.glfw.org/docs/3.3/group__monitor.html#ga7387a3bdb64bfe8ebf2b9e54f5b6c9d0) when initializing WebGPU limits to set them to at least the size of your biggest monitor!
+```
+
 Conclusion
 ----------
 
