@@ -1,4 +1,4 @@
-sphinx==5.3.0
+sphinx @ git+https://github.com/eliemichel/sphinx@master
 myst-parser
 furo
 sphinx-copybutton

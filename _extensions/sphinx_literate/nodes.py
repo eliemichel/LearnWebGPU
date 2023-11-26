@@ -73,14 +73,19 @@ class LiterateNode(nodes.General, nodes.Element):
         """
         literal_block_handlers = {}
         reference_handlers = {}
-        for name, builder in app.registry.builders.items():
-            default = builder.default_translator_class
+        for name, Builder in app.registry.builders.items():
+            try:
+                default = Builder.default_translator_class
+            except AttributeError:
+                continue
+            
             translator_class = app.registry.translators.get(
                 name,
                 default.fget(app) if type(default) == property else default
             )
             if translator_class is None:
                 continue
+                
             literal_block_handlers[name] = (
                 translator_class.visit_literal_block,
                 translator_class.depart_literal_block
