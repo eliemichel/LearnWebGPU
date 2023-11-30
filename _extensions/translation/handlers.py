@@ -54,14 +54,31 @@ def on_html_page_context(
     context: Dict[str, Any],
     doctree: Any,
 ):
+    #if docname.startswith("translation/"):
+    #    print("################### on_html_page_context")
+    #    print(f"docname = {docname}")
+    #    print(f"templatename = {templatename}")
+    #    print(f"context = {context}")
+    #    print(f"doctree = {doctree}")
     pass
+
+#############################################################
+
+@print_traceback
+def on_doctree_read(app, doctree):
+    print("################### on_doctree_read")
+    print(dir(doctree))
+    doctree["source"] = doctree["source"].replace("translation\\", "")
+    print(doctree["source"])
 
 #############################################################
 # Setup
 
 def setup(app):
-    app.connect('doctree-resolved', on_doctree_resolved)
-    app.connect('env-purge-doc', on_env_purge_doc)
-    app.connect('env-merge-info', on_env_merge_info)
+    #app.connect('config-inited', on_config_inited)
+    #app.connect('doctree-resolved', on_doctree_resolved)
+    #app.connect('env-purge-doc', on_env_purge_doc)
+    #app.connect('env-merge-info', on_env_merge_info)
     app.connect('build-finished', on_build_finished)
-    app.connect('html-page-context', on_html_page_context)
+    #app.connect('html-page-context', on_html_page_context)
+    #app.connect('doctree-read', on_doctree_read)

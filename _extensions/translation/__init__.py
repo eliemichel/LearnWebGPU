@@ -8,6 +8,7 @@ from sphinx.application import Sphinx
 from .directives import setup as setup_directives
 from .config import setup as setup_config
 from .handlers import setup as setup_handlers
+from .project import setup as setup_project
 
 #############################################################
 # Setup
@@ -18,6 +19,8 @@ def setup(app: Sphinx):
     setup_directives(app)
 
     setup_handlers(app)
+
+    setup_project(app)
 
     return {
         'version': '0.1',

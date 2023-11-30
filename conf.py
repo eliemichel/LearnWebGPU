@@ -10,6 +10,7 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
+import os
 from os.path import abspath, dirname, join
 import sys
 sys.path.append(abspath(join(dirname(__file__), '_extensions')))
@@ -20,7 +21,6 @@ sys.path.append(abspath(join(dirname(__file__), '_extensions')))
 project = 'Learn WebGPU for C++'
 copyright = '2022-2023, Élie Michel and contributors'
 author = 'Élie Michel'
-
 
 # -- General configuration ---------------------------------------------------
 
@@ -47,7 +47,14 @@ templates_path = [
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', 'README.md', 'venv', 'tmp']
+exclude_patterns = [
+    '_build',
+    'Thumbs.db',
+    '.DS_Store',
+    'README.md',
+    'venv',
+    'tmp',
+]
 
 myst_heading_anchors = 3
 
@@ -149,8 +156,3 @@ favicons = [
 lit_begin_ref = "{{"
 lit_end_ref = "}}"
 lit_use_default_style = True
-
-# -- Internationalization ---------------------------------------------------
-
-locale_dirs = ['locale/']
-gettext_compact = "guide"
