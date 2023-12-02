@@ -1,5 +1,6 @@
-from typing import Dict, Any
+from typing import Dict, Any, List, Tuple
 from os.path import dirname, join
+from dataclasses import dataclass
 
 from sphinx.application import Sphinx
 from sphinx.locale import _
@@ -104,6 +105,66 @@ def toctree_for_doc_no_toplevel(
         result.extend(toctree.children)
     return result
 
+@dataclass
+class TranslationMetadata:
+    is_current: bool
+    language_emoji: str
+    language_name: str
+    language_name_en: str
+    translated_docname: str
+
+def get_translation(
+    env: BuildEnvironment,
+    docname_default: str,
+    language_info: Tuple[str, str, str, str],
+    current_lang: str,
+    default_lang: str,
+) -> TranslationMetadata | None:
+    short_language_name, language_emoji, language_name, language_name_en = language_info
+    is_current = short_language_name == current_lang
+    if short_language_name != default_lang:
+        translated_docname = f"{short_language_name}/{docname_default}"
+    else:
+        translated_docname = docname_default
+
+    try:
+        env.get_doctree(translated_docname)
+    except FileNotFoundError:
+        return None
+
+    return TranslationMetadata(
+        is_current,
+        language_emoji,
+        language_name,
+        language_name_en,
+        translated_docname
+    )
+
+def get_all_translations(
+    env: BuildEnvironment,
+    docname: str,
+    translation_languages: List[Tuple[str, str, str, str]],
+) -> List[TranslationMetadata]:
+    default_lang = "en"
+    current_lang = None
+    for lang in translation_languages:
+        short_language_name = lang[0]
+        if docname.startswith(f"{short_language_name}/"):
+            current_lang = short_language_name
+
+    if current_lang is None:
+        current_lang = default_lang
+        docname_default = docname
+    else:
+        # Remove language prefix
+        docname_default = docname[len(current_lang)+1:]
+
+    all_translations = []
+    for lang in translation_languages:
+        if tr := get_translation(env, docname_default, lang, current_lang, default_lang):
+            all_translations.append(tr)
+    return all_translations
+
 @print_traceback
 def on_html_page_context(
     app: Sphinx,
@@ -112,8 +173,12 @@ def on_html_page_context(
     context: Dict[str, Any],
     doctree: Any,
 ):
-    context["toctree"] = lambda **kwargs: get_local_toctree_no_toplevel(app.builder, docname, **kwargs)
-    context["master_doc"] = get_local_master(app.builder.env, docname)
+    builder = app.builder
+    env = builder.env
+
+    context["toctree"] = lambda **kwargs: get_local_toctree_no_toplevel(builder, docname, **kwargs)
+    context["master_doc"] = get_local_master(env, docname)
+    context["translations"] = get_all_translations(env, docname, app.config.translation_languages)
 
 #############################################################
 

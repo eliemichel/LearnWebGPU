@@ -1,3 +1,4 @@
+from typing import List, Tuple
 
 def setup(app):
     app.add_css_file("diff-admonition.css")
@@ -5,4 +6,5 @@ def setup(app):
 
     app.add_css_file("translation.css")
 
-    #app.add_config_value("lit_begin_ref", "{{", 'html', [str])
+    # Each entry is (short language name, emoji, language name, english language name)
+    app.add_config_value("translation_languages", [], 'html', List[Tuple[str, str, str, str]])

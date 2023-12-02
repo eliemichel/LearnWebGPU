@@ -158,3 +158,12 @@ favicons = [
 lit_begin_ref = "{{"
 lit_end_ref = "}}"
 lit_use_default_style = True
+
+# -- Options for translation -----------------------------------------
+
+translation_languages = [
+    ("en", "🇫🇷", "English", ""),
+    ("fr", "🇫🇷", "Français", "French"),
+    ("kr", "🇰🇷", "한국인", "Korean"),
+    ("it", "🇮🇹", "Italiano", "Italian"),
+]

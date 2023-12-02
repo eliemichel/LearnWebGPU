@@ -1,4 +1,5 @@
 {% block language_selector %}
+{% if translations %}
 <div class="language-selector">
 	<label class="language-selector-icon" for="__language">
 		<div class="visually-hidden">Switch Language</div>
@@ -10,11 +11,16 @@
 	<div class="language-list-container">
 		<label class="language-list-underlay" for="__language"></label>
 		<ul class="language-list">
-			<li><a class="muted-link current" href="#">🇺🇸 English</a></li>
-			<li><a class="muted-link" href="#">🇫🇷 Français <span class="en">(French)</span></a></li>
-			<li><a class="muted-link" href="#">🇰🇷 한국인 <span class="en">(Korean)</span></a></li>
-			<li><a class="muted-link" href="#">🇮🇹 Italiano <span class="en">(Italian)</span></a></li>
+			{% for tr in translations %}
+				{% set extra_class = "current" if tr.is_current else "" %}
+				<li><a class="muted-link {{ extra_class }}" href="{{ pathto(tr.translated_docname) }}">{{ tr.language_emoji }} {{ tr.language_name }}
+				{% if tr.language_name_en %}
+					<span class="en">({{ tr.language_name_en }})</span>
+				{% endif %}
+				</a></li>
+			{% endfor %}
 		</ul>
 	</div>
 </div>
+{% endif %}
 {% endblock language_selector %}
