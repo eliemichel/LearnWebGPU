@@ -52,6 +52,14 @@ def on_build_finished(app: Sphinx, exc):
 
 #############################################################
 
+def get_local_master(env: BuildEnvironment, docname: str):
+    """Return the name of the document used as master root for a given doc"""
+    all_ancestors = list(_get_toctree_ancestors(env.toctree_includes, docname))
+    if all_ancestors:
+        return all_ancestors[-1]
+    else:
+        return env.config.root_doc
+
 def get_local_toctree_no_toplevel(builder: Builder, docname: str, collapse: bool = True, **kwargs: Any) -> str:
     """Variant from sphinx.builders.html.__init__ that calls toctree_for_doc_no_toplevel"""
     if 'includehidden' not in kwargs:
@@ -70,15 +78,10 @@ def toctree_for_doc_no_toplevel(
     maxdepth: int = 0,
     titles_only: bool = False,
 ) -> Element | None:
-    """Variant of environment.adapters.toctree that does not return the top level
-    """
+    """Variant of environment.adapters.toctree that does not return the top level"""
 
     # Find ancestor that serves as sub root
-    all_ancestors = list(_get_toctree_ancestors(env.toctree_includes, docname))
-    if all_ancestors:
-        ancestor = all_ancestors[-1]
-    else:
-        ancestor = env.config.root_doc
+    ancestor = get_local_master(env, docname)
 
     toctrees: list[Element] = []
     for toctree_node in env.get_doctree(ancestor).findall(addnodes.toctree):
@@ -110,6 +113,7 @@ def on_html_page_context(
     doctree: Any,
 ):
     context["toctree"] = lambda **kwargs: get_local_toctree_no_toplevel(app.builder, docname, **kwargs)
+    context["master_doc"] = get_local_master(app.builder.env, docname)
 
 #############################################################
 
