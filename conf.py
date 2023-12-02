@@ -24,6 +24,8 @@ author = 'Élie Michel'
 
 # -- General configuration ---------------------------------------------------
 
+root_doc = "toc"
+
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.

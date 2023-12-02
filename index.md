@@ -18,5 +18,5 @@ basic-compute/index
 advanced-techniques/index
 appendices/index
 
-translation/fr/index
+fr/index
 ```
