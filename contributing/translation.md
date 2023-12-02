@@ -32,7 +32,7 @@ When adding a new language, create a **subdirectory in `translation`** that has 
 
 One last thing to ensure when adding a new language: link it to the **global table of content** in `toc.md`:
 
-````
+````text
 ```{toctree}
 :titlesonly:
 
@@ -57,7 +57,7 @@ Once your target language exists, translating a page consists in creating a docu
 
 **Importantly**, insert right after the title the following special directive:
 
-````
+````text
 ```{translation-warning} Outdated Translation, /introduction.md
 This is a **community translation** of [the original English page](%original%), which **has been updated** since it was translated and may thus no longer be in sync. You are welcome to [contribute](%contribute%)!
 ```
@@ -71,7 +71,7 @@ This does multiple things:
 
 You can also add an extra admonition when even the latest version of the translation is not up to date with the (typically because it is a work in progress):
 
-````
+````text
 ```{admonition} Incomplete Translation
 This is a **community translation** of [the original English page](/introduction.md), which is **not fully translated yet**. You are welcome to [contribute](https://github.com/eliemichel/LearnWebGPU/edit/main/translation/fr/introduction.md)!
 ```
