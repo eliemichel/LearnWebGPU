@@ -17,6 +17,4 @@ basic-3d-rendering/index
 basic-compute/index
 advanced-techniques/index
 appendices/index
-
-fr/index
 ```

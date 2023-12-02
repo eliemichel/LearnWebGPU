@@ -11,4 +11,6 @@ Contents
 
 index
 fr/index
+
+contributing/index
 ```

@@ -45,3 +45,13 @@ make html
 ```
 make tangle
 ```
+
+Contributing
+------------
+
+To help this project, you can:
+
+ - Consult the [Contributing](https://eliemichel.github.io/LearnWebGPU/contributing) section of the guide.
+ - Report [Issues](https://github.com/eliemichel/LearnWebGPU/issues) and suggest [Pull Requests](https://github.com/eliemichel/LearnWebGPU/pulls).
+ - [Join Discord](https://discord.gg/2Tar4Kt564) for more information.
+
