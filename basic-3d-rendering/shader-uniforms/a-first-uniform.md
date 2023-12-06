@@ -193,6 +193,9 @@ PipelineLayoutDescriptor layoutDesc{};
 layoutDesc.bindGroupLayoutCount = 1;
 layoutDesc.bindGroupLayouts = (WGPUBindGroupLayout*)&bindGroupLayout;
 PipelineLayout layout = device.createPipelineLayout(layoutDesc);
+
+// Assign the PipelineLayout the to RenderPipelineDescriptor's layout field
+pipelineDesc.layout = layout;
 ```
 ````
 
