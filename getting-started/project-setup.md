@@ -111,11 +111,14 @@ We set up some properties of the target `App` by calling somewhere after `add_ex
 ```{lit} CMake, Recommended extras
 set_target_properties(App PROPERTIES
 	CXX_STANDARD 17
+	CXX_EXTENSIONS OFF
 	COMPILE_WARNING_AS_ERROR ON
 )
 ```
 
 The `CXX_STANDARD` property is set to 17 to mean that we require C++17 (this will enable us to use some syntactic tricks later on, but is not mandatory per se).
+
+The `CXX_EXTENSIONS` property is set to `OFF` to disable compiler specific extensions (for example, on GCC this will make CMake add "-std=c++17" and not "-std=gnu++17" to the list of compilation flags).
 
 The `COMPILE_WARNING_AS_ERROR` is turned on as a good practice, to make sure no warning is left ignored. Warnings are actually important, especially when learning a new language/library. To make sure we even have as many warnings as possible, we add some compile options:
 
