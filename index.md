@@ -31,6 +31,20 @@ You probably want to check out the _**Resulting code**_ link at the beginning an
 :class: only-dark with-shadow
 ```
 
+*Are you ok with using a shallow wrapper for easier reading?*
+
+```{admonition} Yes, I prefer **C++ styled** code.
+:class: foldable yes
+
+Use the "**With webgpu.hpp**" tab.
+```
+
+```{admonition} No, show me the **raw C WebGPU API**!
+:class: foldable no
+
+Use the "**Vanilla webgpu.h**" tab. The *Resulting code* for vanilla WebGPU is less up to date, but this tab also switches **all the code blocks** inside the guide, and these are **up to date**.
+```
+
 To **build this base code**, refer to the [Building](getting-started/project-setup.md#building) section of the project setup chapter. You may add `-DWEBGPU_BACKEND=WGPU` (default) or `-DWEBGPU_BACKEND=DAWN` to the `cmake -B build` line to pick respectively [`wgpu-native`](https://github.com/gfx-rs/wgpu-native) or [Dawn](https://dawn.googlesource.com/dawn/) as a backend.
 
 *How far do you want the base code to go?*
