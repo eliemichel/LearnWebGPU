@@ -43,3 +43,83 @@ figcaption p {
 	width: 100%;
 	height: 100%;
 }
+
+
+
+.admonition.foldable {
+	padding: 0;
+}
+.admonition.foldable > * {
+	max-height: 0;
+	margin: 0 .5rem;
+	transition: max-height 0.1s;
+	transition: margin 0.1s;
+}
+.admonition.foldable.open > * {
+	max-height: inherit;
+	margin: .5rem;
+}
+.admonition.foldable > .admonition-title {
+	max-height: inherit;
+	margin: 0;
+}
+.admonition.foldable > .admonition-title::before {
+	-webkit-mask-image: none;
+	mask-image: none;
+	background: none;
+}
+
+.admonition.foldable .admonition-title {
+	display: block;
+	clear: both;
+	cursor: pointer;
+}
+.admonition.foldable > .admonition-title:before {
+	content: "▼";
+	transform: rotate(-90deg);
+	transition: transform 0.1s;
+	transform-origin: 35% 60%;
+	color: var(--color-admonition-title);
+}
+.admonition.foldable.open > .admonition-title:before {
+	content: "▼";
+	transform: rotate(0deg);
+}
+
+:root {
+	--color-admonition-title--yes: rgb(0, 200, 82);
+	--color-admonition-title-background--yes: rgba(0, 200, 82, 0.2);
+
+	--color-admonition-title--no: rgb(255, 82, 82);
+	--color-admonition-title-background--no: rgba(255, 82, 82, 0.2);
+
+	/* Handled in conf.py
+	Light:
+	--color-admonition-title--quickstart: rgb(206, 87, 51);
+	--color-admonition-title-background--quickstart: rgba(206, 87, 51, 0.2);
+	Dark:
+	--color-admonition-title--quickstart: rgb(0, 124, 172);
+	--color-admonition-title-background--quickstart: rgba(0, 124, 172, 0.2);
+	*/
+}
+
+.admonition.quickstart {
+	--color-admonition-title: var(--color-admonition-title--quickstart);
+	--color-admonition-title-background: var(--color-admonition-title-background--quickstart);
+}
+.admonition.yes {
+	--color-admonition-title: var(--color-admonition-title--yes);
+	--color-admonition-title-background: var(--color-admonition-title-background--yes);
+}
+.admonition.no {
+	--color-admonition-title: var(--color-admonition-title--no);
+	--color-admonition-title-background: var(--color-admonition-title-background--no);
+}
+.admonition.seealso {
+	--color-admonition-title: var(--color-admonition-title--seealso);
+}
+.admonition.warning {
+	--color-admonition-title: var(--color-admonition-title--warning);
+}
+
+

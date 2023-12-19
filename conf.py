@@ -82,10 +82,16 @@ html_theme_options = {
     "light_css_variables": {
         "color-brand-primary": "#ac2800",  # or #ac2800
         "color-brand-content": "#007cac",  # #05acc8  #0089BD
+
+        "color-admonition-title--quickstart": "rgb(0, 124, 172)",
+        "color-admonition-title-background--quickstart": "rgba(0, 124, 172, 0.2)",
     },
     "dark_css_variables": {
         "color-brand-primary": "#ce5733",
         "color-brand-content": "#38a6b9",  # #05acc8  #0089BD
+
+        "color-admonition-title--quickstart": "rgb(56, 166, 185)",
+        "color-admonition-title-background--quickstart": "rgba(56, 166, 185, 0.2)",
     },
     "footer_icons": [
         {
@@ -112,6 +118,10 @@ html_static_path = ['images', 'data', 'theme', 'video']
 html_css_files = [
     'extra.css',
     'sphinx_literate.css',
+]
+
+html_js_files = [
+    'extra.js',
 ]
 
 # Syntax highlighting of code blocks
