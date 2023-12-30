@@ -144,7 +144,7 @@ The **order of the fields** does not need to be the same. The order of the field
 The order in `VertexInput` does not matter, and the `@location` must match the attribute definition:
 
 ```C++
-std::vector<VertexAttribute> vertexAttribs(3);
+std::vector<VertexAttributes> vertexAttribs(3);
 //                                         ^ This was a 2
 
 // Position attribute
