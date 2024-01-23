@@ -26,7 +26,7 @@ One thing important to keep in mind when doing graphics programming: we have **t
 
 They are not too far, but for high performance applications like real time graphics, this matters. In advanced pipelines, rendering a frame may involve thousands or tens of thousands of commands running on the GPU.
 
-As a consequence, we cannot afford to send the commands one by one from the CPU and wait for a response after each one. Instead, commands meant to the GPU are batched and fired through a **command queue**. The GPU consumes this queue whenever it is ready, and this way processors minimize the time spend idling for their sibling to respond.
+As a consequence, we cannot afford to send the commands one by one from the CPU and wait for a response after each one. Instead, commands intended for the GPU are batched and fired through a **command queue**. The GPU consumes this queue whenever it is ready, and this way processors minimize the time spend idling for their sibling to respond.
 
 The CPU-side of your program, i.e., the C++ code that you write, lives in the **Content timeline**. The other side of the command queue is the **Queue timeline**, running on the GPU.
 
