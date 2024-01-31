@@ -43,6 +43,13 @@ Our WebGPU device has a single queue, which we can get with `wgpuDeviceGetQueue`
 WGPUQueue queue = wgpuDeviceGetQueue(device);
 ```
 
+We must also release the queue once we no longer use it, at the end of the program:
+
+```{lit} C++, Destroy things (prepend)
+// At the end
+wgpuQueueRelease(queue);
+```
+
 ```{note}
 Other graphics API allow one to build multiple queues per device, and future version of WebGPU might as well. But for now, one queue is already more than enough for us to play with!
 ```
@@ -92,6 +99,7 @@ If we have a single element, it is simply:
 // With a single command:
 WGPUCommandBuffer command = /* [...] */;
 wgpuQueueSubmit(queue, 1, &command);
+wgpuCommandBufferRelease(command); // release command buffer once submitted
 ```
 
 If we know at compile time ("statically") the number of commands, we may use a C array (although a `std::array` is safer):
@@ -110,6 +118,15 @@ commands[0] = /* [...] */;
 commands[1] = /* [...] */;
 commands[2] = /* [...] */;
 wgpuQueueSubmit(queue, commands.size(), commands.data());
+```
+
+In any case, do not forgot to release the command buffers once they have been submitted:
+
+```C++
+// Release:
+for (auto cmd : commands) {
+	wgpuCommandBufferRelease(cmd);
+}
 ```
 
 And if we need to dynamically change the size, we use a `std::vector`:
@@ -148,6 +165,7 @@ WGPUCommandBufferDescriptor cmdBufferDescriptor = {};
 cmdBufferDescriptor.nextInChain = nullptr;
 cmdBufferDescriptor.label = "Command buffer";
 WGPUCommandBuffer command = wgpuCommandEncoderFinish(encoder, &cmdBufferDescriptor);
+wgpuCommandEncoderRelease(encoder); // release encoder after it's finished
 
 // Finally submit the command queue
 std::cout << "Submitting command..." << std::endl;

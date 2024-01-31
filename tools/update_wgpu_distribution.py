@@ -4,7 +4,7 @@ from io import BytesIO
 from os.path import join
 
 base_url = "https://github.com/gfx-rs/wgpu-native/releases/download"
-git_tag = "v0.18.0.1"
+git_tag = "v0.18.1.4"
 
 # Make sure to check out the right branch!
 destination = "G:/SourceCode/WebGPU-distribution"
@@ -13,8 +13,8 @@ destination = "G:/SourceCode/WebGPU-distribution"
 all_configs = ["release"]
 
 arch_per_os = {
-    "linux": ["x86_64"],
-    "macos": ["x86_64", "arm64"],
+    "linux": ["x86_64", "aarch64"],
+    "macos": ["x86_64", "aarch64"],
     "windows": ["x86_64", "i686"],
 }
 

@@ -202,6 +202,7 @@ WGPURenderPassDescriptor renderPassDesc = {};
 {{Describe Render Pass}}
 WGPURenderPassEncoder renderPass = wgpuCommandEncoderBeginRenderPass(encoder, &renderPassDesc);
 wgpuRenderPassEncoderEnd(renderPass);
+wgpuRenderPassEncoderRelease(renderPass);
 ```
 
 Note that we directly end the pass without issuing any other command. This is because the render pass has a built-in mechanism for clearing the screen when it begins, which we'll set up through the descriptor.

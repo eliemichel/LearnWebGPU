@@ -4,7 +4,6 @@ The Adapter
 ```{lit-setup}
 :tangle-root: 010 - The Adapter - Part A
 :parent: 005 - Hello WebGPU
-:fetch-files: ../data/webgpu-release.h
 ```
 
 *Resulting code:* [`step010`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step010)

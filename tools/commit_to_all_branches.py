@@ -2,10 +2,62 @@ import subprocess
 
 # Config
 clone_root = r"G:\SourceCode\LearnWebGPU-Code-folded"
-cherry_picked_commit = "792900f33b9167113bf374e2e5bc8cce8873840a"
+cherry_picked_commit = "435cb601d5d89fe1bcb7135e79b7b4549dfc19b9"
 all_branches = [
-    'step005',
-    'step010',
+    #"step001",
+    #"step005",
+    #"step010",
+    #"step015",
+    #"step017",
+    #"step018",
+    #"step020",
+    #"step025",
+    #"step030",
+    #"step030-headless",
+    #"step030-sdl",
+    #"step030-sdl-c",
+    #"step031",
+    #"step032",
+    #"step033",
+    #"step033-optionB",
+    "step034",
+    "step037",
+    "step039",
+    "step043",
+    "step044",
+    "step050",
+    "step052",
+    "step054",
+    "step055",
+    "step056",
+    "step058",
+    "step060",
+    "step065",
+    "step070",
+    "step075",
+    "step080",
+    "step085",
+    "step090",
+    "step095",
+    "step095-emscripten",
+    "step095-timestamp-queries",
+    "step100",
+    "step100-gltf",
+    "step105",
+    "step110",
+    "step110-next",
+    "step115",
+    "step117",
+    "step120",
+    "step125",
+    "step200",
+    "step201",
+    "step210",
+    "step211",
+    "step215",
+    "step220",
+    "step222",
+    "step240",
 ]
 excluded_branches = [
     'main',
@@ -30,7 +82,7 @@ def main():
             continue
         print(f"Processing branch '{branch}'...")
         git("checkout", branch)
-        res = git("cherry-pick", cherry_picked_commit)
+        res = git("cherry-pick", cherry_picked_commit, "-m", "1")
         if res.returncode != 0:
             print(f"Cannot cherry pick for branch '{branch}':")
             print(res.stderr.decode())
