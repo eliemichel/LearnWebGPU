@@ -8,7 +8,7 @@ This documentation walks you through the use of the [WebGPU](https://www.w3.org/
 `````{admonition} Quick Start! (Click Me)
 :class: foldable quickstart
 
-*Do you want to understand every bits if GPU code you write?*
+*Do you want to understand every bit of GPU code you write?*
 
 ````{admonition} Yes, write WebGPU code **from scratch**!
 :class: foldable yes
