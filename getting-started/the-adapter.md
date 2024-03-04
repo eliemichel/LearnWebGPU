@@ -187,7 +187,7 @@ The Surface
 ```{lit-setup}
 :tangle-root: 010 - The Adapter - Part B
 :parent: 010 - The Adapter - Part A
-:fetch-files: ../data/glfw3webgpu.zip
+:fetch-files: ../data/glfw3webgpu-v1.1.0.zip
 ```
 
 We actually need to pass an option to the adapter request: the **surface** onto which we draw.
