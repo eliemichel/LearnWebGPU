@@ -298,7 +298,7 @@ auto onBuffer2Mapped = [](WGPUBufferMapAsyncStatus status, void* pUserData) {
 	if (status != WGPUBufferMapAsyncStatus_Success) return;
 
 	// Get a pointer to wherever the driver mapped the GPU memory to the RAM
-	uint8_t* bufferData = (uint8_t*)wgpuBufferGetMappedRange(context->buffer, 0, 16);
+	uint8_t* bufferData = (uint8_t*)wgpuBufferGetConstMappedRange(context->buffer, 0, 16);
 
 	// [...] (Do stuff with bufferData)
 

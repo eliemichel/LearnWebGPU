@@ -289,23 +289,33 @@ WGPUShaderModule loadShaderModule(const fs::path& path, WGPUDevice device) {
 	shaderCodeDesc.chain.next = nullptr;
 	shaderCodeDesc.chain.sType = WGPUSType_ShaderModuleWGSLDescriptor;
 	shaderCodeDesc.code = shaderSource.c_str();
-	ShaderModuleDescriptor shaderDesc{};
+	WGPUShaderModuleDescriptor shaderDesc{};
 	shaderDesc.nextInChain = nullptr;
 	shaderDesc.hintCount = 0;
 	shaderDesc.hints = nullptr;
 	shaderDesc.nextInChain = &shaderCodeDesc.chain;
-	return wgpuDeviceCreateShaderModule(device, shaderDesc);
+	return wgpuDeviceCreateShaderModule(device, &shaderDesc);
 }
 ```
 ````
 
 Move the original content of the shaderSource variable into `resources/shader.wgsl` and replace the module creation step by:
 
+````{tab} With webgpu.hpp
 ```C++
 std::cout << "Creating shader module..." << std::endl;
 ShaderModule shaderModule = loadShaderModule(RESOURCE_DIR "/shader.wgsl", device);
 std::cout << "Shader module: " << shaderModule << std::endl;
 ```
+````
+
+````{tab} Vanilla webgpu.h
+```C++
+std::cout << "Creating shader module..." << std::endl;
+WGPUShaderModule shaderModule = loadShaderModule(RESOURCE_DIR "/shader.wgsl", device);
+std::cout << "Shader module: " << shaderModule << std::endl;
+```
+````
 
 This way, you **no longer need to rebuild** the application when you only want to change the shader!
 
