@@ -1,7 +1,6 @@
-sphinx @ git+https://github.com/eliemichel/sphinx@master
+sphinx @ git+https://github.com/eliemichel/sphinx@eliemichel/custom-project
 myst-parser
 furo
-sphinx-basic-ng
 sphinx-copybutton
 sphinxext-opengraph
 sphinx-favicon
