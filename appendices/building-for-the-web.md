@@ -16,25 +16,11 @@ Building C++ code into a web page requires a **specific compiler** that can targ
 
 Open a terminal and activate `emsdk` (see installation instruction), such that **the command `emcmake` is available** in the `PATH` (you may check with `where emcmake` on Windows `which emcmake` on others).
 
-### Configuration
-
-This is a command provided by Emcripten to ease the compilation of CMake-based into WebAssembly. It must simply be used **as a prefix** of the `cmake` configuration call:
-
-```bash
-# Create a build-web directory in which we configured the project to be built
-# with emscripten. You may use any regular cmake command line option here.
-emcmake cmake -B build-web
-```
-
-```{note}
-Prefixing with `emcmake` is **only needed for the first call** to CMake. Relevant information are then properly stored in the `CMakeCache.txt`, such that you can use CMake as usual afterwards.
-```
-
-Note however that it won't correctly run as is, we need to change a few things in the CMakeLists.
-
 ### Dependencies
 
-Emscripten provides its own version of GLFW, because drawing on a Web page is very different from drawing on a native window. We thus tell CMake to include our own `glfw` directory only when **not** using Emscripten:
+Although the `emcmake` command we use below does a lot to make our transition to a web build seamless, we should **slightly alter** our `CMakeLists.txt` before running anything, in order to add some web-specific options.
+
+Emscripten provides **its own version of GLFW**, because drawing on a Web page is very different from drawing on a native window. We thus tell CMake to include our own `glfw` directory only when **not** using Emscripten:
 
 ```CMake
 if (NOT EMSCRIPTEN)
@@ -74,6 +60,22 @@ set_target_properties(App PROPERTIES SUFFIX ".html")
 ```{note}
 We see below how to customize the HTML part of this web page (a.k.a. the *shell*).
 ```
+
+### Configuration
+
+We are now ready to configure our project using `emcmake`. This is a command provided by Emcripten to ease the compilation of CMake-based into WebAssembly. It must simply be used **as a prefix** of the `cmake` configuration call:
+
+```bash
+# Create a build-web directory in which we configured the project to be built
+# with emscripten. You may use any regular cmake command line option here.
+emcmake cmake -B build-web
+```
+
+```{note}
+Prefixing with `emcmake` is **only needed for the first call** to CMake. Relevant information are then properly stored in the `CMakeCache.txt`, such that you can use CMake as usual afterwards.
+```
+
+Note however that it won't correctly run as is, we need to change a few things in the CMakeLists.
 
 ### Build
 
