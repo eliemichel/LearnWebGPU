@@ -33,6 +33,32 @@ These two implementations still have **some discrepancies**, but they will disap
 
 To make the integration of either of these in a CMake project as easy as with GLFW and without too many extra dependencies, I share a [WebGPU-distribution](https://github.com/eliemichel/WebGPU-distribution) repository that lets you chose one of the following options:
 
+`````{admonition} Too many options? (Click Me)
+:class: foldable quickstart
+
+*Do you favor fast build over detailed error messages?*
+
+````{admonition} Yes please, **fast build** and **no need** for an Internet connection the first time I build
+:class: foldable yes
+
+Go for [**Option A**](#option-a-the-lightness-of-wgpu-native) (wgpu-native)!
+````
+
+````{admonition} No, I'd rather have **detailed error messages**.
+:class: foldable no
+
+Go for [**Option B**](#option-b-the-comfort-of-dawn) (Dawn)!
+
+````
+
+```{admonition} I don't want to chose.
+:class: foldable warning
+
+Go for [**Option C**](#option-c-the-flexibility-of-both), that lets you switch from one backend to another one at any time!
+```
+
+`````
+
 ### Option A: The lightness of wgpu-native
 
 Since `wgpu-native` is written in rust, we cannot easily build it from scratch so the distribution includes pre-compiled libraries:
