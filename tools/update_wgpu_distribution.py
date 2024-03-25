@@ -4,7 +4,7 @@ from io import BytesIO
 from os.path import join
 
 base_url = "https://github.com/gfx-rs/wgpu-native/releases/download"
-git_tag = "v0.18.1.4"
+git_tag = "v0.19.3.1"
 
 # Make sure to check out the right branch!
 destination = "G:/SourceCode/WebGPU-distribution"

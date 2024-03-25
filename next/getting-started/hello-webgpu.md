@@ -2,8 +2,8 @@ Hello WebGPU
 ============
 
 ```{lit-setup}
-:tangle-root: 005 - Hello WebGPU
-:parent: 001 - Opening a window
+:tangle-root: 005 - Hello WebGPU - next
+:parent: 001 - Opening a window - next
 :fetch-files: ../data/webgpu-distribution.zip
 ```
 
@@ -35,7 +35,7 @@ There are (at least) two implementations of WebGPU, developed for the two main w
 
 These two implementations still have **some discrepancies**, but these will disappear as the WebGPU specification gets stable. I try to write this guide such that it **works for both** of them.
 
-To make the integration of either of these in a CMake project as easy as with GLFW and without too many extra dependencies, I share a [WebGPU-distribution](https://github.com/eliemichel/WebGPU-distribution) repository that lets you chose one of the following options:
+To ease the integration of either of these in a CMake project, I share a [WebGPU-distribution](https://github.com/eliemichel/WebGPU-distribution) repository that lets you chose one of the following options:
 
 `````{admonition} Too many options? (Click Me)
 :class: foldable quickstart
