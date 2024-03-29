@@ -508,9 +508,9 @@ using glm::vec3;
 // Translate the view
 vec3 focalPoint(0.0, 0.0, -2.0);
 mat4x4 T2 = transpose(mat4x4(
-	1.0,  0.0, 0.0, focalPoint.x,
-	0.0,  1.0, 0.0, focalPoint.y,
-	0.0,  0.0, 1.0, focalPoint.z,
+	1.0,  0.0, 0.0, -focalPoint.x,
+	0.0,  1.0, 0.0, -focalPoint.y,
+	0.0,  0.0, 1.0, -focalPoint.z,
 	0.0,  0.0, 0.0,     1.0
 ));
 
