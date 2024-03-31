@@ -9,6 +9,10 @@ Opening a window
 
 *Resulting code:* [`step001`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step001)
 
+```{note}
+When using Dawn, make sure to add the `webgpu` directory **after** you add `glfw`, otherwise Dawn provides its own version (which may be fine sometimes, but you don't get to chose the version).
+```
+
 Before being able to render anything on screen, we need to ask the Operating System to hand us some place where to draw things, something commonly known as a **window**.
 
 Unfortunately, the process to open a window depends a lot on the OS, so we use a little library called [GLFW](https://www.glfw.org/) which unifies the different window management APIs and enables our code to be **agnostic** in the OS.
@@ -130,6 +134,95 @@ int main (int, char**) {
     {{Main Content}}
     return 0;
 }
+```
+
+The Surface
+-----------
+
+```{lit-setup}
+:tangle-root: 010 - The Adapter - Part B - next
+:parent: 010 - The Adapter - Part A - next
+:fetch-files: ../data/glfw3webgpu-v1.1.0.zip
+```
+
+We actually need to pass an option to the adapter request: the **surface** onto which we draw.
+
+```{lit} C++, Request adapter (replace)
+{{Get the surface}}
+
+WGPURequestAdapterOptions adapterOpts = {};
+adapterOpts.nextInChain = nullptr;
+adapterOpts.compatibleSurface = surface;
+
+WGPUAdapter adapter = requestAdapter(instance, &adapterOpts);
+```
+
+How do we get the surface? This depends on the OS, and GLFW does not handle this for us, for it does not know WebGPU (yet?). So I provide you this function, in a little extension to GLFW3 called [`glfw3webgpu`](https://github.com/eliemichel/glfw3webgpu).
+
+### GLFW3 WebGPU Extension
+
+Download and unzip [glfw3webgpu.zip](https://github.com/eliemichel/glfw3webgpu/releases/download/v1.1.0/glfw3webgpu-v1.1.0.zip) in your project's directory. There should now be a directory `glfw3webgpu` sitting next to your `main.cpp`. Like we have done before, we can add this directory and link the target it creates to our App:
+
+```{lit} CMake, Dependency subdirectories (append)
+add_subdirectory(glfw3webgpu)
+```
+
+```{lit} CMake, Link libraries (replace)
+target_link_libraries(App PRIVATE glfw webgpu glfw3webgpu)
+target_copy_webgpu_binaries(App)
+```
+
+```{note}
+The `glfw3webgpu` library is very simple, it is only made of 2 files so we could have almost included them directly in our project's source tree. However, it requires some special compilation flags in macOS that we would have had to deal with (you can see them in the `CMakeLists.txt`).
+```
+
+You can now `#include <glfw3webgpu.h>` at the beginning of your `main.cpp` and get the surface by simply doing:
+
+```{lit} C++, Get the surface
+WGPUSurface surface = glfwGetWGPUSurface(instance, window);
+```
+
+```{lit} C++, Includes (append, hidden)
+#include <glfw3webgpu.h>
+```
+
+Also don't forget to release the surface at the end:
+
+```{lit} C++, Destroy surface
+wgpuSurfaceRelease(surface);
+```
+
+```{lit} C++, Destroy things (replace, hidden)
+{{Destroy surface}}
+{{Destroy adapter}}
+{{Destroy WebGPU instance}}
+```
+
+One last thing: we can **tell GLFW not to care about the graphics API** setup, as it does not know WebGPU and we won't use what it could set up by default for other APIs:
+
+```{lit} C++, Create window
+glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API); // NEW
+GLFWwindow* window = glfwCreateWindow(640, 480, "Learn WebGPU", NULL, NULL);
+```
+
+```{lit} C++, Create things (prepend, hidden)
+glfwInit();
+{{Create window}}
+```
+
+```{lit} C++, Main body (replace, hidden)
+{{Main loop}}
+```
+
+```{lit} C++, Destroy things (append, hidden)
+glfwDestroyWindow(window);
+glfwTerminate();
+```
+
+The `glfwWindowHint` function is a way to pass optional arguments to `glfwCreateWindow`. Here we tell it to initialize no particular graphics API by default, as we manage this ourselves.
+
+```{tip}
+I invite you to look at the documentation of GLFW to know more about [`glfwCreateWindow`](https://www.glfw.org/docs/latest/group__window.html#ga3555a418df92ad53f917597fe2f64aeb) and other related functions.
 ```
 
 *Resulting code:* [`step001`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step001)

@@ -107,6 +107,32 @@ The Dawn-based distribution I provide here fetches the source code of Dawn from 
  - The distribution fetches Dawn's source code and its dependencies so the first time you build you need an **Internet connection**.
  - The initial build takes significantly longer, and occupies more disk space overall.
 
+### Option C: The flexibility of both
+
+In this option, we only include a couple of CMake files in our project, which then dynamically fetch either `wgpu-native` or Dawn depending on a configuration option:
+
+```
+cmake -B build -DWEBGPU_BACKEND=WGPU
+# or
+cmake -B build -DWEBGPU_BACKEND=DAWN
+```
+
+```{note}
+The **accompanying code** uses this Option C.
+```
+
+This is given by the `main` branch of my distribution repository:
+
+ - [WebGPU any distribution](https://github.com/eliemichel/WebGPU-distribution/archive/refs/heads/main.zip)
+
+**Pros**
+ - You can have two `build` at the same time, one that uses Dawn and one that uses `wgpu-native`
+
+**Cons**
+ - This is a "meta-distribution" that fetches the one you want at configuration time (i.e., when calling `cmake` the first time) so you need an **Internet connection** and **git** at that time.
+
+And of course depending on your choice the pros and cons of *Option A* and *Option B* apply.
+
 ### Integration
 
 Whichever distribution you choose, the integration is the same:
@@ -120,11 +146,7 @@ Whichever distribution you choose, the integration is the same:
 add_subdirectory(webgpu)
 ```
 
-```{note}
-When using Dawn, make sure to add the `webgpu` directory **after** you add `glfw`, otherwise Dawn provides its own version (which may be fine sometimes, but you don't get to chose the version).
-```
-
- 4. Add the `webgpu` target as a dependency of our app, after GLFW in the `target_link_libraries` command.
+ 4. Add the `webgpu` target as a dependency of our app, using the `target_link_libraries` command.
 
 ```{lit} CMake, Link libraries (replace)
 # Add the 'webgpu' target as a dependency of our App
@@ -144,28 +166,6 @@ target_copy_webgpu_binaries(App)
 In the case of Dawn, there is no precompiled binaries to copy but I define the `target_copy_webgpu_binaries` function anyway (it does nothing) so that you can really use the same CMakeLists with both distributions.
 ```
 
-### Option C: The flexibility of both
-
-Bonus option that I use in the accompanying code that enables to decide on one distribution or the other upon calling `cmake`:
-
-```
-cmake -B build -DWEBGPU_BACKEND=WGPU
-# or
-cmake -B build -DWEBGPU_BACKEND=DAWN
-```
-
-This is given by the `main` branch of my distribution repository:
-
- - [WebGPU any distribution](https://github.com/eliemichel/WebGPU-distribution/archive/refs/heads/main.zip)
-
-**Pros**
- - You can have two `build` at the same time, one that uses Dawn and one that uses `wgpu-native`
-
-**Cons**
- - This is a "meta-distribution" that fetches the one you want at configuration time (i.e., when calling `cmake` the first time) so you need an **Internet connection** and **git** at that time.
-
-And of course depending on your choice the pros and cons of *Option A* and *Option B* apply.
-
 ### Building for the Web
 
 If you are interested in building your application for the web, you can consult [the dedicated appendix](../appendices/building-for-the-web.md)!
@@ -174,6 +174,10 @@ Testing the installation
 ------------------------
 
 To test the implementation, we simply create the WebGPU **instance**, i.e., the equivalent of the `navigator.gpu` we could get in JavaScript. We then check it and destroy it.
+
+```{important}
+Make sure to include `<webgpu/webgpu.h>` before using any WebGPU function or type!
+```
 
 ```{lit} C++, file: main.cpp
 #include <webgpu/webgpu.h>
@@ -260,18 +264,6 @@ In particular, we need to release the global WebGPU instance:
 // 5. We clean up the WebGPU instance
 wgpuInstanceRelease(instance);
 ```
-
-````{note}
-In older versions of `wgpu-native`, the Release and Reference functions did not exist, and a Drop function was used to immediately free an object. See details in [this GitHub issue](https://github.com/webgpu-native/webgpu-headers/issues/9).
-
-```C++
-// With old versions of wgpu-native
-WGPUSomething sth = wgpuCreateSomething(/* descriptor */);
-// This means "the object sth will never be used ever again"
-// and destroys the object right away:
-wgpuSomethingDrop(sth);
-```
-````
 
 ### Implementation-specific behavior
 

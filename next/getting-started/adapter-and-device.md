@@ -12,49 +12,32 @@ The **device** is the **main object** we interact with when using WebGPU. It is 
 
 This chapter describes the **device initialization process**, which is where we also **check the capabilities** of the end user's physical device.
 
-**WIP**
+The Adapter
+-----------
+
+Before getting our hand on a **device**, we need to select an **adapter**. The same host system may expose **multiple adapters** if it has access to multiple physical GPUs. It may also have an adapter that represents an emulated/virtual device.
+
+```{note}
+It is common that high-end laptops have **two physical GPUs**, a **high performance** one and a **low energy** consumption one (that is usually integrated inside the CPU chip).
+```
+
+Each adapter advertises a list of optional **features** and **supported limits** that it can handle. These are used to determine the overall capabilities of the system before **requesting the device**.
+
+> 🤔 Why do we have both an **adapter** and then a **device** abstraction?
+
+The idea is to limit the "it worked on my machine" issue you could encounter when trying your program on a different machine. The **adapter** is used to **access the capabilities** of the user's hardware, which are used to select the behavior of your application among very different code paths. Once a code path is chosen, a **device** is created with **the capabilities we choose**.
+
+Only the capabilities selected for this device are then allowed in the rest of the application. This way, it is **not possible to inadvertently rely on capabilities specific to your own machine**.
+
+```{figure} /images/device-creation.png
+:align: center
+In an advanced use of the adapter/device duality, we can set up multiple limit presets and select one depending on the adapter. In our case, we have a single preset and abort early if it is not supported.
+```
 
 Requesting the adapter
 ----------------------
 
-The first thing we need to do in order to dialog with our GPU is to get a WebGPU **adapter**. It is the main entry point of the library, and the same host system may expose multiple adapters if it has multiple implementations of the WebGPU backend (e.g., a high performance one, a low energy consumption one, etc.).
-
-In JavaScript, this would be:
-
-```js
-const adapter = await navigator.gpu.requestAdapter(options);
-// do something with the adapter
-```
-
-The equivalent in the C API is a bit more complex because there is no such thing as [promises](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise) in C, but the logic is very similar.
-
-Without the `await` keyword, the JavaScript version can be rewritten as:
-
-```js
-function onAdapterRequestEnded(adapter) {
-	// do something with the adapter
-}
-navigator.gpu.requestAdapter(options).then(onAdapterRequestEnded);
-```
-
-which is close enough to the C/C++ version (minus the boilerplate):
-
-```C++
-void onAdapterRequestEnded(
-	WGPURequestAdapterStatus status, // a success status
-	WGPUAdapter adapter, // the returned adapter
-	char const* message, // error message, or nullptr
-	void* userdata // custom user data, as provided when requesting the adapter
-) {
-	// [...] Do something with the adapter
-}
-wgpuInstanceRequestAdapter(
-	instance /* equivalent of navigator.gpu */,
-	&options,
-	onAdapterRequestEnded,
-	nullptr // custom user data, see below
-);
-```
+An adapter is not something we *create*, but rather something that we *request* using the function `wgpuInstanceRequestAdapter`.
 
 ````{note}
 The names of the procedure provided by `webgpu.h` always follow the same construction:
@@ -69,7 +52,111 @@ wgpuSomethingSomeAction(something, ...)
 The first argument of the function is always a "handle" (a blind pointer) representing an object of type "Something".
 ````
 
+So, as suggested by the name, the first argument is the `WGPUInstance` that we created in the previous chapter. What about the others?
+
+```C++
+// Signature of the wgpuInstanceRequestAdapter function as defined in webgpu.h
+void wgpuInstanceRequestAdapter(
+	WGPUInstance instance,
+	WGPU_NULLABLE WGPURequestAdapterOptions const * options,
+	WGPURequestAdapterCallback callback,
+	void * userdata
+);
+```
+
+```{note}
+It is always informative to have a look at how a function is defined in `webgpu.h`!
+```
+
+The second argument is a set of **option**, that is a bit like the **descriptor** that we find in `wgpuCreateSomething` functions, we detail them below. The `WGPU_NULLABLE` flag is an empty define that is only here to tell the reader (i.e., us) that it is allowed to leave the argument to `nullptr` to use **default options**.
+
+### Asynchronous function
+
+The last two arguments go together, and reveal yet another **WebGPU idiom**. Indeed, the function `wgpuInstanceRequestAdapter` is **asynchronous**. This means that instead of directly returning a `WGPUAdapter` object, this request function remembers a **callback**, i.e. a function that will be called whenever the request ends.
+
+```{note}
+Asynchronous functions are used in multiple places in the WebGPU API, whenever an operation may take time. Actually, **none of the WebGPU functions** takes time to return. This way, the CPU program that we are writing never gets blocked by a lengthy operation!
+```
+
+To understand this callback mechanism a bit better, here is the definition of the `WGPURequestAdapterCallback` function type:
+
+```C++
+// Definition of the WGPURequestAdapterCallback function type as defined in webgpu.h
+typedef void (*WGPURequestAdapterCallback)(
+	WGPURequestAdapterStatus status,
+	WGPUAdapter adapter,
+	char const * message,
+	void * userdata
+);
+```
+
+The callback is a **function** that receives the **requested adapter** as an argument, together with **status** information (that tells whether the request failed and why), as well as this mysterious `userdata` **pointer**.
+
+This `userdata` pointer can be anything, it is not interpreted by WebGPU, but only **forwarded** from the initial call to `wgpuInstanceRequestAdapter` to the callback, as a mean to **share some context information**:
+
+```C++
+void onAdapterRequestEnded(
+	WGPURequestAdapterStatus status, // a success status
+	WGPUAdapter adapter, // the returned adapter
+	char const* message, // error message, or nullptr
+	void* userdata // custom user data, as provided when requesting the adapter
+) {
+	// [...] Do something with the adapter
+
+	// Manipulate user data
+	bool* pRequestEnded = reinterpret_cast<bool*>(userdata);
+	*pRequestEnded = true;
+}
+
+// [...]
+
+// In main():
+bool requestEnded = false;
+wgpuInstanceRequestAdapter(
+	instance /* equivalent of navigator.gpu */,
+	&options,
+	onAdapterRequestEnded,
+	&requestEnded // custom user data is simply a pointer to a boolean in this case
+);
+```
+
+We see in the next section a more advanced use of this context in order to retrieve the adapter once the request is done.
+
+````{note}
+In the **JavaScript API** of WebGPU, asynchronous functions use the built-in [Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise) mechanism:
+
+```js
+const adapterPromise = navigator.gpu.requestAdapter(options);
+// The "promise" has no value yet, it is rather a handle that we may connect to callbacks:
+adapterPromise.then(onAdapterRequestEnded).catch(onAdapterRequestFailed);
+
+// [...]
+
+// Instead of a 'status' argument, we have multiple callbacks:
+function onAdapterRequestEnded(adapter) {
+	// do something with the adapter
+}
+function onAdapterRequestFailed(error) {
+	// display the error message
+}
+```
+
+The JavaScript language later introduced a mechanism [`async` function](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/async_function), which enables **"awaiting"** for an asynchronous function without explicitly creating a callback:
+
+```js
+// (From within an async function)
+const adapter = await navigator.gpu.requestAdapter(options);
+// do something with the adapter
+```
+
+This mechanism now exists in other languages such as [Python](https://docs.python.org/3/library/asyncio-task.html), and has even been introduced in C++20 with [coroutines](https://en.cppreference.com/w/cpp/language/coroutines).
+
+I try however to **avoid stacking up too many levels of abstraction** in this guide so we will not use these (and also stick to C++17), but advanced readers may want to create their own WebGPU wrapper that relies on coroutines.
+````
+
 ### Request
+
+**WIP**
 
 We can wrap this in a `requestAdapter()` function that mimicks the JS `await requestAdapter()`:
 
@@ -185,95 +272,6 @@ int main() {
 ```{lit} C++, Destroy things (hidden)
 {{Destroy adapter}}
 {{Destroy WebGPU instance}}
-```
-
-The Surface
------------
-
-```{lit-setup}
-:tangle-root: 010 - The Adapter - Part B - next
-:parent: 010 - The Adapter - Part A - next
-:fetch-files: ../data/glfw3webgpu-v1.1.0.zip
-```
-
-We actually need to pass an option to the adapter request: the **surface** onto which we draw.
-
-```{lit} C++, Request adapter (replace)
-{{Get the surface}}
-
-WGPURequestAdapterOptions adapterOpts = {};
-adapterOpts.nextInChain = nullptr;
-adapterOpts.compatibleSurface = surface;
-
-WGPUAdapter adapter = requestAdapter(instance, &adapterOpts);
-```
-
-How do we get the surface? This depends on the OS, and GLFW does not handle this for us, for it does not know WebGPU (yet?). So I provide you this function, in a little extension to GLFW3 called [`glfw3webgpu`](https://github.com/eliemichel/glfw3webgpu).
-
-### GLFW3 WebGPU Extension
-
-Download and unzip [glfw3webgpu.zip](https://github.com/eliemichel/glfw3webgpu/releases/download/v1.1.0/glfw3webgpu-v1.1.0.zip) in your project's directory. There should now be a directory `glfw3webgpu` sitting next to your `main.cpp`. Like we have done before, we can add this directory and link the target it creates to our App:
-
-```{lit} CMake, Dependency subdirectories (append)
-add_subdirectory(glfw3webgpu)
-```
-
-```{lit} CMake, Link libraries (replace)
-target_link_libraries(App PRIVATE glfw webgpu glfw3webgpu)
-target_copy_webgpu_binaries(App)
-```
-
-```{note}
-The `glfw3webgpu` library is very simple, it is only made of 2 files so we could have almost included them directly in our project's source tree. However, it requires some special compilation flags in macOS that we would have had to deal with (you can see them in the `CMakeLists.txt`).
-```
-
-You can now `#include <glfw3webgpu.h>` at the beginning of your `main.cpp` and get the surface by simply doing:
-
-```{lit} C++, Get the surface
-WGPUSurface surface = glfwGetWGPUSurface(instance, window);
-```
-
-```{lit} C++, Includes (append, hidden)
-#include <glfw3webgpu.h>
-```
-
-Also don't forget to release the surface at the end:
-
-```{lit} C++, Destroy surface
-wgpuSurfaceRelease(surface);
-```
-
-```{lit} C++, Destroy things (replace, hidden)
-{{Destroy surface}}
-{{Destroy adapter}}
-{{Destroy WebGPU instance}}
-```
-
-One last thing: we can **tell GLFW not to care about the graphics API** setup, as it does not know WebGPU and we won't use what it could set up by default for other APIs:
-
-```{lit} C++, Create window
-glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API); // NEW
-GLFWwindow* window = glfwCreateWindow(640, 480, "Learn WebGPU", NULL, NULL);
-```
-
-```{lit} C++, Create things (prepend, hidden)
-glfwInit();
-{{Create window}}
-```
-
-```{lit} C++, Main body (replace, hidden)
-{{Main loop}}
-```
-
-```{lit} C++, Destroy things (append, hidden)
-glfwDestroyWindow(window);
-glfwTerminate();
-```
-
-The `glfwWindowHint` function is a way to pass optional arguments to `glfwCreateWindow`. Here we tell it to initialize no particular graphics API by default, as we manage this ourselves.
-
-```{tip}
-I invite you to look at the documentation of GLFW to know more about [`glfwCreateWindow`](https://www.glfw.org/docs/latest/group__window.html#ga3555a418df92ad53f917597fe2f64aeb) and other related functions.
 ```
 
 Inspecting the adapter
@@ -397,17 +395,6 @@ The Device
 *Resulting code:* [`step015`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step015)
 
 A WebGPU **device** represents a **context** of use of the API. All the objects that we create (geometry, textures, etc.) are owned by the device.
-
-> 🤔 Why do we have both an **adapter** and then a **device** abstraction?
-
-The idea is to limit the "it worked on my machine" issue you could encounter when trying your program on a different machine. The **adapter** is used to **access the capabilities** of the user's hardware, which are used to select the behavior of your application among very different code paths. Once a code path is chosen, a **device** is created with **the capabilities we choose**.
-
-Only the capabilities selected for this device are then allowed in the rest of the application. This way, it is **not possible to inadvertently rely on capabilities specific to your own machine**.
-
-```{figure} /images/device-creation.png
-:align: center
-In an advanced use of the adapter/device duality, we can set up multiple limit presets and select one depending on the adapter. In our case, we have a single preset and abort early if it is not supported.
-```
 
 Device request
 --------------
