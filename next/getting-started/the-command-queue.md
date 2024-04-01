@@ -2,13 +2,13 @@ The Command Queue
 =================
 
 ```{lit-setup}
-:tangle-root: 017 - The Command Queue - next
-:parent: 015 - The Device - next
+:tangle-root: 015 - The Command Queue - next
+:parent: 010 - The Device - next
 ```
 
-*Resulting code:* [`step017`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step017)
+*Resulting code:* [`step015-next`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step015-next)
 
-We are getting close, but we will still not display anything on our window. We learn in this chapter a key concept of WebGPU (and of most modern graphics APIs as well): the **command queue**.
+Let us see one last concept before moving on to openning a window to draw on: we learn in this chapter a key concept of WebGPU (and of most modern graphics APIs as well): the **command queue**.
 
 ```{figure} /images/command-queue.png
 :align: center
@@ -19,16 +19,16 @@ The CPU instructs the GPU what to do by sending commands through a command queue
 Different timelines
 -------------------
 
-One thing important to keep in mind when doing graphics programming: we have **two processors running simultaneously**. One of them is the CPU, also known as *host*, and the other one is the GPU, or *device*. There are two rules:
+One important thing to keep in mind when doing graphics programming: we have **two processors running simultaneously**. One of them is the CPU, also known as *host*, and the other one is the GPU, or *device*. There are two rules:
 
  1. **The code we write runs on the CPU**, and some of it triggers operations on the GPU. The only exception are *shaders*, which actually run on GPU.
  2. Processors are "**far away**", meaning that communicating between them takes time.
 
 They are not too far, but for high performance applications like real time graphics, this matters. In advanced pipelines, rendering a frame may involve thousands or tens of thousands of commands running on the GPU.
 
-As a consequence, we cannot afford to send the commands one by one from the CPU and wait for a response after each one. Instead, commands intended for the GPU are batched and fired through a **command queue**. The GPU consumes this queue whenever it is ready, and this way processors minimize the time spend idling for their sibling to respond.
+As a consequence, we cannot afford to send the commands one by one from the CPU and wait for a response after each one. Instead, commands intended for the GPU are batched and fired through a **command queue**. The GPU consumes this queue whenever it is ready, and this way processors minimize the time spent idling for their sibling to respond.
 
-The CPU-side of your program, i.e., the C++ code that you write, lives in the **Content timeline**. The other side of the command queue is the **Queue timeline**, running on the GPU.
+The CPU-side of your program, i.e., the C++ code that you write, lives in the **Content timeline**. The other side of the command queue is in the **Queue timeline**, running on the GPU.
 
 ```{note}
 There is also a **Device timeline** defined in [WebGPU's documentation](https://www.w3.org/TR/webgpu/#programming-model-timelines). It corresponds to the GPU operations for which our code actually waits for an immediate answer (called "synchronous" calls), but unlike the JavaScript API, it is roughly the same as the content timeline in our C++ case.
@@ -37,7 +37,7 @@ There is also a **Device timeline** defined in [WebGPU's documentation](https://
 Queue operations
 ----------------
 
-Our WebGPU device has a single queue, which we can get with `wgpuDeviceGetQueue`.
+Our WebGPU device has a single queue, which is used to send both **commands** and **data**. We can get it with `wgpuDeviceGetQueue`.
 
 ```{lit} C++, Get Queue
 WGPUQueue queue = wgpuDeviceGetQueue(device);
@@ -51,7 +51,7 @@ wgpuQueueRelease(queue);
 ```
 
 ```{note}
-Other graphics API allow one to build multiple queues per device, and future version of WebGPU might as well. But for now, one queue is already more than enough for us to play with!
+**Other graphics API** allow one to build **multiple queues** per device, and future version of WebGPU might as well. But for now, one queue is already more than enough for us to play with!
 ```
 
 Looking at `webgpu.h`, we find 3 different ways to submit work to this queue:
@@ -60,7 +60,7 @@ Looking at `webgpu.h`, we find 3 different ways to submit work to this queue:
  - `wgpuQueueWriteBuffer`
  - `wgpuQueueWriteTexture`
 
-The first one only sends commands (potentially complicated ones though), and the two other ones send memory from the CPU memory (RAM) to the GPU one (VRAM). This is where the delay of the communication might become particularly critical.
+The first one only sends **commands** (potentially complicated ones though), and the two other ones send **data** from the CPU memory (RAM) to the GPU one (VRAM). This is where the delay of the communication might become particularly critical.
 
 We also find a `wgpuQueueOnSubmittedWorkDone` procedure that we can use to set up a function to be called back once the work is done. Let us do it to make sure things happen as expected:
 
@@ -102,7 +102,7 @@ wgpuQueueSubmit(queue, 1, &command);
 wgpuCommandBufferRelease(command); // release command buffer once submitted
 ```
 
-If we know at compile time ("statically") the number of commands, we may use a C array (although a `std::array` is safer):
+If we know at **compile time** ("statically") the number of commands, we may use a C array (although a `std::array` is safer):
 
 ```C++
 // With a statically know number of commands:
@@ -120,7 +120,7 @@ commands[2] = /* [...] */;
 wgpuQueueSubmit(queue, commands.size(), commands.data());
 ```
 
-In any case, do not forgot to release the command buffers once they have been submitted:
+In any case, do not forgot to **release** the command buffers once they have been submitted:
 
 ```C++
 // Release:
@@ -129,7 +129,7 @@ for (auto cmd : commands) {
 }
 ```
 
-And if we need to dynamically change the size, we use a `std::vector`:
+And if we need to **dynamically** change the size, we use a `std::vector`:
 
 ```C++
 std::vector<WGPUCommandBuffer> commands;
@@ -151,7 +151,7 @@ encoderDesc.label = "My command encoder";
 WGPUCommandEncoder encoder = wgpuDeviceCreateCommandEncoder(device, &encoderDesc);
 ```
 
-We can now use the encoder to write instructions (debug placeholder for now).
+We can now use the encoder to write instructions. Since we do not have any object to manipulate yet we stick with simple debug placeholder for now:
 
 ```{lit} C++, Add commands
 wgpuCommandEncoderInsertDebugMarker(encoder, "Do one thing");
@@ -170,11 +170,8 @@ wgpuCommandEncoderRelease(encoder); // release encoder after it's finished
 // Finally submit the command queue
 std::cout << "Submitting command..." << std::endl;
 wgpuQueueSubmit(queue, 1, &command);
-
-#ifdef WEBGPU_BACKEND_DAWN
-wgpuCommandEncoderRelease(encoder);
 wgpuCommandBufferRelease(command);
-#endif
+std::cout << "Command submitted." << std::endl;
 ```
 
 ```{lit} C++, Test command encoding (hidden)
@@ -183,20 +180,67 @@ wgpuCommandBufferRelease(command);
 {{Create Command Encoder}}
 {{Add commands}}
 {{Finish encoding and submit}}
+{{Poll device}}
 ```
 
 ```{lit} C++, Create things (append, hidden)
 {{Test command encoding}}
 ```
 
-This should output:
+Device polling
+--------------
+
+The above code actually **fails** when used with Dawn:
 
 ```
 Submitting command...
-Queued work finished with status: 0
+Command submitted.
+Queued work finished with status: 4
 ```
 
-At this stage, the code works, but submits a command queue that is almost empty. So it is a bit hard to be thrilled about, let's pump it up with some basic buffer manipulation.
+```{note}
+The present example is so simple that `wgpu-native` actually completes the submitted work before the device gets released.
+```
+
+As can be seen in [`webgpu.h`](https://github.com/webgpu-native/webgpu-headers/blob/main/webgpu.h), the value `4` corresponds to `WGPUQueueWorkDoneStatus_DeviceLost`. Indeed, our program **terminates** right after submitting the commands, without waiting for it to complete, so **the device gets destroyed before** the submitted work is done!
+
+So, we need to wait a little bit, and **importantly** to call **tick**/**poll** the device so that it updates its awaiting tasks. This is a part of the API that is **not standard yet**, so we must adapt our implementation to the backend:
+
+```{lit} C++, Poll device
+for (int i = 0 ; i < 5 ; ++i) {
+	std::cout << "Tick/Poll device..." << std::endl;
+#if defined(WEBGPU_BACKEND_DAWN)
+	wgpuDeviceTick(device);
+#elif defined(WEBGPU_BACKEND_WGPU)
+	wgpuDevicePoll(device, false, nullptr);
+#endif
+}
+```
+
+````{important}
+Since `wgpu-native` holds non-standard functions in `wgpu.h` to keep them separate from the standard `webgpu.h`
+
+```{lit} C++, Includes (append)
+#ifdef WEBGPU_BACKEND_WGPU
+#  include <webgpu/wgpu.h>
+#endif // WEBGPU_BACKEND_WGPU
+```
+````
+
+Our program now outputs something like this:
+
+```
+Submitting command...
+Command submitted.
+Tick/Poll device...
+Queued work finished with status: 0
+Tick/Poll device...
+Tick/Poll device...
+Tick/Poll device...
+Tick/Poll device...
+```
+
+To avoid using an arbitrary number of ticks, we may set a **context boolean** to `true` in `onQueueWorkDone` and break the loop as soon as it is true. But we will quickly have this called in the main application loop anyways!
 
 Conclusion
 ----------
@@ -206,9 +250,12 @@ We have seen a few important notions in this chapter:
  - The CPU and GPU live in **different timelines**.
  - Commands are streamed from CPU to GPU through a **command queue**.
  - Queued command buffers must be encoded using a **command encoder**.
+ - We must regularly **tick**/**poll** the device to updates its awaiting tasks.
 
-This was a bit abstract because we can queue operations but we did not see any yet. In the next chapter we use it to **finally display something** in our window!
+This was a bit abstract because we can queue operations but we did not see any yet. In the next chapters we open a graphics window and then use our queue to **finally display something**!
 
-We will also see in [*Playing with buffers*](../basic-3d-rendering/input-geometry/playing-with-buffers.md) how to use it for GPU-side buffer manipulation.
+```{note}
+If you are only interested in **compute shaders** and do not need to open a window, you may leave the *Getting Started* section right away and move on to [*Basic Compute*](../basic-compute/index.md), although some key concepts are still only introduced in the [*Basic 3D Rendering*](../basic-3d-rendering/index.md) part, like the [*Playing with buffers*](../basic-3d-rendering/input-geometry/playing-with-buffers.md) chapter.
+```
 
-*Resulting code:* [`step017`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step017)
+*Resulting code:* [`step015-next`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step015-next)
