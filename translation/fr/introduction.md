@@ -116,12 +116,12 @@ Everything is turned off by default to avoid visual clutter, but if you feel you
 
 If you encounter any typo or more important issue, feel free of fixing it by clicking the edit button present on top of each page!
 
-```{image} images/edit-light.png
+```{image} /images/edit-light.png
 :alt: Use the edit button present on top of each page!
 :class: only-light
 ```
 
-```{image} images/edit-dark.png
+```{image} /images/edit-dark.png
 :alt: Use the edit button present on top of each page!
 :class: only-dark
 ```

@@ -121,5 +121,8 @@ figcaption p {
 .admonition.warning {
 	--color-admonition-title: var(--color-admonition-title--warning);
 }
+.admonition.note {
+	--color-admonition-title: var(--color-admonition-title--note);
+}
 
 

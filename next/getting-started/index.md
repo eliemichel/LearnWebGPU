@@ -11,7 +11,7 @@ Contents
 
 project-setup
 hello-webgpu
-adapter-and-device
+adapter-and-device/index
 the-command-queue
 opening-a-window
 first-color

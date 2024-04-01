@@ -3,8 +3,8 @@ Opening a window
 
 ```{lit-setup}
 :tangle-root: 001 - Opening a window - next
-:parent: 000 - Project setup - next
-:fetch-files: ../data/glfw.zip
+:parent: 010 - The Device - next
+:fetch-files: ../data/glfw.zip ../data/glfw3webgpu-v1.1.0.zip
 ```
 
 *Resulting code:* [`step001`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step001)
@@ -138,12 +138,6 @@ int main (int, char**) {
 
 The Surface
 -----------
-
-```{lit-setup}
-:tangle-root: 010 - The Adapter - Part B - next
-:parent: 010 - The Adapter - Part A - next
-:fetch-files: ../data/glfw3webgpu-v1.1.0.zip
-```
 
 We actually need to pass an option to the adapter request: the **surface** onto which we draw.
 
