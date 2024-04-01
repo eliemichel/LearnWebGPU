@@ -261,6 +261,21 @@ In particular, we need to release the global WebGPU instance:
 wgpuInstanceRelease(instance);
 ```
 
+### Implementation-specific behavior
+
+In order to handle the slight differences between implementations, the distributions I provide also define the following preprocessor variables:
+
+```C++
+// If using Dawn
+#define WEBGPU_BACKEND_DAWN
+
+// If using wgpu-native
+#define WEBGPU_BACKEND_WGPU
+
+// If using emscripten
+#define WEBGPU_BACKEND_EMSCRIPTEN
+```
+
 ### Building for the Web
 
 The WebGPU distribution listed above are readily compatible with [Emscripten](https://emscripten.org/docs/getting_started/downloads.html) and if you have trouble with building your application for the web, you can consult [the dedicated appendix](../appendices/building-for-the-web.md).
@@ -281,22 +296,20 @@ For now we only change the output extension so that it is an HTML web page (rath
 set_target_properties(App PROPERTIES SUFFIX ".html")
 ```
 
-### Implementation-specific behavior
+For some reason the instance descriptor **must be null** (which means "use default") when using Emscripten, so we can already use our `WEBGPU_BACKEND_EMSCRIPTEN` macro:
 
-In order to handle the slight differences between implementations, the distributions I provide also define the following preprocessor variables:
+```{lit} C++, Create WebGPU instance (replace)
+// 1. We create a descriptor
+WGPUInstanceDescriptor desc = {};
+desc.nextInChain = nullptr;
 
-```C++
-// If using Dawn
-#define WEBGPU_BACKEND_DAWN
-
-// If using wgpu-native
-#define WEBGPU_BACKEND_WGPU
-
-// If using emscripten
-#define WEBGPU_BACKEND_EMSCRIPTEN
+// 2. We create the instance using this descriptor
+#ifdef WEBGPU_BACKEND_EMSCRIPTEN
+WGPUInstance instance = wgpuCreateInstance(nullptr);
+#else //  WEBGPU_BACKEND_EMSCRIPTEN
+WGPUInstance instance = wgpuCreateInstance(&desc);
+#endif //  WEBGPU_BACKEND_EMSCRIPTEN
 ```
-
-The case of emscripten only occurs when trying to compile our code as a WebAssembly module, which is covered in the [Building for the Web](../appendices/building-for-the-web.md) appendix.
 
 Conclusion
 ----------

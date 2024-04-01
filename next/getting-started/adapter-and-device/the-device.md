@@ -53,6 +53,12 @@ WGPUDevice requestDeviceSync(WGPUAdapter adapter, WGPUDeviceDescriptor const * d
 		(void*)&userData
 	);
 
+#ifdef __EMSCRIPTEN__
+	while (!userData.requestEnded) {
+		emscripten_sleep(100);
+	}
+#endif // __EMSCRIPTEN__
+
 	assert(userData.requestEnded);
 
 	return userData.device;
@@ -103,6 +109,10 @@ void inspectDevice(WGPUDevice device);
 #include <iostream>
 #include <vector>
 #include <cassert>
+
+#ifdef __EMSCRIPTEN__
+#  include <emscripten.h>
+#endif // __EMSCRIPTEN__
 
 {{Utility functions}}
 ```

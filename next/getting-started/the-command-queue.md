@@ -213,6 +213,8 @@ for (int i = 0 ; i < 5 ; ++i) {
 	wgpuDeviceTick(device);
 #elif defined(WEBGPU_BACKEND_WGPU)
 	wgpuDevicePoll(device, false, nullptr);
+#elif defined(WEBGPU_BACKEND_EMSCRIPTEN)
+	emscripten_sleep(100);
 #endif
 }
 ```

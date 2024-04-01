@@ -199,10 +199,9 @@ WGPUAdapter requestAdapterSync(WGPUInstance instance, WGPURequestAdapterOptions 
 		(void*)&userData
 	);
 
-	// In theory we should wait until onAdapterReady has been called, which
-	// could take some time (what the 'await' keyword does in the JavaScript
-	// code). In practice, we know that when the wgpuInstanceRequestAdapter()
-	// function returns its callback has been called.
+	// We wait until userData.requestEnded gets true
+	{{Wait for request to end}}
+
 	assert(userData.requestEnded);
 
 	return userData.adapter;
@@ -219,6 +218,37 @@ adapterOpts.nextInChain = nullptr;
 WGPUAdapter adapter = requestAdapterSync(instance, &adapterOpts);
 
 std::cout << "Got adapter: " << adapter << std::endl;
+```
+
+#### Waiting for the request to end
+
+You may have noticed the comment above saying **we need to wait** for the request to end, i.e. for the callback to be invoked, before returning.
+
+When using the **native** API (Dawn or `wgpu-native`), it is in practice **not needed**, we know that when the `wgpuInstanceRequestAdapter` function returns its callback has been called.
+
+However, when using **Emscripten**, we need to hand the control **back to the browser** until the adapter is ready. In JavaScript, this would be using the `await` keyword. Instead, Emscripten provides the `emscripten_sleep` function that interrupts the C++ module for a couple of milliseconds:
+
+```{lit} C++, Wait for request to end
+#ifdef __EMSCRIPTEN__
+	while (!userData.requestEnded) {
+		emscripten_sleep(100);
+	}
+#endif // __EMSCRIPTEN__
+```
+
+In order to use this, we must add a **custom link option** in `CMakeLists.txt`, in the `if (EMSCRIPTEN)` block:
+
+```{lit} CMake, Emscripten-specific options (append)
+# Enable the use of emscripten_sleep()
+target_link_options(App PRIVATE -sASYNCIFY)
+```
+
+Also do not forget to include `emscripten.h` in order to use `emscripten_sleep`:
+
+```{lit} C++, Includes (append)
+#ifdef __EMSCRIPTEN__
+#  include <emscripten.h>
+#endif // __EMSCRIPTEN__
 ```
 
 ### Destruction
@@ -296,6 +326,7 @@ inspectAdapter(adapter);
 We can first list the limits that our adapter supports with `wgpuAdapterGetLimits`. This function takes as argument a `WGPUSupportedLimits` object where it writes the limits:
 
 ```{lit} C++, Inspect adapter
+#ifndef __EMSCRIPTEN__
 WGPUSupportedLimits supportedLimits = {};
 supportedLimits.nextInChain = nullptr;
 bool success = wgpuAdapterGetLimits(adapter, &supportedLimits);
@@ -306,6 +337,11 @@ if (success) {
 	std::cout << " - maxTextureDimension3D: " << supportedLimits.limits.maxTextureDimension3D << std::endl;
 	std::cout << " - maxTextureArrayLayers: " << supportedLimits.limits.maxTextureArrayLayers << std::endl;
 }
+#endif // NOT __EMSCRIPTEN__
+```
+
+```{note}
+As of April 1st, 2024, `wgpuAdapterGetLimits` is not implemented yet on Google Chrome, hence the `#ifndef __EMSCRIPTEN__` above.
 ```
 
 Here is an example of what you could see:
