@@ -141,16 +141,24 @@ Whichever distribution you choose, the integration is the same:
  2. Unzip it at the root of the project, there should be a `webgpu/` directory containing a `CMakeLists.txt` file and some other (.dll or .so).
  3. Add `add_subdirectory(webgpu)` in your `CMakeLists.txt`.
 
-```{lit} CMake, Dependency subdirectories (append)
+```{lit} CMake, Dependency subdirectories (insert in {{Define app target}} before "add_executable")
 # Include webgpu directory, to define the 'webgpu' target
 add_subdirectory(webgpu)
 ```
 
- 4. Add the `webgpu` target as a dependency of our app, using the `target_link_libraries` command.
+```{important}
+The name 'webgpu' here designate the directory where GLFW is located, so there should be a file `webgpu/CMakeLists.txt`. Otherwise it means that `webgpu.zip` was not decompressed in the correct directory; you may either move it or adapt the `add_subdirectory` directive.
+```
 
-```{lit} CMake, Link libraries (replace)
+ 4. Add the `webgpu` target as a dependency of our app, using the `target_link_libraries` command (after `add_executable(App main.cpp)`).
+
+```{lit} CMake, Link libraries (insert in {{Define app target}} after "add_executable")
 # Add the 'webgpu' target as a dependency of our App
-target_link_libraries(App PRIVATE glfw webgpu)
+target_link_libraries(App PRIVATE webgpu)
+```
+
+```{tip}
+This time, the name 'webgpu' is one of the *target* defined in `webgpu/CMakeLists.txt` by calling `add_library(webgpu ...)`, it is not related to a directory name.
 ```
 
 One additional step when using pre-compiled binaries: call the function `target_copy_webgpu_binaries(App)` at the end of `CMakeLists.txt`, this makes sure that the .dll/.so file that your binary depends on at runtime is copied next to it. Whenever you distribute your application, make sure to also distribute this dynamic library file as well.
@@ -175,9 +183,14 @@ To test the implementation, we simply create the WebGPU **instance**, i.e., the 
 Make sure to include `<webgpu/webgpu.h>` before using any WebGPU function or type!
 ```
 
-```{lit} C++, file: main.cpp
+```{lit} C++, Includes
+// Includes
 #include <webgpu/webgpu.h>
 #include <iostream>
+```
+
+```{lit} C++, file: main.cpp
+{{Includes}}
 
 int main (int, char**) {
     {{Create WebGPU instance}}

@@ -8,7 +8,7 @@ The Command Queue
 
 *Resulting code:* [`step015-next`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step015-next)
 
-Let us see one last concept before moving on to openning a window to draw on: we learn in this chapter a key concept of WebGPU (and of most modern graphics APIs as well): the **command queue**.
+Let us see one last concept before moving on to openning a window to draw on: we learn in this chapter a **key concept** of WebGPU (and of most modern graphics APIs as well): the **command queue**.
 
 ```{figure} /images/command-queue.png
 :align: center

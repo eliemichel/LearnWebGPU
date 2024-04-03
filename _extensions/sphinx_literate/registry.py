@@ -398,6 +398,8 @@ class CodeBlockRegistry:
             for missing in self._missing:
                 if missing.key == CodeBlock.build_key(lit.name, child_tangle):
                     child_lit = self.get_by_key(missing.key)
+                    if child_lit.prev is not None:
+                        print(f"ERROR {child_lit.format()} has non null prev {child_lit.prev.format()}")
                     assert(child_lit.prev is None)
                     assert(child_lit.relation_to_prev not in {'NEW', 'INSERTED'})
                     child_lit.prev = lit

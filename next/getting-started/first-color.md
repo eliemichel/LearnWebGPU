@@ -2,8 +2,8 @@ First Color
 ===========
 
 ```{lit-setup}
-:tangle-root: 020 - First Color - next
-:parent: 017 - The Command Queue - next
+:tangle-root: 025 - First Color - next
+:parent: 020 - Opening a window - next
 ```
 
 ```{lit} C++, Test command encoding (replace, hidden)
