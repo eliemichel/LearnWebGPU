@@ -4,7 +4,7 @@ Opening a window
 ```{lit-setup}
 :tangle-root: 020 - Opening a window - next
 :parent: 015 - The Command Queue - next
-:fetch-files: ../data/glfw.zip ../data/glfw3webgpu-v1.2.0.zip
+:fetch-files: ../../data/glfw.zip ../../glfw3webgpu-v1.2.0.zip
 ```
 
 *Resulting code:* [`step020-next`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step020-next)
