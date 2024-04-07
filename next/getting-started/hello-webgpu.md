@@ -107,6 +107,14 @@ The Dawn-based distribution I provide here fetches the source code of Dawn from 
  - The distribution fetches Dawn's source code and its dependencies so the first time you build you need an **Internet connection**.
  - The initial build takes significantly longer, and occupies more disk space overall.
 
+````{note}
+On Linux check out [Dawn's build documentation](https://dawn.googlesource.com/dawn/+/HEAD/docs/building.md) for teh list of packages to install. As of April 7, 2024, the list is the following (for Ubuntu):
+
+```bash
+sudo apt-get install libxrandr-dev libxinerama-dev libxcursor-dev mesa-common-dev libx11-xcb-dev pkg-config nodejs npm
+```
+````
+
 ### Option C: The flexibility of both
 
 In this option, we only include a couple of CMake files in our project, which then dynamically fetch either `wgpu-native` or Dawn depending on a configuration option:

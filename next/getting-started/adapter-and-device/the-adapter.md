@@ -259,6 +259,10 @@ Like for the WebGPU instance, we must release the adapter:
 wgpuAdapterRelease(adapter);
 ```
 
+```{note}
+We will no longer need to use the `instance` once we have selected our **adapter**, so we can call `wgpuInstanceRelease(instance)` right after the adapter request **instead of at the very end**. The **underlying instance** object will keep on living until the adapter gets released but we do not need to manager this.
+```
+
 ```{lit} C++, Includes (append, hidden)
 #include <webgpu/webgpu.h>
 ```

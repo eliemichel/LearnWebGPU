@@ -4,7 +4,7 @@ Opening a window
 ```{lit-setup}
 :tangle-root: 020 - Opening a window - next
 :parent: 015 - The Command Queue - next
-:fetch-files: ../data/glfw.zip ../data/glfw3webgpu-v1.1.0.zip
+:fetch-files: ../data/glfw.zip ../data/glfw3webgpu-v1.2.0.zip
 ```
 
 *Resulting code:* [`step020-next`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step020-next)
@@ -35,11 +35,17 @@ To integrate GLFW in your project, we first add its directory to our root `CMake
 ```{lit} CMake, Dependency subdirectories (prepend)
 if (NOT EMSCRIPTEN)
 	add_subdirectory(glfw)
+else()
+	# Emscripten has built-in support for GLFW but requires the `-sUSE_GLFW=3` link option:
+	add_library(glfw INTERFACE)
+	target_link_options(glfw INTERFACE -sUSE_GLFW=3)
 endif()
 ```
 
 ```{note}
-When using **Dawn**, make sure to add the `glfw` directory **before** you add `webgpu`, otherwise Dawn provides its own version (which may be fine sometimes, but you don't get to chose the version). When using **Emscripten**, GLFW is handled by the compiler itself.
+When using **Dawn**, make sure to add the `glfw` directory **before** you add `webgpu`, otherwise Dawn provides its own version (which may be fine sometimes, but you don't get to chose the version).
+
+When using **Emscripten**, GLFW is handled by the compiler itself, but we need to specify the `-sUSE_GLFW=3` link option to enable it. The above CMake script creates a mock `glfw` target that takes care of adding this link option.
 ```
 
 Then, we must tell CMake to link our application to this library, like we did for webgpu:
@@ -86,7 +92,7 @@ Once the library has been initialized, we may **create a window**:
 
 ```{lit} C++, Create and destroy window
 // Create the window
-GLFWwindow* window = glfwCreateWindow(640, 480, "Learn WebGPU", NULL, NULL);
+GLFWwindow* window = glfwCreateWindow(640, 480, "Learn WebGPU", nullptr, nullptr);
 
 {{Use the window}}
 
@@ -103,6 +109,23 @@ if (!window) {
 	return 1;
 }
 {{Main loop (hidden)}}
+```
+
+### Window hints
+
+The `glfwCreateWindow` function has some optional **extra arguments** that are passed through calls of `glfwWindowHint` **before** invoking `glfwCreateWindow`. We add two hints in our case:
+
+ - Setting `GLFW_CLIENT_API` to `GLFW_NO_API` tells GLFW **not to care about the graphics API**, as it does not know WebGPU and we won't use what it could set up by default for other APIs.
+ - Setting `GLFW_RESIZABLE` to `GLFW_FALSE` prevents the user from **resizing the window**. We will release this constraint later on, but for now it avoids some inconvenient crash.
+
+```{lit} C++, Create window
+glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API); // <-- extra info for glfwCreateWindow
+glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+GLFWwindow* window = glfwCreateWindow(640, 480, "Learn WebGPU", nullptr, nullptr);
+```
+
+```{tip}
+I invite you to look at the documentation of GLFW to know more about [`glfwCreateWindow`](https://www.glfw.org/docs/latest/group__window.html#ga3555a418df92ad53f917597fe2f64aeb) and other related functions.
 ```
 
 ### Main loop
@@ -128,7 +151,7 @@ Our first window, using the GLFW library.
 ```
 
 ```{warning}
-This main loop will **not work** with **Emscripten**. In a Web page, the main loop is handled by the browser and we just tell it **what to call at each frame**.
+This main loop will **not work** with **Emscripten**. In a Web page, the main loop is handled by the browser and we just tell it **what to call at each frame**. We **fix this** below while refactoring our program around an `Application` class.
 ```
 
 Application class
@@ -171,7 +194,7 @@ int main() {
 		return 1;
 	}
 
-	// Warning: this is still not Emscripten-friendly
+	// Warning: this is still not Emscripten-friendly, see below
 	while (app.IsRunning()) {
 		app.MainLoop();
 	}
@@ -182,7 +205,7 @@ int main() {
 
 And we can now move almost all our current code to `Initialize()`. The only thing that belongs to `MainLoop()` for now is the polling of GLFW events and WebGPU device:
 
-```{lit} C++, main function
+```{lit} C++, Application implementation
 bool Application::Initialize() {
 	// [...] Move the whole initialization here
 	return true;
@@ -215,15 +238,68 @@ So **not** move the `emscripten_sleep(100)` line to `MainLoop()`. This line is n
 Once you have move everything, you should end up with the following class attributes shared across init/main:
 
 ```{lit} C++, Application attributes
+GLFWwindow *window;
+WGPUDevice device;
+WGPUQueue queue;
+```
 
+```{note}
+The `WGPUInstance` and `WGPUAdapter` are intermediate steps towards getting the device that may be released in the initialization.
 ```
 
 ### Emscripten
 
+As mentionned multiple times above, explicitly writing the `while` loop is not possible when building for the **Web** (with Emscripten) because it **conflicts** with the web browser's own loop. We thus write the main loop differently in such a case:
+
+```C++
+#ifdef __EMSCRIPTEN__
+	{{Emscripten main loop}}
+#else // __EMSCRIPTEN__
+	while (app.IsRunning()) {
+		app.MainLoop();
+	}
+#endif // __EMSCRIPTEN__
+```
+
+We use here the function [`emscripten_set_main_loop_arg()`](https://emscripten.org/docs/api_reference/emscripten.h.html#c.emscripten_set_main_loop_arg), which is precisely **dedicated to this issue**. This sets a **callback** that the browser will call each time it runs its main rendering loop.
+
+```C++
+// Callback type takes one argument of type 'void*' and returns nothing
+typedef void (*em_arg_callback_func)(void*);
+
+// Signature of 'emscripten_set_main_loop_arg' as provided in emscripten.h
+void emscripten_set_main_loop_arg(
+	em_arg_callback_func func,
+	void *arg,
+	int fps,
+	int simulate_infinite_loop
+)
+```
+
+We can recognize the **callback pattern** that we used already when requesting the adapter and device, or setting error callbacks. What is called `arg` here is what WebGPU calls `userdata`: it is a pointer that is **blindly passed to the callback** function.
+
+```{lit} C++, Emscripten main loop
+// Equivalent of the main loop when using Emscripten:
+auto callback = [](void *arg) {
+    //                   ^^^ 2. We get the address of the app in the callback.
+    Application* pApp = reinterpret_cast<Application*>(arg);
+    //                  ^^^^^^^^^^^^^^^^ 3. We force this address to be interpreted
+    //                                      as a pointer to an Application object.
+    pApp->MainLoop(); // 4. We can use the application object
+}
+emscripten_set_main_loop_arg(callback, &app, 0, true);
+//                                     ^^^^ 1. We pass the address of our application object.
+```
+
+The extra arguments are recommended to be `0` and `true`:
+
+ - `fps` is the **framerate** at which the function gets called. For **better performance**, it is recommended to set it to 0 to leave it up to the browser (equivalent of usign `requestAnimationFrame` in JavaScript)
+ - `simulate_infinite_loop` must be `true` to prevent `app` from being freed. Otherwise, the `main` function **returns before the callback gets invoked**, so the application no longer exists and the `arg` pointer is *dangling* (i.e., points to nothing valid).
+
 The Surface
 -----------
 
-We actually need to pass an option to the adapter request: the **surface** onto which we draw.
+It is now time to **connect our GLFW window to WebGPU**. This happens when **requesting the adapter**, by specifying a **WGPUSurface** object to draw on:
 
 ```{lit} C++, Request adapter (replace)
 {{Get the surface}}
@@ -231,15 +307,16 @@ We actually need to pass an option to the adapter request: the **surface** onto 
 WGPURequestAdapterOptions adapterOpts = {};
 adapterOpts.nextInChain = nullptr;
 adapterOpts.compatibleSurface = surface;
+//                              ^^^^^^^ Use the surface here
 
 WGPUAdapter adapter = requestAdapter(instance, &adapterOpts);
 ```
 
-How do we get the surface? This depends on the OS, and GLFW does not handle this for us, for it does not know WebGPU (yet?). So I provide you this function, in a little extension to GLFW3 called [`glfw3webgpu`](https://github.com/eliemichel/glfw3webgpu).
+**How do we get the surface?** This depends on the OS, and GLFW does not handle this for us, for it does not know WebGPU ([yet?](https://github.com/glfw/glfw/pull/2333)). So I provide you this function, in a little extension to GLFW3 called [`glfw3webgpu`](https://github.com/eliemichel/glfw3webgpu).
 
 ### GLFW3 WebGPU Extension
 
-Download and unzip [glfw3webgpu.zip](https://github.com/eliemichel/glfw3webgpu/releases/download/v1.1.0/glfw3webgpu-v1.1.0.zip) in your project's directory. There should now be a directory `glfw3webgpu` sitting next to your `main.cpp`. Like we have done before, we can add this directory and link the target it creates to our App:
+Download and unzip [glfw3webgpu.zip](https://github.com/eliemichel/glfw3webgpu/releases/download/v1.2.0/glfw3webgpu-v1.2.0.zip) in your project's directory. There should now be a directory `glfw3webgpu` sitting next to your `main.cpp`. Like we have done before, we can add this directory and link the target it creates to our App:
 
 ```{lit} CMake, Dependency subdirectories (append)
 add_subdirectory(glfw3webgpu)
@@ -251,17 +328,17 @@ target_copy_webgpu_binaries(App)
 ```
 
 ```{note}
-The `glfw3webgpu` library is very simple, it is only made of 2 files so we could have almost included them directly in our project's source tree. However, it requires some special compilation flags in macOS that we would have had to deal with (you can see them in the `CMakeLists.txt`).
+The `glfw3webgpu` library is **very simple**, it is only made of 2 files so we could have almost included them directly in our project's source tree. However, it requires some special compilation flags in macOS that we would have had to deal with (you can see them in the `CMakeLists.txt`).
 ```
 
-You can now `#include <glfw3webgpu.h>` at the beginning of your `main.cpp` and get the surface by simply doing:
+You can now get the surface by simply doing:
+
+```{lit} C++, Includes (append)
+#include <glfw3webgpu.h>
+```
 
 ```{lit} C++, Get the surface
-WGPUSurface surface = glfwGetWGPUSurface(instance, window);
-```
-
-```{lit} C++, Includes (append, hidden)
-#include <glfw3webgpu.h>
+surface = glfwGetWGPUSurface(instance, window);
 ```
 
 Also don't forget to release the surface at the end:
@@ -270,17 +347,18 @@ Also don't forget to release the surface at the end:
 wgpuSurfaceRelease(surface);
 ```
 
+````{important}
+The **surface** lives independently from the adapter and device, so it **must not** be released **before the end** of the program like we do for the adapter and instance. It is thus defined as a class attribute of `Application`:
+
+```{lit} C++, Application attributes (append)
+WGPUSurface surface;
+```
+````
+
 ```{lit} C++, Destroy things (replace, hidden)
 {{Destroy surface}}
 {{Destroy adapter}}
 {{Destroy WebGPU instance}}
-```
-
-One last thing: we can **tell GLFW not to care about the graphics API** setup, as it does not know WebGPU and we won't use what it could set up by default for other APIs:
-
-```{lit} C++, Create window
-glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API); // NEW
-GLFWwindow* window = glfwCreateWindow(640, 480, "Learn WebGPU", NULL, NULL);
 ```
 
 ```{lit} C++, Create things (prepend, hidden)
@@ -297,10 +375,15 @@ glfwDestroyWindow(window);
 glfwTerminate();
 ```
 
-The `glfwWindowHint` function is a way to pass optional arguments to `glfwCreateWindow`. Here we tell it to initialize no particular graphics API by default, as we manage this ourselves.
+Conclusion
+----------
 
-```{tip}
-I invite you to look at the documentation of GLFW to know more about [`glfwCreateWindow`](https://www.glfw.org/docs/latest/group__window.html#ga3555a418df92ad53f917597fe2f64aeb) and other related functions.
-```
+In this chapter we set up the following:
+
+ - Use the [GLFW](https://www.glfw.org/) library to handle **windowing** (as well as user input, see later).
+ - Refactor our code to separate **initialization** from **main loop**.
+ - **Connect WebGPU** to our window using the [glfw3webgpu](https://github.com/eliemichel/glfw3webgpu) extension.
+
+We are now ready to **display something** on this window!
 
 *Resulting code:* [`step020-next`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step020-next)

@@ -361,7 +361,7 @@ Conclusion
 ----------
 
  - We now have our **device**, from which we can create all other WebGPU objects.
- - **Important:** Once the device is created, the adapter should no longer be used. The only capabilities that matter to the application are the one of the device.
+ - **Important:** Once the device is created, the adapter should in general no longer be used. The only capabilities that matter to the application are the one of the device.
  - Default limits are minimal limits, rather than what the adapter supports. This helps ensuring consistency across devices.
 
 *Resulting code:* [`step010-next`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step010-next)
