@@ -4,7 +4,7 @@ Hello WebGPU
 ```{lit-setup}
 :tangle-root: 005 - Hello WebGPU
 :parent: 001 - Opening a window
-:fetch-files: ../data/webgpu-distribution.zip
+:fetch-files: ../data/WebGPU-distribution.zip
 ```
 
 *Resulting code:* [`step005`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step005)
