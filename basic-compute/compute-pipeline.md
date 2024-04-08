@@ -29,7 +29,7 @@ fn f(x: f32) -> f32 {
 
 A **naive solution** would be to copy this buffer back to the CPU, evaluate the function here, and upload the result to the GPU again. But this is **very inefficient** for two reasons:
 
- - The CPU-GPU **copies** are expensives, especially for large buffers.
+ - The CPU-GPU **copies** are expensive, especially for large buffers.
  - Since `f` is applied independently to each value, the problem is very **parallel**, and the GPU is much better than the CPU at this type of *Single Instruction Multiple Data* (SIMD) parallelism.
 
 So we set up a compute shader that evaluates `f` directly on the GPU, and save the result in a second buffer.
