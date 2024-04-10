@@ -393,7 +393,7 @@ As a consequence, we give a name to the intermediate **coordinate systems** thro
  - Afterwards, the fixed pipeline divides the clip coordinates by its $w$, which gives the **NDC** (normalized device coordinates).
 
 ```{note}
-In order to alleviate notations I omitted above the fact that we actually use the homogeneous coordinates `vec3f(in.position, 1.0)` as the input of the transform.
+In order to alleviate notations I omitted above the fact that we actually use the homogeneous coordinates `vec4f(in.position, 1.0)` as the input of the transform.
 ```
 
 ### Precomputing
@@ -561,7 +561,7 @@ I am not putting the image again, you should still obtain the same result. Only 
 
 The construction of **atomic matrices** like translations, rotations, scaling or perspective is something that is very common. Yet it is not part of the built-in functions of WGSL because, as we just saw, we are not supposed to do it in the shader code.
 
-Since GLM intends to reproduce the types of the shader languages, it does not include those neither. At least not in the `glm/glm.hpp`. But it does in its **extensions**, which we can include like this:
+Since GLM intends to reproduce the types of the shader languages, it does not include those either. At least not in `glm/glm.hpp`. But it does in its **extensions**, which we can include like this:
 
 ```C++
 #include <glm/ext.hpp>
@@ -701,7 +701,7 @@ In this quite mathematical chapter, we have seen fundamental points:
 
  - **Projections** (either orthographic or perspective) can be **encoded as matrices** thanks to the coordinate normalization performed by the fixed pipeline (the division by $w$).
  - A **perspective** projection is parameterized either by a **focal length** or a **field of view**.
- - Transform matrices (mode, view, projection) should be computed once and stored in a **uniform buffer** to avoid unnecessary costly computation.
+ - Transform matrices (model, view, projection) should be computed once and stored in a **uniform buffer** to avoid unnecessary costly computations.
  - The GLM library provides us with all we need to easily compute these matrices on the CPU side.
 
 ```{seealso}
