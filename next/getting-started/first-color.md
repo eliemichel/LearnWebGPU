@@ -270,6 +270,17 @@ renderPassColorAttachment.storeOp = WGPUStoreOp_Store;
 renderPassColorAttachment.clearValue = WGPUColor{ 0.9, 0.1, 0.2, 1.0 };
 ```
 
+````{admonition} Dawn
+Dawn has an extra member `depthSlice` in the attachment, that we must explicitly set to its undefined value because we do not use a depth buffer:
+
+```{lit} C++, Describe the attachment (append)
+#ifdef WEBGPU_BACKEND_DAWN
+renderPassColorAttachment.depthSlice = WGPU_DEPTH_SLICE_UNDEFINED;
+#endif // WEBGPU_BACKEND_DAWN
+```
+````
+
+
 ### Misc
 
 There is also one special type of attachment, namely the **depth** and **stencil** attachment (it is a single attachment potentially containing two channels). We'll come back on this later on, for now we do not use it so we set it to null:
