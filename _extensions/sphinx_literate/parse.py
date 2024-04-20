@@ -257,7 +257,7 @@ def parse_fetched_files(raw_file_list: str | None, docpath: str) -> List[Path]:
     if raw_file_list is None:
         return []
     return [
-        Path(docpath).parent.joinpath(f).resolve()
+        Path(docpath).parent.joinpath(f.strip()).resolve()
         for f in raw_file_list.split(",")
     ]
 

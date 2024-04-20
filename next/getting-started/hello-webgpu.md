@@ -216,11 +216,11 @@ int main (int, char**) {
 The instance is created using the `wgpuCreateInstance` function. Like all WebGPU functions meant to **create** an entity, it takes as argument a **descriptor**, which we can use to specify options regarding how to set up this object.
 
 ```{lit} C++, Create WebGPU instance
-// 1. We create a descriptor
+// We create a descriptor
 WGPUInstanceDescriptor desc = {};
 desc.nextInChain = nullptr;
 
-// 2. We create the instance using this descriptor
+// We create the instance using this descriptor
 WGPUInstance instance = wgpuCreateInstance(&desc);
 ```
 
@@ -238,13 +238,13 @@ A WebGPU entity created with a `wgpuCreateSomething` function is technically **j
 To check that an object is valid, we can just compare it with `nullptr`, or use the boolean operator:
 
 ```{lit} C++, Check WebGPU instance
-// 3. We can check whether there is actually an instance created
+// We can check whether there is actually an instance created
 if (!instance) {
     std::cerr << "Could not initialize WebGPU!" << std::endl;
     return 1;
 }
 
-// 4. Display the object (WGPUInstance is a simple pointer, it may be
+// Display the object (WGPUInstance is a simple pointer, it may be
 // copied around without worrying about its size).
 std::cout << "WGPU instance: " << instance << std::endl;
 ```

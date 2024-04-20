@@ -163,9 +163,19 @@ And of course, we release the device when the program ends:
 wgpuDeviceRelease(device);
 ```
 
-```{note}
+````{note}
 The adapter can be **released before the device**. Actually it is good practice to release it as soon as we have our device and never use it again.
+
+```{lit} C++, Create things (append, hidden)
+// We no longer need to access the adapter once we have the device
+{{Destroy adapter}}
 ```
+
+```{lit} C++, Destroy things (replace)
+wgpuDeviceRelease(device);
+```
+
+````
 
 Device descriptor
 -----------------

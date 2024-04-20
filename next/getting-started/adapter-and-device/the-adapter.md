@@ -208,6 +208,11 @@ WGPUAdapter requestAdapterSync(WGPUInstance instance, WGPURequestAdapterOptions 
 }
 ```
 
+```{lit} C++, Utility functions (hidden)
+// All utility functions are regrouped here
+{{Request adapter function}}
+```
+
 In the main function, after opening the window, we can get the adapter:
 
 ```{lit} C++, Request adapter
@@ -259,15 +264,19 @@ Like for the WebGPU instance, we must release the adapter:
 wgpuAdapterRelease(adapter);
 ```
 
-```{note}
+````{note}
 We will no longer need to use the `instance` once we have selected our **adapter**, so we can call `wgpuInstanceRelease(instance)` right after the adapter request **instead of at the very end**. The **underlying instance** object will keep on living until the adapter gets released but we do not need to manager this.
-```
 
-```{lit} C++, Includes (append, hidden)
-#include <webgpu/webgpu.h>
+```{lit} C++, Create things (hidden)
+{{Create WebGPU instance}}
+{{Check WebGPU instance}}
+{{Request adapter}}
+// We no longer need to use the instance once we have the adapter
+{{Destroy WebGPU instance}}
 ```
+````
 
-```{lit} C++, file: main.cpp (hidden)
+```{lit} C++, file: main.cpp (replace, hidden)
 {{Includes}}
 
 {{Utility functions in main.cpp}}
@@ -278,6 +287,8 @@ int main() {
 	{{Main body}}
 
 	{{Destroy things}}
+
+	return 0;
 }
 ```
 
@@ -285,21 +296,11 @@ int main() {
 {{Utility functions}}
 ```
 
-```{lit} C++, Utility functions (hidden)
-{{Request adapter function}}
-```
-
-```{lit} C++, Create things (hidden)
-{{Create WebGPU instance}}
-{{Request adapter}}
-```
-
 ```{lit} C++, Main body (hidden)
 ```
 
 ```{lit} C++, Destroy things (hidden)
 {{Destroy adapter}}
-{{Destroy WebGPU instance}}
 ```
 
 Inspecting the adapter

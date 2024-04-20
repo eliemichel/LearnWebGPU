@@ -146,6 +146,8 @@ class CodeBlock:
                            different if referencing inserted blocks that are
                            redefined in children.
         """
+        debug = []  # collect all yielded values for error message
+        debug.append(f"%% Getting content of block {self.format()} from {self.source_location.format()}")
         if tangle_root is None:
             tangle_root = self.tangle_root
 
@@ -186,18 +188,36 @@ class CodeBlock:
                 del insert_nodes[placement][pattern]
 
         def maybeInsert(l):
+            first = True
             for ll in _maybeInsertAux(l, 'BEFORE'):
-                yield ll
-            yield l
+                if first:
+                    yield (f"%% Start inserting before", True)
+                    first = False
+                yield (ll, False)
+            if not first:
+                yield (f"%% End inserting before", True)
+
+            yield (l, False)
+
+            first = True
             for ll in _maybeInsertAux(l, 'AFTER'):
-                yield ll
+                if first:
+                    yield (f"%% Start inserting after", True)
+                    first = False
+                yield (ll, False)
+            if not first:
+                yield (f"%% End inserting after", True)
 
         # If no replace, maybe add source from the parent tangle
         if start.prev is not None and start.relation_to_prev in {'APPEND', 'INSERT'}:
             assert(start.prev.tangle_root != start.tangle_root)
+            debug.append("%% Start tangling parent content")
             for l in start.prev.all_content(registry, tangle_root):
-                for ll in maybeInsert(l):
-                    yield ll
+                for ll, is_debug_info in maybeInsert(l):
+                    debug.append(ll)
+                    if not is_debug_info:
+                        yield ll
+            debug.append("%% End tangling parent content")
 
         # Content of the start and next blocks
         lit = start
@@ -207,25 +227,35 @@ class CodeBlock:
         test = False
         while lit is not None:
             chunk = []
+            chunk.append((f"%% Start tangling block {lit.format()} from {lit.source_location.format()}", True))
             for l in lit.content:
                 for ll in maybeInsert(l):
                     chunk.append(ll)
+            chunk.append((f"%% End tangling block {lit.format()} from {lit.source_location.format()}", True))
             if lit.relation_to_prev == 'PREPEND':
                 consolidated_content.insert(0, chunk)
             else:
                 consolidated_content.append(chunk)
+            assert(lit.next != lit)
             lit = lit.next
 
         for chunk in consolidated_content:
-            for ll in chunk:
-                yield ll
+            for ll, is_debug_info in chunk:
+                debug.append(ll)
+                if not is_debug_info:
+                    yield ll
 
         # Add parent tangle afterwards if this block is prepended
+        debug.append(f"%% start.prev = {start.prev}, start.relation_to_prev = {start.relation_to_prev}")
         if start.prev is not None and start.relation_to_prev in {'PREPEND'}:
             assert(start.prev.tangle_root != start.tangle_root)
+            debug.append("%% Start tangling parent content after prepend")
             for l in start.prev.all_content(registry, tangle_root):
-                for ll in maybeInsert(l):
-                    yield ll
+                for ll, is_debug_info in maybeInsert(l):
+                    debug.append(ll)
+                    if not is_debug_info:
+                        yield ll
+            debug.append("%% End tangling parent content after prepend")
 
         for placement, node_dict in insert_nodes.items():
             for pattern, nodes in node_dict.items():
@@ -235,6 +265,7 @@ class CodeBlock:
                         + f"\"{pattern}\" in block {self.format()}, "
                         + f"but no occurrence of this text was found."
                     )
+                    message += "\nHint: Current bloc content:\n" + "\n".join(debug)
                     raise ExtensionError(message, modname="sphinx_literate")
 
     def format(self):
@@ -441,7 +472,7 @@ class CodeBlockRegistry:
         lit.relation_to_prev = relation_to_prev
 
         existing = self.get_rec(lit.name, lit.tangle_root)
-        
+
         if existing is None:
             self._missing.append(
                 MissingCodeBlock(lit.key, lit.relation_to_prev)
@@ -465,7 +496,7 @@ class CodeBlockRegistry:
 
     def merge(self, other: CodeBlockRegistry) -> None:
         """
-        Merge antoher registry into this one. This one comes from a document
+        Merge another registry into this one. This one comes from a document
         defined before the other one (matters when resolving missing blocks).
         The other registry must no longer be used after this.
         """
@@ -486,6 +517,17 @@ class CodeBlockRegistry:
         # Merge cross-references
         for key, refs in other._references.items():
             self._references[key].update(refs)
+
+    def try_fixing_all_missing(self):
+        for missing in self._missing[:]:
+            missing_tangle_root, missing_name = missing.key.split("##")
+            entry = self._hierarchy.get(missing_tangle_root)
+            if entry is None:
+                continue
+            parent_tangle_root = entry.parent
+            existing = self.get_rec(missing_name, parent_tangle_root)
+            if existing:
+                self._fix_missing_referees(existing)
 
     def remove_codeblocks_by_docname(self, docname: str) -> None:
         # TODO: when supporting cross-document REPLACE, be careful here
