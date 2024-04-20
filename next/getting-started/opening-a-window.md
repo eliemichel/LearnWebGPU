@@ -216,16 +216,20 @@ And we can now move almost all our current code to `Initialize()`. The only thin
 
 ```{lit} C++, Application implementation
 bool Application::Initialize() {
-	{{Move the whole initialization here}}
+	// Move the whole initialization here
+	{{Initialize}}
 	return true;
 }
 
 void Application::Terminate() {
-	{{Move all the release/destroy/terminate calls here}}
+	// Move all the release/destroy/terminate calls here
+	{{Terminate}}
 }
 
 void Application::MainLoop() {
 	glfwPollEvents();
+
+	{{Main loop content}}
 
 	// Also move here the tick/poll but NOT the emscripten sleep
 #if defined(WEBGPU_BACKEND_DAWN)
@@ -240,7 +244,10 @@ bool Application::IsRunning() {
 }
 ```
 
-```{lit} C++, Move the whole initialization here (hidden)
+```{lit} C++, Main loop content (hidden)
+```
+
+```{lit} C++, Initialize (hidden)
 // Open window
 glfwInit();
 glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API); // <-- extra info for glfwCreateWindow
@@ -293,7 +300,7 @@ wgpuDeviceSetUncapturedErrorCallback(device, onDeviceError, nullptr /* pUserData
 queue = wgpuDeviceGetQueue(device);
 ```
 
-```{lit} C++, Move all the release/destroy/terminate calls here (hidden)
+```{lit} C++, Terminate (hidden)
 wgpuQueueRelease(queue);
 {{Destroy surface}}
 wgpuDeviceRelease(device);
