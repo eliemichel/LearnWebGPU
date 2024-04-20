@@ -115,7 +115,7 @@ textureDesc.format = WGPUTextureFormat_RGBA8Unorm;
 
 ### Misc
 
-Like buffers, textures must **declare their intended usage**, so that they can be places in more appropriate parts of the memory by the GPU's memory allocator.
+Like buffers, textures must **declare their intended usage**, so that they can be placed in more appropriate parts of the memory by the GPU's memory allocator.
 
 In order to be able to **copy pixel data from C++**, the texture needs the `CopyDst` usage. And we will then use the texture by **sampling it from a shader**, so it must be declared with the `TextureBinding` usage:
 
@@ -141,7 +141,7 @@ textureDesc.viewFormats = nullptr;
 Uploading texture data
 ----------------------
 
-We created a texture, which allocated memory in VRAM (i.e., on the GPU). But this remains an **uninitialized chunk of memory**, to which we must set data. This is typically done by **uploading** it from the CPU.
+We created a texture, which allocated memory in VRAM (i.e. on the GPU). But this remains an **uninitialized chunk of memory**, to which we must set data. This is typically done by **uploading** it from the CPU.
 
 ### Test data
 
@@ -229,9 +229,9 @@ destination.aspect = WGPUTextureAspect_All; // only relevant for depth/Stencil t
 
 The `source` layout tells how to read from the buffer. The `offset` tells where the data starts after the CPU data pointer we provide in `writeTexture`.
 
-The `bytesPerRow` tells the stride, i.e., the number of bytes between two consecutive rows in the CPU data.
+The `bytesPerRow` tells the stride, i.e. the number of bytes between two consecutive rows in the CPU data.
 
-And the `rowsPerImage` is the the height of an image, it is important when uploading multiple images at once (only possible when uploading a *texture array*, which we do not use here).
+And the `rowsPerImage` is the height of an image, it is important when uploading multiple images at once (only possible when uploading a *texture array*, which we do not use here).
 
 In our case, the data is contiguous, so we set this as follows:
 
