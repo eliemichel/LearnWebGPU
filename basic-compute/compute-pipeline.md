@@ -29,8 +29,8 @@ fn f(x: f32) -> f32 {
 
 A **naive solution** would be to copy this buffer back to the CPU, evaluate the function here, and upload the result to the GPU again. But this is **very inefficient** for two reasons:
 
- - The CPU-GPU **copies** are expansive, especially for large buffers.
- - Since `f` is applied independently to each values, the problem is very **parallel**, and the GPU is much better than the CPU at this type of *Single Instruction Multiple Data* (SIMD) parallelism.
+ - The CPU-GPU **copies** are expensive, especially for large buffers.
+ - Since `f` is applied independently to each value, the problem is very **parallel**, and the GPU is much better than the CPU at this type of *Single Instruction Multiple Data* (SIMD) parallelism.
 
 So we set up a compute shader that evaluates `f` directly on the GPU, and save the result in a second buffer.
 
@@ -92,7 +92,7 @@ Compute Pass
 
 Remember how we drew [our first color](../getting-started/first-color.md)? We submitted to the command queue a particular render-specific sequence of instructions called a `RenderPass`. The approach to run compute-only shaders is similar, and uses a `ComputePass` instead.
 
-The creation of the compute pass is **much simpler** than the one of the render pass, because since we do **not use any fixed-function stage**, there is almost nothing to configure! The only option if the timestamp writes that will be described in the benchmarking chapter.
+The creation of the compute pass is **much simpler** than the one of the render pass, because since we do **not use any fixed-function stage**, there is almost nothing to configure! The only option is the timestamp writes that will be described in the benchmarking chapter.
 
 ```C++
 // Create compute pass
@@ -306,7 +306,7 @@ Invocation
 
 ### Concurrent calls
 
-Now that the the `dispatchWorkgroups` call actually does something, let us explain a little more what it does.
+Now that the `dispatchWorkgroups` call actually does something, let us explain a little more what it does.
 
 A compute shader (and more generally a GPU) is **good at doing the same thing multiple times in parallel**, so built in this *dispatch* operation is the possibility to call the shader's entry point multiple times.
 
@@ -336,7 +336,7 @@ The workgroup sizes must be constant expressions.
 
 The thing is: **all combinations are not equivalent**, even if they multiply to the same number of threads.
 
-The jobs are **not really all launched at once**: under the hood a scheduler organizes the execution of individual workgroups. What we can now is that the jobs from the **same workgroup** are launched together, but two **different workgroup** might get executed at significantly different times.
+The jobs are **not really all launched at once**: under the hood a scheduler organizes the execution of individual workgroups. What we can know is that the jobs from the **same workgroup** are launched together, but two **different workgroups** might get executed at significantly different times.
 
 The appropriate size for a workgroup **depends a lot on the task** that threads run. Here are some rules of thumb about the **workgroup size versus workgroup count**:
 
@@ -358,7 +358,7 @@ These rules are somehow contradictory. Only a benchmark on your specific use cas
 
 > 😟 Ok I see better now, but what about the different axes $w$, $h$ and $d$? Is a workgroup size of $2 \times 2 \times 4$ different from $16 \times 1 \times 1$?
 
-It is different indeed, because this size **give hints to the hardware** about the potential **consistency of memory access** across threads.
+It is different indeed, because this size **gives hints to the hardware** about the potential **consistency of memory access** across threads.
 
 Both the CPU and the GPU try in general to guess patterns in the way consecutive and/or concurrent operations use memory, in order for instance to [prefetch](https://en.wikipedia.org/wiki/Cache_prefetching) memory in caches or to group (a.k.a. "coalesce") concurrent read/writes into a single memory access.
 
@@ -393,7 +393,7 @@ computePass.dispatchWorkgroups(workgroupCount, 1, 1);
 Be careful about ceiling the `invocationCount / workgroupSize` division instead of flooring it, otherwise when `workgroupSize` does not exactly divide `invocationCount` the last threads will be missing.
 ```
 
-All we need now is to now in which thread of which workgroup we are, to figure out which index of the buffer we need to process. This is given by [built-in shader inputs](https://gpuweb.github.io/gpuweb/wgsl/#built-in-values-global_invocation_id), and in particular the **invocation id** provided as the `global_invocation_id` built-in:
+All we need now is to know in which thread of which workgroup we are, to figure out which index of the buffer we need to process. This is given by [built-in shader inputs](https://gpuweb.github.io/gpuweb/wgsl/#built-in-values-global_invocation_id), and in particular the **invocation id** provided as the `global_invocation_id` built-in:
 
 ```rust
 @compute @workgroup_size(32)
@@ -516,7 +516,7 @@ input 0.4 became 1.8
 Conclusion
 ----------
 
-Some parts of this chapters were reminders of what has been done with the render pass, the **most important news** here is the dispatch/workgroup/thread hierarchy. Make sure to come back to the list of rules regularly to check that the choice of workgroup size is relevant (and benchmark whenever possible).
+Some parts of this chapter were reminders of what has been done with the render pass, the **most important novelty** here is the dispatch/workgroup/thread hierarchy. Make sure to come back to the list of rules regularly to check that the choice of workgroup size is relevant (and benchmark whenever possible).
 
 We are now ready to focus on the content of the compute shader itself, and the different ways it can manipulate resources and memory!
 

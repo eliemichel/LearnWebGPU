@@ -25,7 +25,7 @@ This is not very satisfying, what happens when we want to move the object during
 
 > ☝️ We could dynamically change the shader code and rebuild a new shader module!
 
-It would work, but **building a shader module takes time**. A lot of time if we compare it to the budget for rendering a single frame (typically a 60th of a second). Imagine we want to **animate** our scene and thus change the `offset` at each frame!
+It would work, but **building a shader module takes time**. A lot of time if we compare it to the budget for rendering a single frame (typically a 60th of a second). Imagine we want to **animate** our scene and thus change the `offset` each frame!
 
 This is why a proper solution is to use a **uniform variable**.
 
@@ -33,7 +33,7 @@ This is why a proper solution is to use a **uniform variable**.
 
 A uniform is a global variable in a shader whose value is loaded from a GPU buffer. We say that it is **bound** to the buffer.
 
-Its value is **uniform** across the different vertices and fragment of **a given call** to `draw`, but it change from one call to another one by **updating** the value of the buffer it is *bound* to.
+Its value is **uniform** across the different vertices and fragment of **a given call** to `draw`, but it can be changed from one call to another by **updating** the value of the buffer it is *bound* to.
 
 To use a uniform, we need to:
 
@@ -58,7 +58,7 @@ requiredLimits.limits.maxUniformBufferBindingSize = 16 * 4;
 Shader side
 -----------
 
-In order to animate our scene, we create a uniform called `uTime` that we update at each frame with the current time, expressed in second (as provided by `glfwGetTime()`).
+In order to animate our scene, we create a uniform called `uTime` that we update each frame with the current time, expressed in second (as provided by `glfwGetTime()`).
 
 ```{note}
 I usually prefix uniform variables with a 'u' so that it is easy to figure out when reading a long shader when a variable is a uniform rather than a local variable.
