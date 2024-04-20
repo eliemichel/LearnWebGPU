@@ -304,6 +304,6 @@ Our first color!
 When using Dawn, the displayed color is potentially different because the surface color format uses another color space. More on this [later](../basic-3d-rendering/input-geometry/loading-from-file.md)!
 ```
 
-We are now ready with the basic WebGPU setup, and can dive more deeply in the 3D rendering pipeline.
+We are now **ready with the basic WebGPU setup**, and can dive more deeply in the 3D rendering pipeline! The next chapter is a **bonus** that introduces a **more comfortable API** that benefits from C++ idioms.
 
 *Resulting code:* [`step025-next`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step025-next)
