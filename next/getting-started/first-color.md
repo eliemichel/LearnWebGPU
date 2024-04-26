@@ -270,16 +270,13 @@ renderPassColorAttachment.storeOp = WGPUStoreOp_Store;
 renderPassColorAttachment.clearValue = WGPUColor{ 0.9, 0.1, 0.2, 1.0 };
 ```
 
-````{admonition} Dawn
-Dawn has an extra member `depthSlice` in the attachment, that we must explicitly set to its undefined value because we do not use a depth buffer:
+There is a last member `depthSlice` to set in the attachment, that we must explicitly set to its undefined value because we do not use a depth buffer. This option is not supported by `wgpu-native` for now so we enclosed this within a `#ifdef`:
 
 ```{lit} C++, Describe the attachment (append)
-#ifdef WEBGPU_BACKEND_DAWN
+#ifndef WEBGPU_BACKEND_WGPU
 renderPassColorAttachment.depthSlice = WGPU_DEPTH_SLICE_UNDEFINED;
-#endif // WEBGPU_BACKEND_DAWN
+#endif // NOT WEBGPU_BACKEND_WGPU
 ```
-````
-
 
 ### Misc
 
