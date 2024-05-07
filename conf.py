@@ -139,7 +139,7 @@ pygments_dark_style = "monokai"
 
 ogp_site_url = "https://eliemichel.github.io/LearnWebGPU"
 ogp_site_name = "Learn WebGPU for C++"
-ogp_image = "_static/preview.png"
+ogp_image = "https://eliemichel.github.io/LearnWebGPU/_static/preview.png"
 
 # -- Options for sphinx-favicon -----------------------------------------
 
