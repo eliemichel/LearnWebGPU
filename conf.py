@@ -117,6 +117,10 @@ html_theme_options = {
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['images', 'data', 'theme', 'video']
 
+html_extra_path = [
+    'images/preview.png'
+]
+
 html_css_files = [
     'extra.css',
     'sphinx_literate.css',
@@ -135,7 +139,7 @@ pygments_dark_style = "monokai"
 
 ogp_site_url = "https://eliemichel.github.io/LearnWebGPU"
 ogp_site_name = "Learn WebGPU for C++"
-ogp_image = "images/preview.png"
+ogp_image = "_static/preview.png"
 
 # -- Options for sphinx-favicon -----------------------------------------
 
