@@ -4,7 +4,7 @@ Opening a window
 ```{lit-setup}
 :tangle-root: 020 - Opening a window - next
 :parent: 015 - The Command Queue - next
-:fetch-files: ../../data/glfw.zip, ../../data/glfw3webgpu-v1.2.0.zip
+:fetch-files: ../../data/glfw-3.4.0-light.zip, ../../data/glfw3webgpu-v1.2.0.zip
 ```
 
 *Resulting code:* [`step020-next`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step020-next)
@@ -28,7 +28,7 @@ WebGPU **does not require a window** to draw things actually, it may run headles
 Installation of GLFW
 --------------------
 
-We do **not really need to install** it, we just need to add the code of GLFW to our project directory. Download the file [glfw.zip](../data/glfw.zip) (621 KB) and **unzip** it in your project. This is a stripped down version of the official release where I removed documentation, examples and tests so that it is more **lightweight**.
+We do **not really need to install** it, we just need to add the code of GLFW to our project directory. Download the file [glfw.zip](../data/glfw-3.4.0-light.zip) (780 KB) and **unzip** it in your project. This is a stripped down version of the official release where I removed documentation, examples and tests so that it is more **lightweight**.
 
 To integrate GLFW in your project, we first add its directory to our root `CMakeLists.txt`:
 

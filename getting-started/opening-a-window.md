@@ -4,7 +4,7 @@ Opening a window
 ```{lit-setup}
 :tangle-root: 001 - Opening a window
 :parent: 000 - Project setup
-:fetch-files: ../data/glfw.zip
+:fetch-files: ../data/glfw-3.3.8-light.zip
 ```
 
 *Resulting code:* [`step001`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step001)
@@ -28,7 +28,7 @@ Another popular choice for window management is the SDL library. It is not as li
 Installation of GLFW
 --------------------
 
-We do **not need to install** it, we just need to add the code of GLFW to our project directory. Download the file [glfw.zip](../data/glfw.zip) (621 KB) and **unzip** it in your project. This is a stripped down version of the official release where I removed documentation, examples and tests so that it is more **lightweight**.
+We do **not need to install** it, we just need to add the code of GLFW to our project directory. Download the file [glfw.zip](../data/glfw-3.3.8-light.zip) (621 KB) and **unzip** it in your project. This is a stripped down version of the official release where I removed documentation, examples and tests so that it is more **lightweight**.
 
 To integrate GLFW in your project, we first add its directory to our root `CMakeLists.txt`:
 
