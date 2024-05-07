@@ -61,9 +61,14 @@ You should now be able to build the application and add `#include <GLFW/glfw3.h>
 #include <GLFW/glfw3.h>
 ```
 
-```{important}
-If you are on a **linux** system, make sure to install the package `xorg-dev`, which GLFW depends on.
+````{important}
+If you are on a **linux** system, make sure to install the [dependencies that GLFW require](https://www.glfw.org/docs/3.3/compile.html#compile_deps). By default, it tries to build for both **X11** and **Wayland** so you need both sets of dependencies. If you only want to use/install one of them, turn either `GLFW_BUILD_X11` or `GLFW_BUILD_WAYLAND` off when calling cmake, e.g.:
+
 ```
+# Build with only X11 support
+cmake -B build -DGLFW_BUILD_WAYLAND=OFF
+```
+````
 
 Basic usage
 -----------
