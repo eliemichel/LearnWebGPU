@@ -133,13 +133,13 @@ jobs:
     - name: Configure CMake
       run: >
         cmake
-          -S "${{ matrix.tangle-root }}"
-          -B ${{github.workspace}}/build
-          -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
-          -DGLFW_BUILD_WAYLAND=OFF
+        -S "${{ matrix.tangle-root }}"
+        -B ${{github.workspace}}/build
+        -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+        -DGLFW_BUILD_WAYLAND=OFF
 
     - name: Build
       run: >
         cmake
-          --build ${{github.workspace}}/build
-          --config ${{env.BUILD_TYPE}}
+        --build ${{github.workspace}}/build
+        --config ${{env.BUILD_TYPE}}
