@@ -82,6 +82,7 @@ html_theme_options = {
     "light_css_variables": {
         "color-brand-primary": "#ac2800",  # or #ac2800
         "color-brand-content": "#007cac",  # #05acc8  #0089BD
+        "color-brand-visited": "#007cac",  # 12b0a2
 
         "color-admonition-title--quickstart": "rgb(0, 124, 172)",
         "color-admonition-title-background--quickstart": "rgba(0, 124, 172, 0.2)",
@@ -89,6 +90,7 @@ html_theme_options = {
     "dark_css_variables": {
         "color-brand-primary": "#ce5733",
         "color-brand-content": "#38a6b9",  # #05acc8  #0089BD
+        "color-brand-visited": "#2280ae",
 
         "color-admonition-title--quickstart": "rgb(56, 166, 185)",
         "color-admonition-title-background--quickstart": "rgba(56, 166, 185, 0.2)",
