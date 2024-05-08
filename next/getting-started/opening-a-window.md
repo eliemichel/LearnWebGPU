@@ -28,7 +28,7 @@ WebGPU **does not require a window** to draw things actually, it may run headles
 Installation of GLFW
 --------------------
 
-We do **not really need to install** it, we just need to add the code of GLFW to our project directory. Download the file [glfw.zip](../data/glfw-3.4.0-light.zip) (780 KB) and **unzip** it in your project. This is a stripped down version of the official release where I removed documentation, examples and tests so that it is more **lightweight**.
+We do **not really need to install** it, we just need to add the code of GLFW to our project directory. Download the file [glfw.zip](../../data/glfw-3.4.0-light.zip) (780 KB) and **unzip** it in your project. This is a stripped down version of the official release where I removed documentation, examples and tests so that it is more **lightweight**.
 
 To integrate GLFW in your project, we first add its directory to our root `CMakeLists.txt`:
 
