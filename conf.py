@@ -143,6 +143,16 @@ ogp_image = "https://eliemichel.github.io/LearnWebGPU/_static/preview.png"
 ogp_social_cards = {
     "image": "images/logo/webgpu-light.png",
 }
+ogp_type = "article"
+
+ogp_custom_meta_tags = [
+    '<meta name="twitter:image:src" content="https://eliemichel.github.io/LearnWebGPU/_static/preview.png" />',
+    '<meta name="twitter:site" content="LearnWebGPU" />',
+    '<meta name="twitter:card" content="summary_large_image" />',
+    '<meta name="twitter:title" content="Learn WebGPU for C++" />',
+    '<meta name="twitter:description" content="This documentation walks you through the use of the WebGPU graphics API to create native 3D applications in C++ from scratch, for Windows, Linux and macOS." />',
+]
+
 
 # -- Options for sphinx-favicon -----------------------------------------
 
