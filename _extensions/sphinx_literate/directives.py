@@ -10,9 +10,23 @@ from sphinx.util.typing import OptionSpec
 from sphinx.directives.code import CodeBlock as SphinxCodeBlock
 from sphinx.application import Sphinx
 
-from .parse import parse_block_content, parse_block_title, parse_fetched_files
+from .parse import parse_block_content, parse_block_title, parse_fetched_files, ParsedBlockTitle
 from .registry import CodeBlock, CodeBlockRegistry, SourceLocation
 from .nodes import LiterateNode, TangleNode, RegistryNode
+
+#############################################################
+
+def get_tangle_root_from_parsed_title(parsed_title: ParsedBlockTitle, env) -> str:
+    """
+    Try and find tangle root override in the block's options, otherwise
+    use current tangle root from environment.
+    """
+    tangle_aliases = env.temp_data.get('tangle-aliases', {})
+
+    for opt in parsed_title.options:
+        if type(opt) == tuple and opt[0] == 'TANGLE ROOT':
+            return tangle_aliases.get(opt[1], opt[1])
+    return env.temp_data.get('tangle-root')
 
 #############################################################
 
@@ -31,19 +45,27 @@ class LiterateSetupDirective(SphinxDirective):
         'tangle-root': directives.unchanged,
         'parent': directives.unchanged,
         'fetch-files': directives.unchanged,
+        'alias': directives.unchanged,
     }
 
     def run(self) -> List[Node]:
         tangle_root = self.options.get('tangle-root')
         tangle_parent = self.options.get('parent')
         fetch_files = self.options.get('fetch-files')
+        alias = self.options.get('alias')
         force = 'force' in self.options
         reg = CodeBlockRegistry.from_env(self.env)
 
-        if tangle_root is not None:
+        if tangle_root is not None and alias is None:
             self.env.temp_data['tangle-root'] = tangle_root
-        else:
+
+        if tangle_root is None:
             tangle_root = self.env.temp_data['tangle-root']
+
+        if alias is not None:
+            if 'tangle-aliases' not in self.env.temp_data:
+                self.env.temp_data['tangle-aliases'] = {}
+            self.env.temp_data['tangle-aliases'][alias] = tangle_root
 
         if tangle_parent is not None:
             reg.set_tangle_parent(
@@ -68,7 +90,7 @@ class TangleDirective(SphinxCodeBlock):
 
     def run(self):
         parsed_title = parse_block_title(self.arguments[0])
-        tangle_root = self.env.temp_data.get('tangle-root')
+        tangle_root = get_tangle_root_from_parsed_title(parsed_title, self.env)
 
         self.content = StringList(["Hello, world"])
         self.arguments = [parsed_title.lexer] if parsed_title.lexer is not None else []
@@ -122,8 +144,8 @@ class LiterateDirective(SphinxCodeBlock):
     final_argument_whitespace = True
 
     def run(self):
-        tangle_root = self.env.temp_data.get('tangle-root')
         parsed_title = parse_block_title(self.arguments[0])
+        tangle_root = get_tangle_root_from_parsed_title(parsed_title, self.env)
         self.parsed_content = parse_block_content(self.content, tangle_root, self.config)
 
         targetid = 'lit-%d' % self.env.new_serialno('lit')

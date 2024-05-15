@@ -31,7 +31,8 @@ class ParsedBlockTitle:
     # Name of the language lexer
     lexer: str | None = None
 
-    # Possible options are 'APPEND', 'REPLACE', ('INSERT AFTER', "foo", "bar"), ...
+    # Possible options are 'APPEND', 'REPLACE', ('INSERT AFTER', "foo", "bar"),
+    # ('TANGLE ROOT', "foo"), ...
     options: BlockOptions = field(default_factory=set)
 
 #############################################################
@@ -57,6 +58,15 @@ def parse_option(raw_option: str) -> str|Tuple[str]:
         pattern = raw_option[j+1:-1]
         return ('INSERT', block_name, placement, pattern)
         return ('INSERT BEFORE', block_name, pattern)
+    if raw_option.lower().startswith("for tangle root"):
+        offset = len("for tangle root")
+        j = raw_option.find('"', offset)
+        if j == -1:
+            raise ExtensionError(f"Unable to parse option '{raw_option}' (could not find beginning of tangle root)")
+        if raw_option[-1] != '"':
+            raise ExtensionError(f"Unable to parse option '{raw_option}' (should end with '\"')")
+        tangle_root = raw_option[j+1:-1]
+        return ('TANGLE ROOT', tangle_root)
     else:
         return raw_option.upper()
 
