@@ -125,7 +125,7 @@ config.alphaMode = WGPUCompositeAlphaMode_Auto;
 ```
 
 ```{admonition} Troubleshooting
-If you get the error `Uncaptured device error: type 3 (Device(OutOfMemory))` when calling `wgpuDeviceCreateSwapChain`, check that you specified the `GLFW_NO_API` value to glfw when creating the window.
+If you get the error `Uncaptured device error: type 3 (Device(OutOfMemory))` when calling `wgpuSurfaceConfigure`, check that you specified the `GLFW_NO_API` value to glfw when creating the window.
 ```
 
 Surface Texture
