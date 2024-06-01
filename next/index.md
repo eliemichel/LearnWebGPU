@@ -6,6 +6,5 @@ This section is where we store the **Work in Progress** chapters, before moving 
 ```{toctree}
 :titlesonly:
 
-getting-started/index
 basic-3d-rendering/index
 ```

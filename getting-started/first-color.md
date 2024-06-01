@@ -2,38 +2,28 @@ First Color
 ===========
 
 ```{lit-setup}
-:tangle-root: 020 - First Color
-:parent: 017 - The Command Queue
+:tangle-root: 025 - First Color
+:parent: 020 - Opening a window
 ```
 
-```{lit} C++, Test command encoding (replace, hidden)
-{{Get Queue}}
-```
+*Resulting code:* [`step025`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step025)
 
-*Resulting code:* [`step020`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step020)
+The goal of this chapter is to **draw a solid color** all over our window. To do so, we must first **configure** the surface, then get at each frame the **Surface Texture** to draw onto, and finally create a **Render Pass** to effectively draw something.
 
-The goal of this chapter is to **draw a solid color** all over our window. This will be the occasion to introduce 3 new concepts of WebGPU:
+Surface configuration
+---------------------
 
- - Swap Chains
- - Texture Views
- - Render Passes
+At the end of the previous chapter, we introduced the **surface** object as the link between the OS window (managed by GLFW) and the WebGPU instance.
 
-Swap Chain
-----------
-
-```{Warning}
-In very recent versions of WebGPU, the explicit manipulation of the Swap Chain has been removed. Concepts are still relevant but tuned through the surface's capabilities. **The code presented here still works** with the corresponding WebGPU distribution but will change a lot at the next update of this guide!
-```
+However, this surface needs to be **configured** before we can draw on it. To understand why, we need to know a little more about how the window's surface is drawn.
 
 ### Drawing process
 
-To understand the notion of **Swap Chain**, we need to know a little more about how the window's surface is drawn.
-
-First, the render pipeline **does not draw directly on the texture that is currently displayed**, otherwise we would see pixels change all the time. A typical pipeline draws to an off-screen texture, which replaces the currently displayed one only once it is complete. We then say that the texture is **presented** to the surface.
+First, the render pipeline **does not draw directly on the texture that is currently displayed**, otherwise we would see pixels change all the time. A typical pipeline draws to an **off-screen texture**, which replaces the currently displayed one only once it is complete. We then say that the texture is **presented** to the surface.
 
 Second, drawing takes a **different time** than the frame rate required by your application, so the GPU may have to wait until the next frame is needed. There might be more than one off-screen texture waiting in the queue to be presented, so that fluctuations in the render time get amortized.
 
-Last, **these off-screen textures are reused** as much as possible. As soon as a new texture is presented, the previous one can be reused as a target for the next frame. This whole texture swapping mechanism is implemented by the **Swap Chain** object.
+Last, **these off-screen textures are reused** as much as possible. As soon as a new texture is presented, the previous one can be reused as a target for the next frame. This whole mechanism of called a **Swap Chain** and is handled under teh hood by the **Surface** object.
 
 ```{note}
 Remember that the GPU process runs at its own pace and that our CPU-issued commands are only asynchronously executed. Implementing the swap chain process manually would hence require a lot of boilerplate, so we are glad it is provided by the API!
@@ -43,57 +33,76 @@ Remember that the GPU process runs at its own pace and that our CPU-issued comma
     <source src="../_static/swapchain.mp4" type="video/mp4">
 </video>
 
-*Left: The render process draws on an off-screen texture. Middle: Rendered textures wait in a queue. Right: At a regular frame rate, rendered textures are presented to the window's surface.*
+<p class="align-center">
+    <span class="caption-text"><em>Left: The render process draws on an off-screen texture. Middle: Rendered textures wait in a queue. Right: At a regular frame rate, rendered textures are presented to the window's surface.</em></span>
+</p>
 
-### Creation
+### Configuration
 
-As always, we pass swap chain creation option through a descriptor. A first obvious option is the size of all the textures that are manipulated:
+The process that we just described has a couple of parameters that we set through `wgpuSurfaceConfigure`, which works a bit like an object creation:
 
-```{lit} C++, Describe Swap Chain
-WGPUSwapChainDescriptor swapChainDesc = {};
-swapChainDesc.nextInChain = nullptr;
-swapChainDesc.width = 640;
-swapChainDesc.height = 480;
+```{lit} C++, Surface Configuration
+WGPUSurfaceConfiguration config = {};
+config.nextInChain = nullptr;
+
+{{Describe Surface Configuration}}
+
+wgpuSurfaceConfigure(surface, &config);
+```
+
+This must be done at the end of the initialization, and at the end of the program, we can unconfigure the surface:
+
+```{lit} C++, Initialize (append, hidden)
+{{Surface Configuration}}
+```
+
+```{lit} C++, Terminate (prepend)
+wgpuSurfaceUnconfigure(surface);
+```
+
+#### Texture parameters
+
+We must first specify the parameters used to **allocate the textures** for the underlying swap chain. This includes of course a **size** (which we set to the window size), but also a **format** and a **usage**.
+
+```{lit} C++, Describe Surface Configuration
+// Configuration of the textures created for the underlying swap chain
+config.width = 640;
+config.height = 480;
+{{Describe Surface Usage}}
+{{Describe Surface Format}}
 ```
 
 ```{warning}
-As you can guess, we will have to take care of creating a new swap chain **when the window is resized**. In the meantime, do not try to resize it. You may add `glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);` before creating the window to instruct GLFW to disable resizing.
+As you can guess, we will have to take care of re-configuring the surface **when the window is resized**. In the meantime, do not try to resize it. You may add `glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);` before creating the window to instruct GLFW to disable resizing.
 ```
 
-For the swap chain to **allocate textures**, we also need to specify their **format**. The format is a combination of a number of channels (a subset of red, green, blue, alpha), a size per channel (8, 16 or 32 bits) and a channel type (float, integer, signed or not), a compression scheme, a normalization mode, etc.
+The **format** is a combination of a **number of channels** (a subset of red, green, blue, alpha), a **size per channel** (8, 16 or 32 bits) and a **channel type** (float, integer, signed or not), a compression scheme, a normalization mode, etc.
 
 All available combinations are listed in the `WGPUTextureFormat` enum, but since our swap chain targets an existing surface, we can just use whichever format the surface uses:
 
-```{lit} C++, Describe Swap Chain format
-WGPUTextureFormat swapChainFormat = wgpuSurfaceGetPreferredFormat(surface, adapter);
-swapChainDesc.format = swapChainFormat;
-```
-
-```{lit} C++, Describe Swap Chain (append, hidden)
-{{Describe Swap Chain format}}
-```
-
-```{admonition} Dawn
-When using the Dawn implementation of WebGPU, `wgpuSurfaceGetPreferredFormat` is not implemented yet. Actually, the only texture format it supports is `WGPUTextureFormat_BGRA8Unorm`.
-
-```
-
-```{lit} C++, Describe Swap Chain format (replace, hidden)
-#ifdef WEBGPU_BACKEND_WGPU
-    WGPUTextureFormat swapChainFormat = wgpuSurfaceGetPreferredFormat(surface, adapter);
-#else
-    WGPUTextureFormat swapChainFormat = WGPUTextureFormat_BGRA8Unorm;
-#endif
-swapChainDesc.format = swapChainFormat;
+```{lit} C++, Describe Surface Format
+WGPUTextureFormat surfaceFormat = wgpuSurfaceGetPreferredFormat(surface, adapter);
+config.format = surfaceFormat;
+// And we do not need any particular view format:
+config.viewFormatCount = 0;
+config.viewFormats = nullptr;
 ```
 
 Textures are allocated for a **specific usage**, that dictates the way the GPU organizes its memory. In our case, we use the swap chain textures as targets for a *Render Pass* so it needs to be created with the `RenderAttachment` usage flag:
 
-```{lit} C++, Describe Swap Chain (append)
-swapChainDesc.usage = WGPUTextureUsage_RenderAttachment;
+```{lit} C++, Describe Surface Usage
+config.usage = WGPUTextureUsage_RenderAttachment;
 ```
 
-Finally, we can tell which texture from the waiting queue must be presented at each frame. Possible values are:
+Lastly, the surface needs to know the device to use to create the textures:
+
+```{lit} C++, Describe Surface Configuration (append)
+config.device = device;
+```
+
+#### Presentation parameters
+
+After telling how to allocate textures, we can tell which texture from the waiting queue must be presented at each frame. Possible values are found in the `WGPUPresentMode` enum:
 
  - `Immediate`: No off-screen texture is used, the render process directly draws on the surface, which might lead to artifacts (called *tearing*) but has zero latency.
  - `Mailbox`: There is only one slot in the queue, and when a new frame is rendered, it replaces the one currently waiting (which is discarded without ever being presented).
@@ -105,77 +114,87 @@ The `Force32` enum values that you can find when reading the source code of `web
 
 In our case, we use `Fifo`, as illustrated in the video above.
 
-```{lit} C++, Describe Swap Chain (append)
-swapChainDesc.presentMode = WGPUPresentMode_Fifo;
+```{lit} C++, Describe Surface Configuration (append)
+config.presentMode = WGPUPresentMode_Fifo;
 ```
 
-We may now create the swap chain:
+Finally, we may specify how the textures will be composited onto the OS window, which may be used to create **transparent** windows. We can also simply leave it to the auto mode:
 
-```{lit} C++, Create Swap Chain
-WGPUSwapChain swapChain = wgpuDeviceCreateSwapChain(device, surface, &swapChainDesc);
-std::cout << "Swapchain: " << swapChain << std::endl;
-```
-
-```{lit} C++, Create things (append, hidden)
-{{Describe Swap Chain}}
-{{Create Swap Chain}}
-```
-
-And of course at the end of the program we destroy it:
-
-```{lit} C++, Destroy things (prepend)
-wgpuSwapChainRelease(swapChain);
-```
-
-```{note}
-The Swap Chain is something that is not exposed in the JavaScript version of the API. Like the notion of *surface* that we have met already, by the way. The web browser takes care of it and does not offer any option.
+```{lit} C++, Describe Surface Configuration (append)
+config.alphaMode = WGPUCompositeAlphaMode_Auto;
 ```
 
 ```{admonition} Troubleshooting
-If you get the error `Uncaptured device error: type 3 (Device(OutOfMemory))` when calling `wgpuDeviceCreateSwapChain`, check that you specified the `GLFW_NO_API` value to glfw when creating the window.
+If you get the error `Uncaptured device error: type 3 (Device(OutOfMemory))` when calling `wgpuSurfaceConfigure`, check that you specified the `GLFW_NO_API` value to glfw when creating the window.
 ```
 
-Texture View
-------------
+Surface Texture
+---------------
 
-Let's move on to the **main loop** and see how to use the swap chain. As explained above, the swap chain provides us with the texture where to draw the next frame. It is as simple as this:
+Now that our surface is configured, we can ask it **at each frame** for the **next available texture** in the swap chain, i.e., the texture onto which we must draw. Overall, the content of our main loop is as follows:
 
-```{lit} C++, Main loop (replace)
-while (!glfwWindowShouldClose(window)) {
-    glfwPollEvents();
-    {{Get target texture view}}
-    {{Draw things}}
-    {{Destroy texture view}}
-    {{Present swap chain}}
+```{lit} C++, Main loop content (replace)
+// In Application::MainLoop()
+{{Get the next target texture}}
+{{Create target texture view}}
+{{Draw things}}
+{{Present the surface onto the window}}
+```
+
+### Getting the next target texture
+
+To get the texture to draw onto, we use `wgpuSurfaceGetCurrentTexture`. The "surface texture" is not really an object but rather a **container** for the **multiple things that this function returns**. It is thus up to us to create the `WGPUSurfaceTexture` container, which we pass to the function to write into it:
+
+```{lit} C++, Get the next target texture
+WGPUSurfaceTexture surfaceTexture;
+wgpuSurfaceGetCurrentTexture(surface, &surfaceTexture);
+```
+
+We then have access to the following information:
+
+ - `surfaceTexture.status` tells us whether the operation was **successful**, and if not gives some hint about why.
+ - `surfaceTexture.suboptimal` may additionally note that despite the texture being successfully retrieved, the underlying surface changed and we should probably **reconfigure** it.
+ - `surfaceTexture.texture` is the **texture** that we must draw on **during this frame**.
+
+We only deal with the obvious failure case and ignore the suboptimal flag for now:
+
+```{lit} C++, Get the next target texture (append)
+if (surfaceTexture.status != WGPUSurfaceGetCurrentTextureStatus_Success) {
+    return;
 }
 ```
 
-```{lit} C++, Get target texture view
-WGPUTextureView nextTexture = wgpuSwapChainGetCurrentTextureView(swapChain);
-std::cout << "nextTexture: " << nextTexture << std::endl;
+### Texture view
+
+What we will need in the next section is not directly the surface texture, but a **texture view**, which may represent a sub-part of the texture, or expose it using a different format. We will come back on texture views in the [Texturing](/basic-3d-rendering/texturing/index.md) section of this guide, for now you may copy-paste the following boilerplate:
+
+```{lit} C++, Create target texture view
+WGPUTextureViewDescriptor viewDescriptor;
+viewDescriptor.nextInChain = nullptr;
+viewDescriptor.label = "Surface texture view";
+viewDescriptor.format = wgpuTextureGetFormat(surfaceTexture.texture);
+viewDescriptor.dimension = WGPUTextureViewDimension_2D;
+viewDescriptor.baseMipLevel = 0;
+viewDescriptor.mipLevelCount = 1;
+viewDescriptor.baseArrayLayer = 0;
+viewDescriptor.arrayLayerCount = 1;
+viewDescriptor.aspect = WGPUTextureAspect_All;
+WGPUTextureView targetView = wgpuTextureCreateView(surfaceTexture.texture, &viewDescriptor);
 ```
 
-Note that this returns a **Texture View**. This gives a restricted access to the actual texture object allocated by the swap chain, so that internally the swap chain can use whatever organization it wants while exposing a view that has the dimensions and format that we expect.
+Of course we must release this view once we no longer need it, just before presenting:
 
-Getting the texture view **may fail**, in particular if the window has been resized and thus the target surface changed, so don't forget to check that it is not null:
-
-```{lit} C++, Get target texture view (append)
-if (!nextTexture) {
-    std::cerr << "Cannot acquire next swap chain texture" << std::endl;
-    break;
-}
+```{lit} C++, Present the surface onto the window
+// At the end of the frame
+wgpuTextureViewRelease(targetView);
 ```
 
-The texture view is **used only for a single frame**, after which it is our responsibility to destroy it:
+### Presenting
 
-```{lit} C++, Destroy texture view
-wgpuTextureViewRelease(nextTexture);
-```
+Finally, once the texture is filled in and released, we can tell the surface to present the next texture of its swap chain (which may or may not be the texture we just drew onto, depending on the `presentMode`):
 
-At the end of the main loop, once the texture is filled in and the view released, we can tell the swap chain to present the next texture (which depends on the `presentMode` of the swap chain):
-
-```{lit} C++, Present swap chain
-wgpuSwapChainPresent(swapChain);
+```{lit} C++, Present the surface onto the window (append)
+wgpuSurfacePresent(surface);
 ```
 
 Render Pass
@@ -183,9 +202,9 @@ Render Pass
 
 ### Render pass encoder
 
-We now hold the texture where to draw to display something in our window. Like any GPU-side operation, we trigger drawing operations from the command queue, using a command encoder as described in [the previous chapter](the-command-queue.md).
+We now hold the texture where to draw to display something in our window. Like any GPU-side operation, we trigger drawing operations from the **command queue**, using a command encoder as described in the [Command Queue](the-command-queue.md).
 
-Build a `WGPUCommandEncoder` called `encoder`, then submit it to the queue. In between we will add a command that clears the screen with a uniform color.
+We build a `WGPUCommandEncoder` called `encoder`, then submit it to the queue. In between we will add a command that clears the screen with a uniform color.
 
 ```{lit} C++, Draw things
 {{Create Command Encoder}}
@@ -193,77 +212,84 @@ Build a `WGPUCommandEncoder` called `encoder`, then submit it to the queue. In b
 {{Finish encoding and submit}}
 ```
 
-If you look in `webgpu.h` at the methods of the encoder (the procedures starting with `wgpuCommandEncoder`), most of them are related to copying buffers and textures around. Except **two special ones**: `wgpuCommandEncoderBeginComputePass` and `wgpuCommandEncoderBeginRenderPass`. These return specialized encoder objects, namely `WGPUComputePassEncoder` and `WGPURenderPassEncoder`, that give access to commands dedicated to respectively computing and 3D rendering.
+If you look in `webgpu.h` at the methods of the encoder (the procedures starting with `wgpuCommandEncoder`), most of them are related to copying buffers and textures around. Except **two special ones**: `wgpuCommandEncoderBeginComputePass` and `wgpuCommandEncoderBeginRenderPass`. These return **specialized encoder objects**, namely `WGPUComputePassEncoder` and `WGPURenderPassEncoder`, that give access to commands dedicated to respectively **computing** and **3D rendering**.
 
-In our case, we use a render pass:
+In our case, we use a **render pass**:
 
 ```{lit} C++, Encode Render Pass
 WGPURenderPassDescriptor renderPassDesc = {};
+renderPassDesc.nextInChain = nullptr;
+
 {{Describe Render Pass}}
+
 WGPURenderPassEncoder renderPass = wgpuCommandEncoderBeginRenderPass(encoder, &renderPassDesc);
 wgpuRenderPassEncoderEnd(renderPass);
 wgpuRenderPassEncoderRelease(renderPass);
 ```
 
-Note that we directly end the pass without issuing any other command. This is because the render pass has a built-in mechanism for clearing the screen when it begins, which we'll set up through the descriptor.
+Note that we directly end the pass **without issuing** any other command. This is because the render pass has a built-in mechanism for **clearing the screen** when it begins, which we will set up through the descriptor.
 
 ### Color attachment
 
 A render pass leverages the 3D rendering circuits of the GPU to draw content into one or multiple textures. So one important thing to set up is to tell **which textures are the target** of this process. These are the **attachments** of the render pass.
 
-The number of attachment is variable, so the descriptor gets it through two fields: the number `colorAttachmentCount` of attachments and the address `colorAttachments` of the color attachment array. Since we only use one, the address of the array is just the address of a single `WGPURenderPassColorAttachment` variable.
+The number of attachment is variable, so the descriptor gets it through two fields: the number `colorAttachmentCount` of attachments and the address `colorAttachments` of the color attachment array. Since we **only use one** here, the address of the array is just the address of a single `WGPURenderPassColorAttachment` variable.
 
 ```{lit} C++, Describe Render Pass
 WGPURenderPassColorAttachment renderPassColorAttachment = {};
-{{Set up the attachment}}
+
+{{Describe the attachment}}
 
 renderPassDesc.colorAttachmentCount = 1;
 renderPassDesc.colorAttachments = &renderPassColorAttachment;
 ```
 
-The first important setting of the attachment is the texture view it must draw in. In our case, the view returned by the swap chain because we directly want to draw on screen, but in advanced pipelines it is very common to draw on intermediate textures, which are then fed to e.g., post-process passes.
+The first important setting of the attachment is the **texture view** it must draw in.
 
-```{lit} C++, Set up the attachment
-renderPassColorAttachment.view = nextTexture;
+In our case, this is simply the `targetView` that we got from the surface, because we want to **directly draw on screen**, but in advanced pipelines it is very common to draw on **intermediate textures**, which are then fed to e.g., post-processing passes.
+
+```{lit} C++, Describe the attachment
+renderPassColorAttachment.view = targetView;
 ```
 
-There is a second target texture view called `resolveTarget`, but it is not relevant here because we do not use *multi-sampling* (more on this later).
+There is a second target texture view called `resolveTarget`, but it is not relevant here because we do not use **multi-sampling** (more on this later).
 
-```{lit} C++, Set up the attachment (append)
+```{lit} C++, Describe the attachment (append)
 renderPassColorAttachment.resolveTarget = nullptr;
 ```
 
-The `loadOp` setting indicates the load operation to perform on view prior to executing the render pass. It can be either read from the view or set to a default uniform color, namely the clear value. When it does not matter, use `WGPULoadOp_Clear` as it is likely more efficient.
+The `loadOp` setting indicates the load operation to perform on the view **prior to executing** the render pass. It can be either read from the view or set to a default uniform color, namely the clear value. **When it does not matter**, use `WGPULoadOp_Clear` as it is likely more efficient.
 
-The `storeOp` indicates the operation to perform on view after executing the render pass. It can be either stored or discarded (which only makes sense if the render pass has side-effects).
+The `storeOp` indicates the operation to perform on view **after executing** the render pass. It can be either stored or discarded (the latter only makes sense if the render pass has side-effects).
 
-And the `clearValue` is the value to clear the screen with, put anything you want in here! The 4 values are the red, green, blue and alpha channels, on a scale from 0.0 to 1.0.
+And the `clearValue` is the value to **clear the screen** with, put anything you want in here! The 4 values are the **red**, **green**, **blue** and **alpha** channels, on a scale **from 0.0 to 1.0**.
 
-```{lit} C++, Set up the attachment (append)
+```{lit} C++, Describe the attachment (append)
 renderPassColorAttachment.loadOp = WGPULoadOp_Clear;
 renderPassColorAttachment.storeOp = WGPUStoreOp_Store;
 renderPassColorAttachment.clearValue = WGPUColor{ 0.9, 0.1, 0.2, 1.0 };
 ```
 
+There is a last member `depthSlice` to set in the attachment, that we must explicitly set to its undefined value because we do not use a depth buffer. This option is not supported by `wgpu-native` for now so we enclosed this within a `#ifdef`:
+
+```{lit} C++, Describe the attachment (append)
+#ifndef WEBGPU_BACKEND_WGPU
+renderPassColorAttachment.depthSlice = WGPU_DEPTH_SLICE_UNDEFINED;
+#endif // NOT WEBGPU_BACKEND_WGPU
+```
+
 ### Misc
 
-There is also one special type of attachment, namely the *depth* and *stencil* attachment (it is a single attachment potentially containing two channels). We'll come back on this later on, for now we do not use it so we set it to null:
+There is also one special type of attachment, namely the **depth** and **stencil** attachment (it is a single attachment potentially containing two channels). We'll come back on this later on, for now we do not use it so we set it to null:
 
 ```{lit} C++, Describe Render Pass (append)
 renderPassDesc.depthStencilAttachment = nullptr;
 ```
 
-When measuring the performance of a render pass, it is not possible to use CPU-side timing functions, since the commands are not executed synchronously. Instead, the render pass can receive a set of timestamp queries. We do not use it in this example.
+When **measuring the performance** of a render pass, it is not possible to use CPU-side timing functions, since the commands are not executed synchronously. Instead, the render pass can receive a set of timestamp queries. We do not use it in this example (see advanced chapter about [Benchmarking Time](/advanced-techniques/benchmarking/time.md) for more information).
 
 ```{lit} C++, Describe Render Pass (append)
-renderPassDesc.timestampWriteCount = 0;
 renderPassDesc.timestampWrites = nullptr;
-```
-
-Lastly, we set `nextInChain` to a null pointer (remember this pointer is an extension mechanism that the standard WebGPU API does not use).
-
-```{lit} C++, Describe Render Pass (append)
-renderPassDesc.nextInChain = nullptr;
 ```
 
 Conclusion
@@ -286,6 +312,6 @@ Our first color!
 When using Dawn, the displayed color is potentially different because the surface color format uses another color space. More on this [later](../basic-3d-rendering/input-geometry/loading-from-file.md)!
 ```
 
-We are now ready with the basic WebGPU setup, and can dive more deeply in the 3D rendering pipeline.
+We are now **ready with the basic WebGPU setup**, and can dive more deeply in the 3D rendering pipeline! The next chapter is a **bonus** that introduces a **more comfortable API** that benefits from C++ idioms.
 
-*Resulting code:* [`step020`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step020)
+*Resulting code:* [`step025`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step025)

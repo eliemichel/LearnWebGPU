@@ -2,11 +2,11 @@ The Adapter
 ===========
 
 ```{lit-setup}
-:tangle-root: 005 - The Adapter - next
-:parent: 001 - Hello WebGPU - next
+:tangle-root: 005 - The Adapter
+:parent: 001 - Hello WebGPU
 ```
 
-*Resulting code:* [`step005-next`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step005-next)
+*Resulting code:* [`step005`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step005)
 
 Before getting our hand on a **device**, we need to select an **adapter**. The same host system may expose **multiple adapters** if it has access to multiple physical GPUs. It may also have an adapter that represents an emulated/virtual device.
 
@@ -452,4 +452,4 @@ Conclusion
  - Once we have an adapter, we can inspect its **capabilities** (limits, features) and properties.
  - We learned to use **asynchronous functions** and **double call** enumeration functions.
 
-*Resulting code:* [`step005-next`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step005-next)
+*Resulting code:* [`step005`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step005)

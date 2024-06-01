@@ -2,12 +2,12 @@ Hello WebGPU
 ============
 
 ```{lit-setup}
-:tangle-root: 005 - Hello WebGPU
-:parent: 001 - Opening a window
-:fetch-files: ../data/webgpu-distribution.zip
+:tangle-root: 001 - Hello WebGPU
+:parent: 000 - Project setup
+:fetch-files: ../data/WebGPU-distribution-v0.2.0-beta1.zip
 ```
 
-*Resulting code:* [`step005`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step005)
+*Resulting code:* [`step001`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step001)
 
 WebGPU is a *Render Hardware Interface* (RHI), which means that it is a programming library meant to provide a **unified interface** for multiple underlying graphics hardware and operating system setups.
 
@@ -35,7 +35,7 @@ There are (at least) two implementations of WebGPU, developed for the two main w
 
 These two implementations still have **some discrepancies**, but these will disappear as the WebGPU specification gets stable. I try to write this guide such that it **works for both** of them.
 
-To make the integration of either of these in a CMake project as easy as with GLFW and without too many extra dependencies, I share a [WebGPU-distribution](https://github.com/eliemichel/WebGPU-distribution) repository that lets you chose one of the following options:
+To ease the integration of either of these in a CMake project, I share a [WebGPU-distribution](https://github.com/eliemichel/WebGPU-distribution) repository that lets you chose one of the following options:
 
 `````{admonition} Too many options? (Click Me)
 :class: foldable quickstart
@@ -71,7 +71,7 @@ Since `wgpu-native` is written in rust, we cannot easily build it from scratch s
 **WIP:** Use the "for any platform" link rather than the platform-specific ones, I haven't automated their generation yet so they are usually behind the main one.
 ```
 
- - [wgpu-native for any platform](https://github.com/eliemichel/WebGPU-distribution/archive/refs/tags/wgpu-5433868.zip) (a bit heavier as it's a merge of all the above basically)
+ - [wgpu-native for any platform](https://github.com/eliemichel/WebGPU-distribution/archive/refs/tags/wgpu-v0.19.4.1.zip) (a bit heavier as it's a merge of all possible platforms)
  - [wgpu-native for Linux](#)
  - [wgpu-native for Windows](#)
  - [wgpu-native for MacOS](#)
@@ -91,7 +91,7 @@ The pre-compiled binaries are provided by the `wgpu-native` project itself so yo
 
 Dawn gives much better error messages, and since it is written in C++ we can build it from source and thus inspect more deeply the stack trace in case of crash:
 
- - [Dawn for any platform](https://github.com/eliemichel/WebGPU-distribution/archive/refs/tags/dawn-5869.zip)
+ - [Dawn for any platform](https://github.com/eliemichel/WebGPU-distribution/archive/refs/tags/dawn-6512.zip)
 
 ```{note}
 The Dawn-based distribution I provide here fetches the source code of Dawn from its original repository, but in an as shallow as possible way, and pre-sets some options to avoid building parts that we do not use.
@@ -107,6 +107,40 @@ The Dawn-based distribution I provide here fetches the source code of Dawn from 
  - The distribution fetches Dawn's source code and its dependencies so the first time you build you need an **Internet connection**.
  - The initial build takes significantly longer, and occupies more disk space overall.
 
+````{note}
+On Linux check out [Dawn's build documentation](https://dawn.googlesource.com/dawn/+/HEAD/docs/building.md) for teh list of packages to install. As of April 7, 2024, the list is the following (for Ubuntu):
+
+```bash
+sudo apt-get install libxrandr-dev libxinerama-dev libxcursor-dev mesa-common-dev libx11-xcb-dev pkg-config nodejs npm
+```
+````
+
+### Option C: The flexibility of both
+
+In this option, we only include a couple of CMake files in our project, which then dynamically fetch either `wgpu-native` or Dawn depending on a configuration option:
+
+```
+cmake -B build -DWEBGPU_BACKEND=WGPU
+# or
+cmake -B build -DWEBGPU_BACKEND=DAWN
+```
+
+```{note}
+The **accompanying code** uses this Option C.
+```
+
+This is given by the `main` branch of my distribution repository:
+
+ - [WebGPU any distribution](https://github.com/eliemichel/WebGPU-distribution/archive/refs/tags/main-v0.2.0-beta1.zip)
+
+**Pros**
+ - You can have two `build` at the same time, one that uses Dawn and one that uses `wgpu-native`
+
+**Cons**
+ - This is a "meta-distribution" that fetches the one you want at configuration time (i.e., when calling `cmake` the first time) so you need an **Internet connection** and **git** at that time.
+
+And of course depending on your choice the pros and cons of *Option A* and *Option B* apply.
+
 ### Integration
 
 Whichever distribution you choose, the integration is the same:
@@ -115,20 +149,24 @@ Whichever distribution you choose, the integration is the same:
  2. Unzip it at the root of the project, there should be a `webgpu/` directory containing a `CMakeLists.txt` file and some other (.dll or .so).
  3. Add `add_subdirectory(webgpu)` in your `CMakeLists.txt`.
 
-```{lit} CMake, Dependency subdirectories (append)
+```{lit} CMake, Dependency subdirectories (insert in {{Define app target}} before "add_executable")
 # Include webgpu directory, to define the 'webgpu' target
 add_subdirectory(webgpu)
 ```
 
-```{note}
-When using Dawn, make sure to add the `webgpu` directory **after** you add `glfw`, otherwise Dawn provides its own version (which may be fine sometimes, but you don't get to chose the version).
+```{important}
+The name 'webgpu' here designate the directory where GLFW is located, so there should be a file `webgpu/CMakeLists.txt`. Otherwise it means that `webgpu.zip` was not decompressed in the correct directory; you may either move it or adapt the `add_subdirectory` directive.
 ```
 
- 4. Add the `webgpu` target as a dependency of our app, after GLFW in the `target_link_libraries` command.
+ 4. Add the `webgpu` target as a dependency of our app, using the `target_link_libraries` command (after `add_executable(App main.cpp)`).
 
-```{lit} CMake, Link libraries (replace)
+```{lit} CMake, Link libraries (insert in {{Define app target}} after "add_executable")
 # Add the 'webgpu' target as a dependency of our App
-target_link_libraries(App PRIVATE glfw webgpu)
+target_link_libraries(App PRIVATE webgpu)
+```
+
+```{tip}
+This time, the name 'webgpu' is one of the *target* defined in `webgpu/CMakeLists.txt` by calling `add_library(webgpu ...)`, it is not related to a directory name.
 ```
 
 One additional step when using pre-compiled binaries: call the function `target_copy_webgpu_binaries(App)` at the end of `CMakeLists.txt`, this makes sure that the .dll/.so file that your binary depends on at runtime is copied next to it. Whenever you distribute your application, make sure to also distribute this dynamic library file as well.
@@ -144,40 +182,23 @@ target_copy_webgpu_binaries(App)
 In the case of Dawn, there is no precompiled binaries to copy but I define the `target_copy_webgpu_binaries` function anyway (it does nothing) so that you can really use the same CMakeLists with both distributions.
 ```
 
-### Option C: The flexibility of both
-
-Bonus option that I use in the accompanying code that enables to decide on one distribution or the other upon calling `cmake`:
-
-```
-cmake -B build -DWEBGPU_BACKEND=WGPU
-# or
-cmake -B build -DWEBGPU_BACKEND=DAWN
-```
-
-This is given by the `main` branch of my distribution repository:
-
- - [WebGPU any distribution](https://github.com/eliemichel/WebGPU-distribution/archive/refs/heads/main.zip)
-
-**Pros**
- - You can have two `build` at the same time, one that uses Dawn and one that uses `wgpu-native`
-
-**Cons**
- - This is a "meta-distribution" that fetches the one you want at configuration time (i.e., when calling `cmake` the first time) so you need an **Internet connection** and **git** at that time.
-
-And of course depending on your choice the pros and cons of *Option A* and *Option B* apply.
-
-### Building for the Web
-
-If you are interested in building your application for the web, you can consult [the dedicated appendix](../appendices/building-for-the-web.md)!
-
 Testing the installation
 ------------------------
 
 To test the implementation, we simply create the WebGPU **instance**, i.e., the equivalent of the `navigator.gpu` we could get in JavaScript. We then check it and destroy it.
 
-```{lit} C++, file: main.cpp
+```{important}
+Make sure to include `<webgpu/webgpu.h>` before using any WebGPU function or type!
+```
+
+```{lit} C++, Includes
+// Includes
 #include <webgpu/webgpu.h>
 #include <iostream>
+```
+
+```{lit} C++, file: main.cpp
+{{Includes}}
 
 int main (int, char**) {
     {{Create WebGPU instance}}
@@ -195,11 +216,11 @@ int main (int, char**) {
 The instance is created using the `wgpuCreateInstance` function. Like all WebGPU functions meant to **create** an entity, it takes as argument a **descriptor**, which we can use to specify options regarding how to set up this object.
 
 ```{lit} C++, Create WebGPU instance
-// 1. We create a descriptor
+// We create a descriptor
 WGPUInstanceDescriptor desc = {};
 desc.nextInChain = nullptr;
 
-// 2. We create the instance using this descriptor
+// We create the instance using this descriptor
 WGPUInstance instance = wgpuCreateInstance(&desc);
 ```
 
@@ -217,13 +238,13 @@ A WebGPU entity created with a `wgpuCreateSomething` function is technically **j
 To check that an object is valid, we can just compare it with `nullptr`, or use the boolean operator:
 
 ```{lit} C++, Check WebGPU instance
-// 3. We can check whether there is actually an instance created
+// We can check whether there is actually an instance created
 if (!instance) {
     std::cerr << "Could not initialize WebGPU!" << std::endl;
     return 1;
 }
 
-// 4. Display the object (WGPUInstance is a simple pointer, it may be
+// Display the object (WGPUInstance is a simple pointer, it may be
 // copied around without worrying about its size).
 std::cout << "WGPU instance: " << instance << std::endl;
 ```
@@ -261,18 +282,6 @@ In particular, we need to release the global WebGPU instance:
 wgpuInstanceRelease(instance);
 ```
 
-````{note}
-In older versions of `wgpu-native`, the Release and Reference functions did not exist, and a Drop function was used to immediately free an object. See details in [this GitHub issue](https://github.com/webgpu-native/webgpu-headers/issues/9).
-
-```C++
-// With old versions of wgpu-native
-WGPUSomething sth = wgpuCreateSomething(/* descriptor */);
-// This means "the object sth will never be used ever again"
-// and destroys the object right away:
-wgpuSomethingDrop(sth);
-```
-````
-
 ### Implementation-specific behavior
 
 In order to handle the slight differences between implementations, the distributions I provide also define the following preprocessor variables:
@@ -288,11 +297,44 @@ In order to handle the slight differences between implementations, the distribut
 #define WEBGPU_BACKEND_EMSCRIPTEN
 ```
 
-The case of emscripten only occurs when trying to compile our code as a WebAssembly module, which is covered in the [Building for the Web](../appendices/building-for-the-web.md) appendix.
+### Building for the Web
+
+The WebGPU distribution listed above are readily compatible with [Emscripten](https://emscripten.org/docs/getting_started/downloads.html) and if you have trouble with building your application for the web, you can consult [the dedicated appendix](../appendices/building-for-the-web.md).
+
+As we will add a few options specific to the web build from time to time, we can add a section at the end of our `CMakeLists.txt`:
+
+```{lit} CMake, file: CMakeLists.txt (append)
+# Options that are specific to Emscripten
+if (EMSCRIPTEN)
+    {{Emscripten-specific options}}
+endif()
+```
+
+For now we only change the output extension so that it is an HTML web page (rather than a WebAssembly module or JavaScript library):
+
+```{lit} CMake, Emscripten-specific options
+# Generate a full web page rather than a simple WebAssembly module
+set_target_properties(App PROPERTIES SUFFIX ".html")
+```
+
+For some reason the instance descriptor **must be null** (which means "use default") when using Emscripten, so we can already use our `WEBGPU_BACKEND_EMSCRIPTEN` macro:
+
+```{lit} C++, Create WebGPU instance (replace)
+// 1. We create a descriptor
+WGPUInstanceDescriptor desc = {};
+desc.nextInChain = nullptr;
+
+// 2. We create the instance using this descriptor
+#ifdef WEBGPU_BACKEND_EMSCRIPTEN
+WGPUInstance instance = wgpuCreateInstance(nullptr);
+#else //  WEBGPU_BACKEND_EMSCRIPTEN
+WGPUInstance instance = wgpuCreateInstance(&desc);
+#endif //  WEBGPU_BACKEND_EMSCRIPTEN
+```
 
 Conclusion
 ----------
 
 In this chapter we set up WebGPU and learnt that there are **multiple backends** available. We also saw the basic idioms of **object creation and destruction** that will be used all the time in WebGPU API!
 
-*Resulting code:* [`step005`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step005)
+*Resulting code:* [`step001`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step001)

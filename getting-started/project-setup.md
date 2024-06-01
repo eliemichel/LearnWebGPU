@@ -111,14 +111,15 @@ We set up some properties of the target `App` by calling somewhere after `add_ex
 ```{lit} CMake, Recommended extras
 set_target_properties(App PROPERTIES
 	CXX_STANDARD 17
+	CXX_STANDARD_REQUIRED ON
 	CXX_EXTENSIONS OFF
 	COMPILE_WARNING_AS_ERROR ON
 )
 ```
 
-The `CXX_STANDARD` property is set to 17 to mean that we require C++17 (this will enable us to use some syntactic tricks later on, but is not mandatory per se).
+The `CXX_STANDARD` property is set to 17 to mean that we require C++17 (this will enable us to use some syntactic tricks later on, but is not mandatory per se). The `CXX_STANDARD_REQUIRED` property ensures that configuration fails if C++17 is not supported.
 
-The `CXX_EXTENSIONS` property is set to `OFF` to disable compiler specific extensions (for example, on GCC this will make CMake add "-std=c++17" and not "-std=gnu++17" to the list of compilation flags).
+The `CXX_EXTENSIONS` property is set to `OFF` to disable compiler specific extensions (for example, on GCC this will make CMake use `-std=c++17` rather than `-std=gnu++17` in the list of compilation flags).
 
 The `COMPILE_WARNING_AS_ERROR` is turned on as a good practice, to make sure no warning is left ignored. Warnings are actually important, especially when learning a new language/library. To make sure we even have as many warnings as possible, we add some compile options:
 
@@ -147,7 +148,9 @@ if(XCODE)
 endif()
 ```
 
+Conclusion
+----------
 
-We now have a good basic project configuration, that we'll build upon in the next chapters. We are ready to move on to opening a window.
+We now have a good **basic project configuration**, that we will build upon in the next chapters. In the next chapters, we will see how to [integrate WebGPU](hello-webgpu.md) to our project, how to [initialize it](adapter-and-device/index.md), and how to [open a window](opening-a-window.md) into which to draw.
 
 *Resulting code:* [`step000`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step000)

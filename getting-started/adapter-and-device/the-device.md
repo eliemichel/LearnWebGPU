@@ -2,11 +2,11 @@ The Device
 ==========
 
 ```{lit-setup}
-:tangle-root: 010 - The Device - next
-:parent: 005 - The Adapter - next
+:tangle-root: 010 - The Device
+:parent: 005 - The Adapter
 ```
 
-*Resulting code:* [`step010-next`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step010-next)
+*Resulting code:* [`step010`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step010)
 
 A WebGPU **device** represents a **context** of use of the API. All the objects that we create (geometry, textures, etc.) are owned by the device.
 
@@ -374,4 +374,4 @@ Conclusion
  - **Important:** Once the device is created, the adapter should in general no longer be used. The only capabilities that matter to the application are the one of the device.
  - Default limits are minimal limits, rather than what the adapter supports. This helps ensuring consistency across devices.
 
-*Resulting code:* [`step010-next`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step010-next)
+*Resulting code:* [`step010`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step010)

@@ -8,11 +8,10 @@ Contents
 :titlesonly:
 
 project-setup
-opening-a-window
 hello-webgpu
-the-adapter
-the-device
+adapter-and-device/index
 the-command-queue
+opening-a-window
 first-color
 
 cpp-idioms
