@@ -1,6 +1,17 @@
 Hello Triangle
 ==============
 
+```{lit-setup}
+:tangle-root: 030 - Hello Triangle - vanilla
+:parent: 025 - First Color
+:alias: Vanilla
+```
+
+```{lit-setup}
+:tangle-root: 030 - Hello Triangle
+:parent: 028 - C++ Wrapper
+```
+
 ````{tab} With webgpu.hpp
 *Resulting code:* [`step030`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step030)
 ````
@@ -12,7 +23,7 @@ Hello Triangle
 In its overall outline, drawing a triangle is as simple as this:
 
 ````{tab} With webgpu.hpp
-```C++
+```{lit} Select which render pipeline to use
 // Select which render pipeline to use
 renderPass.setPipeline(pipeline);
 // Draw 1 instance of a 3-vertices shape
@@ -21,7 +32,7 @@ renderPass.draw(3, 1, 0, 0);
 ````
 
 ````{tab} Vanilla webgpu.h
-```C++
+```{lit} Select which render pipeline to use (for tangle root "Vanilla")
 // Select which render pipeline to use
 wgpuRenderPassEncoderSetPipeline(renderPass, pipeline);
 // Draw 1 instance of a 3-vertices shape
