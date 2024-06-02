@@ -266,9 +266,6 @@ window = glfwCreateWindow(640, 480, "Learn WebGPU", nullptr, nullptr);
 // Create instance
 WGPUInstance instance = wgpuCreateInstance(nullptr);
 
-// Get surface
-{{Get the surface}}
-
 // Get adapter
 std::cout << "Requesting adapter..." << std::endl;
 {{Request adapter}}
