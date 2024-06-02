@@ -278,7 +278,7 @@ wgpuSomethingRelease(sth);
 In particular, we need to release the global WebGPU instance:
 
 ```{lit} C++, Destroy WebGPU instance
-// 5. We clean up the WebGPU instance
+// We clean up the WebGPU instance
 wgpuInstanceRelease(instance);
 ```
 
@@ -320,11 +320,11 @@ set_target_properties(App PROPERTIES SUFFIX ".html")
 For some reason the instance descriptor **must be null** (which means "use default") when using Emscripten, so we can already use our `WEBGPU_BACKEND_EMSCRIPTEN` macro:
 
 ```{lit} C++, Create WebGPU instance (replace)
-// 1. We create a descriptor
+// We create a descriptor
 WGPUInstanceDescriptor desc = {};
 desc.nextInChain = nullptr;
 
-// 2. We create the instance using this descriptor
+// We create the instance using this descriptor
 #ifdef WEBGPU_BACKEND_EMSCRIPTEN
 WGPUInstance instance = wgpuCreateInstance(nullptr);
 #else //  WEBGPU_BACKEND_EMSCRIPTEN

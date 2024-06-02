@@ -71,17 +71,6 @@ auto onQueueWorkDone = [](WGPUQueueWorkDoneStatus status, void* /* pUserData */)
 wgpuQueueOnSubmittedWorkDone(queue, onQueueWorkDone, nullptr /* pUserData */);
 ```
 
-
-```{lit} C++, Add queue callback (replace, hidden)
-#ifdef WEBGPU_BACKEND_DAWN
-// Add a callback to monitor the moment queued work finished
-auto onQueueWorkDone = [](WGPUQueueWorkDoneStatus status, void* /* pUserData */) {
-    std::cout << "Queued work finished with status: " << status << std::endl;
-};
-wgpuQueueOnSubmittedWorkDone(queue, 0 /* non standard argument for Dawn */, onQueueWorkDone, nullptr /* pUserData */);
-#endif // WEBGPU_BACKEND_DAWN
-```
-
 Submitting commands
 -------------------
 

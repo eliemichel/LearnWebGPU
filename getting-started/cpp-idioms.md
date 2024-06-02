@@ -1,6 +1,11 @@
 C++ wrapper
 ===========
 
+```{lit-setup}
+:tangle-root: 028 - C++ Wrapper
+:parent: 025 - First Color
+```
+
 *Resulting code:* [`step028`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step028)
 
 So far we have used the **raw WebGPU API**, which is a **C API**, and this prevented us from using some **nice productive features of C++**. This chapter first gives imaginary examples of how this could be improved, before linking to a little library that implements all these features in an alternate `webgpu.hpp` header that replaces `webgpu.h`.
@@ -27,7 +32,6 @@ The C interface could not make use of namespaces, since they only exist in C++, 
 ```C++
 // Using Vanilla webgpu.h
 WGPUInstanceDescriptor desc = {};
-desc.nextInChain = nullptr;
 WGPUInstance instance = wgpuCreateInstance(&desc);
 ```
 
@@ -36,7 +40,6 @@ becomes with namespaces:
 ```C++
 // Using C++ webgpu.hpp
 wgpu::InstanceDescriptor desc = {};
-desc.nextInChain = nullptr;
 wgpu::Instance instance = wgpu::createInstance(&desc);
 ```
 
@@ -198,3 +201,224 @@ This header is actually included in the WebGPU zip I provided you earlier, at th
 More information can be found in [the webgpu-cpp repository](https://github.com/eliemichel/WebGPU-Cpp).
 
 *Resulting code:* [`step028`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step028)
+
+```{lit} C++, Includes (replace, hidden)
+#define WEBGPU_CPP_IMPLEMENTATION
+#include <webgpu/webgpu.hpp>
+
+#include <GLFW/glfw3.h>
+#include <glfw3webgpu.h>
+
+#ifdef __EMSCRIPTEN__
+#  include <emscripten.h>
+#endif // __EMSCRIPTEN__
+
+#include <iostream>
+#include <cassert>
+#include <vector>
+
+using namespace wgpu;
+```
+
+```{lit} C++, Application attributes (replace, hidden)
+GLFWwindow *window;
+Device device;
+Queue queue;
+Surface surface;
+```
+
+```{lit} C++, Initialize (replace, hidden)
+// Open window
+glfwInit();
+glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+window = glfwCreateWindow(640, 480, "Learn WebGPU", nullptr, nullptr);
+
+// Create instance
+Instance instance = wgpuCreateInstance(nullptr);
+
+// Get adapter
+std::cout << "Requesting adapter..." << std::endl;
+{{Request adapter}}
+std::cout << "Got adapter: " << adapter << std::endl;
+
+// We no longer need to access the instance
+instance.release();
+
+// Get device
+std::cout << "Requesting device..." << std::endl;
+DeviceDescriptor deviceDesc = {};
+deviceDesc.label = "My Device";
+deviceDesc.requiredFeatureCount = 0;
+deviceDesc.requiredLimits = nullptr;
+deviceDesc.defaultQueue.nextInChain = nullptr;
+deviceDesc.defaultQueue.label = "The default queue";
+deviceDesc.deviceLostCallback = [](WGPUDeviceLostReason reason, char const* message, void* /* pUserData */) {
+	std::cout << "Device lost: reason " << reason;
+	if (message) std::cout << " (" << message << ")";
+	std::cout << std::endl;
+};
+device = adapter.requestDevice(deviceDesc);
+std::cout << "Got device: " << device << std::endl;
+
+// We no longer need to access the adapter
+adapter.release();
+
+// Device error callback
+device.setUncapturedErrorCallback([](ErrorType type, char const* message) {
+	std::cout << "Uncaptured device error: type " << type;
+	if (message) std::cout << " (" << message << ")";
+	std::cout << std::endl;
+});
+
+queue = device.getQueue();
+{{Surface Configuration}}
+```
+
+```{lit} C++, Request adapter (replace, hidden)
+{{Get the surface}}
+
+RequestAdapterOptions adapterOpts = {};
+adapterOpts.compatibleSurface = surface;
+
+Adapter adapter = instance.requestAdapter(adapterOpts);
+```
+
+```{lit} C++, Surface Configuration (replace, hidden)
+SurfaceConfiguration config = {};
+
+{{Describe Surface Configuration}}
+
+surface.configure(config);
+```
+
+```{lit} C++, Describe Surface Configuration (replace, hidden)
+// Configuration of the textures created for the underlying swap chain
+config.width = 640;
+config.height = 480;
+{{Describe Surface Usage}}
+{{Describe Surface Format}}
+config.device = device;
+config.presentMode = PresentMode::Fifo;
+config.alphaMode = CompositeAlphaMode::Auto;
+```
+
+```{lit} C++, Describe Surface Format (replace, hidden)
+TextureFormat surfaceFormat = surface.getPreferredFormat(adapter);
+config.format = surfaceFormat;
+// And we do not need any particular view format:
+config.viewFormatCount = 0;
+config.viewFormats = nullptr;
+```
+
+```{lit} C++, Describe Surface Usage (replace, hidden)
+config.usage = TextureUsage::RenderAttachment;
+config.device = device;
+```
+
+```{lit} C++, Terminate (replace, hidden)
+surface.unconfigure();
+queue.release();
+surface.release();
+device.release();
+glfwDestroyWindow(window);
+glfwTerminate();
+```
+
+```{lit} C++, Get the next target texture (replace, hidden)
+SurfaceTexture surfaceTexture;
+surface.getCurrentTexture(&surfaceTexture);
+Texture texture = surfaceTexture.texture;
+if (surfaceTexture.status != SurfaceGetCurrentTextureStatus::Success) {
+    return;
+}
+```
+
+```{lit} C++, Create target texture view (replace, hidden)
+TextureViewDescriptor viewDescriptor;
+viewDescriptor.label = "Surface texture view";
+viewDescriptor.format = texture.getFormat();
+viewDescriptor.dimension = TextureViewDimension::_2D;
+viewDescriptor.baseMipLevel = 0;
+viewDescriptor.mipLevelCount = 1;
+viewDescriptor.baseArrayLayer = 0;
+viewDescriptor.arrayLayerCount = 1;
+viewDescriptor.aspect = TextureAspect::All;
+TextureView targetView = texture.createView(viewDescriptor);
+```
+
+```{lit} C++, Create Command Encoder (replace, hidden)
+CommandEncoderDescriptor encoderDesc = {};
+encoderDesc.label = "My command encoder";
+CommandEncoder encoder = device.createCommandEncoder(encoderDesc);
+```
+
+```{lit} C++, Encode Render Pass (replace, hidden)
+RenderPassDescriptor renderPassDesc = {};
+
+{{Describe Render Pass}}
+
+RenderPassEncoder renderPass = encoder.beginRenderPass(renderPassDesc);
+renderPass.end();
+renderPass.release();
+```
+
+```{lit} C++, Describe Render Pass (replace, hidden)
+RenderPassColorAttachment renderPassColorAttachment = {};
+
+{{Describe the attachment}}
+
+renderPassDesc.colorAttachmentCount = 1;
+renderPassDesc.colorAttachments = &renderPassColorAttachment;
+renderPassDesc.depthStencilAttachment = nullptr;
+renderPassDesc.timestampWrites = nullptr;
+```
+
+```{lit} C++, Describe the attachment (replace, hidden)
+renderPassColorAttachment.view = targetView;
+renderPassColorAttachment.resolveTarget = nullptr;
+renderPassColorAttachment.loadOp = LoadOp::Clear;
+renderPassColorAttachment.storeOp = StoreOp::Store;
+renderPassColorAttachment.clearValue = Color{ 0.9, 0.1, 0.2, 1.0 };
+#ifndef WEBGPU_BACKEND_WGPU
+renderPassColorAttachment.depthSlice = WGPU_DEPTH_SLICE_UNDEFINED;
+#endif // NOT WEBGPU_BACKEND_WGPU
+```
+
+```{lit} C++, Finish encoding and submit (replace, hidden)
+// Finally encode and submit the render pass
+CommandBufferDescriptor cmdBufferDescriptor = {};
+cmdBufferDescriptor.label = "Command buffer";
+CommandBuffer command = encoder.finish(cmdBufferDescriptor);
+encoder.release();
+
+std::cout << "Submitting command..." << std::endl;
+queue.submit(1, &command);
+command.release();
+std::cout << "Command submitted." << std::endl;
+```
+
+```{lit} C++, Present the surface onto the window (replace, hidden)
+targetView.release();
+surface.present();
+```
+
+```{lit} C++, Poll WebGPU Events (replace, hidden)
+#if defined(WEBGPU_BACKEND_DAWN)
+	device.tick();
+#elif defined(WEBGPU_BACKEND_WGPU)
+	device.poll(false);
+#endif
+```
+
+```{lit} C++, Define app target (replace, hidden)
+add_executable(App
+	main.cpp
+)
+```
+
+```{lit} C++, file: webgpu-utils.h (replace, hidden)
+```
+
+```{lit} C++, file: webgpu-utils.cpp (replace, hidden)
+```

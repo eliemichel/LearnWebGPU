@@ -237,16 +237,20 @@ void Application::MainLoop() {
 	{{Main loop content}}
 
 	// Also move here the tick/poll but NOT the emscripten sleep
-#if defined(WEBGPU_BACKEND_DAWN)
-	wgpuDeviceTick(device);
-#elif defined(WEBGPU_BACKEND_WGPU)
-	wgpuDevicePoll(device, false, nullptr);
-#endif
+	{{Poll WebGPU Events}}
 }
 
 bool Application::IsRunning() {
 	return !glfwWindowShouldClose(window);
 }
+```
+
+```{lit} C++, Poll WebGPU Events
+#if defined(WEBGPU_BACKEND_DAWN)
+	wgpuDeviceTick(device);
+#elif defined(WEBGPU_BACKEND_WGPU)
+	wgpuDevicePoll(device, false, nullptr);
+#endif
 ```
 
 ```{lit} C++, Main loop content (hidden)

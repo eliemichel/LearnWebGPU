@@ -141,10 +141,11 @@ want a scheme for our main target. Therefore, we set the `XCODE_GENERATE_SCHEME`
 We will also already enable frame capture for GPU debugging.
 
 ```{lit} CMake, Recommended extras (append)
-if(XCODE)
-    set_target_properties(App PROPERTIES
-        XCODE_GENERATE_SCHEME ON
-        XCODE_SCHEME_ENABLE_GPU_FRAME_CAPTURE_MODE "Metal")
+if (XCODE)
+	set_target_properties(App PROPERTIES
+		XCODE_GENERATE_SCHEME ON
+		XCODE_SCHEME_ENABLE_GPU_FRAME_CAPTURE_MODE "Metal"
+	)
 endif()
 ```
 

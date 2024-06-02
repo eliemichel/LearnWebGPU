@@ -114,6 +114,9 @@ class TangleBuilder(Builder):
             lit.source_location.format() + ", "
         )
 
+        if not tangled_content:
+            return
+
         outfilename = join(self.outdir, filename)
         ensuredir(dirname(outfilename))
         try:
