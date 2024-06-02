@@ -417,6 +417,8 @@ surface.present();
 add_executable(App
 	main.cpp
 )
+
+{{Link libraries}}
 ```
 
 ```{lit} C++, file: webgpu-utils.h (replace, hidden)
