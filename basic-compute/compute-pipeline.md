@@ -332,7 +332,7 @@ The workgroup sizes must be constant expressions.
 
 ### Workgroup size vs count
 
-> 😟 Okey, that makes a lot of variables just to set a number of jobs that is just the product of them in the end, doesn't it?
+> 😟 OK, that makes a lot of variables just to set a number of jobs that is just the product of them in the end, doesn't it?
 
 The thing is: **all combinations are not equivalent**, even if they multiply to the same number of threads.
 

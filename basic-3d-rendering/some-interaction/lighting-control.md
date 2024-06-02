@@ -388,7 +388,7 @@ In this chapter we have:
  - Connected lighting with GUI.
  - Created a custom GUI.
 
-Okey, we are now ready to dive into material models for real!
+OK, we are now ready to dive into material models for real!
 
 ````{tab} With webgpu.hpp
 *Resulting code:* [`step100`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step100)

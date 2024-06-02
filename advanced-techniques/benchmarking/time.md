@@ -58,7 +58,7 @@ submit_to_do_on_gpu(write_current_time, end_timestamp_query)
 
 We must then **fetch** the timestamp values back to the CPU, through a mapped buffer like we see in [Playing with buffers](../../basic-3d-rendering/input-geometry/playing-with-buffers.md#mapping-context).
 
-> 🫡 Okey, got it, so what about actual C++ code?
+> 🫡 OK, got it, so what about actual C++ code?
 
 Whether they measure timestamps or other things, GPU queries are stored in a `QuerySet`. We typically store both the start and end time in the same set:
 
