@@ -46,6 +46,7 @@ class LiterateSetupDirective(SphinxDirective):
         'parent': directives.unchanged,
         'fetch-files': directives.unchanged,
         'alias': directives.unchanged,
+        'debug': directives.flag,
     }
 
     def run(self) -> List[Node]:
@@ -54,6 +55,7 @@ class LiterateSetupDirective(SphinxDirective):
         fetch_files = self.options.get('fetch-files')
         alias = self.options.get('alias')
         force = 'force' in self.options
+        debug = 'debug' in self.options
         reg = CodeBlockRegistry.from_env(self.env)
 
         if tangle_root is not None and alias is None:
@@ -76,6 +78,7 @@ class LiterateSetupDirective(SphinxDirective):
                     lineno = self.lineno,
                 ),
                 parse_fetched_files(fetch_files, self.env.docname),
+                debug,
             )
 
         return []

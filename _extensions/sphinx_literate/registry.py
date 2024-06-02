@@ -303,6 +303,10 @@ class TangleHierarchyEntry:
     # Files copied to the tangle root
     fetch_files: List[Path]
 
+    # When a tangle root is in debug mode, extra information about blocks are
+    # displayed in the tangled source code.
+    debug: bool
+
 #############################################################
 
 @dataclass
@@ -537,7 +541,7 @@ class CodeBlockRegistry:
             if lit.source_location.docname != docname
         }
 
-    def set_tangle_parent(self, tangle_root: str, parent: str, source_location: SourceLocation = SourceLocation(), fetch_files: List[Path] = []) -> None:
+    def set_tangle_parent(self, tangle_root: str, parent: str, source_location: SourceLocation = SourceLocation(), fetch_files: List[Path] = [], debug = False) -> None:
         """
         Set the parent for a given tangle root. Fail if a different root has
         already been defined.
@@ -568,6 +572,7 @@ class CodeBlockRegistry:
                 parent = parent,
                 source_location = source_location,
                 fetch_files = fetch_files,
+                debug = debug,
             )
 
             # Now that 'tangle_root' has a parent, blocks that were missing for

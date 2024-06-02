@@ -8,6 +8,12 @@ from sphinx.errors import ExtensionError
 #############################################################
 # Private
 
+def _get_tangle_info(registry, lit, override_tangle_root):
+    tangle_root = override_tangle_root
+    if tangle_root is None:
+        tangle_root = lit.tangle_root
+    return registry.get_tangle_info(tangle_root)
+
 def _tangle_rec(
     lit: CodeBlock,
     registry: CodeBlockRegistry,
@@ -18,6 +24,9 @@ def _tangle_rec(
     prefix = "" # for recursive use only
 ) -> None:
     assert(lit is not None)
+    tangle_info = _get_tangle_info(registry, lit, override_tangle_root)
+    if tangle_info is not None and tangle_info.debug:
+        tangled_content.append(prefix + f"// {{Begin block {lit.format()}}}")
     for line in lit.all_content(registry, override_tangle_root):
         # TODO: use parse.parse_block_content here?
         subprefix = None
@@ -49,6 +58,8 @@ def _tangle_rec(
             )
         else:
             tangled_content.append(prefix + line)
+    if tangle_info is not None and tangle_info.debug:
+        tangled_content.append(prefix + f"// {{End block {lit.format()}}}")
 
 #############################################################
 # Public
