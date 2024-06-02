@@ -174,8 +174,9 @@ And do not forget to change the device limits:
 // We changed the number of attributes
 requiredLimits.limits.maxVertexAttributes = 3;
 //                                          ^ This was a 2
-requiredLimits.limits.maxBufferSize = 15 * sizeof(VertexAttributes);
+requiredLimits.limits.maxBufferSize = 16 * sizeof(VertexAttributes);
 //                                         ^^^^^^^^^^^^^^^^^^^^^^^^ This was 6 * sizeof(float)
+//                                    ^^ This was 15
 requiredLimits.limits.maxVertexBufferArrayStride = sizeof(VertexAttributes);
 //                                                        ^^^^^^^^^^^^^^^^^^^^^^^^ This was 6 * sizeof(float)
 
