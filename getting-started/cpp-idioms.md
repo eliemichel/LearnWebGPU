@@ -412,6 +412,8 @@ surface.present();
 ```
 
 ```{lit} C++, Define app target (replace, hidden)
+{{Dependency subdirectories}}
+
 add_executable(App
 	main.cpp
 )
