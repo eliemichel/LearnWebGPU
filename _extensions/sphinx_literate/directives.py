@@ -16,17 +16,20 @@ from .nodes import LiterateNode, TangleNode, RegistryNode
 
 #############################################################
 
-def get_tangle_root_from_parsed_title(parsed_title: ParsedBlockTitle, env) -> str:
+def get_tangle_roots_from_parsed_title(parsed_title: ParsedBlockTitle, env) -> List[str]:
     """
     Try and find tangle root override in the block's options, otherwise
     use current tangle root from environment.
     """
     tangle_aliases = env.temp_data.get('tangle-aliases', {})
 
+    tangle_roots = [ env.temp_data.get('tangle-root') ]
     for opt in parsed_title.options:
         if type(opt) == tuple and opt[0] == 'TANGLE ROOT':
-            return tangle_aliases.get(opt[1], opt[1])
-    return env.temp_data.get('tangle-root')
+            if opt[1] == 'REPLACE':
+                tangle_roots = []
+            tangle_roots.append(tangle_aliases.get(opt[2], opt[2]))
+    return tangle_roots
 
 #############################################################
 
@@ -93,7 +96,7 @@ class TangleDirective(SphinxCodeBlock):
 
     def run(self):
         parsed_title = parse_block_title(self.arguments[0])
-        tangle_root = get_tangle_root_from_parsed_title(parsed_title, self.env)
+        tangle_roots = get_tangle_roots_from_parsed_title(parsed_title, self.env)
 
         self.content = StringList(["Hello, world"])
         self.arguments = [parsed_title.lexer] if parsed_title.lexer is not None else []
@@ -103,7 +106,7 @@ class TangleDirective(SphinxCodeBlock):
         return [
             TangleNode(
                 parsed_title.name,
-                tangle_root,
+                t,
                 parsed_title.lexer,
                 SourceLocation(
                     docname = self.env.docname,
@@ -111,6 +114,7 @@ class TangleDirective(SphinxCodeBlock):
                 ),
                 raw_block_node,
             )
+            for t in tangle_roots
         ]
 
 #############################################################
@@ -148,37 +152,46 @@ class LiterateDirective(SphinxCodeBlock):
 
     def run(self):
         parsed_title = parse_block_title(self.arguments[0])
-        tangle_root = get_tangle_root_from_parsed_title(parsed_title, self.env)
-        self.parsed_content = parse_block_content(self.content, tangle_root, self.config)
-
-        targetid = 'lit-%d' % self.env.new_serialno('lit')
-        targetnode = nodes.target('', '', ids=[targetid])
-
-        self.lit = CodeBlock(
-            name = parsed_title.name,
-            tangle_root = tangle_root,
-            source_location = SourceLocation(
-                docname = self.env.docname,
-                lineno = self.lineno,
-            ),
-            content = self.content,
-            target = targetnode,
-            lexer = parsed_title.lexer,
-        )
+        all_tangle_roots = get_tangle_roots_from_parsed_title(parsed_title, self.env)
+        primary_tangle_root = all_tangle_roots[0]
 
         lit_codeblocks = CodeBlockRegistry.from_env(self.env)
-        lit_codeblocks.register_codeblock(self.lit, parsed_title.options)
-        
-        for ref in self.parsed_content.uid_to_block_link.values():
-            lit_codeblocks.add_reference(self.lit.key, ref.key)
+
+        all_targetnodes = []
+        for tangle_root in all_tangle_roots:
+            parsed_content = parse_block_content(self.content, tangle_root, self.config)
+
+            targetid = 'lit-%d' % self.env.new_serialno('lit')
+            targetnode = nodes.target('', '', ids=[targetid])
+
+            lit = CodeBlock(
+                name = parsed_title.name,
+                tangle_root = tangle_root,
+                source_location = SourceLocation(
+                    docname = self.env.docname,
+                    lineno = self.lineno,
+                ),
+                content = self.content,
+                target = targetnode,
+                lexer = parsed_title.lexer,
+            )
+
+            # Register
+            lit_codeblocks.register_codeblock(lit, parsed_title.options)
+            for ref in parsed_content.uid_to_block_link.values():
+                lit_codeblocks.add_reference(lit.key, ref.key)
+
+            all_targetnodes.append(targetnode)
+            if tangle_root == primary_tangle_root:
+                self.lit = lit
+                self.parsed_content = parsed_content
 
         # Call parent for generating a regular code block
         self.content = StringList(self.parsed_content.content)
         self.arguments = [parsed_title.lexer] if parsed_title.lexer is not None else []
-
         block_node = self.create_block_node()
 
-        return [targetnode, block_node]
+        return all_targetnodes + [block_node]
 
     def create_block_node(self):
         """
