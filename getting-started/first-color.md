@@ -233,6 +233,20 @@ Finally, once the texture is filled in and released, we can tell the surface to 
 wgpuSurfacePresent(surface);
 ```
 
+````{admonition} Building for the Web
+In the context of a **Web browser**, we do **not** present the surface texture ourselves. We rather rely on `emscripten_set_main_loop_arg` (a.k.a. `requestAnimationFrame` in JavaScript) to call our `MainLoop()` function right before presenting.
+
+As a consequence, we **must not** call `wgpuSurfacePresent()` when building with emcripten:
+
+```{lit} C++, Present the surface onto the window (replace)
+// At the end of the frame
+wgpuTextureViewRelease(targetView);
+#ifndef __EMSCRIPTEN__
+wgpuSurfacePresent(surface);
+#endif
+```
+````
+
 Render Pass
 -----------
 
@@ -259,11 +273,16 @@ renderPassDesc.nextInChain = nullptr;
 {{Describe Render Pass}}
 
 WGPURenderPassEncoder renderPass = wgpuCommandEncoderBeginRenderPass(encoder, &renderPassDesc);
+{{Use Render Pass}}
 wgpuRenderPassEncoderEnd(renderPass);
 wgpuRenderPassEncoderRelease(renderPass);
 ```
 
 Note that we directly end the pass **without issuing** any other command. This is because the render pass has a built-in mechanism for **clearing the screen** when it begins, which we will set up through the descriptor.
+
+```{lit} C++, Use Render Pass (hidden)
+// Use the render pass here (we do nothing with the render pass for now)
+```
 
 ### Color attachment
 

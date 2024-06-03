@@ -378,6 +378,7 @@ RenderPassDescriptor renderPassDesc = {};
 {{Describe Render Pass}}
 
 RenderPassEncoder renderPass = encoder.beginRenderPass(renderPassDesc);
+{{Use Render Pass}}
 renderPass.end();
 renderPass.release();
 ```
@@ -419,7 +420,9 @@ std::cout << "Command submitted." << std::endl;
 
 ```{lit} C++, Present the surface onto the window (replace, hidden)
 targetView.release();
+#ifndef __EMSCRIPTEN__
 surface.present();
+#endif
 ```
 
 ```{lit} C++, Poll WebGPU Events (replace, hidden)
