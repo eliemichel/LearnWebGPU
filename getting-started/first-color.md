@@ -8,7 +8,11 @@ First Color
 
 *Resulting code:* [`step025`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step025)
 
-The goal of this chapter is to **draw a solid color** all over our window. To do so, we must first **configure** the surface, then get at each frame the **Surface Texture** to draw onto, and finally create a **Render Pass** to effectively draw something.
+The goal of this chapter is to **draw a solid color** all over our window. To do so, we add the following steps:
+
+ 1. We must first **configure** the *surface* of our window.
+ 2. We then get at each frame the **Surface Texture** to draw onto.
+ 3. And finally we create a **Render Pass** to effectively draw something.
 
 Surface configuration
 ---------------------
@@ -50,11 +54,13 @@ config.nextInChain = nullptr;
 wgpuSurfaceConfigure(surface, &config);
 ```
 
-This must be done at the end of the initialization, and at the end of the program, we can unconfigure the surface:
+This must be done **at the end of the initialization**:
 
 ```{lit} C++, Initialize (append, hidden)
 {{Surface Configuration}}
 ```
+
+And at the end of the program, we can unconfigure the surface:
 
 ```{lit} C++, Terminate (prepend)
 wgpuSurfaceUnconfigure(surface);
@@ -135,17 +141,47 @@ Now that our surface is configured, we can ask it **at each frame** for the **ne
 
 ```{lit} C++, Main loop content (replace)
 // In Application::MainLoop()
-{{Get the next target texture}}
-{{Create target texture view}}
+{{Get the next target texture view}}
 {{Draw things}}
 {{Present the surface onto the window}}
 ```
+
+Since what we need is usually a **texture view** rather than the raw surface texture, we may create a dedicated function `GetNextSurfaceTextureView()` in our application class.
+
+```{lit} C++, GetNextSurfaceTextureView method
+WGPUTextureView Application::GetNextSurfaceTextureView() {
+    {{Get the next surface texture}}
+    {{Create surface texture view}}
+    return targetView;
+}
+```
+
+```{lit} C++, Application implementation (append, hidden)
+{{GetNextSurfaceTextureView method}}
+```
+
+We then simply call this function at the beginning of the main loop and check that it returns a valid view:
+
+```{lit} C++, Get the next target texture view
+// Get the next target texture view
+WGPUTextureView targetView = GetNextSurfaceTextureView();
+if (!targetView) return;
+```
+
+````{note}
+Do not forget to **declare the method** in the `Application` class declaration. This is an internal gear of our app so we make this method **private**:
+
+```{lit} C++, Private methods (insert in {{Application class}} after "bool IsRunning();")
+private:
+    WGPUTextureView GetNextSurfaceTextureView();
+```
+````
 
 ### Getting the next target texture
 
 To get the texture to draw onto, we use `wgpuSurfaceGetCurrentTexture`. The "surface texture" is not really an object but rather a **container** for the **multiple things that this function returns**. It is thus up to us to create the `WGPUSurfaceTexture` container, which we pass to the function to write into it:
 
-```{lit} C++, Get the next target texture
+```{lit} C++, Get the next surface texture
 WGPUSurfaceTexture surfaceTexture;
 wgpuSurfaceGetCurrentTexture(surface, &surfaceTexture);
 ```
@@ -158,9 +194,9 @@ We then have access to the following information:
 
 We only deal with the obvious failure case and ignore the suboptimal flag for now:
 
-```{lit} C++, Get the next target texture (append)
+```{lit} C++, Get the next surface texture (append)
 if (surfaceTexture.status != WGPUSurfaceGetCurrentTextureStatus_Success) {
-    return;
+    return nullptr;
 }
 ```
 
@@ -168,7 +204,7 @@ if (surfaceTexture.status != WGPUSurfaceGetCurrentTextureStatus_Success) {
 
 What we will need in the next section is not directly the surface texture, but a **texture view**, which may represent a sub-part of the texture, or expose it using a different format. We will come back on texture views in the [Texturing](/basic-3d-rendering/texturing/index.md) section of this guide, for now you may copy-paste the following boilerplate:
 
-```{lit} C++, Create target texture view
+```{lit} C++, Create surface texture view
 WGPUTextureViewDescriptor viewDescriptor;
 viewDescriptor.nextInChain = nullptr;
 viewDescriptor.label = "Surface texture view";

@@ -325,16 +325,35 @@ glfwDestroyWindow(window);
 glfwTerminate();
 ```
 
-```{lit} C++, Get the next target texture (replace, hidden)
+```{lit} C++, Get the next target texture view (replace, hidden)
+// Get the next target texture view
+TextureView targetView = GetNextSurfaceTextureView();
+if (!targetView) return;
+```
+
+```{lit} C++, GetNextSurfaceTextureView method (replace, hidden)
+TextureView Application::GetNextSurfaceTextureView() {
+    {{Get the next surface texture}}
+    {{Create surface texture view}}
+    return targetView;
+}
+```
+
+```{lit} C++, Private methods (replace, hidden)
+private:
+    TextureView GetNextSurfaceTextureView();
+```
+
+```{lit} C++, Get the next surface texture (replace, hidden)
 SurfaceTexture surfaceTexture;
 surface.getCurrentTexture(&surfaceTexture);
 Texture texture = surfaceTexture.texture;
 if (surfaceTexture.status != SurfaceGetCurrentTextureStatus::Success) {
-    return;
+    return nullptr;
 }
 ```
 
-```{lit} C++, Create target texture view (replace, hidden)
+```{lit} C++, Create surface texture view (replace, hidden)
 TextureViewDescriptor viewDescriptor;
 viewDescriptor.label = "Surface texture view";
 viewDescriptor.format = texture.getFormat();
