@@ -5,6 +5,19 @@ Playing with buffers
 From this chapter on, the guide uses a previous version of the accompanying code (in particular, it does not define an `Application` class but rather puts everything in a monolithic `main` function). **I am currently refreshing it** chapter by chapter and this is **where I am currently working**!
 ```
 
+```{lit-setup}
+:tangle-root: 031 - Playing with buffers - vanilla
+:parent: 030 - Hello Triangle - vanilla
+:alias: Vanilla
+:debug:
+```
+
+```{lit-setup}
+:tangle-root: 031 - Playing with buffers
+:parent: 030 - Hello Triangle
+:debug:
+```
+
 ````{tab} With webgpu.hpp
 *Resulting code:* [`step031`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step031)
 ````
@@ -13,9 +26,9 @@ From this chapter on, the guide uses a previous version of the accompanying code
 *Resulting code:* [`step031-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step031-vanilla)
 ````
 
-Before feeding vertex data to the render pipeline, we need to get familiar with the notion of **buffer**. A buffer is "just" a chunk of memory allocated in the VRAM (the GPU's memory). Think of it as some kind of `new` or `malloc` for the GPU.
+Before feeding vertex data to the render pipeline, we need to get familiar with the notion of **buffer**. A buffer is "just" a **chunk of memory** allocated in the **VRAM** (the GPU's memory). Think of it as some kind of `new` or `malloc` for the GPU.
 
-One notable difference is that we must state some hint about our use of this memory upon its creation. For instance, if we are going to use it only to write it from the CPU but never to read it back, we set its `CopyDst` flag on but not the `CopySrc` flag. This not fully agnostic memory management helps the device figure out the best memory layout.
+In this chapter, we see how to **create** (i.e., allocate), **write** from CPU, **copy** from GPU to GPU and **read back** to CPU.
 
 ```{note}
 Note that textures are a special kind of memory (because of the way we usually sample them) that they live in a different kind of object.
@@ -24,10 +37,10 @@ Note that textures are a special kind of memory (because of the way we usually s
 Creating a buffer
 -----------------
 
-The overall structure of the buffer creation will surprise no one now:
+The overall structure of the buffer creation will surprise no one now: a descriptor, and a call to `createBuffer`.
 
 ````{tab} With webgpu.hpp
-```C++
+```{lit} C++, Create a first buffer
 BufferDescriptor bufferDesc;
 bufferDesc.label = "Some GPU-side data buffer";
 bufferDesc.usage = BufferUsage::CopyDst | BufferUsage::CopySrc;
@@ -38,7 +51,7 @@ Buffer buffer1 = device.createBuffer(bufferDesc);
 ````
 
 ````{tab} Vanilla webgpu.h
-```C++
+```{lit} C++, Create a first buffer (for tangle root "Vanilla")
 WGPUBufferDescriptor bufferDesc = {};
 bufferDesc.nextInChain = nullptr;
 bufferDesc.label = "Some GPU-side data buffer";
@@ -49,26 +62,48 @@ WGPUBuffer buffer1 = wgpuDeviceCreateBuffer(device, &bufferDesc);
 ```
 ````
 
+One **notable difference** with a CPU buffer is that we must state some **usage hints**, telling about our use of this memory. For instance, if we are going to use it only to write it from the CPU but never to read it back, we set its `CopyDst` usage flag on but not the `CopySrc` flag. This not fully agnostic memory management **helps the device** figure out the best memory layout.
+
 ```{note}
-A GPU buffer is *mapped* when it is connected to a specific part of the CPU-side RAM. The driver then automatically synchronizes its content, either for reading or for writing. We will not use it here.
+A GPU buffer is **mapped** when it is connected to a specific part of the CPU-side RAM. The driver then automatically synchronizes its content, either for reading or for writing. We do not use this feature for now.
 ```
 
-For our little exercise, create a second buffer, called `buffer2`. We will load data in the first buffer, issue a copy command so that the GPU copies data from one to another, then read the destination buffer back.
+For our little exercise, let us **create a second buffer**, called `buffer2`. We will load data in the first buffer, issue a **copy** command so that the GPU copies data from one to another, then **read** the destination buffer back.
 
-Also, don't forget to free your buffers once you no longer use them:
+We can reuse the descriptor, only changing teh label for now:
 
 ````{tab} With webgpu.hpp
-```C++
-buffer1.destroy();
-buffer2.destroy();
+```{lit} C++, Create a second buffer
+bufferDesc.label = "Output buffer";
+Buffer buffer2 = device.createBuffer(bufferDesc);
+```
+````
 
+````{tab} Vanilla webgpu.h
+```{lit} C++, Create a second buffer (for tangle root "Vanilla")
+bufferDesc.label = "Output buffer";
+WGPUBuffer buffer2 = wgpuDeviceCreateBuffer(device, &bufferDesc);
+```
+````
+
+```{lit} C++, Create buffers (hidden, also for tangle root "Vanilla")
+{{Create a first buffer}}
+{{Create a second buffer}}
+```
+
+Also, don't forget to **release your buffers** once you no longer use them:
+
+````{tab} With webgpu.hpp
+```{lit} C++, Release buffers
+// In Terminate()
 buffer1.release();
 buffer2.release();
 ```
 ````
 
 ````{tab} Vanilla webgpu.h
-```C++
+```{lit} C++, Release buffers (for tangle root "Vanilla")
+// In Terminate()
 wgpuBufferDestroy(buffer1);
 wgpuBufferDestroy(buffer2);
 
@@ -77,21 +112,43 @@ wgpuBufferRelease(buffer2);
 ```
 ````
 
-Note that there are two different operations here:
+```{lit} C++, Terminate (hidden, append, also for tangle root "Vanilla")
+// We add this at the end of Terminate()
+{{Release buffers}}
+```
 
- - **Destroy** frees the GPU memory that was allocated for the buffer, but the buffer object itself, which lives on the driver/backend side, still exists.
- - **Release** frees the driver/backend side object (or rather decreases its reference pointer and frees it if nobody else uses it).
+`````{note}
+Buffers (as well as textures) also provide a **destroy** method:
+
+````{tab} With webgpu.hpp
+```C++
+buffer1.destroy();
+```
+````
+
+````{tab} Vanilla webgpu.h
+```C++
+wgpuBufferDestroy(buffer1);
+```
+````
+
+This can be used to **force freeing** the GPU memory even if there remains existing references to the buffer.
+
+- **Destroy** frees the GPU memory that was allocated for the buffer, but the buffer object itself, which lives on the driver/backend side, still exists.
+ - **Release** frees the driver/backend side object (or rather decreases its reference pointer) and destroys it if nobody else uses it.
+`````
 
 Writing to a buffer
 -------------------
 
-Let us simply use the `queue.writeBuffer` function (or the C-style `wgpuQueueWriteBuffer`), to which we give a memory address and size from which data is copied:
+The device queue provides a `queue.writeBuffer` function (or the C-style `wgpuQueueWriteBuffer`), to which we first give the **GPU buffer** to write into, then a CPU-side **memory address** and **size** from which data is copied:
 
 ````{tab} With webgpu.hpp
-```C++
+```{lit} C++, Write input data
 // Create some CPU-side data buffer (of size 16 bytes)
 std::vector<uint8_t> numbers(16);
 for (uint8_t i = 0; i < 16; ++i) numbers[i] = i;
+// `numbers` now contains [ 0, 1, 2, ... ]
 
 // Copy this from `numbers` (RAM) to `buffer1` (VRAM)
 queue.writeBuffer(buffer1, 0, numbers.data(), numbers.size());
@@ -99,10 +156,11 @@ queue.writeBuffer(buffer1, 0, numbers.data(), numbers.size());
 ````
 
 ````{tab} Vanilla webgpu.h
-```C++
+```{lit} C++, Write input data (for tangle root "Vanilla")
 // Create some CPU-side data buffer (of size 16 bytes)
 std::vector<uint8_t> numbers(16);
 for (uint8_t i = 0; i < 16; ++i) numbers[i] = i;
+// `numbers` now contains [ 0, 1, 2, ... ]
 
 // Copy this from `numbers` (RAM) to `buffer1` (VRAM)
 wgpuQueueWriteBuffer(queue, buffer1, 0, numbers.data(), numbers.size());
@@ -110,32 +168,39 @@ wgpuQueueWriteBuffer(queue, buffer1, 0, numbers.data(), numbers.size());
 ````
 
 ```{note}
-Uploading data from the CPU-side memory (RAM) to the GPU-side memory (VRAM) **takes time**. When the function `writeBuffer()` returns, data transfer may not have finished yet but it is **guaranteed** that:
+Uploading data from the CPU-side memory (RAM) to the GPU-side memory (VRAM) **takes time**. When the function `writeBuffer()` returns, data transfer may not have finished yet but what is **guaranteed** is that:
 
- - You can **free up the memory** from the address you just passed, because the backend maintains its own CPU-side copy of the buffer during transfer.
+ - You can **free up the memory** from the address you just passed, because the backend maintains its own CPU-side copy of the buffer during transfer (use mapping if you want to avoir that).
 
  - Commands that are **submitted in the queue after** the `writeBuffer()` operation will not be executed before the data transfer is finished.
 
 And don't forget that commands sent through the **command encoder** are only submitted when calling `queue.submit()` with the encoded command buffer returned by `encoder.finish()`.
 ```
 
-We can thus submit a buffer-buffer copy operation to the command queue, after having created a command encoder:
+Copying a buffer
+----------------
+
+We can now submit a **buffer-buffer copy** operation to the command queue. This is not directly available from the queue object but rather requires to **create a command encoder**. We may use the same one as the render pass for our test and simply add the following:
 
 ````{tab} With webgpu.hpp
-```C++
+```{lit} C++, Copy buffer to buffer (insert in {{Create Command Encoder}} after "CommandEncoder encoder =")
+// After creating the command encoder
 encoder.copyBufferToBuffer(buffer1, 0, buffer2, 0, 16);
 ```
 ````
 
 ````{tab} Vanilla webgpu.h
-```C++
+```{lit} C++, Copy buffer to buffer (insert in {{Create Command Encoder}} after "CommandEncoder encoder =", for tangle root "Vanilla")
+// After creating the command encoder
 wgpuCommandEncoderCopyBufferToBuffer(encoder, buffer1, 0, buffer2, 0, 16);
 ```
 ````
 
 ```{important}
-Make sure that command encoding operations are called before `encoder.finish()` or `wgpuCommandEncoderFinish()`!
+Make sure that command encoding operations are called **before** `encoder.finish()` or `wgpuCommandEncoderFinish()`!
 ```
+
+The argment `0` after each buffer is the **byte offset** within the buffer at which the copy must happen. This enables copying **sub-parts** of buffers.
 
 Reading from a buffer
 ---------------------

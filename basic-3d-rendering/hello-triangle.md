@@ -23,7 +23,7 @@ Hello Triangle
 In its overall outline, **drawing a triangle** is as simple as this:
 
 ````{tab} With webgpu.hpp
-```{lit} Draw a triangle
+```{lit} C++, Draw a triangle
 // Select which render pipeline to use
 renderPass.setPipeline(pipeline);
 // Draw 1 instance of a 3-vertices shape
@@ -32,7 +32,7 @@ renderPass.draw(3, 1, 0, 0);
 ````
 
 ````{tab} Vanilla webgpu.h
-```{lit} Draw a triangle (for tangle root "Vanilla")
+```{lit} C++, Draw a triangle (for tangle root "Vanilla")
 // Select which render pipeline to use
 wgpuRenderPassEncoderSetPipeline(renderPass, pipeline);
 // Draw 1 instance of a 3-vertices shape
@@ -645,7 +645,7 @@ wgpuRenderPipelineRelease(pipeline);
 Finally, we insert in the main loop the two lines that this chapter started with, just after creating the `renderPass` object:
 
 ````{tab} With webgpu.hpp
-```{lit} Draw a triangle (replace)
+```{lit} C++, Draw a triangle (replace)
 // Select which render pipeline to use
 renderPass.setPipeline(pipeline);
 // Draw 1 instance of a 3-vertices shape
@@ -654,7 +654,7 @@ renderPass.draw(3, 1, 0, 0);
 ````
 
 ````{tab} Vanilla webgpu.h
-```{lit} Draw a triangle (replace, for tangle root "Vanilla")
+```{lit} C++, Draw a triangle (replace, for tangle root "Vanilla")
 // Select which render pipeline to use
 wgpuRenderPassEncoderSetPipeline(renderPass, pipeline);
 // Draw 1 instance of a 3-vertices shape
