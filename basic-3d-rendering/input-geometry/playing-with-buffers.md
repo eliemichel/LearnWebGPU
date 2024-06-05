@@ -104,9 +104,6 @@ buffer2.release();
 ````{tab} Vanilla webgpu.h
 ```{lit} C++, Release buffers (for tangle root "Vanilla")
 // In Terminate()
-wgpuBufferDestroy(buffer1);
-wgpuBufferDestroy(buffer2);
-
 wgpuBufferRelease(buffer1);
 wgpuBufferRelease(buffer2);
 ```
@@ -205,41 +202,45 @@ The argment `0` after each buffer is the **byte offset** within the buffer at wh
 Reading from a buffer
 ---------------------
 
-We cannot just use the command queue to read memory back from the GPU, because this is a "fire and forget" queue: functions do not return a value since they are run on a different timeline.
+The **command queue**, that we used to send data (`writeBuffer`) and instructions (`copyBufferToBuffer`), **only goes in one way**: from CPU host to GPU device. It is thus a "fire and forget" queue: functions do not return a value since they **run on a different timeline**.
 
-Instead, we use an **asynchronous operation**, namely `buffer.mapAsync` (or `wgpuBufferMapAsync`). This operation maps the GPU buffer into CPU memory, and then whenever it is ready it executes the callback function it was provided.
+So, how do we read data back then? We use an **asynchronous operation**, like we did when using `wgpuQueueOnSubmittedWorkDone` in the [Command Queue](../../getting-started/the-command-queue.md) chapter. Instead of directly get a value back, we set up a **callback** that gets invoked whenever the requested data is ready. We then **poll the device** to check for incoming events.
 
-This asynchronicity makes the programming workflow more complicated than synchronous operations, but once again it is important to minimize wasteful processor idling.
+**To read data from a buffer**, we use `buffer.mapAsync` (or `wgpuBufferMapAsync`). This operation **maps** the GPU buffer into CPU memory, and then whenever it is ready it executes the callback function it was provided. Once we are done, we can **unmap** the buffer.
+
+```{note}
+This **asynchronicity** makes the programming workflow **more complicated** than synchronous operations, but it is very important to minimize wasteful processor idling. It is common to launch a mapping operation, then **do other things while waiting** for the data (which takes a lot of time, compared to running CPU instructions).
+```
 
 ### Mapping
 
-Let us first change the `usage` of the second buffer by adding the `BufferUsage::MapRead` flag, so that the buffer can be mapped for reading:
+Let us first change the `usage` of the **second buffer** by adding the `BufferUsage::MapRead` flag, so that the buffer can be mapped for reading:
 
 ````{tab} With webgpu.hpp
-```C++
-bufferDesc2.usage = BufferUsage::CopyDst | BufferUsage::MapRead;
+```{lit} C++, Create a second buffer (replace)
+bufferDesc.label = "Output buffer";
+bufferDesc.usage = BufferUsage::CopyDst | BufferUsage::MapRead;
+Buffer buffer2 = device.createDevice(bufferDesc);
 ```
 ````
 
 ````{tab} Vanilla webgpu.h
-```C++
-bufferDesc2.usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_MapRead;
+```{lit} C++, Create a second buffer (replace, for tangle root "Vanilla")
+bufferDesc.label = "Output buffer";
+bufferDesc.usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_MapRead;
+WGPUBuffer buffer2 = wgpuDeviceCreateBuffer(device, &bufferDesc);
 ```
 ````
 
 ```{note}
-The `BufferUsage::MapRead` flag is not compatible with `BufferUsage::CopySrc` one, so make sure not to have both at the same time.
+The `BufferUsage::MapRead` flag is not compatible with `BufferUsage::CopySrc` one, so make sure not to have both at the same time. It is common to create a **buffer dedicated to mapping operations**.
 ```
 
-We can now call the buffer mapping with a simple callback.
-
-```{important}
-I intentionally use the C-style procedure for now, it helps understanding what is happening under the hood when using the simpler API provided by the C++ wrapper.
-```
+We can now call the buffer mapping with a simple callback. The `wgpuBufferMapAsync` procedure takes as argument the **map mode** (read, write or both), the **slice** of buffer data to map, given by an offset (0) and a number of bytes (16), then the **callback** and finally some **"user data"** pointer. We show [below](#mapping-context) what the latter is for.
 
 ````{tab} With webgpu.hpp
-```C++
-auto onBuffer2Mapped = [](WGPUBufferMapAsyncStatus status, void* /*pUserData*/) {
+```{lit} C++, Define callback and start mapping buffer
+auto onBuffer2Mapped = [](WGPUBufferMapAsyncStatus status, void* /* pUserData */) {
 	std::cout << "Buffer 2 mapped with status " << status << std::endl;
 };
 wgpuBufferMapAsync(buffer2, MapMode::Read, 0, 16, onBuffer2Mapped, nullptr /*pUserData*/);
@@ -247,77 +248,90 @@ wgpuBufferMapAsync(buffer2, MapMode::Read, 0, 16, onBuffer2Mapped, nullptr /*pUs
 ````
 
 ````{tab} Vanilla webgpu.h
-```C++
-auto onBuffer2Mapped = [](WGPUBufferMapAsyncStatus status, void* /*pUserData*/) {
+```{lit} C++, Define callback and start mapping buffer (for tangle root "Vanilla")
+auto onBuffer2Mapped = [](WGPUBufferMapAsyncStatus status, void* /* pUserData */) {
 	std::cout << "Buffer 2 mapped with status " << status << std::endl;
 };
 wgpuBufferMapAsync(buffer2, WGPUMapMode_Read, 0, 16, onBuffer2Mapped, nullptr /*pUserData*/);
 ```
 ````
 
-````{note}
-The function `onBuffer2Mapped` is defined here as a [lambda expression](https://en.cppreference.com/w/cpp/language/lambda) but it could also be a regular function declared before `main()`, provided it has the same signature:
-
-```C++
-void onBuffer2Mapped(WGPUBufferMapAsyncStatus status, void* /*pUserData*/) {
-	std::cout << "Buffer 2 mapped with status " << status << std::endl;
-}
+```{important}
+I intentionally use the **C-style procedure** for now, it helps understanding what is happening under the hood when using the simpler API provided by the C++ wrapper.
 ```
-````
 
 ### Asynchronous polling
 
-If you run the program at this point, you might be surprised (and disappointed) to see that the callback is **never executed**!
+If you run the program at this point, you might be surprised (and disappointed) to see that the callback is **never executed**! We saw this in the [Device Polling](../../getting-started/the-command-queue.md#device-polling) section of the Command Queue chapter: there is **no hidden process** executed by the WebGPU library to **check that the async operation is ready** so we must do it ourselves.
 
-This is because there is no hidden process executed by the WebGPU library to check that the async operation is ready. Instead, the backend checks for ongoing async operations only when we call another operation, so we will add in the main loop a simple operation that does nothing.
-
-Unfortunately, this mechanism has no standard solution, so we write it differently for Dawn and `wgpu-native`:
+Unfortunately, this mechanism has no standard solution yet, so we write it differently for Dawn, `wgpu-native` and emscripten, with a little subtlety for the latter:
 
 ````{tab} With webgpu.hpp
-```C++
-while (!glfwWindowShouldClose(window)) {
-	// Do nothing, this checks for ongoing asynchronous operations and call their callbacks
-#ifdef WEBGPU_BACKEND_WGPU
-	// Non-standardized behavior: submit empty queue to flush callbacks
-	// (wgpu-native also has a device.poll but its API is more complex)
-	queue.submit(0, nullptr);
-#else
-	// Non-standard Dawn way
+```{lit} C++, Define the wgpuPollEvents function
+// We define a function that hides implementation-specific variants of device polling:
+function wgpuPollEvents(Device device, bool yieldToWebBrowser) {
+#if defined(WEBGPU_BACKEND_DAWN)
 	device.tick();
+#elif defined(WEBGPU_BACKEND_WGPU)
+	device.poll(false);
+#elif defined(WEBGPU_BACKEND_EMSCRIPTEN)
+	if (yieldToWebBrowser) {
+		emscripten_sleep(100);
+	}
 #endif
-
-	// (This is the same idea, for the GLFW library callbacks)
-	glfwPollEvents();
 }
 ```
 ````
 
 ````{tab} Vanilla webgpu.h
-```C++
-while (!glfwWindowShouldClose(window)) {
-	// Do nothing, this checks for ongoing asynchronous operations and call their callbacks
-#ifdef WEBGPU_BACKEND_WGPU
-	// Non-standardized behavior: submit empty queue to flush callbacks
-	// (wgpu-native also has a wgpuDevicePoll but its API is more complex)
-	wgpuQueueSubmit(queue, 0, nullptr);
-#else
-	// Non-standard Dawn way
+```{lit} C++, Define the wgpuPollEvents function (for tangle root "Vanilla")
+// We define a function that hides implementation-specific variants of device polling:
+function wgpuPollEvents(WGPUDevice device, bool yieldToWebBrowser) {
+#if defined(WEBGPU_BACKEND_DAWN)
 	wgpuDeviceTick(device);
+#elif defined(WEBGPU_BACKEND_WGPU)
+	wgpuDevicePoll(device, false, nullptr);
+#elif defined(WEBGPU_BACKEND_EMSCRIPTEN)
+	if (yieldToWebBrowser) {
+		emscripten_sleep(100);
+	}
 #endif
-
-	// (This is the same idea, for the GLFW library callbacks)
-	glfwPollEvents();
 }
 ```
 ````
 
-```{warning}
-Make sure the calls to `buffer.destroy` are issued *after* the main loop, otherwise the callback will be called with status `BufferMapAsyncStatus::DestroyedBeforeCallback`.
+```{admonition} Emscripten subtlety
+When our C++ code runs in a **Web browser** (after being compiled to WebAssembly through emscripten), there is **no way** to explicitly tick/poll the WebGPU device. This is because **the device is managed by the Web browser** itself, which decides at what pace polling should happen. As a result:
+
+ - The device **never ticks** in between two consecutive lines of our WebAssembly module, it can only tick when the execution flow leaves the module.
+ - The device **always ticks** between two calls to our `MainLoop()` function, because if you remember the [Emscripten](../../getting-started/opening-a-window.md#emscripten) section of the Opening a Window chapter, we leave the main loop management to the browser and only provide a callback to run at each frame.
+
+Thanks to the second point, we do not need `wgpuPollEvents` to do anything when called at the beginning or end of our main loop (so we set `yieldToWebBrowser` to false).
+
+However, if what we intend is really to **wait until** something happens (e.g., a callback gets invoked), the first point requires us to make sure we **yield back** the execution flow to the Web browser, so that it may tick its device from time to time. We do this thanks to `emscripten_sleep` function, at the cost of effectively sleeping during 100 ms (we're in a case where we want to wait anyways).
+
+Note that using `emscripten_sleep` requires the `-SASYNCIFY` link option to be passed to emscripten, like we added [already](../../getting-started/adapter-and-device/the-adapter.md#waiting-for-the-request-to-end).
 ```
 
-You should now see `Buffer 2 mapped with status 0` (0 being the value of `BufferMapAsyncStatus::Success`) when running your program.
+In our example, we want to wait for read back during an iteration of the main loop, so we specify that we yield back to the browser:
+
+```{lit} C++, TODO
+bool ready = false;
+
+{{Define callback and start mapping buffer}}
+
+while (!ready) {
+	wgpuPollEvents(device, true /* yieldToBrowser */)
+}
+```
+
+You could now see `Buffer 2 mapped with status 0` (0 being the value of `BufferMapAsyncStatus::Success`) when running your program. **However**, we never change the `ready` variable to `true`! So the program then halts forever... not great. That is why the next section shows how to pass some context to the callback.
 
 ### Mapping context
+
+So, we need the callback to access and mutate the `ready` variable.
+
+WIP
 
 Now, we need to get more than a status when running this callback, we need to access the buffer's content. But the `onBuffer2Mapped` function cannot access the `buffer2` variable so far.
 
