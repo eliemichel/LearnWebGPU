@@ -34,7 +34,7 @@ Note that textures are a special kind of memory (because of the way we usually s
 
 Since this is just an experiment, I suggest we temporarily write the whole code of this chapter at the end of the `Initialize()` function. The overall outline of our code is as follows:
 
-```{lit} C++, Playing with buffers (insert in {{Initialize}} after "InitializePipeline()", also in tangle root "Vanilla")
+```{lit} C++, Playing with buffers (insert in {{Initialize}} after "InitializePipeline()", also for tangle root "Vanilla")
 // Experimentation for the "Playing with buffer" chapter
 {{Create a first buffer}}
 {{Create a second buffer}}
@@ -442,11 +442,13 @@ while (!context.ready) {
 ```{lit} C++, Read buffer data back (for tangle root "Vanilla")
 // The context shared between this main function and the callback.
 struct Context {
+	bool ready;
 	WGPUBuffer buffer;
 };
 
 auto onBuffer2Mapped = [](WGPUBufferMapAsyncStatus status, void* pUserData) {
 	Context* context = reinterpret_cast<Context*>(pUserData);
+	context->ready = true;
 	std::cout << "Buffer 2 mapped with status " << status << std::endl;
 	if (status != WGPUBufferMapAsyncStatus_Success) return;
 
