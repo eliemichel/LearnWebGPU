@@ -9,13 +9,11 @@ From this chapter on, the guide uses a previous version of the accompanying code
 :tangle-root: 031 - Playing with buffers - vanilla
 :parent: 030 - Hello Triangle - vanilla
 :alias: Vanilla
-:debug:
 ```
 
 ```{lit-setup}
 :tangle-root: 031 - Playing with buffers
 :parent: 030 - Hello Triangle
-:debug:
 ```
 
 ````{tab} With webgpu.hpp
@@ -32,6 +30,22 @@ In this chapter, we see how to **create** (i.e., allocate), **write** from CPU, 
 
 ```{note}
 Note that textures are a special kind of memory (because of the way we usually sample them) that they live in a different kind of object.
+```
+
+Since this is just an experiment, I suggest we temporarily write the whole code of this chapter at the end of the `Initialize()` function. The overall outline of our code is as follows:
+
+```{lit} C++, Playing with buffers (insert in {{Initialize}} after "InitializePipeline()", also in tangle root "Vanilla")
+// Experimentation for the "Playing with buffer" chapter
+{{Create a first buffer}}
+{{Create a second buffer}}
+
+{{Write input data}}
+
+{{Encode and submit the buffer to buffer copy}}
+
+{{Read buffer data back}}
+
+{{Release buffers}}
 ```
 
 Creating a buffer
@@ -86,11 +100,6 @@ WGPUBuffer buffer2 = wgpuDeviceCreateBuffer(device, &bufferDesc);
 ```
 ````
 
-```{lit} C++, Create buffers (hidden, also for tangle root "Vanilla")
-{{Create a first buffer}}
-{{Create a second buffer}}
-```
-
 Also, don't forget to **release your buffers** once you no longer use them:
 
 ````{tab} With webgpu.hpp
@@ -108,11 +117,6 @@ wgpuBufferRelease(buffer1);
 wgpuBufferRelease(buffer2);
 ```
 ````
-
-```{lit} C++, Terminate (hidden, append, also for tangle root "Vanilla")
-// We add this at the end of Terminate()
-{{Release buffers}}
-```
 
 `````{note}
 Buffers (as well as textures) also provide a **destroy** method:
@@ -180,24 +184,48 @@ Copying a buffer
 We can now submit a **buffer-buffer copy** operation to the command queue. This is not directly available from the queue object but rather requires to **create a command encoder**. We may use the same one as the render pass for our test and simply add the following:
 
 ````{tab} With webgpu.hpp
-```{lit} C++, Copy buffer to buffer (insert in {{Create Command Encoder}} after "CommandEncoder encoder =")
+```{lit} C++, Copy buffer to buffer
 // After creating the command encoder
 encoder.copyBufferToBuffer(buffer1, 0, buffer2, 0, 16);
 ```
 ````
 
 ````{tab} Vanilla webgpu.h
-```{lit} C++, Copy buffer to buffer (insert in {{Create Command Encoder}} after "CommandEncoder encoder =", for tangle root "Vanilla")
+```{lit} C++, Copy buffer to buffer (for tangle root "Vanilla")
 // After creating the command encoder
 wgpuCommandEncoderCopyBufferToBuffer(encoder, buffer1, 0, buffer2, 0, 16);
 ```
 ````
 
-```{important}
-Make sure that command encoding operations are called **before** `encoder.finish()` or `wgpuCommandEncoderFinish()`!
-```
-
 The argment `0` after each buffer is the **byte offset** within the buffer at which the copy must happen. This enables copying **sub-parts** of buffers.
+
+We wrap this in a command encoding process similar to the render pass one:
+
+````{tab} With webgpu.hpp
+```{lit} C++, Encode and submit the buffer to buffer copy
+CommandEncoder encoder = device.createCommandEncoder(Default);
+
+{{Copy buffer to buffer}}
+
+CommandBuffer command = encoder.finish(Default);
+encoder.release();
+queue.submit(1, &command);
+command.release();
+```
+````
+
+````{tab} Vanilla webgpu.h
+```{lit} C++, Encode and submit the buffer to buffer copy (for tangle root "Vanilla")
+WGPUCommandEncoder encoder = wgpuDeviceCreateCommandEncoder(device, nullptr);
+
+{{Copy buffer to buffer}}
+
+WGPUCommandBuffer command = wgpuCommandEncoderFinish(encoder, nullptr);
+wgpuCommandEncoderRelease(encoder);
+wgpuQueueSubmit(queue, 1, &command);
+wgpuCommandBufferRelease(command);
+```
+````
 
 Reading from a buffer
 ---------------------
@@ -220,7 +248,7 @@ Let us first change the `usage` of the **second buffer** by adding the `BufferUs
 ```{lit} C++, Create a second buffer (replace)
 bufferDesc.label = "Output buffer";
 bufferDesc.usage = BufferUsage::CopyDst | BufferUsage::MapRead;
-Buffer buffer2 = device.createDevice(bufferDesc);
+Buffer buffer2 = device.createBuffer(bufferDesc);
 ```
 ````
 
@@ -239,7 +267,7 @@ The `BufferUsage::MapRead` flag is not compatible with `BufferUsage::CopySrc` on
 We can now call the buffer mapping with a simple callback. The `wgpuBufferMapAsync` procedure takes as argument the **map mode** (read, write or both), the **slice** of buffer data to map, given by an offset (0) and a number of bytes (16), then the **callback** and finally some **"user data"** pointer. We show [below](#mapping-context) what the latter is for.
 
 ````{tab} With webgpu.hpp
-```{lit} C++, Define callback and start mapping buffer
+```C++
 auto onBuffer2Mapped = [](WGPUBufferMapAsyncStatus status, void* /* pUserData */) {
 	std::cout << "Buffer 2 mapped with status " << status << std::endl;
 };
@@ -248,7 +276,7 @@ wgpuBufferMapAsync(buffer2, MapMode::Read, 0, 16, onBuffer2Mapped, nullptr /*pUs
 ````
 
 ````{tab} Vanilla webgpu.h
-```{lit} C++, Define callback and start mapping buffer (for tangle root "Vanilla")
+```C++
 auto onBuffer2Mapped = [](WGPUBufferMapAsyncStatus status, void* /* pUserData */) {
 	std::cout << "Buffer 2 mapped with status " << status << std::endl;
 };
@@ -269,7 +297,7 @@ Unfortunately, this mechanism has no standard solution yet, so we write it diffe
 ````{tab} With webgpu.hpp
 ```{lit} C++, Define the wgpuPollEvents function
 // We define a function that hides implementation-specific variants of device polling:
-function wgpuPollEvents(Device device, bool yieldToWebBrowser) {
+void wgpuPollEvents([[maybe_unused]] Device device, [[maybe_unused]] bool yieldToWebBrowser) {
 #if defined(WEBGPU_BACKEND_DAWN)
 	device.tick();
 #elif defined(WEBGPU_BACKEND_WGPU)
@@ -286,7 +314,7 @@ function wgpuPollEvents(Device device, bool yieldToWebBrowser) {
 ````{tab} Vanilla webgpu.h
 ```{lit} C++, Define the wgpuPollEvents function (for tangle root "Vanilla")
 // We define a function that hides implementation-specific variants of device polling:
-function wgpuPollEvents(WGPUDevice device, bool yieldToWebBrowser) {
+void wgpuPollEvents([[maybe_unused]] WGPUDevice device, [[maybe_unused]] bool yieldToWebBrowser) {
 #if defined(WEBGPU_BACKEND_DAWN)
 	wgpuDeviceTick(device);
 #elif defined(WEBGPU_BACKEND_WGPU)
@@ -300,8 +328,12 @@ function wgpuPollEvents(WGPUDevice device, bool yieldToWebBrowser) {
 ```
 ````
 
+```{lit} C++, Global declarations (hidden, append, also for tangle root "Vanilla")
+{{Define the wgpuPollEvents function}}
+```
+
 ```{admonition} Emscripten subtlety
-When our C++ code runs in a **Web browser** (after being compiled to WebAssembly through emscripten), there is **no way** to explicitly tick/poll the WebGPU device. This is because **the device is managed by the Web browser** itself, which decides at what pace polling should happen. As a result:
+When our C++ code runs in a **Web browser** (after being compiled to WebAssembly through emscripten), there is **no explicit way** to tick/poll the WebGPU device. This is because **the device is managed by the Web browser** itself, which decides at what pace polling should happen. As a result:
 
  - The device **never ticks** in between two consecutive lines of our WebAssembly module, it can only tick when the execution flow leaves the module.
  - The device **always ticks** between two calls to our `MainLoop()` function, because if you remember the [Emscripten](../../getting-started/opening-a-window.md#emscripten) section of the Opening a Window chapter, we leave the main loop management to the browser and only provide a callback to run at each frame.
@@ -315,61 +347,99 @@ Note that using `emscripten_sleep` requires the `-SASYNCIFY` link option to be p
 
 In our example, we want to wait for read back during an iteration of the main loop, so we specify that we yield back to the browser:
 
-```{lit} C++, TODO
+```C++
 bool ready = false;
 
 {{Define callback and start mapping buffer}}
 
 while (!ready) {
-	wgpuPollEvents(device, true /* yieldToBrowser */)
+	wgpuPollEvents(device, true /* yieldToBrowser */);
 }
 ```
 
-You could now see `Buffer 2 mapped with status 0` (0 being the value of `BufferMapAsyncStatus::Success`) when running your program. **However**, we never change the `ready` variable to `true`! So the program then halts forever... not great. That is why the next section shows how to pass some context to the callback.
+You could now see `Buffer 2 mapped with status 0` (0 being the value of `BufferMapAsyncStatus::Success`) when running your program. **However**, we never change the `ready` variable to `true`! So the program then **halts forever**... not great. That is why the next section shows how to pass some context to the callback.
 
 ### Mapping context
 
-So, we need the callback to access and mutate the `ready` variable.
-
-WIP
-
-Now, we need to get more than a status when running this callback, we need to access the buffer's content. But the `onBuffer2Mapped` function cannot access the `buffer2` variable so far.
+So, we need the callback to **access and mutate** the `ready` variable. But how can we do this since `onBuffer2Mapped` is a separate function whose signature cannot be changed? We can use the **user pointer**, like we did in [the adapter request](../../getting-started/adapter-and-device/the-adapter.md) or [the device request](../../getting-started/adapter-and-device/the-device.md).
 
 ```{note}
-When using a regular function, it is clear that `buffer2` is not accessible. When using a lambda expression, one could be tempted to add `buffer2` in the **capture list** (the brackets before function arguments). But this **does not work** because capturing lambdas have a different type, that cannot be used as a regular callback. The C++ wrapper fixes this.
+When defining `onBuffer2Mapped` as a regular function, it is clear that `ready` is not accessible. When using a lambda expression like we did above, one could be tempted to add `ready` in the **capture list** (the brackets before function arguments). But this **does not work** because a capturing lambda has a **different type**, that cannot be used as a regular callback. We see below that the C++ wrapper fixes this limitation.
 ```
 
-We thus use the `void *userdata` pointer communicated from the original call to `wgpuBufferMapAsync` to the callback, like we did in [the adapter request](../../getting-started/the-adapter.md) or [the device request](../../getting-started/the-device.md):
-
+The **user pointer** is an argument that is provided to `wgpuBufferMapAsync`, when setting up the callback, and that is then fed **as is** to the callback `onBuffer2Mapped` when the map operation is ready. The buffer only forwards this pointer but never uses it: **only you** (the user of the API) interprets it.
 
 ````{tab} With webgpu.hpp
 ```C++
-// The context shared between this main function and the callback.
-struct Context {
-	Buffer buffer;
-};
+// A first use of the 'pUserData' argument.
+bool ready = false;
 
 auto onBuffer2Mapped = [](WGPUBufferMapAsyncStatus status, void* pUserData) {
-	Context* context = reinterpret_cast<Context*>(pUserData);
+	// We know by convention with ourselves that the user data is a pointer to 'ready':
+	bool* pReady = reinterpret_cast<bool*>(pUserData);
+	// We set ready to 'true'
+	*pReady = true;
+
 	std::cout << "Buffer 2 mapped with status " << status << std::endl;
-	if (status != BufferMapAsyncStatus::Success) return;
-
-	// Get a pointer to wherever the driver mapped the GPU memory to the RAM
-	uint8_t* bufferData = (uint8_t*)context->buffer.getConstMappedRange(0, 16);
-
-	// [...] (Do stuff with bufferData)
-
-	// Then do not forget to unmap the memory
-	context->buffer.unmap();
 };
 
-Context context = { buffer2 };
-wgpuBufferMapAsync(buffer2, MapMode::Read, 0, 16, onBuffer2Mapped, (void*)&context);
+wgpuBufferMapAsync(buffer2, MapMode::Read, 0, 16, onBuffer2Mapped, (void*)&ready);
+//                                Pass the address of 'ready' here: ^^^^^^^^^^^^
 ```
 ````
 
 ````{tab} Vanilla webgpu.h
 ```C++
+// A first use of the 'pUserData' argument.
+bool ready = false;
+
+auto onBuffer2Mapped = [](WGPUBufferMapAsyncStatus status, void* pUserData) {
+	// We know by convention with ourselves that the user data is a pointer to 'ready':
+	bool* pReady = reinterpret_cast<bool*>(pUserData);
+	// We set ready to 'true'
+	*pReady = true;
+
+	std::cout << "Buffer 2 mapped with status " << status << std::endl;
+};
+
+wgpuBufferMapAsync(buffer2, WGPUMapMode_Read, 0, 16, onBuffer2Mapped, (void*)&ready);
+//                                   Pass the address of 'ready' here: ^^^^^^^^^^^^
+````
+
+Now, we need to **access to more than a status** when running this callback, since we need to access the buffer's content. But the `onBuffer2Mapped` function cannot have a second user pointer! Not a problem: we can define **a context structure**, that holds **all fields that we want to share** with the callback, then pass the address of an instance of this context.
+
+````{tab} With webgpu.hpp
+```{lit} C++, Read buffer data back
+// The context shared between this main function and the callback.
+struct Context {
+	bool ready;
+	Buffer buffer;
+};
+
+auto onBuffer2Mapped = [](WGPUBufferMapAsyncStatus status, void* pUserData) {
+	Context* context = reinterpret_cast<Context*>(pUserData);
+	context->ready = true;
+	std::cout << "Buffer 2 mapped with status " << status << std::endl;
+	if (status != BufferMapAsyncStatus::Success) return;
+
+	{{Use context->buffer here}}
+};
+
+// Create the Context instance
+Context context = { false, buffer2 };
+
+wgpuBufferMapAsync(buffer2, MapMode::Read, 0, 16, onBuffer2Mapped, (void*)&context);
+//                   Pass the address of the Context instance here: ^^^^^^^^^^^^^^
+
+while (!context.ready) {
+	//  ^^^^^^^^^^^^^ Use context.ready here instead of ready
+	wgpuPollEvents(device, true /* yieldToBrowser */);
+}
+```
+````
+
+````{tab} Vanilla webgpu.h
+```{lit} C++, Read buffer data back (for tangle root "Vanilla")
 // The context shared between this main function and the callback.
 struct Context {
 	WGPUBuffer buffer;
@@ -380,33 +450,67 @@ auto onBuffer2Mapped = [](WGPUBufferMapAsyncStatus status, void* pUserData) {
 	std::cout << "Buffer 2 mapped with status " << status << std::endl;
 	if (status != WGPUBufferMapAsyncStatus_Success) return;
 
-	// Get a pointer to wherever the driver mapped the GPU memory to the RAM
-	uint8_t* bufferData = (uint8_t*)wgpuBufferGetConstMappedRange(context->buffer, 0, 16);
-
-	// [...] (Do stuff with bufferData)
-
-	// Then do not forget to unmap the memory
-	wgpuBufferUnmap(context->buffer);
+	{{Use context->buffer here}}
 };
 
-Context context = { buffer2 };
+// Create the Context instance
+Context context = { false, buffer2 };
+
 wgpuBufferMapAsync(buffer2, WGPUMapMode_Read, 0, 16, onBuffer2Mapped, (void*)&context);
+//                      Pass the address of the Context instance here: ^^^^^^^^^^^^^^
+
+while (!context.ready) {
+	//  ^^^^^^^^^^^^^ Use context.ready here instead of ready
+	wgpuPollEvents(device, true /* yieldToBrowser */);
+}
 ```
 ````
 
-For instance we can just display the content of the buffer and check that it corresponds to our initially fed buffer data:
+```{tip}
+When the whole operation lives in a class like our `Application`, it can be convenient to simply **use `this` as the user pointer**, and thus retrieve the whole application object inside the callback.
+```
 
-```C++
+### Using the mapped buffer
+
+Once the buffer is mapped (either directly within the callback or after the polling loop that makes sure it is ready), we use `Buffer::getConstMappedRange` (a.k.a. `wgpuBufferGetConstMappedRange`) to **get a pointer** to the CPU-side data. Once we are done with this CPU-side data, we must **unmap** the buffer:
+
+````{tab} With webgpu.hpp
+```{lit} C++, Use context->buffer here
+// Get a pointer to wherever the driver mapped the GPU memory to the RAM
+uint8_t* bufferData = (uint8_t*)context->buffer.getConstMappedRange(0, 16);
+
+{{Do stuff with bufferData}}
+
+// Then do not forget to unmap the memory
+context->buffer.unmap();
+```
+````
+
+````{tab} Vanilla webgpu.h
+```{lit} C++, Use context->buffer here (for tangle root "Vanilla")
+// Get a pointer to wherever the driver mapped the GPU memory to the RAM
+uint8_t* bufferData = (uint8_t*)wgpuBufferGetConstMappedRange(context->buffer, 0, 16);
+
+{{Do stuff with bufferData}}
+
+// Then do not forget to unmap the memory
+wgpuBufferUnmap(context->buffer);
+```
+````
+
+```{note}
+When mapping the buffer in **write mode**, use `Buffer::getMappedRange` (a.k.a. `wgpuBufferGetMappedRange`) instead of the "const" version.
+```
+
+For instance we can just **display the content** of the buffer and check that it corresponds to our initially fed buffer data:
+
+```{lit} C++, Do stuff with bufferData (also for tangle root "Vanilla")
 std::cout << "bufferData = [";
 for (int i = 0; i < 16; ++i) {
 	if (i > 0) std::cout << ", ";
-	std::cout << bufferData[i];
+	std::cout << (int)bufferData[i];
 }
 std::cout << "]" << std::endl;
-```
-
-```{note}
-In such a simple example, we could spare ourselves the need to define a `Context struct` and just pass the address of the `buffer` object as the value of `pUserData` (or even the `buffer` object itself, as it is a pointer already).
 ```
 
 Conclusion

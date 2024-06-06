@@ -225,6 +225,7 @@ GLFWwindow *window;
 Device device;
 Queue queue;
 Surface surface;
+std::unique_ptr<ErrorCallback> uncapturedErrorCallbackHandle;
 ```
 
 ```{lit} C++, Initialize (replace, hidden)
@@ -265,7 +266,7 @@ std::cout << "Got device: " << device << std::endl;
 adapter.release();
 
 // Device error callback
-device.setUncapturedErrorCallback([](ErrorType type, char const* message) {
+uncapturedErrorCallbackHandle = device.setUncapturedErrorCallback([](ErrorType type, char const* message) {
 	std::cout << "Uncaptured device error: type " << type;
 	if (message) std::cout << " (" << message << ")";
 	std::cout << std::endl;
