@@ -5,6 +5,19 @@ A first Vertex Attribute
 From this chapter on, the guide uses a previous version of the accompanying code (in particular, it does not define an `Application` class but rather puts everything in a monolithic `main` function). **I am currently refreshing it** chapter by chapter and this is **where I am currently working**!
 ```
 
+```{lit-setup}
+:tangle-root: 032 - A first Vertex Attribute - vanilla
+:parent: 031 - Playing with buffers - vanilla
+:alias: Vanilla
+:debug:
+```
+
+```{lit-setup}
+:tangle-root: 032 - A first Vertex Attribute
+:parent: 031 - Playing with buffers
+:debug:
+```
+
 ````{tab} With webgpu.hpp
 *Resulting code:* [`step032`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step032)
 ````
@@ -13,18 +26,23 @@ From this chapter on, the guide uses a previous version of the accompanying code
 *Resulting code:* [`step032-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step032-vanilla)
 ````
 
-This chapter presents a proper way to feed data as **input to the *vertex shader***.
+In the [Hello Triangle](../hello-triangle.md) chapter, we were hardcoding the 3 vertex positions directly in the shader, but this obvioulsy does not scale well. In this chapter, we see the **proper way** to feed vertex attributes as **input to the *vertex shader***.
 
-Shader
-------
+Vertex shader input
+-------------------
 
-Remember that we do **not** control the way the `vs_main` function is invoked, the fixed part of the render pipeline does. However, we can **request** some input data by labeling the argument of the function with **WGSL attributes**.
+Remember that we do **not** control the way the `vs_main` function is invoked, the **fixed part** of the render pipeline does. However, we can **request** some input data by labeling the argument of the function with **WGSL attributes**.
 
-Actually we do this already, with the `@builtin(vertex_index)` attribute:
+```{important}
+The term *attribute* is used for two different things. We talk about **WGSL attribute** to mean tokens of the form `@something` in a WGSL code, and about **vertex attribute** to mean an input of the vertex shader.
+```
+
+We already use a WGSL attribute in our vertex shader input actually, namely the `@builtin(vertex_index)` attribute:
 
 ```rust
 @vertex
 fn vs_main(@builtin(vertex_index) in_vertex_index: u32) -> /* [...] */ {
+	//     ^^^^^^^^^^^^^^^^^^^^^^ This is a WGSL attribute
 	// [...]
 }
 ```
@@ -32,33 +50,30 @@ fn vs_main(@builtin(vertex_index) in_vertex_index: u32) -> /* [...] */ {
 This means that the argument `in_vertex_index` must be populated by the vertex fetch stage with the index of the current vertex.
 
 ```{note}
-Attributes that are built-in can be found in [the WGSL documentation](https://gpuweb.github.io/gpuweb/wgsl/#builtin-values).
+Attributes that are **built-in**, like `vertex_index`, are listed in [the WGSL documentation](https://gpuweb.github.io/gpuweb/wgsl/#builtin-values).
 ```
 
 Instead of using a built-in input, we can create our own. For this we need to:
 
- 1. Create a **buffer** to store the value of the input for each vertex; this data must be stored on the GPU side of course.
- 2. Tell the render pipeline how to interpret the raw buffer data when fetching an entry for each vertex. This is the vertex buffer **layout**.
- 3. Set vertex buffer in the render pass before the draw call.
+ 1. Create a **buffer** to store the value of the input for each vertex; this data must be stored **on the GPU side**, of course.
+ 2. Tell the render pipeline **how to interpret** the raw buffer data when fetching an entry for each vertex. This is the vertex buffer **layout**.
+ 3. Set the vertex buffer in the render pass before the draw call.
 
 On the shader side, we replace the vertex index argument with a new one:
 
 ```rust
 @vertex
 fn vs_main(@location(0) in_vertex_position: vec2f) -> /* [...] */ {
+	//     ^^^^^^^^^^^^ This is a WGSL attribute
 	// [...]
 }
 ```
 
-The `@location(0)` attribute means that this input variable is described by the vertex attribute in the `pipelineDesc.vertex.buffers` array. The type `vec2f` must comply with what we will declare in the layout. The argument name `in_vertex_position` is up to you, it is only internal to the shader code!
-
-```{note}
-The term *attribute* is used for two different things. We talk about **WGSL attribute** to mean tokens of the form `@something` in a WGSL code, and about **vertex attribute** to mean an input of the vertex shader.
-```
+The `@location(0)` attribute means that this input variable is described by the first (index '0') **vertex attribute** in the `pipelineDesc.vertex.buffers` array. The type `vec2f` must comply with what we will declare in the **layout**. The argument name `in_vertex_position` is up to you, it is only local to the shader code!
 
 The vertex shader becomes really simple in the end:
 
-```rust
+```{lit} rust, Vertex shader (also for tangle root "Vanilla")
 fn vs_main(@location(0) in_vertex_position: vec2f) -> @builtin(position) vec4f {
 	return vec4f(in_vertex_position, 0.0, 1.0);
 }
@@ -67,7 +82,9 @@ fn vs_main(@location(0) in_vertex_position: vec2f) -> @builtin(position) vec4f {
 Device capabilities
 -------------------
 
-> 🤓 Hey what is the maximum number of location attributes?
+### Checking capabilities
+
+> 🤓 Hey what is the **maximum number** of location attributes?
 
 Glad you asked! The number of vertex attributes available for our device may vary if we do not specify anything. We can check it as follows:
 
@@ -104,16 +121,41 @@ std::cout << "device.maxVertexAttributes: " << supportedLimits.limits.maxVertexA
 ```
 ````
 
-The spirit of the adapter + device abstraction provided by WebGPU is to first check on the adapter that it has the capabilities we need, then we **require** the minimal limits we need during the device creation and if the creation succeeds we are **guarantied** to have the limits we asked for.
+The spirit of the [adapter + device](../../getting-started/adapter-and-device/index.md) abstraction provided by WebGPU is to first check on the adapter that it has the capabilities we need, then we **require** the minimal limits we need during the device creation and if the creation succeeds we are **guarantied** to have the limits we asked for.
 
 And we get nothing more than required, so that if we forget to update the initial check when using more vertex buffers, the program fails. With this **good practice**, we limit the cases of *"it worked for me"* where the program runs correctly on your device but not on somebody else's, which can quickly become a nightmare.
+
+### Requiring capabilities
 
 This initial check is done by specifying a non null `requiredLimits` pointer in the device descriptor:
 
 ````{tab} With webgpu.hpp
-```C++
+```{lit} C++, TODO
+DeviceDescriptor deviceDesc;
+// [...]
+{{We defined requiredLimits limits here}}
+deviceDesc.requiredLimits = &requiredLimits;
+Device device = adapter.requestDevice(deviceDesc);
+```
+````
+
+````{tab} Vanilla webgpu.h
+```{lit} C++, TODO (for tangle root "Vanilla")
+DeviceDescriptor deviceDesc{};
+// [...]
+{{We defined requiredLimits limits here}}
+deviceDesc.requiredLimits = &requiredLimits;
+Device device = adapter.requestDevice(deviceDesc);
+```
+````
+
+The required limits follow the **same structure** than the supported limits, we can customize some of them for our vertex attribute:
+
+````{tab} With webgpu.hpp
+```{lit} C++, We defined requiredLimits limits here
 // Don't forget to = Default
 RequiredLimits requiredLimits = Default;
+
 // We use at most 1 vertex attribute for now
 requiredLimits.limits.maxVertexAttributes = 1;
 // We should also tell that we use 1 vertex buffers
@@ -126,32 +168,25 @@ requiredLimits.limits.maxVertexBufferArrayStride = 2 * sizeof(float);
 requiredLimits.limits.minStorageBufferOffsetAlignment = supportedLimits.limits.minStorageBufferOffsetAlignment;
 // This must be set even if we do not use uniform buffers for now
 requiredLimits.limits.minUniformBufferOffsetAlignment = supportedLimits.limits.minUniformBufferOffsetAlignment;
-
-
-
-DeviceDescriptor deviceDesc;
-// [...]
-// We specify required limits here
-deviceDesc.requiredLimits = &requiredLimits;
-Device device = adapter.requestDevice(deviceDesc);
 ```
 ````
 
 ````{tab} Vanilla webgpu.h
-```C++
+```{lit} C++, We defined requiredLimits limits here (for tangle root "Vanilla")
 // If you do not use webgpu.hpp, I suggest you create a function to init the
 // WGPULimits structure somewhere.
 void setDefault(WGPULimits &limits) {
-	limits.maxTextureDimension1D = 0;
-	limits.maxTextureDimension2D = 0;
-	limits.maxTextureDimension3D = 0;
-	// [...] Set everything to 0 to mean "no limit"
+	limits.maxTextureDimension1D = WGPU_LIMIT_U32_UNDEFINED;
+	limits.maxTextureDimension2D = WGPU_LIMIT_U32_UNDEFINED;
+	limits.maxTextureDimension3D = WGPU_LIMIT_U32_UNDEFINED;
+	// [...] Set everything to WGPU_LIMIT_U32_UNDEFINED or WGPU_LIMIT_U64_UNDEFINED to mean "no limit"
 }
 
 // [...]
 
 WGPURequiredLimits requiredLimits{};
 setDefault(requiredLimits.limits);
+
 // We use at most 1 vertex attribute for now
 requiredLimits.limits.maxVertexAttributes = 1;
 // We should also tell that we use 1 vertex buffers
@@ -162,17 +197,11 @@ requiredLimits.limits.maxBufferSize = 6 * 2 * sizeof(float);
 requiredLimits.limits.maxVertexBufferArrayStride = 2 * sizeof(float);
 // This must be set even if we do not use storage buffers for now
 requiredLimits.limits.minStorageBufferOffsetAlignment = supportedLimits.limits.minStorageBufferOffsetAlignment;
-
-DeviceDescriptor deviceDesc{};
-// [...]
-// We specify required limits here
-deviceDesc.requiredLimits = &requiredLimits;
-Device device = adapter.requestDevice(deviceDesc);
 ```
 ````
 
 ```{important}
-Notice how I initialized the required limits object with `= Default` above. This is a syntactic helper provided by the `webgpu.hpp` wrapper for all structs to prevent us from manually setting default values. In this case it sets all limits to 0 to mean that there is no requirement.
+Notice how I **initialized the required limits** object with `= Default` above. This is a syntactic helper provided by the `webgpu.hpp` wrapper for all structs to prevent us from manually setting default values. In this case it sets all limits to `WGPU_LIMIT_U32_UNDEFINED` or `WGPU_LIMIT_U64_UNDEFINED` to mean that there is no requirement.
 ```
 
 I now get these more secure supported limits:
@@ -183,6 +212,17 @@ device.maxVertexBuffers: 1
 ```
 
 I recommend you have a look at all the fields of the `WGPULimits` structure in `webgpu.h` so that you know when to add something to the required limits.
+
+### Default capabilities
+
+The official default capabilities can be found in [the specification](https://www.w3.org/TR/webgpu/#limit-default). This also mentions that:
+
+> Every adapter is guaranteed to support the default value or better. ([source](https://www.w3.org/TR/webgpu/#limit-default))
+
+**In this guide**, I take care of specifying required capabilities more strictly for two reasons:
+
+ - To make sure we introduce the capabilities related to the various notions as we are introducing them.
+ - Because it is possible to have "**compatibility**" adapters that would not be deemed valid in the web but are still exposed in native mode.
 
 Vertex Buffer
 -------------
