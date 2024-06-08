@@ -109,11 +109,17 @@ We now detail the configuration of the **different stages**. We start with a ver
 
 Both the **vertex fetch** and **vertex shader** stages are configured through the **vertex state** structure, accessible at `pipelineDesc.vertex`.
 
+```{lit} C++, Describe vertex pipeline state (also for tangle root "Vanilla")
+// Configure 'pipelineDesc.vertex'
+{{Describe vertex buffers}}
+{{Describe vertex shader}}
+```
+
 The render pipeline first **fetches vertex attributes** from some buffers that lives in GPU memory. These *attributes* include usually at least a **vertex position**, and might include additional per-vertex information like **color**, **normal**, **texture coordinate**, etc.
 
 **In this first example**, we hard-code the position of the 3 vertices of the triangles in shaders so we do not even need a position buffer.
 
-```{lit} C++, Describe vertex pipeline state (also for tangle root "Vanilla")
+```{lit} C++, Describe vertex buffers (also for tangle root "Vanilla")
 // We do not use any vertex buffer for this first simplistic example
 pipelineDesc.vertex.bufferCount = 0;
 pipelineDesc.vertex.buffers = nullptr;
@@ -125,7 +131,7 @@ Then each vertex is processed by a custom **vertex shader**. A shader is the com
  2. An **entry point**, which is the name of the function in the shader module that must be called for each vertex. This enables a given shader module to include entry points for multiple render pipeline configurations at the same time. In particular, we use the same module for the vertex and fragment shaders.
  3. An array of value assignments for the **constants** of the shader. We do not use any for now.
 
-```{lit} C++, Describe vertex pipeline state (append, also for tangle root "Vanilla")
+```{lit} C++, Describe vertex shader (also for tangle root "Vanilla")
 // NB: We define the 'shaderModule' in the second part of this chapter.
 // Here we tell that the programmable vertex shader stage is described
 // by the function called 'vs_main' in that module.

@@ -274,23 +274,7 @@ std::cout << "Got adapter: " << adapter << std::endl;
 // We no longer need to access the instance
 wgpuInstanceRelease(instance);
 
-// Get device
-std::cout << "Requesting device..." << std::endl;
-WGPUDeviceDescriptor deviceDesc = {};
-deviceDesc.nextInChain = nullptr;
-deviceDesc.label = "My Device"; // anything works here, that's your call
-deviceDesc.requiredFeatureCount = 0; // we do not require any specific feature
-deviceDesc.requiredLimits = nullptr; // we do not require any specific limit
-deviceDesc.defaultQueue.nextInChain = nullptr;
-deviceDesc.defaultQueue.label = "The default queue";
-// A function that is invoked whenever the device stops being available.
-deviceDesc.deviceLostCallback = [](WGPUDeviceLostReason reason, char const* message, void* /* pUserData */) {
-	std::cout << "Device lost: reason " << reason;
-	if (message) std::cout << " (" << message << ")";
-	std::cout << std::endl;
-};
-device = requestDeviceSync(adapter, &deviceDesc);
-std::cout << "Got device: " << device << std::endl;
+{{Request device}}
 
 // We no longer need to access the adapter
 wgpuAdapterRelease(adapter);
@@ -304,6 +288,30 @@ auto onDeviceError = [](WGPUErrorType type, char const* message, void* /* pUserD
 wgpuDeviceSetUncapturedErrorCallback(device, onDeviceError, nullptr /* pUserData */);
 
 queue = wgpuDeviceGetQueue(device);
+```
+
+```{lit} C++, Request device (hidden)
+// Get device
+std::cout << "Requesting device..." << std::endl;
+WGPUDeviceDescriptor deviceDesc = {};
+deviceDesc.nextInChain = nullptr;
+{{Build device descriptor}}
+device = requestDeviceSync(adapter, &deviceDesc);
+std::cout << "Got device: " << device << std::endl;
+```
+
+```{lit} C++, Build device descriptor (hidden)
+deviceDesc.label = "My Device"; // anything works here, that's your call
+deviceDesc.requiredFeatureCount = 0; // we do not require any specific feature
+deviceDesc.requiredLimits = nullptr; // we do not require any specific limit
+deviceDesc.defaultQueue.nextInChain = nullptr;
+deviceDesc.defaultQueue.label = "The default queue";
+// A function that is invoked whenever the device stops being available.
+deviceDesc.deviceLostCallback = [](WGPUDeviceLostReason reason, char const* message, void* /* pUserData */) {
+	std::cout << "Device lost: reason " << reason;
+	if (message) std::cout << " (" << message << ")";
+	std::cout << std::endl;
+};
 ```
 
 ```{lit} C++, Terminate (hidden)

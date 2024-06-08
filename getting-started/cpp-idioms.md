@@ -246,21 +246,7 @@ std::cout << "Got adapter: " << adapter << std::endl;
 // We no longer need to access the instance
 instance.release();
 
-// Get device
-std::cout << "Requesting device..." << std::endl;
-DeviceDescriptor deviceDesc = {};
-deviceDesc.label = "My Device";
-deviceDesc.requiredFeatureCount = 0;
-deviceDesc.requiredLimits = nullptr;
-deviceDesc.defaultQueue.nextInChain = nullptr;
-deviceDesc.defaultQueue.label = "The default queue";
-deviceDesc.deviceLostCallback = [](WGPUDeviceLostReason reason, char const* message, void* /* pUserData */) {
-	std::cout << "Device lost: reason " << reason;
-	if (message) std::cout << " (" << message << ")";
-	std::cout << std::endl;
-};
-device = adapter.requestDevice(deviceDesc);
-std::cout << "Got device: " << device << std::endl;
+{{Request device}}
 
 // We no longer need to access the adapter
 adapter.release();
@@ -274,6 +260,28 @@ uncapturedErrorCallbackHandle = device.setUncapturedErrorCallback([](ErrorType t
 
 queue = device.getQueue();
 {{Surface Configuration}}
+```
+
+```{lit} C++, Request device (replace, hidden)
+// Get device
+std::cout << "Requesting device..." << std::endl;
+DeviceDescriptor deviceDesc = {};
+{{Build device descriptor}}
+device = adapter.requestDevice(deviceDesc);
+std::cout << "Got device: " << device << std::endl;
+```
+
+```{lit} C++, Build device descriptor (replace, hidden)
+deviceDesc.label = "My Device";
+deviceDesc.requiredFeatureCount = 0;
+deviceDesc.requiredLimits = nullptr;
+deviceDesc.defaultQueue.nextInChain = nullptr;
+deviceDesc.defaultQueue.label = "The default queue";
+deviceDesc.deviceLostCallback = [](WGPUDeviceLostReason reason, char const* message, void* /* pUserData */) {
+	std::cout << "Device lost: reason " << reason;
+	if (message) std::cout << " (" << message << ")";
+	std::cout << std::endl;
+};
 ```
 
 ```{lit} C++, Request adapter (replace, hidden)
