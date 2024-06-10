@@ -334,7 +334,11 @@ We can first list the limits that our adapter supports with `wgpuAdapterGetLimit
 #ifndef __EMSCRIPTEN__
 WGPUSupportedLimits supportedLimits = {};
 supportedLimits.nextInChain = nullptr;
+#ifdef WEBGPU_BACKEND_DAWN
+bool success = wgpuAdapterGetLimits(adapter, &supportedLimits) == WGPUStatus_Success;
+#else
 bool success = wgpuAdapterGetLimits(adapter, &supportedLimits);
+#endif
 if (success) {
 	std::cout << "Adapter limits:" << std::endl;
 	std::cout << " - maxTextureDimension1D: " << supportedLimits.limits.maxTextureDimension1D << std::endl;

@@ -246,7 +246,11 @@ void inspectDevice(WGPUDevice device) {
 
 	WGPUSupportedLimits limits = {};
 	limits.nextInChain = nullptr;
+#ifdef WEBGPU_BACKEND_DAWN
+	bool success = wgpuDeviceGetLimits(device, &limits) == WGPUStatus_Success;
+#else
 	bool success = wgpuDeviceGetLimits(device, &limits);
+#endif
 	if (success) {
 		std::cout << "Device limits:" << std::endl;
 		std::cout << " - maxTextureDimension1D: " << limits.limits.maxTextureDimension1D << std::endl;
