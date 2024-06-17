@@ -257,6 +257,19 @@ bool Application::IsRunning() {
 ```
 
 ```{lit} C++, Initialize (hidden)
+{{Open window and get adapter}}
+
+{{Request device}}
+
+// We no longer need to access the adapter
+wgpuAdapterRelease(adapter);
+
+{{Add device error callback}}
+
+queue = wgpuDeviceGetQueue(device);
+```
+
+```{lit} C++, Open window and get adapter (hidden)
 // Open window
 glfwInit();
 glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API); // <-- extra info for glfwCreateWindow
@@ -273,12 +286,9 @@ std::cout << "Got adapter: " << adapter << std::endl;
 
 // We no longer need to access the instance
 wgpuInstanceRelease(instance);
+```
 
-{{Request device}}
-
-// We no longer need to access the adapter
-wgpuAdapterRelease(adapter);
-
+```{lit} C++, Add device error callback (hidden)
 // Device error callback
 auto onDeviceError = [](WGPUErrorType type, char const* message, void* /* pUserData */) {
 	std::cout << "Uncaptured device error: type " << type;
@@ -286,8 +296,6 @@ auto onDeviceError = [](WGPUErrorType type, char const* message, void* /* pUserD
 	std::cout << std::endl;
 };
 wgpuDeviceSetUncapturedErrorCallback(device, onDeviceError, nullptr /* pUserData */);
-
-queue = wgpuDeviceGetQueue(device);
 ```
 
 ```{lit} C++, Request device (hidden)

@@ -94,6 +94,24 @@ config.viewFormatCount = 0;
 config.viewFormats = nullptr;
 ```
 
+````{warning}
+Make sure to move the call to `wgpuAdapterRelease` **after** the call to `wgpuSurfaceGetPreferredFormat`, since the latter uses our `adapter` handle.
+
+```{lit} C++, Initialize (hidden, replace)
+{{Open window and get adapter}}
+
+{{Request device}}
+queue = wgpuDeviceGetQueue(device);
+
+{{Add device error callback}}
+
+{{Surface Configuration}}
+
+// We no longer need to access the adapter
+wgpuAdapterRelease(adapter);
+```
+````
+
 Textures are allocated for a **specific usage**, that dictates the way the GPU organizes its memory. In our case, we use the swap chain textures as targets for a *Render Pass* so it needs to be created with the `RenderAttachment` usage flag:
 
 ```{lit} C++, Describe Surface Usage

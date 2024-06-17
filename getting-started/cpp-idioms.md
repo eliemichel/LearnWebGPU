@@ -229,6 +229,20 @@ std::unique_ptr<ErrorCallback> uncapturedErrorCallbackHandle;
 ```
 
 ```{lit} C++, Initialize (replace, hidden)
+{{Open window and get adapter}}
+
+{{Request device}}
+queue = device.getQueue();
+
+{{Add device error callback}}
+
+{{Surface Configuration}}
+
+// We no longer need to access the adapter
+adapter.release();
+```
+
+```{lit} C++, Open window and get adapter (replace, hidden)
 // Open window
 glfwInit();
 glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
@@ -245,21 +259,15 @@ std::cout << "Got adapter: " << adapter << std::endl;
 
 // We no longer need to access the instance
 instance.release();
+```
 
-{{Request device}}
-
-// We no longer need to access the adapter
-adapter.release();
-
+```{lit} C++, Add device error callback (replace, hidden)
 // Device error callback
 uncapturedErrorCallbackHandle = device.setUncapturedErrorCallback([](ErrorType type, char const* message) {
 	std::cout << "Uncaptured device error: type " << type;
 	if (message) std::cout << " (" << message << ")";
 	std::cout << std::endl;
 });
-
-queue = device.getQueue();
-{{Surface Configuration}}
 ```
 
 ```{lit} C++, Request device (replace, hidden)
