@@ -353,8 +353,8 @@ desc.nextInChain = nullptr;
 WGPUDawnTogglesDescriptor toggles;
 toggles.chain.next = nullptr;
 toggles.chain.sType = WGPUSType_DawnTogglesDescriptor;
-toggles.disabledTogglesCount = 0;
-toggles.enabledTogglesCount = 1;
+toggles.disabledToggleCount = 0;
+toggles.enabledToggleCount = 1;
 const char* toggleName = "enable_immediate_error_handling";
 toggles.enabledToggles = &toggleName;
 
