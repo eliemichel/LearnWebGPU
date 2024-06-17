@@ -560,6 +560,7 @@ class CodeBlockRegistry:
                 )
                 raise ExtensionError(message, modname="sphinx_literate")
             existing.fetch_files += fetch_files
+            existing.debug = debug
         elif tangle_root == parent:
             message = (
                 f"A tangle root cannot be its own parent! \n" +

@@ -71,6 +71,20 @@ auto onQueueWorkDone = [](WGPUQueueWorkDoneStatus status, void* /* pUserData */)
 wgpuQueueOnSubmittedWorkDone(queue, onQueueWorkDone, nullptr /* pUserData */);
 ```
 
+````{note}
+The function `onQueueWorkDone` is defined here as a [lambda expression](https://en.cppreference.com/w/cpp/language/lambda) but it could also be a regular function declared before `main()`, provided it has the same signature:
+
+```C++
+void onQueueWorkDone(WGPUQueueWorkDoneStatus status, void* /*pUserData*/) {
+	std::cout << "Queued work finished with status: " << status << std::endl;
+}
+```
+````
+
+````{important}
+Only **non-capturing** lambdas (i.e., with `[]` empty) are allowed to be passed as a callback to `wgpuQueueOnSubmittedWorkDone` and other asynchronous operations. Instead of capturing some context, we must use the `pUserData` pointer (see subsequent chapters).
+````
+
 Submitting commands
 -------------------
 

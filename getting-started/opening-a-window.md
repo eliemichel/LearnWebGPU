@@ -257,6 +257,19 @@ bool Application::IsRunning() {
 ```
 
 ```{lit} C++, Initialize (hidden)
+{{Open window and get adapter}}
+
+{{Request device}}
+
+// We no longer need to access the adapter
+wgpuAdapterRelease(adapter);
+
+{{Add device error callback}}
+
+queue = wgpuDeviceGetQueue(device);
+```
+
+```{lit} C++, Open window and get adapter (hidden)
 // Open window
 glfwInit();
 glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API); // <-- extra info for glfwCreateWindow
@@ -273,11 +286,29 @@ std::cout << "Got adapter: " << adapter << std::endl;
 
 // We no longer need to access the instance
 wgpuInstanceRelease(instance);
+```
 
+```{lit} C++, Add device error callback (hidden)
+// Device error callback
+auto onDeviceError = [](WGPUErrorType type, char const* message, void* /* pUserData */) {
+	std::cout << "Uncaptured device error: type " << type;
+	if (message) std::cout << " (" << message << ")";
+	std::cout << std::endl;
+};
+wgpuDeviceSetUncapturedErrorCallback(device, onDeviceError, nullptr /* pUserData */);
+```
+
+```{lit} C++, Request device (hidden)
 // Get device
 std::cout << "Requesting device..." << std::endl;
 WGPUDeviceDescriptor deviceDesc = {};
 deviceDesc.nextInChain = nullptr;
+{{Build device descriptor}}
+device = requestDeviceSync(adapter, &deviceDesc);
+std::cout << "Got device: " << device << std::endl;
+```
+
+```{lit} C++, Build device descriptor (hidden)
 deviceDesc.label = "My Device"; // anything works here, that's your call
 deviceDesc.requiredFeatureCount = 0; // we do not require any specific feature
 deviceDesc.requiredLimits = nullptr; // we do not require any specific limit
@@ -289,21 +320,6 @@ deviceDesc.deviceLostCallback = [](WGPUDeviceLostReason reason, char const* mess
 	if (message) std::cout << " (" << message << ")";
 	std::cout << std::endl;
 };
-device = requestDeviceSync(adapter, &deviceDesc);
-std::cout << "Got device: " << device << std::endl;
-
-// We no longer need to access the adapter
-wgpuAdapterRelease(adapter);
-
-// Device error callback
-auto onDeviceError = [](WGPUErrorType type, char const* message, void* /* pUserData */) {
-	std::cout << "Uncaptured device error: type " << type;
-	if (message) std::cout << " (" << message << ")";
-	std::cout << std::endl;
-};
-wgpuDeviceSetUncapturedErrorCallback(device, onDeviceError, nullptr /* pUserData */);
-
-queue = wgpuDeviceGetQueue(device);
 ```
 
 ```{lit} C++, Terminate (hidden)

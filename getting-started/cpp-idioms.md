@@ -225,9 +225,24 @@ GLFWwindow *window;
 Device device;
 Queue queue;
 Surface surface;
+std::unique_ptr<ErrorCallback> uncapturedErrorCallbackHandle;
 ```
 
 ```{lit} C++, Initialize (replace, hidden)
+{{Open window and get adapter}}
+
+{{Request device}}
+queue = device.getQueue();
+
+{{Add device error callback}}
+
+{{Surface Configuration}}
+
+// We no longer need to access the adapter
+adapter.release();
+```
+
+```{lit} C++, Open window and get adapter (replace, hidden)
 // Open window
 glfwInit();
 glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
@@ -244,10 +259,27 @@ std::cout << "Got adapter: " << adapter << std::endl;
 
 // We no longer need to access the instance
 instance.release();
+```
 
+```{lit} C++, Add device error callback (replace, hidden)
+// Device error callback
+uncapturedErrorCallbackHandle = device.setUncapturedErrorCallback([](ErrorType type, char const* message) {
+	std::cout << "Uncaptured device error: type " << type;
+	if (message) std::cout << " (" << message << ")";
+	std::cout << std::endl;
+});
+```
+
+```{lit} C++, Request device (replace, hidden)
 // Get device
 std::cout << "Requesting device..." << std::endl;
 DeviceDescriptor deviceDesc = {};
+{{Build device descriptor}}
+device = adapter.requestDevice(deviceDesc);
+std::cout << "Got device: " << device << std::endl;
+```
+
+```{lit} C++, Build device descriptor (replace, hidden)
 deviceDesc.label = "My Device";
 deviceDesc.requiredFeatureCount = 0;
 deviceDesc.requiredLimits = nullptr;
@@ -258,21 +290,6 @@ deviceDesc.deviceLostCallback = [](WGPUDeviceLostReason reason, char const* mess
 	if (message) std::cout << " (" << message << ")";
 	std::cout << std::endl;
 };
-device = adapter.requestDevice(deviceDesc);
-std::cout << "Got device: " << device << std::endl;
-
-// We no longer need to access the adapter
-adapter.release();
-
-// Device error callback
-device.setUncapturedErrorCallback([](ErrorType type, char const* message) {
-	std::cout << "Uncaptured device error: type " << type;
-	if (message) std::cout << " (" << message << ")";
-	std::cout << std::endl;
-});
-
-queue = device.getQueue();
-{{Surface Configuration}}
 ```
 
 ```{lit} C++, Request adapter (replace, hidden)
@@ -325,16 +342,35 @@ glfwDestroyWindow(window);
 glfwTerminate();
 ```
 
-```{lit} C++, Get the next target texture (replace, hidden)
+```{lit} C++, Get the next target texture view (replace, hidden)
+// Get the next target texture view
+TextureView targetView = GetNextSurfaceTextureView();
+if (!targetView) return;
+```
+
+```{lit} C++, GetNextSurfaceTextureView method (replace, hidden)
+TextureView Application::GetNextSurfaceTextureView() {
+    {{Get the next surface texture}}
+    {{Create surface texture view}}
+    return targetView;
+}
+```
+
+```{lit} C++, Private methods (replace, hidden)
+private:
+    TextureView GetNextSurfaceTextureView();
+```
+
+```{lit} C++, Get the next surface texture (replace, hidden)
 SurfaceTexture surfaceTexture;
 surface.getCurrentTexture(&surfaceTexture);
 Texture texture = surfaceTexture.texture;
 if (surfaceTexture.status != SurfaceGetCurrentTextureStatus::Success) {
-    return;
+    return nullptr;
 }
 ```
 
-```{lit} C++, Create target texture view (replace, hidden)
+```{lit} C++, Create surface texture view (replace, hidden)
 TextureViewDescriptor viewDescriptor;
 viewDescriptor.label = "Surface texture view";
 viewDescriptor.format = texture.getFormat();
@@ -359,6 +395,7 @@ RenderPassDescriptor renderPassDesc = {};
 {{Describe Render Pass}}
 
 RenderPassEncoder renderPass = encoder.beginRenderPass(renderPassDesc);
+{{Use Render Pass}}
 renderPass.end();
 renderPass.release();
 ```
@@ -400,7 +437,9 @@ std::cout << "Command submitted." << std::endl;
 
 ```{lit} C++, Present the surface onto the window (replace, hidden)
 targetView.release();
+#ifndef __EMSCRIPTEN__
 surface.present();
+#endif
 ```
 
 ```{lit} C++, Poll WebGPU Events (replace, hidden)
