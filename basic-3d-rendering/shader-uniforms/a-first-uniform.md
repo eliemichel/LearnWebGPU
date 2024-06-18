@@ -354,7 +354,7 @@ The fields `binding.sampler` and `binding.textureView` are only needed when the 
 
 ### Usage
 
-OK we are now ready to connect the dots! It is as simple as setting the bind group to use before the draw call:
+Okay, we are now ready to connect the dots! It is as simple as setting the bind group to use before the draw call:
 
 ````{tab} With webgpu.hpp
 ```C++

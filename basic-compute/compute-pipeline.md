@@ -332,7 +332,7 @@ The workgroup sizes must be constant expressions.
 
 ### Workgroup size vs count
 
-> 😟 OK, that makes a lot of variables just to set a number of jobs that is just the product of them in the end, doesn't it?
+> 😟 Okay, that makes a lot of variables just to set a number of jobs that is just the product of them in the end, doesn't it?
 
 The thing is: **all combinations are not equivalent**, even if they multiply to the same number of threads.
 
@@ -356,7 +356,7 @@ These rules are somehow contradictory. Only a benchmark on your specific use cas
 
 ### Workgroup dimensions
 
-> 😟 Ok I see better now, but what about the different axes $w$, $h$ and $d$? Is a workgroup size of $2 \times 2 \times 4$ different from $16 \times 1 \times 1$?
+> 😟 Okay, I see better now, but what about the different axes $w$, $h$ and $d$? Is a workgroup size of $2 \times 2 \times 4$ different from $16 \times 1 \times 1$?
 
 It is different indeed, because this size **gives hints to the hardware** about the potential **consistency of memory access** across threads.
 
