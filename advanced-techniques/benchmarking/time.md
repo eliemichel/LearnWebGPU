@@ -58,7 +58,7 @@ submit_to_do_on_gpu(write_current_time, end_timestamp_query)
 
 We must then **fetch** the timestamp values back to the CPU, through a mapped buffer like we see in [Playing with buffers](../../basic-3d-rendering/input-geometry/playing-with-buffers.md#mapping-context).
 
-> 🫡 Okey, got it, so what about actual C++ code?
+> 🫡 Okay, got it, so what about actual C++ code?
 
 Whether they measure timestamps or other things, GPU queries are stored in a `QuerySet`. We typically store both the start and end time in the same set:
 
@@ -293,7 +293,7 @@ Reading timestamps
 
 ### Resolving timestamps
 
-Okey, the render pass writes to our first query when it begins, and writes to the second query when it ends. We only need to compute the difference now, right? But the timestamps still **live in the GPU memory**, so we first need to **fetch them back** to the CPU.
+Okay, the render pass writes to our first query when it begins, and writes to the second query when it ends. We only need to compute the difference now, right? But the timestamps still **live in the GPU memory**, so we first need to **fetch them back** to the CPU.
 
 The first step consists in **resolving** the query. This gets the timestamp values from whatever internal representation the WebGPU implementation uses to store query set and write them in a **GPU buffer**.
 

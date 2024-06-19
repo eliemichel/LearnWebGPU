@@ -108,7 +108,7 @@ The Dawn-based distribution I provide here fetches the source code of Dawn from 
  - The initial build takes significantly longer, and occupies more disk space overall.
 
 ````{note}
-On Linux check out [Dawn's build documentation](https://dawn.googlesource.com/dawn/+/HEAD/docs/building.md) for teh list of packages to install. As of April 7, 2024, the list is the following (for Ubuntu):
+On Linux check out [Dawn's build documentation](https://dawn.googlesource.com/dawn/+/HEAD/docs/building.md) for the list of packages to install. As of April 7, 2024, the list is the following (for Ubuntu):
 
 ```bash
 sudo apt-get install libxrandr-dev libxinerama-dev libxcursor-dev mesa-common-dev libx11-xcb-dev pkg-config nodejs npm

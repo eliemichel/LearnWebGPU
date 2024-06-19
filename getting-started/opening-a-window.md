@@ -163,7 +163,7 @@ Application class
 
 ### Refactor
 
-Let us **reorganize a bit our project** so that it is more Web-friendly and clearer about the **initialization** versus **main loop** separation.
+Let us **reorganize our project a bit** so that it is more Web-friendly and clearer about the **initialization** versus **main loop** separation.
 
 We create functions `Initialize()`, `MainLoop()` and `Terminate()` to split up the three key parts of our program. We also put **all the variables** that these functions share in a common class/struct, that we call for instance `Application`. For better readability, we may have `Initialize()`, `MainLoop()` and `Terminate()` be members of this class:
 
@@ -331,10 +331,10 @@ glfwTerminate();
 ```
 
 ```{important}
-So **not** move the `emscripten_sleep(100)` line to `MainLoop()`. This line is no longer needed once we **let the browser handle** the main loop, because the browser ticks its WebGPU backend itself.
+So **do not** move the `emscripten_sleep(100)` line to `MainLoop()`. This line is no longer needed once we **let the browser handle** the main loop, because the browser ticks its WebGPU backend itself.
 ```
 
-Once you have move everything, you should end up with the following class attributes shared across init/main:
+Once you have moved everything, you should end up with the following class attributes shared across init/main:
 
 ```{lit} C++, Application attributes
 GLFWwindow *window;
@@ -348,7 +348,7 @@ The `WGPUInstance` and `WGPUAdapter` are intermediate steps towards getting the 
 
 ### Emscripten
 
-As mentionned multiple times above, explicitly writing the `while` loop is not possible when building for the **Web** (with Emscripten) because it **conflicts** with the web browser's own loop. We thus write the main loop differently in such a case:
+As mentioned multiple times above, explicitly writing the `while` loop is not possible when building for the **Web** (with Emscripten) because it **conflicts** with the web browser's own loop. We thus write the main loop differently in such a case:
 
 ```{lit} C++, Main loop (replace)
 #ifdef __EMSCRIPTEN__
@@ -374,7 +374,7 @@ int main() {
 }
 ```
 
-We use here the function [`emscripten_set_main_loop_arg()`](https://emscripten.org/docs/api_reference/emscripten.h.html#c.emscripten_set_main_loop_arg), which is precisely **dedicated to this issue**. This sets a **callback** that the browser will call each time it runs its main rendering loop.
+Here we use the function [`emscripten_set_main_loop_arg()`](https://emscripten.org/docs/api_reference/emscripten.h.html#c.emscripten_set_main_loop_arg), which is precisely **dedicated to this issue**. This sets a **callback** that the browser will call each time it runs its main rendering loop.
 
 ```C++
 // Callback type takes one argument of type 'void*' and returns nothing
@@ -406,7 +406,7 @@ emscripten_set_main_loop_arg(callback, &app, 0, true);
 
 The extra arguments are recommended to be `0` and `true`:
 
- - `fps` is the **framerate** at which the function gets called. For **better performance**, it is recommended to set it to 0 to leave it up to the browser (equivalent of usign `requestAnimationFrame` in JavaScript)
+ - `fps` is the **framerate** at which the function gets called. For **better performance**, it is recommended to set it to 0 to leave it up to the browser (equivalent of using `requestAnimationFrame` in JavaScript)
  - `simulate_infinite_loop` must be `true` to prevent `app` from being freed. Otherwise, the `main` function **returns before the callback gets invoked**, so the application no longer exists and the `arg` pointer is *dangling* (i.e., points to nothing valid).
 
 The Surface
