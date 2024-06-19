@@ -153,7 +153,7 @@ I leave the feature state to `Stable` for the sake of simplicity. If you want to
 
 ### Backend change (Vulkan)
 
-Okey now our feature is correctly wired up in the internal API, but so far **none of the backends support it**! At this stage we must focus on **a single one at a time**.
+Okay, now our feature is correctly wired up in the internal API, but so far **none of the backends support it**! At this stage we must focus on **a single one at a time**.
 
 We start with **Vulkan**, looking inside `dawn/src/dawn/native/vulkan`. So let's first force the Vulkan backend in our application:
 

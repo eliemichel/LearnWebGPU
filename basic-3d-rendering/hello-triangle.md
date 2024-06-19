@@ -353,7 +353,7 @@ pipelineDesc.multisample.mask = ~0u;
 pipelineDesc.multisample.alphaToCoverageEnabled = false;
 ```
 
-Okey, we finally **configured all the stages** of the render pipeline. All that remains now is to specify the behavior of the two **programmable stages**, namely give a **vertex** and a **fragment shaders**.
+Okay, we finally **configured all the stages** of the render pipeline. All that remains now is to specify the behavior of the two **programmable stages**, namely give a **vertex** and a **fragment shaders**.
 
 Shaders
 -------
