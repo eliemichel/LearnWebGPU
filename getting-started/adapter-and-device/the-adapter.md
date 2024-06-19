@@ -334,11 +334,13 @@ We can first list the limits that our adapter supports with `wgpuAdapterGetLimit
 #ifndef __EMSCRIPTEN__
 WGPUSupportedLimits supportedLimits = {};
 supportedLimits.nextInChain = nullptr;
+
 #ifdef WEBGPU_BACKEND_DAWN
 bool success = wgpuAdapterGetLimits(adapter, &supportedLimits) == WGPUStatus_Success;
 #else
 bool success = wgpuAdapterGetLimits(adapter, &supportedLimits);
 #endif
+
 if (success) {
 	std::cout << "Adapter limits:" << std::endl;
 	std::cout << " - maxTextureDimension1D: " << supportedLimits.limits.maxTextureDimension1D << std::endl;
@@ -349,8 +351,10 @@ if (success) {
 #endif // NOT __EMSCRIPTEN__
 ```
 
-```{note}
-As of April 1st, 2024, `wgpuAdapterGetLimits` is not implemented yet on Google Chrome, hence the `#ifndef __EMSCRIPTEN__` above.
+```{admonition} Implementation divergences
+The procedure `wgpuAdapterGetLimits` returns a boolean in `wgpu-native` but a `WGPUStatus` in Dawn.
+
+Also, as of April 1st, 2024, `wgpuAdapterGetLimits` is not implemented yet on Google Chrome, hence the `#ifndef __EMSCRIPTEN__` above.
 ```
 
 Here is an example of what you could see:

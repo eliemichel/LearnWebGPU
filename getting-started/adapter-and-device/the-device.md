@@ -246,11 +246,13 @@ void inspectDevice(WGPUDevice device) {
 
 	WGPUSupportedLimits limits = {};
 	limits.nextInChain = nullptr;
+
 #ifdef WEBGPU_BACKEND_DAWN
 	bool success = wgpuDeviceGetLimits(device, &limits) == WGPUStatus_Success;
 #else
 	bool success = wgpuDeviceGetLimits(device, &limits);
 #endif
+
 	if (success) {
 		std::cout << "Device limits:" << std::endl;
 		std::cout << " - maxTextureDimension1D: " << limits.limits.maxTextureDimension1D << std::endl;
@@ -289,6 +291,10 @@ std::cout << " - maxComputeWorkgroupsPerDimension: " << limits.limits.maxCompute
 
 ```{lit} C++, Create things (append, hidden)
 inspectDevice(device);
+```
+
+```{admonition} Implementation divergences
+Like for `wgpuAdapterGetLimits`, the procedure `wgpuDeviceGetLimits` returns a boolean in `wgpu-native` but a `WGPUStatus` in Dawn.
 ```
 
 We can see that by default the device limits are not the same as what the adapter supports. Setting `deviceDesc.requiredLimits` to `nullptr` above corresponded to ask for minimal limits:
