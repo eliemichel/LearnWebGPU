@@ -1,6 +1,10 @@
 Building for the Web
 ====================
 
+```{warning}
+**First iterations** of this guide did **not** include instructions for web builds, hence this appendix. In the latest **ongoing wave of upates**, web builds are directly supported in the **main part of the guide**, so this appendix will shortly feel outdated and eventually be removed.
+```
+
 *Resulting code:* [`step095-emscripten`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step095-emscripten)
 
 Even if this guide focuses on native application development, a nice byproduct of using WebGPU it to be able to compile our code as a Web page.

@@ -5,6 +5,19 @@ Multiple Attributes
 From this chapter on, the guide uses a previous version of the accompanying code (in particular, it does not define an `Application` class but rather puts everything in a monolithic `main` function). **I am currently refreshing it** chapter by chapter and this is **where I am currently working**!
 ```
 
+```{lit-setup}
+:tangle-root: 033 - Multiple Attributes - vanilla
+:parent: 032 - A first Vertex Attribute - vanilla
+:alias: Vanilla
+:debug:
+```
+
+```{lit-setup}
+:tangle-root: 033 - Multiple Attributes
+:parent: 032 - A first Vertex Attribute
+:debug:
+```
+
 ````{tab} With webgpu.hpp
 *Resulting code:* [`step033`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step033)
 ````
@@ -13,23 +26,26 @@ From this chapter on, the guide uses a previous version of the accompanying code
 *Resulting code:* [`step033-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step033-vanilla)
 ````
 
-Vertices can contain more than just a position. A typical example is to **add a color attribute** to each vertex. This will also show us how the rasterizer automatically interpolate vertex attributes across triangles.
+Vertices can contain more than just a position attribute. A typical example is to **add a color attribute** to each vertex. This will also show us how the rasterizer automatically interpolate vertex attributes across triangles.
 
 Shader
 ------
 
-You may have guessed that we can simply add a second argument to the vertex shader entry point `vs_main`, with a different `@location` WGSL attribute:
+### Vertex input struct
+
+You may have guessed that we can simply add a **second argument** to the vertex shader entry point `vs_main`, with a different `@location` WGSL attribute:
 
 ```rust
+// We could do this, but there might be a lot of attributes
 @vertex
 fn vs_main(@location(0) in_position: vec2f, @location(1) in_color: vec3f) -> /* ... */ {
 	// [...]
 }
 ```
 
-This works, but you might prefer when the number of input attribute grows to instead take a single argument whose type is a custom struct labeled with locations:
+This works, but when the **number of input attribute grows**, we will prefer take instead a **single argument** whose type is a **custom struct** labeled with locations:
 
-```rust
+```{lit} rust, Define VertexInput struct (also for tangle root "Vanilla")
 /**
  * A structure with fields labeled with vertex attribute locations can be used
  * as input to the entry point of a shader.
@@ -38,23 +54,50 @@ struct VertexInput {
 	@location(0) position: vec2f,
 	@location(1) color: vec3f,
 };
+```
 
-@vertex
+Our vertex shader thus only receive one single argument, whose type is `VertexInput`:
+
+```{lit} rust, Vertex shader (also for tangle root "Vanilla")
 fn vs_main(in: VertexInput) -> /* ... */ {
-	// [...]
+	{{Vertex shader body}}
 }
 ```
 
-> 😐 But I don't need the color in the vertex shader, I want it in the fragment shader, can I do `fn fs_main(@location(1) color: vec3f)`?
+```{lit} rust, Shader source literal (hidden, replace, also for tangle root "Vanilla")
+const char* shaderSource = R"(
+{{Shader prelude}}
 
-Nope. The vertex attributes are only provided to the vertex shader. However, **the fragment shader can receive what the vertex shader returns!** This is where the structure-based approach becomes handy:
+@vertex
+{{Vertex shader}}
 
-```rust
-struct VertexInput {
-	@location(0) position: vec2f,
-	@location(1) color: vec3f,
-};
+@fragment
+{{Fragment shader}}
+)";
+```
 
+```{lit} rust, Shader prelude (hidden, also for tangle root "Vanilla")
+{{Define VertexInput struct}}
+```
+
+### Forwarding vertex attribute to fragments
+
+> 😐 But I don't need the color in the vertex shader, I want it in the fragment shader. So can I do `fn fs_main(@location(1) color: vec3f)`?
+
+Nope. The vertex attributes are only provided to the vertex shader. However, **the fragment shader can receive whatever the vertex shader returns!** This is where the structure-based approach becomes handy.
+
+First of all, we change again the signature of `vs_main` to **return a custom struct** (instead of `@builtin(position) vec4f`):
+
+```{lit} rust, Vertex shader (replace, also for tangle root "Vanilla")
+fn vs_main(in: VertexInput) -> VertexOutput {
+	//                         ^^^^^^^^^^^^ We return a custom struct
+	{{Vertex shader body}}
+}
+```
+
+Then we need to define this struct. We of course need the **mandatory** `@builtin(position)` attribute required by the rasterizer to know where on screen to draw the geometry. We also add a **custom vertex shader output**, which we name `color` and associate to e.g., location 0.
+
+```{lit} rust, Define VertexOutput struct (also for tangle root "Vanilla")
 /**
  * A structure with fields labeled with builtins and locations can also be used
  * as *output* of the vertex shader, which is also the input of the fragment
@@ -68,29 +111,128 @@ struct VertexOutput {
 	// as input to the fragment shader.)
 	@location(0) color: vec3f,
 };
+```
 
+```{lit} rust, Shader prelude (hidden, append, also for tangle root "Vanilla")
+{{Define VertexOutput struct}}
+```
+
+Now we can **change the arguments** of the fragment shader entry point `fs_main`. Like for the vertex shader, we can directly label arguments:
+
+```rust
+// We can directly label arguments:
+fn fs_main(@location(0) color: vec3f) -> @location(0) vec4f {
+	//     ^^^^^^^^^^^^^^^^^^^^^^^^^ A new argument, with a location WGSL attribute
+	{{Fragment shader body}}
+}
+```
+
+Or we can use a custom struct whose fields are labeled... like the `VertexOutput` itself. It could be a different one, as long as we stay consistent regarding `@location` indices.
+
+```{lit} rust, Fragment shader (replace, also for tangle root "Vanilla")
+// Or we can use a custom struct whose fields are labeled
+fn fs_main(in: VertexOutput) -> @location(0) vec4f {
+	//     ^^^^^^^^^^^^^^^^ Use for instance the same struct as what the vertex outputs
+	{{Fragment shader body}}
+}
+```
+
+All there remains now is to **connect the dots** and return from the vertex shader the color needed by the fragment shader:
+
+```rust
 @vertex
 fn vs_main(in: VertexInput) -> VertexOutput {
-	var out: VertexOutput;
-	out.position = vec4f(in.position, 0.0, 1.0);
-	out.color = in.color; // forward to the fragment shader
+	var out: VertexOutput; // create the output struct
+	out.position = vec4f(in.position, 0.0, 1.0); // same as what we used to directly return
+	out.color = in.color; // forward the color attribute to the fragment shader
 	return out;
 }
 
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4f {
-	return vec4f(in.color, 1.0);
+	return vec4f(in.color, 1.0); // use the interpolated color coming from the vertex shader
 }
 ```
 
-There is a limit on the number of components that can be forwarded from vertex to fragment shader. In our case, we ask for 3 (float) components:
+```{lit} rust, Vertex shader body (hidden, also for tangle root "Vanilla")
+// In vs_main()
+var out: VertexOutput; // create the output struct
+out.position = vec4f(in.position, 0.0, 1.0); // same as what we used to directly return
+out.color = in.color; // forward the color attribute to the fragment shader
+return out;
+```
 
-```C++
+```{lit} rust, Fragment shader body (hidden, also for tangle root "Vanilla")
+// In fs_main()
+return vec4f(in.color, 1.0); // use the interpolated color coming from the vertex shader
+```
+
+### Capabilities
+
+There is a **limit on the number of components** that can be forwarded from vertex to fragment shader. In our case, we ask for 3 (float) components:
+
+```{lit} C++, List required limits (hidden, also for tangle root "Vanilla")
+// We use at most 1 vertex attribute for now
+requiredLimits.limits.maxVertexAttributes = 1;
+// We should also tell that we use 1 vertex buffers
+requiredLimits.limits.maxVertexBuffers = 1;
+// Maximum size of a buffer is 6 vertices of 2 float each
+requiredLimits.limits.maxBufferSize = 6 * 2 * sizeof(float);
+// Maximum stride between 2 consecutive vertices in the vertex buffer
+requiredLimits.limits.maxVertexBufferArrayStride = 2 * sizeof(float);
+// This must be set even if we do not use storage buffers for now
+requiredLimits.limits.minStorageBufferOffsetAlignment = supportedLimits.limits.minStorageBufferOffsetAlignment;
+```
+
+```{lit} C++, List required limits (append, also for tangle root "Vanilla")
+// There is a maximum of 3 float forwarded from vertex to fragment shader
 requiredLimits.limits.maxInterStageShaderComponents = 3;
+```
+
+```{lit} C++, GetRequiredLimits method (hidden, replace)
+RequiredLimits Application::GetRequiredLimits(Adapter adapter) const {
+	// Get adapter supported limits, in case we need them
+	SupportedLimits supportedLimits;
+	adapter.getLimits(&supportedLimits);
+
+	// Don't forget to = Default
+	RequiredLimits requiredLimits = Default;
+
+	{{List required limits}}
+
+	return requiredLimits;
+}
+```
+
+```{lit} C++, GetRequiredLimits method (hidden, replace, for tangle root "Vanilla")
+// If you do not use webgpu.hpp, I suggest you create a function to init the
+// WGPULimits structure:
+void setDefault(WGPULimits &limits) {
+	limits.maxTextureDimension1D = WGPU_LIMIT_U32_UNDEFINED;
+	limits.maxTextureDimension2D = WGPU_LIMIT_U32_UNDEFINED;
+	limits.maxTextureDimension3D = WGPU_LIMIT_U32_UNDEFINED;
+	{{Set everything to WGPU_LIMIT_U32_UNDEFINED or WGPU_LIMIT_U64_UNDEFINED to mean no limit}}
+}
+
+WGPURequiredLimits Application::GetRequiredLimits(WGPUAdapter adapter) const {
+	// Get adapter supported limits, in case we need them
+	WGPUSupportedLimits supportedLimits;
+	supportedLimits.nextInChain = nullptr;
+	wgpuAdapterGetLimits(adapter, &supportedLimits);
+
+	WGPURequiredLimits requiredLimits{};
+	setDefault(requiredLimits.limits);
+
+	{{List required limits}}
+
+	return requiredLimits;
+}
 ```
 
 Vertex Buffer Layout
 --------------------
+
+We defined in the previous section how to handle a **new color attribute** in the shaders, but so far we did not **feed** any new **data for this attribute**.
 
 There are different ways of feeding multiple attributes to the vertex fetch stage. The choice usually depends on the way your input data is organized, which varies with the context, so I am going to present two different ways.
 
