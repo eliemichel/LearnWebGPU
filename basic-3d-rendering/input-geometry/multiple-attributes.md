@@ -234,9 +234,23 @@ Vertex Buffer Layout
 
 We defined in the previous section how to handle a **new color attribute** in the shaders, but so far we did not **feed** any new **data for this attribute**.
 
-There are different ways of feeding multiple attributes to the vertex fetch stage. The choice usually depends on the way your input data is organized, which varies with the context, so I am going to present two different ways.
+There are **different ways** of feeding multiple attributes to the vertex fetch stage. The choice usually depends on the way your input data is organized, which varies with the context, so I am going to present two different ways.
 
 ### Option A: Interleaved attributes
+
+```{image} /images/vertex-buffer/interleaved-attributes-light.svg
+:align: center
+:class: only-light
+```
+
+```{image} /images/vertex-buffer/interleaved-attributes-dark.svg
+:align: center
+:class: only-dark
+```
+
+<p class="align-center">
+	<span class="caption-text"><em>Both attributes are in the same buffer, with all attributes of the same vertex grouped together. The <strong>byte distance</strong> between two consecutive x values is called the <strong>stride</strong>.</em></span>
+</p>
 
 Before anything, do not forget to increase the vertex attribute limit of your device:
 
@@ -323,6 +337,20 @@ vertexBufferLayout.attributes = vertexAttribs.data();
 ````
 
 ### Option B: Multiple buffers
+
+```{image} /images/vertex-buffer/multiple-buffers-light.svg
+:align: center
+:class: only-light
+```
+
+```{image} /images/vertex-buffer/multiple-buffers-dark.svg
+:align: center
+:class: only-dark
+```
+
+<p class="align-center">
+	<span class="caption-text"><em>Each attribute has its own buffer.</em></span>
+</p>
 
 Another possible data layout is to have two different buffers for the two attributes. Make sure to change the device limit to support this:
 
