@@ -172,6 +172,10 @@ return vec4f(in.color, 1.0); // use the interpolated color coming from the verte
 There is a **limit on the number of components** that can be forwarded from vertex to fragment shader. In our case, we ask for 3 (float) components:
 
 ```{lit} C++, List required limits (hidden, also for tangle root "Vanilla")
+// NB: In this auto-generated ("tangled") source code, updates to limits get
+// appended at the end of this block, so pay attention to the last line that
+// affects a given limit field.
+
 // We use at most 1 vertex attribute for now
 requiredLimits.limits.maxVertexAttributes = 1;
 // We should also tell that we use 1 vertex buffers
@@ -236,6 +240,15 @@ We defined in the previous section how to handle a **new color attribute** in th
 
 There are **different ways** of feeding multiple attributes to the vertex fetch stage. The choice usually depends on the way your input data is organized, which varies with the context, so I am going to present two different ways.
 
+````{admonition} Device limits
+Before anything, do not forget to **increase the vertex attribute limit** of your device:
+
+```{lit} C++, List required limits (append, also for tangle root "Vanilla")
+requiredLimits.limits.maxVertexAttributes = 2;
+//                                          ^ This was 1
+```
+````
+
 ### Option A: Interleaved attributes
 
 ```{image} /images/vertex-buffer/interleaved-attributes-light.svg
@@ -252,13 +265,7 @@ There are **different ways** of feeding multiple attributes to the vertex fetch 
 	<span class="caption-text"><em>Both attributes are in the same buffer, with all attributes of the same vertex grouped together. The <strong>byte distance</strong> between two consecutive x values is called the <strong>stride</strong>.</em></span>
 </p>
 
-Before anything, do not forget to increase the vertex attribute limit of your device:
-
-```C++
-requiredLimits.limits.maxVertexAttributes = 2;
-```
-
-Interleaved attributes means that we put in a single buffer the values for all the attributes of the first vertex, then all values for the second vertex, etc:
+Interleaved attributes means that we put in a **single buffer** the values for **all the attributes** of the first vertex, then all values for the second vertex, etc:
 
 ```C++
 std::vector<float> vertexData = {
@@ -278,21 +285,34 @@ std::vector<float> vertexData = {
 int vertexCount = static_cast<int>(vertexData.size() / 5);
 ```
 
-The first thing we can remark is that now the **stride** of our position attribute has changed from `2 * sizeof(float)` to `5 * sizeof(float)`:
+The first thing we can remark is that now the **byte stride** of our position attribute (x,y) has changed from `2 * sizeof(float)` to `5 * sizeof(float)`:
 
-```C++
-// The new stride
+````{tab} With webgpu.hpp
+```{lit} C++, Describe buffer stride and step mode (replace)
 vertexBufferLayout.arrayStride = 5 * sizeof(float);
+//                               ^^^^^^^^^^^^^^^^^ The new stride
+vertexBufferLayout.stepMode = VertexStepMode::Vertex;
 ```
+````
 
-We thus need to update the buffer size and stride limits:
+````{tab} Vanilla webgpu.h
+```{lit} C++, Describe buffer stride and step mode (replace)
+vertexBufferLayout.arrayStride = 5 * sizeof(float);
+//                               ^^^^^^^^^^^^^^^^^ The new stride
+vertexBufferLayout.stepMode = GPUVertexStepMode_Vertex;
+```
+````
 
-```C++
+````{admonition} Device limits
+We thus need to update the **buffer size and stride limits**:
+
+```{lit} C++, List required limits (append, also for tangle root "Vanilla")
 requiredLimits.limits.maxBufferSize = 6 * 5 * sizeof(float);
 requiredLimits.limits.maxVertexBufferArrayStride = 5 * sizeof(float);
 ```
+````
 
-This stride is the same for both attributes, so it is not a problem that the stride is set at the level of the while buffer layout. The main difference between our two attributes actually is the offset at which they start in the buffer: the color starts after 2 floats.
+This stride is the same for both attributes, because jumping from $x_1$ to $x_2$ is the same distance as jumping from $r_1$ to $r_2$. So it is not a problem that the stride is set at the level of the whole **buffer layout**. The main difference between our two attributes actually is the **byte offset** at which they start in the buffer: the color starts after 2 floats.
 
 We now need to provide 2 elements in the `vertexBufferLayout.attributes` array. So instead of passing the address `&vertexAttrib` of a single entry, we use a `std::vector`:
 

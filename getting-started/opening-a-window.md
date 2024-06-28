@@ -245,7 +245,7 @@ bool Application::IsRunning() {
 }
 ```
 
-```{lit} C++, Poll WebGPU Events
+```{lit} C++, Poll WebGPU Events (hidden)
 #if defined(WEBGPU_BACKEND_DAWN)
 	wgpuDeviceTick(device);
 #elif defined(WEBGPU_BACKEND_WGPU)
