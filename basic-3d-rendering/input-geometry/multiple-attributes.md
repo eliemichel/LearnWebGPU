@@ -9,13 +9,11 @@ From this chapter on, the guide uses a previous version of the accompanying code
 :tangle-root: 033 - Multiple Attributes - Option A - vanilla
 :parent: 032 - A first Vertex Attribute - vanilla
 :alias: Vanilla
-:debug:
 ```
 
 ```{lit-setup}
 :tangle-root: 033 - Multiple Attributes - Option A
 :parent: 032 - A first Vertex Attribute
-:debug:
 ```
 
 ````{tab} With webgpu.hpp
@@ -397,13 +395,11 @@ vertexAttribs[1].offset = 2 * sizeof(float); // non null offset!
 :tangle-root: 033 - Multiple Attributes - Option B - vanilla
 :parent: 033 - Multiple Attributes - Option A
 :alias: Vanilla
-:debug:
 ```
 
 ```{lit-setup}
 :tangle-root: 033 - Multiple Attributes - Option B
 :parent: 033 - Multiple Attributes - Option A
-:debug:
 ```
 
 ```{image} /images/vertex-buffer/multiple-buffers-light.svg
