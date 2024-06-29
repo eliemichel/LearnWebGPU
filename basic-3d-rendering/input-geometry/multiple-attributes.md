@@ -1,10 +1,6 @@
 Multiple Attributes
 ===================
 
-```{admonition} 🚧 WIP
-From this chapter on, the guide uses a previous version of the accompanying code (in particular, it does not define an `Application` class but rather puts everything in a monolithic `main` function). **I am currently refreshing it** chapter by chapter and this is **where I am currently working**!
-```
-
 ```{lit-setup}
 :tangle-root: 033 - Multiple Attributes - Option A - vanilla
 :parent: 032 - A first Vertex Attribute - vanilla
@@ -334,7 +330,7 @@ vertexBufferLayout.stepMode = VertexStepMode::Vertex;
 ```{lit} C++, Describe buffer stride and step mode (replace, for tangle root "Vanilla")
 vertexBufferLayout.arrayStride = 5 * sizeof(float);
 //                               ^^^^^^^^^^^^^^^^^ The new stride
-vertexBufferLayout.stepMode = GPUVertexStepMode_Vertex;
+vertexBufferLayout.stepMode = WGPUVertexStepMode_Vertex;
 ```
 ````
 
