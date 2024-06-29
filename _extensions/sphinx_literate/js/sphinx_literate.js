@@ -129,7 +129,7 @@ const litBlockInfoStyle = `
 	text-align: right;
 	font-size: 0.8em;
 	position: absolute;
-	bottom: -0.7em;
+	top: calc(100% - 0.7em);
 	right: 0.5em;
 	margin-top: 0;
 	color: var(--color-foreground-lit-info);

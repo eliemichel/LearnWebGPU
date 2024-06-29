@@ -6,14 +6,14 @@ From this chapter on, the guide uses a previous version of the accompanying code
 ```
 
 ```{lit-setup}
-:tangle-root: 033 - Multiple Attributes - vanilla
+:tangle-root: 033 - Multiple Attributes - Option A - vanilla
 :parent: 032 - A first Vertex Attribute - vanilla
 :alias: Vanilla
 :debug:
 ```
 
 ```{lit-setup}
-:tangle-root: 033 - Multiple Attributes
+:tangle-root: 033 - Multiple Attributes - Option A
 :parent: 032 - A first Vertex Attribute
 :debug:
 ```
@@ -265,9 +265,11 @@ requiredLimits.limits.maxVertexAttributes = 2;
 	<span class="caption-text"><em>Both attributes are in the same buffer, with all attributes of the same vertex grouped together. The <strong>byte distance</strong> between two consecutive x values is called the <strong>stride</strong>.</em></span>
 </p>
 
+#### Vertex Data
+
 Interleaved attributes means that we put in a **single buffer** the values for **all the attributes** of the first vertex, then all values for the second vertex, etc:
 
-```C++
+```{lit} C++, Define vertex data (replace, also for tangle root "Vanilla")
 std::vector<float> vertexData = {
 	// x0,  y0,  r0,  g0,  b0
 	-0.5, -0.5, 1.0, 0.0, 0.0,
@@ -281,11 +283,46 @@ std::vector<float> vertexData = {
 	-0.05f, +0.5, 1.0, 0.0, 1.0,
 	-0.55f, +0.5, 0.0, 1.0, 1.0
 };
+
 // We now divide the vector size by 5 fields.
-int vertexCount = static_cast<int>(vertexData.size() / 5);
+vertexCount = static_cast<uint32_t>(vertexData.size() / 5);
 ```
 
-The first thing we can remark is that now the **byte stride** of our position attribute (x,y) has changed from `2 * sizeof(float)` to `5 * sizeof(float)`:
+#### Layout and Attributes
+
+Still one buffer, but with 2 elements in the `vertexBufferLayout.attributes` array. So instead of passing the address `&positionAttrib` of a single entry, we use a `std::vector`:
+
+````{tab} With webgpu.hpp
+```{lit} C++, Describe the vertex buffer layout (replace)
+// We now have 2 attributes
+std::vector<VertexAttribute> vertexAttribs(2);
+
+{{Describe the position attribute}}
+{{Describe the color attribute}}
+
+vertexBufferLayout.attributeCount = static_cast<uint32_t>(vertexAttribs.size());
+vertexBufferLayout.attributes = vertexAttribs.data();
+
+{{Describe buffer stride and step mode}}
+```
+````
+
+````{tab} Vanilla webgpu.h
+```{lit} C++, Describe the vertex buffer layout (replace, for tangle root "Vanilla")
+// We now have 2 attributes
+std::vector<WGPUVertexAttribute> vertexAttribs(2);
+
+{{Describe the position attribute}}
+{{Describe the color attribute}}
+
+vertexBufferLayout.attributeCount = static_cast<uint32_t>(vertexAttribs.size());
+vertexBufferLayout.attributes = vertexAttribs.data();
+
+{{Describe buffer stride and step mode}}
+```
+````
+
+The first thing we can remark is that now the **byte stride** of our position attribute $(x,y)$ has changed from `2 * sizeof(float)` to `5 * sizeof(float)`:
 
 ````{tab} With webgpu.hpp
 ```{lit} C++, Describe buffer stride and step mode (replace)
@@ -296,7 +333,7 @@ vertexBufferLayout.stepMode = VertexStepMode::Vertex;
 ````
 
 ````{tab} Vanilla webgpu.h
-```{lit} C++, Describe buffer stride and step mode (replace)
+```{lit} C++, Describe buffer stride and step mode (replace, for tangle root "Vanilla")
 vertexBufferLayout.arrayStride = 5 * sizeof(float);
 //                               ^^^^^^^^^^^^^^^^^ The new stride
 vertexBufferLayout.stepMode = GPUVertexStepMode_Vertex;
@@ -312,51 +349,62 @@ requiredLimits.limits.maxVertexBufferArrayStride = 5 * sizeof(float);
 ```
 ````
 
-This stride is the same for both attributes, because jumping from $x_1$ to $x_2$ is the same distance as jumping from $r_1$ to $r_2$. So it is not a problem that the stride is set at the level of the whole **buffer layout**. The main difference between our two attributes actually is the **byte offset** at which they start in the buffer: the color starts after 2 floats.
+This stride is the **same for both attributes**, because jumping from $x_1$ to $x_2$ is the same distance as jumping from $r_1$ to $r_2$. So it is not a problem that the stride is set at the level of the whole **buffer layout**.
 
-We now need to provide 2 elements in the `vertexBufferLayout.attributes` array. So instead of passing the address `&vertexAttrib` of a single entry, we use a `std::vector`:
+The main difference between our two attributes actually is the **byte offset** at which they start in the buffer. The position still starts at the beginning of the buffer, i.e., at offset 0:
 
 ````{tab} With webgpu.hpp
-```C++
-// We now have 2 attributes
-std::vector<VertexAttribute> vertexAttribs(2);
-
-// Position attribute
-vertexAttribs[0].shaderLocation = 0;
+```{lit} C++, Describe the position attribute (replace)
+// Describe the position attribute
+vertexAttribs[0].shaderLocation = 0; // @location(0)
 vertexAttribs[0].format = VertexFormat::Float32x2;
 vertexAttribs[0].offset = 0;
-
-// Color attribute
-vertexAttribs[1].shaderLocation = 1;
-vertexAttribs[1].format = VertexFormat::Float32x3; // different type!
-vertexAttribs[1].offset = 2 * sizeof(float); // non null offset!
-
-vertexBufferLayout.attributeCount = static_cast<uint32_t>(vertexAttribs.size());
-vertexBufferLayout.attributes = vertexAttribs.data();
 ```
 ````
 
 ````{tab} Vanilla webgpu.h
-```C++
-// We now have 2 attributes
-std::vector<WGPUVertexAttribute> vertexAttribs(2);
-
-// Position attribute
-vertexAttribs[0].shaderLocation = 0;
+```{lit} C++, Describe the position attribute (replace, for tangle root "Vanilla")
+// Describe the position attribute
+vertexAttribs[0].shaderLocation = 0; // @location(0)
 vertexAttribs[0].format = WGPUVertexFormat_Float32x2;
 vertexAttribs[0].offset = 0;
+```
+````
 
-// Color attribute
-vertexAttribs[1].shaderLocation = 1;
+And the color starts after the 2 floats $x$ and $y$:
+
+````{tab} With webgpu.hpp
+```{lit} C++, Describe the color attribute
+// Describe the color attribute
+vertexAttribs[1].shaderLocation = 1; // @location(1)
+vertexAttribs[1].format = VertexFormat::Float32x3; // different type!
+vertexAttribs[1].offset = 2 * sizeof(float); // non null offset!
+```
+````
+
+````{tab} Vanilla webgpu.h
+```{lit} C++, Describe the color attribute (for tangle root "Vanilla")
+// Describe the color attribute
+vertexAttribs[1].shaderLocation = 1; // @location(1)
 vertexAttribs[1].format = WGPUVertexFormat_Float32x3; // different type!
 vertexAttribs[1].offset = 2 * sizeof(float); // non null offset!
-
-vertexBufferLayout.attributeCount = static_cast<uint32_t>(vertexAttribs.size());
-vertexBufferLayout.attributes = vertexAttribs.data();
 ```
 ````
 
 ### Option B: Multiple buffers
+
+```{lit-setup}
+:tangle-root: 033 - Multiple Attributes - Option B - vanilla
+:parent: 033 - Multiple Attributes - Option A
+:alias: Vanilla
+:debug:
+```
+
+```{lit-setup}
+:tangle-root: 033 - Multiple Attributes - Option B
+:parent: 033 - Multiple Attributes - Option A
+:debug:
+```
 
 ```{image} /images/vertex-buffer/multiple-buffers-light.svg
 :align: center
@@ -369,18 +417,24 @@ vertexBufferLayout.attributes = vertexAttribs.data();
 ```
 
 <p class="align-center">
-	<span class="caption-text"><em>Each attribute has its own buffer.</em></span>
+	<span class="caption-text"><em>Each attribute has its <strong>own buffer</strong>, and thus its <strong>own byte stride</strong>.</em></span>
 </p>
 
-Another possible data layout is to have two different buffers for the two attributes. Make sure to change the device limit to support this:
+Another possible data layout is to have **two different buffers** for the two attributes.
 
-```C++
+````{admonition} Device limits
+Make sure to change the device limit to support this:
+
+```{lit} C++, List required limits (append, also for tangle root "Vanilla")
 requiredLimits.limits.maxVertexBuffers = 2;
 ```
+````
+
+#### Vertex Data
 
 We thus have 2 input vectors:
 
-```C++
+```{lit} C++, Define vertex data (replace, also for tangle root "Vanilla")
 // x0, y0, x1, y1, ...
 std::vector<float> positionData = {
 	-0.5, -0.5,
@@ -401,40 +455,42 @@ std::vector<float> colorData = {
 	0.0, 1.0, 1.0
 };
 
-int vertexCount = static_cast<int>(positionData.size() / 2);
-assert(vertexCount == static_cast<int>(colorData.size() / 3));
+vertexCount = static_cast<uint32_t>(positionData.size() / 2);
+assert(vertexCount == static_cast<uint32_t>(colorData.size() / 3));
 ```
 
 ````{note}
 This time, the maximum buffer size/stride can be lower:
 
-```C++
+```{lit} C++, List required limits (append, also for tangle root "Vanilla")
 requiredLimits.limits.maxBufferSize = 6 * 3 * sizeof(float);
 requiredLimits.limits.maxVertexBufferArrayStride = 3 * sizeof(float);
 ```
 ````
 
-Which lead to two GPU buffers:
+#### Buffers
+
+This leads to two creating two GPU buffers `positionBuffer` and `colorBuffer`:
 
 ````{tab} With webgpu.hpp
-```C++
+```{lit} C++, Create vertex buffer (replace)
 // Create vertex buffers
 BufferDescriptor bufferDesc;
 bufferDesc.usage = BufferUsage::CopyDst | BufferUsage::Vertex;
 bufferDesc.mappedAtCreation = false;
 
 bufferDesc.size = positionData.size() * sizeof(float);
-Buffer positionBuffer = device.createBuffer(bufferDesc);
+positionBuffer = device.createBuffer(bufferDesc);
 queue.writeBuffer(positionBuffer, 0, positionData.data(), bufferDesc.size);
 
 bufferDesc.size = colorData.size() * sizeof(float);
-Buffer colorBuffer = device.createBuffer(bufferDesc);
+colorBuffer = device.createBuffer(bufferDesc);
 queue.writeBuffer(colorBuffer, 0, colorData.data(), bufferDesc.size);
 ```
 ````
 
 ````{tab} Vanilla webgpu.h
-```C++
+```{lit} C++, Create vertex buffer (replace, for tangle root "Vanilla")
 // Create vertex buffers
 WGPUBufferDescriptor bufferDesc;
 bufferDesc.nextInChain = nullptr;
@@ -442,25 +498,94 @@ bufferDesc.usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_Vertex;
 bufferDesc.mappedAtCreation = false;
 
 bufferDesc.size = positionData.size() * sizeof(float);
-WGPUBuffer positionBuffer = wgpuDeviceCreateBuffer(device, &bufferDesc);
+positionBuffer = wgpuDeviceCreateBuffer(device, &bufferDesc);
 wgpuQueueWriteBuffer(queue, positionBuffer, 0, positionData.data(), bufferDesc.size);
 
 bufferDesc.size = colorData.size() * sizeof(float);
-WGPUBuffer colorBuffer = wgpuDeviceCreateBuffer(device, &bufferDesc);
+colorBuffer = wgpuDeviceCreateBuffer(device, &bufferDesc);
 wgpuQueueWriteBuffer(queue, colorBuffer, 0, colorData.data(), bufferDesc.size);
 ```
 ````
 
+We declare `positionBuffer` and `colorBuffer` as members of the `Application` class so that we can access them in `MainLoop()`:
+
+````{tab} With webgpu.hpp
+```{lit} C++, Application attributes (append)
+private: // Application attributes
+	Buffer positionBuffer;
+	Buffer colorBuffer;
+```
+````
+
+````{tab} Vanilla webgpu.h
+```{lit} C++, Application attributes (append, for tangle root "Vanilla")
+private: // Application attributes
+	WGPUBuffer positionBuffer;
+	WGPUBuffer colorBuffer;
+```
+````
+
+And don't forget to release them in `Terminate()`:
+
+````{tab} With webgpu.hpp
+```{lit} C++, Terminate (prepend)
+// At the beginning of Terminate()
+positionBuffer.release();
+colorBuffer.release();
+```
+````
+
+````{tab} Vanilla webgpu.h
+```{lit} C++, Terminate (prepend, for tangle root "Vanilla")
+// At the beginning of Terminate()
+wgpuBufferRelease(positionBuffer);
+wgpuBufferRelease(colorBuffer);
+```
+````
+
+#### Layout and Attributes
+
 This time it is not the `VertexAttribute` struct but the `VertexBufferLayout` that is replaced with a vector:
 
 ````{tab} With webgpu.hpp
-```C++
+```{lit} C++, Describe vertex buffers (replace)
 // We now have 2 attributes
 std::vector<VertexBufferLayout> vertexBufferLayouts(2);
 
+// Position attribute
+{{Describe the position attribute and buffer layout}}
+
+// Color attribute
+{{Describe the color attribute and buffer layout}}
+
+pipelineDesc.vertex.bufferCount = static_cast<uint32_t>(vertexBufferLayouts.size());
+pipelineDesc.vertex.buffers = vertexBufferLayouts.data();
+```
+````
+
+````{tab} Vanilla webgpu.h
+```{lit} C++, Describe vertex buffers (replace, for tangle root "Vanilla")
+// We now have 2 attributes
+std::vector<WGPUVertexBufferLayout> vertexBufferLayouts(2);
+
+// Position attribute
+{{Describe the position attribute and buffer layout}}
+
+// Color attribute
+{{Describe the color attribute and buffer layout}}
+
+pipelineDesc.vertex.bufferCount = static_cast<uint32_t>(vertexBufferLayouts.size());
+pipelineDesc.vertex.buffers = vertexBufferLayouts.data();
+```
+````
+
+The position attribute itself remains as it was in the previous chapter when it was the only attribute:
+
+````{tab} With webgpu.hpp
+```{lit} C++, Describe the position attribute and buffer layout
 // Position attribute remains untouched
 VertexAttribute positionAttrib;
-positionAttrib.shaderLocation = 0;
+positionAttrib.shaderLocation = 0; // @location(0)
 positionAttrib.format = VertexFormat::Float32x2; // size of position
 positionAttrib.offset = 0;
 
@@ -468,31 +593,14 @@ vertexBufferLayouts[0].attributeCount = 1;
 vertexBufferLayouts[0].attributes = &positionAttrib;
 vertexBufferLayouts[0].arrayStride = 2 * sizeof(float); // stride = size of position
 vertexBufferLayouts[0].stepMode = VertexStepMode::Vertex;
-
-// Color attribute
-VertexAttribute colorAttrib;
-colorAttrib.shaderLocation = 1;
-colorAttrib.format = VertexFormat::Float32x3; // size of color
-colorAttrib.offset = 0;
-
-vertexBufferLayouts[1].attributeCount = 1;
-vertexBufferLayouts[1].attributes = &colorAttrib;
-vertexBufferLayouts[1].arrayStride = 3 * sizeof(float); // stride = size of color
-vertexBufferLayouts[1].stepMode = VertexStepMode::Vertex;
-
-pipelineDesc.vertex.bufferCount = static_cast<uint32_t>(vertexBufferLayouts.size());
-pipelineDesc.vertex.buffers = vertexBufferLayouts.data();
 ```
 ````
 
 ````{tab} Vanilla webgpu.h
-```C++
-// We now have 2 attributes
-std::vector<WGPUVertexBufferLayout> vertexBufferLayouts(2);
-
+```{lit} C++, Describe the position attribute and buffer layout (for tangle root "Vanilla")
 // Position attribute remains untouched
 WGPUVertexAttribute positionAttrib;
-positionAttrib.shaderLocation = 0;
+positionAttrib.shaderLocation = 0; // @location(0)
 positionAttrib.format = WGPUVertexFormat_Float32x2; // size of position
 positionAttrib.offset = 0;
 
@@ -500,10 +608,31 @@ vertexBufferLayouts[0].attributeCount = 1;
 vertexBufferLayouts[0].attributes = &positionAttrib;
 vertexBufferLayouts[0].arrayStride = 2 * sizeof(float); // stride = size of position
 vertexBufferLayouts[0].stepMode = WGPUVertexStepMode_Vertex;
+```
+````
 
-// Position attribute
+The new color attribute has this time also a **byte offset** of 0 (in its own buffer), but this time a **different byte stride**:
+
+````{tab} With webgpu.hpp
+```{lit} C++, Describe the color attribute and buffer layout
+// Color attribute
 VertexAttribute colorAttrib;
-colorAttrib.shaderLocation = 1;
+colorAttrib.shaderLocation = 1; // @location(1)
+colorAttrib.format = VertexFormat::Float32x3; // size of color
+colorAttrib.offset = 0;
+
+vertexBufferLayouts[1].attributeCount = 1;
+vertexBufferLayouts[1].attributes = &colorAttrib;
+vertexBufferLayouts[1].arrayStride = 3 * sizeof(float); // stride = size of color
+vertexBufferLayouts[1].stepMode = VertexStepMode::Vertex;
+```
+````
+
+````{tab} Vanilla webgpu.h
+```{lit} C++, Describe the color attribute and buffer layout (for tangle root "Vanilla")
+// Color attribute
+VertexAttribute colorAttrib;
+colorAttrib.shaderLocation = 1; // @location(1)
 colorAttrib.format = WGPUVertexFormat_Float32x3; // size of color
 colorAttrib.offset = 0;
 
@@ -511,27 +640,38 @@ vertexBufferLayouts[1].attributeCount = 1;
 vertexBufferLayouts[1].attributes = &colorAttrib;
 vertexBufferLayouts[1].arrayStride = 3 * sizeof(float); // stride = size of color
 vertexBufferLayouts[1].stepMode = WGPUVertexStepMode_Vertex;
-
-pipelineDesc.vertex.bufferCount = static_cast<uint32_t>(vertexBufferLayouts.size());
-pipelineDesc.vertex.buffers = vertexBufferLayouts.data();
 ```
 ````
 
-And finally we also have 2 calls to `renderPass.setVertexBuffer`. The first argument (`slot`) corresponds to the index of the buffer layout in the `pipelineDesc.vertex.buffers` array.
+#### Render Pass
+
+And finally in the render pass we have to **set both vertex buffers** by calling `renderPass.setVertexBuffer` twice. The first argument (`slot`) corresponds to the index of the buffer layout in the `pipelineDesc.vertex.buffers` array.
 
 ````{tab} With webgpu.hpp
-```C++
+```{lit} C++, Draw a triangle (replace)
+renderPass.setPipeline(pipeline);
+
 // Set vertex buffers while encoding the render pass
-renderPass.setVertexBuffer(0, positionBuffer, 0, positionData.size() * sizeof(float));
-renderPass.setVertexBuffer(1, colorBuffer, 0, colorData.size() * sizeof(float));
+renderPass.setVertexBuffer(0, positionBuffer, 0, positionBuffer.getSize());
+renderPass.setVertexBuffer(1, colorBuffer, 0, colorBuffer.getSize());
+//                         ^ Add a second call to set the second vertex buffer
+
+// We use the `vertexCount` variable instead of hard-coding the vertex count
+renderPass.draw(vertexCount, 1, 0, 0);
 ```
 ````
 
 ````{tab} Vanilla webgpu.h
-```C++
+```{lit} C++, Draw a triangle (replace, for tangle root "Vanilla")
+wgpuRenderPassEncoderSetPipeline(renderPass, pipeline);
+
 // Set vertex buffers while encoding the render pass
-wgpuRenderPassEncoderSetVertexBuffer(renderPass, 0, positionBuffer, 0, positionData.size() * sizeof(float));
-wgpuRenderPassEncoderSetVertexBuffer(renderPass, 1, colorBuffer, 0, colorData.size() * sizeof(float));
+wgpuRenderPassEncoderSetVertexBuffer(renderPass, 0, positionBuffer, 0, wgpuBufferGetSize(positionData));
+wgpuRenderPassEncoderSetVertexBuffer(renderPass, 1, colorBuffer, 0, wgpuBufferGetSize(colorBuffer));
+//                                               ^ Add a second call to set the second vertex buffer
+
+// We use the `vertexCount` variable instead of hard-coding the vertex count
+wgpuRenderPassEncoderDraw(renderPass, vertexCount, 1, 0, 0);
 ```
 ````
 
@@ -544,9 +684,31 @@ Conclusion
 Triangles with a color attribute (same result for both options).
 ```
 
-```{tip}
+````{tip}
 I changed the background color (`clearValue`) to `Color{ 0.05, 0.05, 0.05, 1.0 }` to better appreciate the colors of the triangles.
+
+```{lit} C++, Describe the attachment (hidden, replace)
+renderPassColorAttachment.view = targetView;
+renderPassColorAttachment.resolveTarget = nullptr;
+renderPassColorAttachment.loadOp = LoadOp::Clear;
+renderPassColorAttachment.storeOp = StoreOp::Store;
+renderPassColorAttachment.clearValue = Color{ 0.05, 0.05, 0.05, 1.0 };
+#ifndef WEBGPU_BACKEND_WGPU
+renderPassColorAttachment.depthSlice = WGPU_DEPTH_SLICE_UNDEFINED;
+#endif // NOT WEBGPU_BACKEND_WGPU
 ```
+
+```{lit} C++, Describe the attachment (hidden, replace, for tangle root "Vanilla")
+renderPassColorAttachment.view = targetView;
+renderPassColorAttachment.resolveTarget = nullptr;
+renderPassColorAttachment.loadOp = WGPULoadOp_Clear;
+renderPassColorAttachment.storeOp = WGPUStoreOp_Store;
+renderPassColorAttachment.clearValue = WGPUColor{ 0.05, 0.05, 0.05, 1.0 };
+#ifndef WEBGPU_BACKEND_WGPU
+renderPassColorAttachment.depthSlice = WGPU_DEPTH_SLICE_UNDEFINED;
+#endif // NOT WEBGPU_BACKEND_WGPU
+```
+````
 
 ````{tab} With webgpu.hpp
 *Resulting code:* [`step033`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step033)

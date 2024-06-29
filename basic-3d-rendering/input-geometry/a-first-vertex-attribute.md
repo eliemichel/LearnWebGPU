@@ -317,14 +317,15 @@ std::vector<float> vertexData = {
 	// x2, y2
 	+0.0, +0.5
 };
+
+// We will declare vertexCount as a member of the Application class
+vertexCount = static_cast<uint32_t>(vertexData.size() / 2);
 ```
 
 The GPU-side vertex buffer is created **like any other buffer**, as introduced in the previous chapter. The main difference is that we must specify `BufferUsage::Vertex` in its `usage` field.
 
 ````{tab} With webgpu.hpp
 ```{lit} C++, Create vertex buffer
-vertexCount = static_cast<uint32_t>(vertexData.size() / 2);
-
 // Create vertex buffer
 BufferDescriptor bufferDesc;
 bufferDesc.size = vertexData.size() * sizeof(float);
@@ -339,8 +340,6 @@ queue.writeBuffer(vertexBuffer, 0, vertexData.data(), bufferDesc.size);
 
 ````{tab} Vanilla webgpu.h
 ```{lit} C++, Create vertex buffer (for tangle root "Vanilla")
-vertexCount = static_cast<uint32_t>(vertexData.size() / 2);
-
 // Create vertex buffer
 WGPUBufferDescriptor bufferDesc{};
 bufferDesc.nextInChain = nullptr;
