@@ -389,7 +389,7 @@ vertexAttribs[1].offset = 2 * sizeof(float); // non null offset!
 
 ```{lit-setup}
 :tangle-root: 033 - Multiple Attributes - Option B - vanilla
-:parent: 033 - Multiple Attributes - Option A
+:parent: 033 - Multiple Attributes - Option A - vanilla
 :alias: Vanilla
 ```
 
@@ -471,10 +471,12 @@ BufferDescriptor bufferDesc;
 bufferDesc.usage = BufferUsage::CopyDst | BufferUsage::Vertex;
 bufferDesc.mappedAtCreation = false;
 
+bufferDesc.label = "Vertex Position";
 bufferDesc.size = positionData.size() * sizeof(float);
 positionBuffer = device.createBuffer(bufferDesc);
 queue.writeBuffer(positionBuffer, 0, positionData.data(), bufferDesc.size);
 
+bufferDesc.label = "Vertex Color";
 bufferDesc.size = colorData.size() * sizeof(float);
 colorBuffer = device.createBuffer(bufferDesc);
 queue.writeBuffer(colorBuffer, 0, colorData.data(), bufferDesc.size);
@@ -489,15 +491,25 @@ bufferDesc.nextInChain = nullptr;
 bufferDesc.usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_Vertex;
 bufferDesc.mappedAtCreation = false;
 
+bufferDesc.label = "Vertex Position";
 bufferDesc.size = positionData.size() * sizeof(float);
 positionBuffer = wgpuDeviceCreateBuffer(device, &bufferDesc);
 wgpuQueueWriteBuffer(queue, positionBuffer, 0, positionData.data(), bufferDesc.size);
 
+bufferDesc.label = "Vertex Color";
 bufferDesc.size = colorData.size() * sizeof(float);
 colorBuffer = wgpuDeviceCreateBuffer(device, &bufferDesc);
 wgpuQueueWriteBuffer(queue, colorBuffer, 0, colorData.data(), bufferDesc.size);
 ```
 ````
+
+```{lit} C++, Create vertex buffer (hidden, append, also for tangle root "Vanilla")
+// It is not easy with the auto-generation of code to remove the previously
+// defined `vertexBuffer` attribute, but at the same time some compilers
+// (rightfully) complain if we do not use it. This is a hack to mark the
+// variable as used and have automated build tests pass.
+(void)vertexBuffer;
+```
 
 We declare `positionBuffer` and `colorBuffer` as members of the `Application` class so that we can access them in `MainLoop()`:
 
@@ -623,7 +635,7 @@ vertexBufferLayouts[1].stepMode = VertexStepMode::Vertex;
 ````{tab} Vanilla webgpu.h
 ```{lit} C++, Describe the color attribute and buffer layout (for tangle root "Vanilla")
 // Color attribute
-VertexAttribute colorAttrib;
+WGPUVertexAttribute colorAttrib;
 colorAttrib.shaderLocation = 1; // @location(1)
 colorAttrib.format = WGPUVertexFormat_Float32x3; // size of color
 colorAttrib.offset = 0;
@@ -658,7 +670,7 @@ renderPass.draw(vertexCount, 1, 0, 0);
 wgpuRenderPassEncoderSetPipeline(renderPass, pipeline);
 
 // Set vertex buffers while encoding the render pass
-wgpuRenderPassEncoderSetVertexBuffer(renderPass, 0, positionBuffer, 0, wgpuBufferGetSize(positionData));
+wgpuRenderPassEncoderSetVertexBuffer(renderPass, 0, positionBuffer, 0, wgpuBufferGetSize(positionBuffer));
 wgpuRenderPassEncoderSetVertexBuffer(renderPass, 1, colorBuffer, 0, wgpuBufferGetSize(colorBuffer));
 //                                               ^ Add a second call to set the second vertex buffer
 
