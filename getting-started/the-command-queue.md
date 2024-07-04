@@ -207,18 +207,12 @@ The present example is so simple that `wgpu-native` actually completes the submi
 
 As can be seen in [`webgpu.h`](https://github.com/webgpu-native/webgpu-headers/blob/main/webgpu.h), the value `4` corresponds to `WGPUQueueWorkDoneStatus_DeviceLost`. Indeed, our program **terminates** right after submitting the commands, without waiting for it to complete, so **the device gets destroyed before** the submitted work is done!
 
-So, we need to wait a little bit, and **importantly** to call **tick**/**poll** the device so that it updates its awaiting tasks. This is a part of the API that is **not standard yet**, so we must adapt our implementation to the backend:
+The queue will be finished after some time and there can be a callback for when the queue finishes.
 
 ```{lit} C++, Poll device
-for (int i = 0 ; i < 5 ; ++i) {
-	std::cout << "Tick/Poll device..." << std::endl;
-#if defined(WEBGPU_BACKEND_DAWN)
-	wgpuDeviceTick(device);
-#elif defined(WEBGPU_BACKEND_WGPU)
-	wgpuDevicePoll(device, false, nullptr);
-#elif defined(WEBGPU_BACKEND_EMSCRIPTEN)
-	emscripten_sleep(100);
-#endif
+wgpuQueueOnSubmittedWorkDone(queue, [](WGPUQueueWorkDoneStatus status, void * userdata) {
+std::cout << "Queued work finished with status: " << status << std::endl;
+}, nullptr);
 }
 ```
 
