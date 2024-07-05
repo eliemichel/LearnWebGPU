@@ -71,8 +71,6 @@ std::vector<uint16_t> indexData = {
 	0, 1, 2, // Triangle #0 connects points #0, #1 and #2
 	0, 2, 3  // Triangle #1 connects points #0, #2 and #3
 };
-
-int indexCount = static_cast<int>(indexData.size());
 ```
 
 The index data must have type `uint16_t` or `uint32_t`. The former is more compact but limited to $2^{16} = 65 536$ vertices.
@@ -80,7 +78,7 @@ The index data must have type `uint16_t` or `uint32_t`. The former is more compa
 ````{note}
 I also keep the interleaved color attribute in this example, my point data is:
 
-```{lit} C++, Define point data (replace, also for tangle root "Vanilla")
+```{lit} C++, Define point data (also for tangle root "Vanilla")
 std::vector<float> pointData = {
 	// x,   y,     r,   g,   b
 	-0.5, -0.5,   1.0, 0.0, 0.0,
