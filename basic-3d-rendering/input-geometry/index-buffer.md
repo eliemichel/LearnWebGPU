@@ -103,7 +103,7 @@ Using the index buffer adds an **overhead** of `6 * sizeof(uint16_t)` = 12 bytes
 
 This split of data reorganizes a bit our buffer initialization method:
 
-```{lit} C++, InitializeBuffers method (replace)
+```{lit} C++, InitializeBuffers method (replace, also for tangle root "Vanilla")
 void Application::InitializeBuffers() {
 	{{Define point data}}
 	{{Define index data}}
@@ -162,6 +162,22 @@ private: // Application attributes
 	WGPUBuffer pointBuffer;
 	WGPUBuffer indexBuffer;
 	uint32_t indexCount;
+```
+````
+
+And as usual, we release buffers in `Terminate()`
+
+````{tab} With webgpu.hpp
+```{lit} C++, Terminate (prepend)
+pointBuffer.release();
+indexBuffer.release();
+```
+````
+
+````{tab} Vanilla webgpu.h
+```{lit} C++, Terminate (prepend, for tangle root "Vanilla")
+wgpuBufferRelease(pointBuffer);
+wgpuBufferRelease(indexBuffer);
 ```
 ````
 
@@ -242,10 +258,10 @@ renderPass.drawIndexed(indexCount, 1, 0, 0, 0);
 wgpuRenderPassEncoderSetPipeline(renderPass, pipeline);
 
 // Set both vertex and index buffers
-wgpuRenderPassEncoderSetVertexBuffer(renderPass, 0, vertexBuffer, 0, wgpuBufferGetSize(pointData));
+wgpuRenderPassEncoderSetVertexBuffer(renderPass, 0, pointBuffer, 0, wgpuBufferGetSize(pointBuffer));
 // The second argument must correspond to the choice of uint16_t or uint32_t
 // we've done when creating the index buffer.
-wgpuRenderPassEncoderSetIndexBuffer(renderPass, indexBuffer, WGPUIndexFormat_Uint16, 0, wgpuBufferGetSize(indexData));
+wgpuRenderPassEncoderSetIndexBuffer(renderPass, indexBuffer, WGPUIndexFormat_Uint16, 0, wgpuBufferGetSize(indexBuffer));
 
 // Replace `draw()` with `drawIndexed()` and `vertexCount` with `indexCount`
 // The extra argument is an offset within the index buffer.
@@ -274,7 +290,7 @@ let ratio = 640.0 / 480.0; // The width and height of the target surface
 out.position = vec4f(in.position.x, in.position.y * ratio, 0.0, 1.0);
 ```
 
-```{lit} rust, Vertex shader body (hidden, also for tangle root "Vanilla")
+```{lit} rust, Vertex shader body (replace, hidden, also for tangle root "Vanilla")
 var out: VertexOutput; // create the output struct
 {{Vertex shader position}}
 out.color = in.color; // forward the color attribute to the fragment shader
