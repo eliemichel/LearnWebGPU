@@ -127,15 +127,21 @@ a.comment:hover {
 const litBlockInfoStyle = `
 .wrapper {
 	text-align: right;
-	font-size: 0.8em;
-	position: absolute;
-	top: calc(100% - 0.7em);
-	right: 0.5em;
+	position: relative;
+	top: -1.7em;
+	margin-bottom: -1.7em;
 	margin-top: 0;
+	padding: 0;
+}
+
+.lit-info {
+	display: inline-block;
+	font-size: 0.8em;
 	color: var(--color-foreground-lit-info);
 	background-color: var(--color-background-lit-info);
 	border-radius: 0.3em;
 	padding: 0 0.3em;
+	padding-bottom: 0.05em;
 }
 
 .wrapper a.lit-name {
@@ -291,10 +297,13 @@ class LitBlockInfo extends HTMLElement {
 
 		const wrapper = document.createElement("div");
 		wrapper.setAttribute("class", "wrapper");
-		wrapper.setAttribute("data-theme", "dark");
+
+		const info = document.createElement("div");
+		info.setAttribute("class", "lit-info");
+		wrapper.append(info);
 
 		if (options.get('showBlockName')) {
-			wrapper.append(...this.createLitLink(data.name, data.permalink, "lit-name"));
+			info.append(...this.createLitLink(data.name, data.permalink, "lit-name"));
 		}
 
 		if (options.get('showReferenceDetails')) {
@@ -311,11 +320,11 @@ class LitBlockInfo extends HTMLElement {
 			];
 			details.map(section => {
 				if (data[section].length > 0) {
-					wrapper.append(document.createTextNode(" " + section + " "));
+					info.append(document.createTextNode(" " + section + " "));
 					data[section].map(lit => {
-						wrapper.append(...this.createLitLink(lit.name, lit.url));
+						info.append(...this.createLitLink(lit.name, lit.url));
 						if (lit.details) {
-							wrapper.append(document.createTextNode(" " + lit.details));
+							info.append(document.createTextNode(" " + lit.details));
 						}
 					});
 				}
