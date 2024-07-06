@@ -452,14 +452,6 @@ class CodeBlockRegistry:
 
         existing = self.get_rec(lit.name, lit.tangle_root)
 
-        # DEBUG
-        if lit.name in { "Application attributes" } and "vanilla" not in lit.tangle_root:
-            print(f"_override_codeblock({lit.format()}, {relation_to_prev})")
-            if existing:
-                print(f"  | existing = {existing.format()}")
-            else:
-                print(f"  | (no prev)")
-
         if existing is None:
             self._missing.append(
                 MissingCodeBlock(lit.key, lit.relation_to_prev)
