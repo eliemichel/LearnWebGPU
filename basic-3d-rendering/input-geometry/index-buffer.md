@@ -88,7 +88,7 @@ std::vector<float> pointData = {
 };
 ```
 
-```{lit} C++, Define index data (hidden, append, also for tangle root "Vanilla")
+```{lit} C++, Define index data (hidden, also for tangle root "Vanilla")
 // This is a list of indices referencing positions in the pointData
 std::vector<uint16_t> indexData = {
 	0, 1, 2, // Triangle #0 connects points #0, #1 and #2
