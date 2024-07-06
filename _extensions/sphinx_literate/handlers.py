@@ -33,6 +33,7 @@ def merge_registry(app, env, docnames, other):
 @print_traceback
 def process_literate_nodes(app: Sphinx, doctree, fromdocname: str):
     registry = CodeBlockRegistry.from_env(app.builder.env)
+    registry.try_fixing_all_missing()
     registry.check_integrity()
 
     has_literate_node = False

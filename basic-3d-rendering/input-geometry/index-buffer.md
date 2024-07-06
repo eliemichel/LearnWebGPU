@@ -5,13 +5,11 @@ Index Buffer
 :tangle-root: 034 - Index Buffer - vanilla
 :parent: 033 - Multiple Attributes - Option A - vanilla
 :alias: Vanilla
-:debug:
 ```
 
 ```{lit-setup}
 :tangle-root: 034 - Index Buffer
 :parent: 033 - Multiple Attributes - Option A
-:debug:
 ```
 
 ````{tab} With webgpu.hpp
