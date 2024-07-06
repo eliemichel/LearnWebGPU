@@ -417,31 +417,6 @@ class CodeBlockRegistry:
             lit.relation_to_prev = 'NEW'
             self._add_codeblock(lit)
 
-        self._fix_missing_referees(lit)
-
-    def _fix_missing_referees(self, lit):
-        """
-        Notify all children tangles that a new block `lit` is defined and thus
-        may no longer be missing.
-        Also set child_lit.prev
-        FIXME: This is inefficient, maybe we should manage missings
-        differently (e.g., by not storing them and only testing once the full
-        register is created.)
-        """
-        for child_tangle in self._all_children_tangle_roots(lit.tangle_root):
-            new_missing_list = []
-            for missing in self._missing:
-                if missing.key == CodeBlock.build_key(lit.name, child_tangle):
-                    child_lit = self.get_by_key(missing.key)
-                    if child_lit.prev is not None:
-                        print(f"ERROR {child_lit.format()} has non null prev {child_lit.prev.format()}")
-                    assert(child_lit.prev is None)
-                    assert(child_lit.relation_to_prev not in {'NEW', 'INSERTED'})
-                    child_lit.prev = lit
-                else:
-                    new_missing_list.append(missing)
-            self._missing = new_missing_list
-
     def _add_codeblock(self, lit: CodeBlock) -> None:
         """
         Add a new code block to the repository. If a block already exists with
@@ -476,6 +451,14 @@ class CodeBlockRegistry:
         lit.relation_to_prev = relation_to_prev
 
         existing = self.get_rec(lit.name, lit.tangle_root)
+
+        # DEBUG
+        if lit.name in { "Application attributes" } and "vanilla" not in lit.tangle_root:
+            print(f"_override_codeblock({lit.format()}, {relation_to_prev})")
+            if existing:
+                print(f"  | existing = {existing.format()}")
+            else:
+                print(f"  | (no prev)")
 
         if existing is None:
             self._missing.append(
@@ -515,7 +498,6 @@ class CodeBlockRegistry:
                 self._add_codeblock(lit)
             else:
                 self._override_codeblock(lit, lit.relation_to_prev)
-            self._fix_missing_referees(lit)
             self.check_integrity(allow_missing=True)
 
         # Merge cross-references
@@ -523,15 +505,24 @@ class CodeBlockRegistry:
             self._references[key].update(refs)
 
     def try_fixing_all_missing(self):
+        new_missing_list = []
         for missing in self._missing[:]:
             missing_tangle_root, missing_name = missing.key.split("##")
+
+            # Look for the missing lit name in the parent tangle
             entry = self._hierarchy.get(missing_tangle_root)
             if entry is None:
                 continue
             parent_tangle_root = entry.parent
             existing = self.get_rec(missing_name, parent_tangle_root)
+
+            # If found, register it as previous literate block
             if existing:
-                self._fix_missing_referees(existing)
+                child_lit = self.get_by_key(missing.key)
+                child_lit.prev = existing
+            else:
+                new_missing_list.append(missing)
+        self._missing = new_missing_list
 
     def remove_codeblocks_by_docname(self, docname: str) -> None:
         # TODO: when supporting cross-document REPLACE, be careful here
@@ -779,7 +770,6 @@ class CodeBlockRegistry:
         Display debug information about the registry.
         Used by {lit-registry} directive.
         """
-        options = set()
         ret = []
         ret += ["== Registry dump =="]
         ret += ["Blocks:"]
