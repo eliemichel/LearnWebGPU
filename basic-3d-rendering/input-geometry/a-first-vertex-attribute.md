@@ -140,22 +140,6 @@ And we get nothing more than required, so that if we forget to update the initia
 This initial check is done by specifying a non null `requiredLimits` pointer in the device descriptor. I suggest that we create a method `GetRequiredLimits(Adapter adapter)` dedicated to setting our app requirements:
 
 ````{tab} With webgpu.hpp
-```{lit} C++, Build device descriptor (append)
-// Before adapter.requestDevice(deviceDesc)
-RequiredLimits requiredLimits = GetRequiredLimits(adapter);
-deviceDesc.requiredLimits = &requiredLimits;
-```
-````
-
-````{tab} Vanilla webgpu.h
-```{lit} C++, Build device descriptor (append, for tangle root "Vanilla")
-// Before requestDeviceSync(adapter, &deviceDesc)
-WGPURequiredLimits requiredLimits = GetRequiredLimits(adapter);
-deviceDesc.requiredLimits = &requiredLimits;
-```
-````
-
-````{tab} With webgpu.hpp
 ```{lit} C++, Private methods (append)
 // In Application class
 private:
@@ -171,9 +155,23 @@ private:
 ```
 ````
 
-```{note}
-We do not really need the adapter to determine the required limits in our case, but I pass it as an argument because it **can become useful** in a scenario where a **different quality of device** is requested depending on the **adapter's capabilities**.
+We then call this method while building the **device descriptor**:
+
+````{tab} With webgpu.hpp
+```{lit} C++, Build device descriptor (append)
+// Before adapter.requestDevice(deviceDesc)
+RequiredLimits requiredLimits = GetRequiredLimits(adapter);
+deviceDesc.requiredLimits = &requiredLimits;
 ```
+````
+
+````{tab} Vanilla webgpu.h
+```{lit} C++, Build device descriptor (append, for tangle root "Vanilla")
+// Before requestDeviceSync(adapter, &deviceDesc)
+WGPURequiredLimits requiredLimits = GetRequiredLimits(adapter);
+deviceDesc.requiredLimits = &requiredLimits;
+```
+````
 
 The required limits follow the **same structure** than the supported limits, we can customize some of them for our vertex attribute:
 
@@ -195,8 +193,8 @@ RequiredLimits Application::GetRequiredLimits(Adapter adapter) const {
 	requiredLimits.limits.maxBufferSize = 6 * 2 * sizeof(float);
 	// Maximum stride between 2 consecutive vertices in the vertex buffer
 	requiredLimits.limits.maxVertexBufferArrayStride = 2 * sizeof(float);
-	// This must be set even if we do not use storage buffers for now
-	requiredLimits.limits.minStorageBufferOffsetAlignment = supportedLimits.limits.minStorageBufferOffsetAlignment;
+
+	{{Other device limits}}
 
 	return requiredLimits;
 }
@@ -231,6 +229,8 @@ WGPURequiredLimits Application::GetRequiredLimits(WGPUAdapter adapter) const {
 	requiredLimits.limits.maxBufferSize = 6 * 2 * sizeof(float);
 	// Maximum stride between 2 consecutive vertices in the vertex buffer
 	requiredLimits.limits.maxVertexBufferArrayStride = 2 * sizeof(float);
+
+	{{Other device limits}}
 
 	return requiredLimits;
 }
@@ -269,12 +269,12 @@ limits.maxComputeWorkgroupsPerDimension = WGPU_LIMIT_U32_UNDEFINED;
 ```
 ````
 
-```{important}
-Notice how I **initialized the required limits** object with `= Default` above. This is a syntactic helper provided by the `webgpu.hpp` wrapper for all structs to prevent us from manually setting default values. In this case it sets all limits to `WGPU_LIMIT_U32_UNDEFINED` or `WGPU_LIMIT_U64_UNDEFINED` to mean that there is no requirement.
-```
-
 ```{lit} C++, Application implementation (hidden, append, also for tangle root "Vanilla")
 {{GetRequiredLimits method}}
+```
+
+```{important}
+Notice how I **initialized the required limits** object with `= Default` above. This is a syntactic helper provided by the `webgpu.hpp` wrapper for all structs to prevent us from manually setting default values. In this case it sets all limits to `WGPU_LIMIT_U32_UNDEFINED` or `WGPU_LIMIT_U64_UNDEFINED` to mean that there is no requirement.
 ```
 
 I now get these more secure supported limits:
@@ -285,6 +285,18 @@ device.maxVertexBuffers: 1
 ```
 
 I recommend you have a look at all the fields of the `WGPULimits` structure in `webgpu.h` so that you know when to add something to the required limits.
+
+````{note}
+There are two limits that may cause issue even if set to `WGPU_LIMIT_U32_UNDEFINED`, namely the one that set **minimums** rather than maximums. The default "undefined" value may not be supported by the adapter, so **in this case only** I suggest we forward values from the **supported limits**:
+
+```{lit} C++, Other device limits (also for tangle root "Vanilla")
+// These two limits are different because they are "minimum" limits,
+// they are the only ones we are may forward from the adapter's supported
+// limits.
+requiredLimits.limits.minUniformBufferOffsetAlignment = supportedLimits.limits.minUniformBufferOffsetAlignment;
+requiredLimits.limits.minStorageBufferOffsetAlignment = supportedLimits.limits.minStorageBufferOffsetAlignment;
+```
+````
 
 ### Default capabilities
 

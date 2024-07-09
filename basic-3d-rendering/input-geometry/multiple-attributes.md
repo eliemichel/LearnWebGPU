@@ -165,66 +165,9 @@ return vec4f(in.color, 1.0); // use the interpolated color coming from the verte
 
 There is a **limit on the number of components** that can be forwarded from vertex to fragment shader. In our case, we ask for 3 (float) components:
 
-```{lit} C++, List required limits (hidden, also for tangle root "Vanilla")
-// NB: In this auto-generated ("tangled") source code, updates to limits get
-// appended at the end of this block, so pay attention to the last line that
-// affects a given limit field.
-
-// We use at most 1 vertex attribute for now
-requiredLimits.limits.maxVertexAttributes = 1;
-// We should also tell that we use 1 vertex buffers
-requiredLimits.limits.maxVertexBuffers = 1;
-// Maximum size of a buffer is 6 vertices of 2 float each
-requiredLimits.limits.maxBufferSize = 6 * 2 * sizeof(float);
-// Maximum stride between 2 consecutive vertices in the vertex buffer
-requiredLimits.limits.maxVertexBufferArrayStride = 2 * sizeof(float);
-// This must be set even if we do not use storage buffers for now
-requiredLimits.limits.minStorageBufferOffsetAlignment = supportedLimits.limits.minStorageBufferOffsetAlignment;
-```
-
-```{lit} C++, List required limits (append, also for tangle root "Vanilla")
+```{lit} C++, Other device limits (append, also for tangle root "Vanilla")
 // There is a maximum of 3 float forwarded from vertex to fragment shader
 requiredLimits.limits.maxInterStageShaderComponents = 3;
-```
-
-```{lit} C++, GetRequiredLimits method (hidden, replace)
-RequiredLimits Application::GetRequiredLimits(Adapter adapter) const {
-	// Get adapter supported limits, in case we need them
-	SupportedLimits supportedLimits;
-	adapter.getLimits(&supportedLimits);
-
-	// Don't forget to = Default
-	RequiredLimits requiredLimits = Default;
-
-	{{List required limits}}
-
-	return requiredLimits;
-}
-```
-
-```{lit} C++, GetRequiredLimits method (hidden, replace, for tangle root "Vanilla")
-// If you do not use webgpu.hpp, I suggest you create a function to init the
-// WGPULimits structure:
-void setDefault(WGPULimits &limits) {
-	limits.maxTextureDimension1D = WGPU_LIMIT_U32_UNDEFINED;
-	limits.maxTextureDimension2D = WGPU_LIMIT_U32_UNDEFINED;
-	limits.maxTextureDimension3D = WGPU_LIMIT_U32_UNDEFINED;
-	{{Set everything to WGPU_LIMIT_U32_UNDEFINED or WGPU_LIMIT_U64_UNDEFINED to mean no limit}}
-}
-
-WGPURequiredLimits Application::GetRequiredLimits(WGPUAdapter adapter) const {
-	// Get adapter supported limits, in case we need them
-	WGPUSupportedLimits supportedLimits;
-	supportedLimits.nextInChain = nullptr;
-	wgpuAdapterGetLimits(adapter, &supportedLimits);
-
-	WGPURequiredLimits requiredLimits{};
-	setDefault(requiredLimits.limits);
-
-	{{List required limits}}
-
-	return requiredLimits;
-}
 ```
 
 Vertex Buffer Layout
@@ -237,7 +180,7 @@ There are **different ways** of feeding multiple attributes to the vertex fetch 
 ````{admonition} Device limits
 Before anything, do not forget to **increase the vertex attribute limit** of your device:
 
-```{lit} C++, List required limits (append, also for tangle root "Vanilla")
+```{lit} C++, Other device limits (append, also for tangle root "Vanilla")
 requiredLimits.limits.maxVertexAttributes = 2;
 //                                          ^ This was 1
 ```
@@ -337,7 +280,7 @@ vertexBufferLayout.stepMode = WGPUVertexStepMode_Vertex;
 ````{admonition} Device limits
 We thus need to update the **buffer size and stride limits**:
 
-```{lit} C++, List required limits (append, also for tangle root "Vanilla")
+```{lit} C++, Other device limits (append, also for tangle root "Vanilla")
 requiredLimits.limits.maxBufferSize = 6 * 5 * sizeof(float);
 requiredLimits.limits.maxVertexBufferArrayStride = 5 * sizeof(float);
 ```
@@ -417,7 +360,7 @@ Another possible data layout is to have **two different buffers** for the two at
 ````{admonition} Device limits
 Make sure to change the device limit to support this:
 
-```{lit} C++, List required limits (append, also for tangle root "Vanilla")
+```{lit} C++, Other device limits (append, also for tangle root "Vanilla")
 requiredLimits.limits.maxVertexBuffers = 2;
 ```
 ````
@@ -454,7 +397,7 @@ assert(vertexCount == static_cast<uint32_t>(colorData.size() / 3));
 ````{note}
 This time, the maximum buffer size/stride can be lower:
 
-```{lit} C++, List required limits (append, also for tangle root "Vanilla")
+```{lit} C++, Other device limits (append, also for tangle root "Vanilla")
 requiredLimits.limits.maxBufferSize = 6 * 3 * sizeof(float);
 requiredLimits.limits.maxVertexBufferArrayStride = 3 * sizeof(float);
 ```
