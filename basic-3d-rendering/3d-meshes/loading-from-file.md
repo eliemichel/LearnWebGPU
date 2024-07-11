@@ -105,6 +105,23 @@ for (const auto& shape : shapes) {
 }
 ```
 
+````{note}
+> 🤔 Why did we stop using **indexed drawing** here?
+
+The OBJ file format is more flexible than what the GPU rasterization pipeline can handle. Typically a vertex whose **position `p1` is shared** by 2 triangles but that have **different normals** `n1`/`n1b` is possible in an OBJ file:
+
+```
+# Inside the OBJ file
+f 3 p1/n1 p2/n2 p3/n3
+f 3 p1/n1b p4/n4 p5/n5
+#      ^^^ index of the normal
+#   ^^ index of the position
+# ^ number of points in the face
+```
+
+But in an **indexed draw call**, two vertices that have the **same index** must share **all of their attributes**, otherwise they must be considered as 2 different vertices. So either way, we need to reorganise the data between what we load from the file and what we store in GPU buffers.
+````
+
 ## Loading a first object
 
 We stop using indexed drawing but switch to a vector of `VertexAttributes` rather than a blind vector of `float` for the vertex buffer data:

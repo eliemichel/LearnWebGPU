@@ -2,22 +2,26 @@ import subprocess
 
 # Config
 clone_root = r"G:\SourceCode\LearnWebGPU-Code-folded"
-cherry_picked_commit = "1957beb"
+cherry_picked_commit = "725ec5bc981eb45eb39a584a5449d526c90d9aa6"
 all_branches = [
     #"step000",
     #"step001",
-    "step005",
-    "step010",
-    "step015",
-    "step020",
-    "step025",
-    "step028",
-    "step030",
-    "step030-vanilla",
-    "step031",
-    "step031-vanilla",
-    "step032",
+    #"step005",
+    #"step010",
+    #"step015",
+    #"step020",
+    #"step025",
+    #"step028",
+    #"step030",
+    #"step030-vanilla",
+    #"step031",
+    #"step031-vanilla",
+    #"step032",
     "step032-vanilla",
+    "step033",
+    "step033-vanilla",
+    "step034",
+    "step034-vanilla",
 
     #"step030-headless",
     #"step030-sdl",
