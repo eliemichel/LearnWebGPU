@@ -99,7 +99,7 @@ std::vector<uint16_t> indexData = {
 Using the index buffer adds an **overhead** of `6 * sizeof(uint16_t)` = 12 bytes **but also saves** `2 * 5 * sizeof(float)` = 40 bytes, so even on this very simple example it is worth using.
 ````
 
-This split of data reorganizes a bit our buffer initialization method:
+This split of data reorganizes our buffer initialization method:
 
 ```{lit} C++, InitializeBuffers method (replace, also for tangle root "Vanilla")
 void Application::InitializeBuffers() {

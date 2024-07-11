@@ -92,7 +92,7 @@ WGPURenderPipeline pipeline = wgpuDeviceCreateRenderPipeline(device, &pipelineDe
 ```
 ````
 
-We now detail the configuration of the **different stages**. We start with a very **minimal setup** where we leave a lot of features unused, they will be introduce progressively in the next chapters.
+We now detail the configuration of the **different stages**. We start with a very **minimal setup** where we leave a lot of features unused, they will be introduced progressively in the next chapters.
 
 **Pipeline description** consists in the following steps, **following the order of the figure above**:
 
