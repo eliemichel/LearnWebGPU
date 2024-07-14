@@ -213,7 +213,7 @@ WGPUAdapter requestAdapterSync(WGPUInstance instance, WGPURequestAdapterOptions 
 {{Request adapter function}}
 ```
 
-In the main function, after creating the WGPUInstance, we can get the adapter:
+In the main function, after creating the WebGPU instance, we can get the adapter:
 
 ```{lit} C++, Request adapter
 std::cout << "Requesting adapter..." << std::endl;
