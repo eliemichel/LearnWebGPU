@@ -27,7 +27,7 @@ First, the render pipeline **does not draw directly on the texture that is curre
 
 Second, drawing takes a **different time** than the frame rate required by your application, so the GPU may have to wait until the next frame is needed. There might be more than one off-screen texture waiting in the queue to be presented, so that fluctuations in the render time get amortized.
 
-Last, **these off-screen textures are reused** as much as possible. As soon as a new texture is presented, the previous one can be reused as a target for the next frame. This whole mechanism of called a **Swap Chain** and is handled under the hood by the **Surface** object.
+Last, **these off-screen textures are reused** as much as possible. As soon as a new texture is presented, the previous one can be reused as a target for the next frame. This whole mechanism is called a **Swap Chain** and is handled under the hood by the **Surface** object.
 
 ```{note}
 Remember that the GPU process runs at its own pace and that our CPU-issued commands are only asynchronously executed. Implementing the swap chain process manually would hence require a lot of boilerplate, so we are glad it is provided by the API!
