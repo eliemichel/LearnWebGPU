@@ -241,6 +241,7 @@ Of course we must release this view once we no longer need it, just before prese
 ```{lit} C++, Present the surface onto the window
 // At the end of the frame
 wgpuTextureViewRelease(targetView);
+wgpuTextureRelease(surfaceTexture.texture);
 ```
 
 ### Presenting
@@ -259,6 +260,7 @@ As a consequence, we **must not** call `wgpuSurfacePresent()` when building with
 ```{lit} C++, Present the surface onto the window (replace)
 // At the end of the frame
 wgpuTextureViewRelease(targetView);
+wgpuTextureRelease(surfaceTexture.texture);
 #ifndef __EMSCRIPTEN__
 wgpuSurfacePresent(surface);
 #endif
