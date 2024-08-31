@@ -647,7 +647,7 @@ l & = \frac{1}{\tan(\alpha/2)} = \cot\frac{\alpha}{2} \\
 \end{align}
 $$
 
-Most probably you will use either fov or focal length and stick to it so there will be no need for conversion! We can still check that our formula gives again the same result:
+Most probably you will use either fov or focal length and stick to it so there will be no need for conversion! We can always still verify that our formula gives the same result:
 
 ```C++
 float fov = 2 * glm::atan(1 / focalLength);

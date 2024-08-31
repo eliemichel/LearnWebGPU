@@ -30,7 +30,7 @@ The **Z-Buffer algorithm** is what the GPU's render pipeline uses to solve the v
 As a result, only the fragment with the lowest depth is visible in the resulting image. The depth value for each pixel is stored in a special **texture** called the **Z-buffer**. This is the only memory overhead required by the Z-buffer algorithm, making it a good fit for real time rendering.
 
 ```{topic} About transparency
-The fact that only the fragment with the lowest depth is visible is **not guaranteed** when fragments have **opacity values that are neither 0 or 1** (and alpha-blending is used). Even worst: the order in which fragments are emitted has an impact on the result (because blending a fragment **A** and then a fragment **B** is different than blending **B** then **A**).
+The fact that only the fragment with the lowest depth is visible is **not guaranteed** when fragments have **opacity values that are neither 0 or 1** (and alpha-blending is used). Even worse; the order in which fragments are emitted has an impact on the result (because blending a fragment **A** and then a fragment **B** is different than blending **B** then **A**).
 
 Long story short: **transparent objects are always a bit tricky** to handle in a Z-buffer pipeline. A simple solution is to limit the number of transparent objects, and dynamically sort them wrt. their distance to the view point. More advanced schemes exist such as [Order-independent transparency](https://en.wikipedia.org/wiki/Order-independent_transparency) techniques.
 ```
