@@ -188,7 +188,7 @@ static void writeMipMaps(
 
 Before dealing with mip maps, we'd like to test our `loadTexture` for mip level 0. But for this we still miss one part: the **texture view**.
 
-To create the texture view that is used by the sampler, we need the **mip level count** and **format**. We can modify the `loadTexture` either to return these information, or as I do here to create an appropriate texture view and return it.
+To create the texture view that is used by the sampler, we need the **mip level count** and **format**. We can modify the `loadTexture` either to return this information or, as in this example, have it create an appropriate texture view and return it.
 
 This is made **optional** by passing the returned view by a pointer, that is ignored if null.
 
