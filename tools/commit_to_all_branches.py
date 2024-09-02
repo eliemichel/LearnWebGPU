@@ -1,8 +1,9 @@
 import subprocess
+from os.path import join, dirname
 
 # Config
-clone_root = r"G:\SourceCode\LearnWebGPU-Code-folded"
-cherry_picked_commit = "725ec5bc981eb45eb39a584a5449d526c90d9aa6"
+clone_root = join(dirname(dirname(dirname(__file__))), "LearnWebGPU-Code")
+cherry_picked_commit = "9fa6c0709209e04dba67b38cd5d1e66588d45b23"
 all_branches = [
     #"step000",
     #"step001",
@@ -10,13 +11,13 @@ all_branches = [
     #"step010",
     #"step015",
     #"step020",
-    #"step025",
-    #"step028",
-    #"step030",
-    #"step030-vanilla",
-    #"step031",
-    #"step031-vanilla",
-    #"step032",
+    "step025",
+    "step028",
+    "step030",
+    "step030-vanilla",
+    "step031",
+    "step031-vanilla",
+    "step032",
     "step032-vanilla",
     "step033",
     "step033-vanilla",
