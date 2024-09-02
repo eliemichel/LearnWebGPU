@@ -213,6 +213,8 @@ int main() {
 		app.MainLoop();
 	}
 
+	app.Terminate();
+
 	return 0;
 }
 ```
@@ -369,6 +371,8 @@ int main() {
 	}
 
 	{{Main loop}}
+
+	app.Terminate();
 
 	return 0;
 }
