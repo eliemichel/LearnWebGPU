@@ -70,7 +70,7 @@ struct CameraState {
 };
 ```
 
-We add such a state to our `Application` class.
+We then add this struct as a state in our `Application` class.
 
 ```C++
 // In the declaration of class Application
@@ -211,7 +211,7 @@ struct DragState {
 	// Inertia
 	vec2 velocity = {0.0, 0.0};
 	vec2 previousDelta;
-	float intertia = 0.9f;
+	float inertia = 0.9f;
 };
 ```
 
@@ -257,7 +257,7 @@ void Application::updateDragInertia() {
 		m_cameraState.angles.y = glm::clamp(m_cameraState.angles.y, -PI / 2 + 1e-5f, PI / 2 - 1e-5f);
 		// Dampen the velocity so that it decreases exponentially and stops
 		// after a few frames.
-		m_drag.velocity *= m_drag.intertia;
+		m_drag.velocity *= m_drag.inertia;
 		updateViewMatrix();
 	}
 }
