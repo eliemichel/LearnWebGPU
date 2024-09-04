@@ -91,7 +91,7 @@ As an example, we will use the typical Sci-Fi Helmet:
 
 <div class="sketchfab-embed-wrapper"> <iframe title="Battle Damaged Sci-fi Helmet - PBR" frameborder="0" allowfullscreen mozallowfullscreen="true" webkitallowfullscreen="true" allow="autoplay; fullscreen; xr-spatial-tracking" xr-spatial-tracking execution-while-out-of-viewport execution-while-not-rendered web-share src="https://sketchfab.com/models/b81008d513954189a063ff901f7abfe4/embed?dnt=1"> </iframe> </div>
 
-Download [DamagedHelmet.glb](https://github.com/KhronosGroup/glTF-Sample-Models/raw/master/2.0/DamagedHelmet/glTF-Binary/DamagedHelmet.glb) into your resource directory and try to load it in the application:
+Download [DamagedHelmet.glb](https://github.com/KhronosGroup/glTF-Sample-Models/raw/main/2.0/DamagedHelmet/glTF-Binary/DamagedHelmet.glb) into your resource directory and try to load it in the application:
 
 ```C++
 bool Application::initGeometry() {
