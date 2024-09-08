@@ -455,7 +455,7 @@ You can now get the surface by simply doing:
 ```
 
 ```{lit} C++, Get the surface
-surface = glfwGetWGPUSurface(instance, window);
+WGPUSurface surface = glfwGetWGPUSurface(instance, window);
 ```
 
 Also don't forget to release the surface at the end:
