@@ -172,7 +172,7 @@ The adapter can be **released before the device**. Actually it is good practice 
 ```
 
 ```{lit} C++, Destroy things (replace)
-wgpuDeviceRelease(device);
+wgpuAdapterRelease(adapter);
 ```
 
 ````
