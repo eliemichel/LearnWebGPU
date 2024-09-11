@@ -23,26 +23,37 @@ Building the website requires Python.
 
 1. It is recommended, but not mandatory, to set up a virtual Python environment:
 
-```
-$ virtualenv venv
-$ venv/Scripts/activate
+```bash
+# Create the virtualenv in the "venv" directory (only the first time)
+virtualenv venv
+# Activate the virtualenv (each time you open a new terminal)
+venv/Scripts/activate
 ```
 
 2. Then install Python packages
 
-```
+```bash
 pip install -r requirements.txt
 ```
 
 3. And finally build the website by running:
 
-```
+```bash
 make html
 ```
 
-4. To build the source code defined by [Sphinx Literate](https://github.com/eliemichel/sphinx_literate), run
+4. To open the new website, run the following simple server:
 
+```bash
+cd _build/html
+python -m http.server 8000
 ```
+
+Then browse to [http://localhost:8000](http://localhost:8000). You should see the LearnWebGPU website there.
+
+5. To build the source code defined by [Sphinx Literate](https://github.com/eliemichel/sphinx_literate) (optional), run
+
+```bash
 make tangle
 ```
 
