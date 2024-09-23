@@ -148,13 +148,13 @@ std::cout << "Requesting device..." << std::endl;
 WGPUDeviceDescriptor deviceDesc = {};
 {{Build device descriptor}}
 WGPUDevice device = requestDeviceSync(adapter, &deviceDesc);
+{{Set uncaptured error callback for emscripten}}
 
 std::cout << "Got device: " << device << std::endl;
 ```
 
 ```{lit} C++, Create things (append, hidden)
 {{Request device}}
-{{Setup device callbacks}}
 ```
 
 And of course, we release the device when the program ends:
@@ -211,11 +211,17 @@ deviceDesc.requiredLimits = nullptr; // we do not require any specific limit
 deviceDesc.defaultQueue.nextInChain = nullptr;
 deviceDesc.defaultQueue.label = "The default queue";
 {{Set device lost callback}}
+{{Set uncaptured error callback}}
 ```
 
 ```{lit} C++, Set device lost callback
 // Null for now, see below
 deviceDesc.deviceLostCallback = nullptr;
+```
+
+```{lit} C++, Set uncaptured error callback
+// Null for now, see below
+deviceDesc.uncapturedErrorCallbackInfo.callback = nullptr;
 ```
 
 We will come back here and refine these options whenever we will need some more capabilities from the device.
@@ -337,16 +343,30 @@ The `deviceLostCallback` must outlive the device, so that when the latter gets d
 
 ### Uncaptured Error Callback
 
-The uncaptured error callback is invoked whenever we misuse the API, and gives very informative feedback about what went wrong. It only set after the creation of the device, by calling `wgpuDeviceSetUncapturedErrorCallback`:
+The uncaptured error callback is invoked whenever we misuse the API, and gives very informative feedback about what went wrong. It provided through the device descriptor's `uncapturedErrorCallbackInfo.callback` field:
 
-```{lit} C++, Setup device callbacks
-auto onDeviceError = [](WGPUErrorType type, char const* message, void* /* pUserData */) {
+```{lit} C++, Set uncaptured error callback (replace)
+// A function that is invoked whenever there is an error in the use of the device
+auto uncapturedErrorCallback = [](WGPUErrorType type, char const* message, void* /* pUserData */) {
 	std::cout << "Uncaptured device error: type " << type;
 	if (message) std::cout << " (" << message << ")";
 	std::cout << std::endl;
 };
-wgpuDeviceSetUncapturedErrorCallback(device, onDeviceError, nullptr /* pUserData */);
+
+#ifndef WEBGPU_BACKEND_EMSCRIPTEN
+deviceDesc.uncapturedErrorCallbackInfo.callback = uncapturedErrorCallback;
+#endif // NOT WEBGPU_BACKEND_EMSCRIPTEN
 ```
+
+````{note}
+The `deviceLostCallback` will soon use a similar API, namely be specified through `deviceLostCallbackInfo.callback`. This is already available on with Dawn backend. On another hand, emscripten lags a bit behind and requires an older API, namely to set the error callback **after the device has been created**:
+
+```{lit} C++, Set uncaptured error callback for emscripten
+#ifdef WEBGPU_BACKEND_EMSCRIPTEN
+wgpuDeviceSetUncapturedErrorCallback(device, uncapturedErrorCallback, nullptr);
+#endif // WEBGPU_BACKEND_EMSCRIPTEN
+```
+````
 
 If you use a debugger (which I recommend), like `gdb` or your IDE, I recommend you **put a breakpoint** in this callback, so that your program pauses and provides you with a call stack whenever WebGPU encounters an unexpected error.
 
