@@ -415,27 +415,19 @@ You may notice very high numbers apparently not defined in this enum. These are 
 Lastly we can have a look at the adapter's properties, that contain information that we may want to display to the end user:
 
 ```{lit} C++, Inspect adapter (append)
-WGPUAdapterProperties properties = {};
-properties.nextInChain = nullptr;
-wgpuAdapterGetProperties(adapter, &properties);
-std::cout << "Adapter properties:" << std::endl;
-std::cout << " - vendorID: " << properties.vendorID << std::endl;
-if (properties.vendorName) {
-	std::cout << " - vendorName: " << properties.vendorName << std::endl;
-}
-if (properties.architecture) {
-	std::cout << " - architecture: " << properties.architecture << std::endl;
-}
-std::cout << " - deviceID: " << properties.deviceID << std::endl;
-if (properties.name) {
-	std::cout << " - name: " << properties.name << std::endl;
-}
-if (properties.driverDescription) {
-	std::cout << " - driverDescription: " << properties.driverDescription << std::endl;
-}
+WGPUAdapterInfo adapterInfo = {};
+adapterInfo.nextInChain = nullptr;
+wgpuAdapterGetInfo(adapter, &adapterInfo);
+std::cout << "Adapter info:" << std::endl;
+std::cout << " - vendor: " << adapterInfo.vendor << std::endl;
+std::cout << " - vendorID: " << adapterInfo.vendorID << std::endl;
+std::cout << " - architecture: " << adapterInfo.architecture << std::endl;
+std::cout << " - device: " << adapterInfo.device << std::endl;
+std::cout << " - deviceID: " << adapterInfo.deviceID << std::endl;
+std::cout << " - description: " << adapterInfo.description << std::endl;
 std::cout << std::hex;
-std::cout << " - adapterType: 0x" << properties.adapterType << std::endl;
-std::cout << " - backendType: 0x" << properties.backendType << std::endl;
+std::cout << " - adapterType: 0x" << adapterInfo.adapterType << std::endl;
+std::cout << " - backendType: 0x" << adapterInfo.backendType << std::endl;
 std::cout << std::dec; // Restore decimal numbers
 ```
 
@@ -443,12 +435,12 @@ Here is a sample result with my nice Titan RTX:
 
 ```
 Adapter properties:
+ - vendor: NVIDIA
  - vendorID: 4318
- - vendorName: NVIDIA
  - architecture:
+ - device: NVIDIA TITAN RTX
  - deviceID: 7682
- - name: NVIDIA TITAN RTX
- - driverDescription: 536.23
+ - description: 536.23
  - adapterType: 0x0
  - backendType: 0x5
 ```
