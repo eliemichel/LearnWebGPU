@@ -11,7 +11,7 @@ Opening a window
 
 Before being able to render anything on screen, we need to ask the Operating System (OS) to hand us some place where to draw things, something commonly known as a **window**.
 
-The process to open a window **depends a lot on the OS**, so we use a little library called [GLFW](https://www.glfw.org/) which unifies the different window management APIs and enables our code to be **agnostic** in the OS.
+The process to open a window **depends a lot on the OS**, so we use a little library called [GLFW](https://www.glfw.org/) which unifies the different window management APIs and enables our code to be **agnostic** to the OS.
 
 ```{note}
 I try to use as few libraries as I can, but this one is required to **make our code cross-platform**, which feels even more important to me than writing code from scratch. GLFW is furthermore **a very common choice** and quite minimal in its design.
@@ -75,7 +75,7 @@ Basic usage
 
 ### Initialization
 
-First of all, any call to the GLFW library must be between its initialization and termination:
+First of all, any call to the GLFW library must be between it's initialization and termination:
 
 ```{lit} C++, Main Content
 glfwInit();
