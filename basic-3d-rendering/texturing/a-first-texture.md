@@ -1,4 +1,4 @@
-A first texture 🟡
+A first texture <span class="bullet">🟡</span>
 ===============
 
 ````{tab} With webgpu.hpp

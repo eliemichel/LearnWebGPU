@@ -1,4 +1,4 @@
-Transformation matrices 🟡
+Transformation matrices <span class="bullet">🟡</span>
 =======================
 
 ````{tab} With webgpu.hpp

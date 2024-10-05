@@ -1,4 +1,4 @@
-Opening a window 🟢
+Opening a window <span class="bullet">🟢</span>
 ================
 
 ```{lit-setup}

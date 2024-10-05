@@ -1,2 +1,2 @@
-Memory (🔴TODO)
+Memory (<span class="bullet">🔴</span>TODO)
 ======

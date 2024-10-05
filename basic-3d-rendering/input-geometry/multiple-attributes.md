@@ -1,4 +1,4 @@
-Multiple Attributes 🟢
+Multiple Attributes <span class="bullet">🟢</span>
 ===================
 
 ```{lit-setup}

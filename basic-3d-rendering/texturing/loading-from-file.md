@@ -1,4 +1,4 @@
-Loading from file 🟡
+Loading from file <span class="bullet">🟡</span>
 =================
 
 ````{tab} With webgpu.hpp

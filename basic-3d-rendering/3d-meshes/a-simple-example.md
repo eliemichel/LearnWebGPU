@@ -1,4 +1,4 @@
-A simple example 🟡
+A simple example <span class="bullet">🟡</span>
 ================
 
 ````{tab} With webgpu.hpp

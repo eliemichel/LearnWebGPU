@@ -1,4 +1,4 @@
-Physically-Based Materials (🟠WIP)
+Physically-Based Materials (<span class="bullet">🟠</span>WIP)
 ==========================
 
 ````{tab} With webgpu.hpp

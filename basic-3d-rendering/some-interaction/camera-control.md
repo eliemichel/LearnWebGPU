@@ -1,4 +1,4 @@
-Camera control 🟡
+Camera control <span class="bullet">🟡</span>
 ==============
 
 ````{tab} With webgpu.hpp

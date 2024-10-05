@@ -1,4 +1,4 @@
-Headless context 🟡
+Headless context <span class="bullet">🟡</span>
 ================
 
 ````{tab} With webgpu.hpp

@@ -1,4 +1,4 @@
-Using SDL for Window Management 🟡
+Using SDL for Window Management <span class="bullet">🟡</span>
 ===============================
 
 ````{tab} With webgpu.hpp

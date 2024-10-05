@@ -1,4 +1,4 @@
-The Command Queue 🟢
+The Command Queue <span class="bullet">🟢</span>
 =================
 
 ```{lit-setup}

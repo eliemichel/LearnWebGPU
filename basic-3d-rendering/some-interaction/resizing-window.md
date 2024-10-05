@@ -1,4 +1,4 @@
-Resizing the window 🟡
+Resizing the window <span class="bullet">🟡</span>
 ===================
 
 ````{tab} With webgpu.hpp

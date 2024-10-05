@@ -1,4 +1,4 @@
-Index Buffer 🟢
+Index Buffer <span class="bullet">🟢</span>
 ============
 
 ```{lit-setup}

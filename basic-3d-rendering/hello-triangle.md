@@ -1,4 +1,4 @@
-Hello Triangle 🟢
+Hello Triangle <span class="bullet">🟢</span>
 ==============
 
 ```{lit-setup}

@@ -1,4 +1,4 @@
-The Adapter 🟢
+The Adapter <span class="bullet">🟢</span>
 ===========
 
 ```{lit-setup}

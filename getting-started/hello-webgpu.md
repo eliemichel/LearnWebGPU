@@ -1,4 +1,4 @@
-Hello WebGPU 🟢
+Hello WebGPU <span class="bullet">🟢</span>
 ============
 
 ```{lit-setup}

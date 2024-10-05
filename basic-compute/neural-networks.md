@@ -1,4 +1,4 @@
-Neural Networks (🔴TODO)
+Neural Networks (<span class="bullet">🔴</span>TODO)
 ===============
 
 ```{note}

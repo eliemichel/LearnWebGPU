@@ -5,13 +5,26 @@ import shutil
 #--------------------------------------------------------------------
 
 def process_line(line):
+	bullets = [
+		"🟢",
+		"🟡",
+		"🟠",
+		"🔴",
+	]
+	for b in bullets:
+		idx = line.find(b)
+		if idx == -1:
+			continue
+		if idx > 0 and line[idx-1] == ">":
+			continue  # already replaced
+		line = line[:idx] + "<span class=\"bullet\">" + b + "</span>" + line[idx+1:]
 	return line
 
 #--------------------------------------------------------------------
 
 def process_file(filename):
-	with open(filename, encoding="utf-8") as fin:
-		with open(filename + ".new", encoding="utf-8") as fout:
+	with open(filename, "r", encoding="utf-8") as fin:
+		with open(filename + ".new", "w", encoding="utf-8") as fout:
 			for line in fin:
 				fout.write(process_line(line))
 	shutil.move(filename + ".new", filename)
@@ -49,6 +62,7 @@ def main():
 	index_filename = join(dirname(dirname(__file__)), "index.md")
 	for filename in collect_chapter_filenames(index_filename):
 		print(filename)
+		process_file(filename)
 
 #--------------------------------------------------------------------
 

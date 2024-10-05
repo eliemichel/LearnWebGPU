@@ -1,4 +1,4 @@
-Mipmap Generation 🟡
+Mipmap Generation <span class="bullet">🟡</span>
 =================
 
 *Resulting code:* [`step211`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step211)

@@ -1,4 +1,4 @@
-More uniforms 🟡
+More uniforms <span class="bullet">🟡</span>
 =============
 
 ````{tab} With webgpu.hpp

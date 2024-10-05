@@ -1,4 +1,4 @@
-References (🟠WIP)
+References (<span class="bullet">🟠</span>WIP)
 ==========
 
 *This list is highly WIP*

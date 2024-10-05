@@ -1,4 +1,4 @@
-Project setup 🟢
+Project setup <span class="bullet">🟢</span>
 =============
 
 ```{lit-setup}
