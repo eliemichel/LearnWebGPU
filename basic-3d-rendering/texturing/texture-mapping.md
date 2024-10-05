@@ -1,4 +1,4 @@
-Texture mapping
+Texture mapping 🟡
 ===============
 
 ````{tab} With webgpu.hpp

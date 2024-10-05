@@ -1,4 +1,4 @@
-The Command Queue
+The Command Queue 🟢
 =================
 
 ```{lit-setup}

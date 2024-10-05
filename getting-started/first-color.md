@@ -1,4 +1,4 @@
-First Color
+First Color <span class="bullet">🟢</span>
 ===========
 
 ```{lit-setup}

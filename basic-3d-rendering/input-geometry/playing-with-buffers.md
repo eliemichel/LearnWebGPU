@@ -1,4 +1,4 @@
-Playing with buffers
+Playing with buffers 🟢
 ====================
 
 ```{lit-setup}

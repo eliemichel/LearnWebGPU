@@ -1,4 +1,4 @@
-A first texture
+A first texture 🟡
 ===============
 
 ````{tab} With webgpu.hpp

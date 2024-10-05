@@ -1,4 +1,4 @@
-Compute Pipeline
+Compute Pipeline 🟡
 ================
 
 *Resulting code:* [`step201`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step201)

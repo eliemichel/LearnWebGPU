@@ -1,4 +1,4 @@
-Cube Maps (🚧WIP)
+Cube Maps (🟠WIP)
 =========
 
 ````{tab} With webgpu.hpp

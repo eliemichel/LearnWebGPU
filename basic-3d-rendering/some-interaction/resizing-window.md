@@ -1,4 +1,4 @@
-Resizing the window
+Resizing the window 🟡
 ===================
 
 ````{tab} With webgpu.hpp

@@ -1,4 +1,4 @@
-Convolution Filters
+Convolution Filters 🟡
 ===================
 
 *Resulting code:* [`step215`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step215)

@@ -1,4 +1,4 @@
-The extension mechanism (🚧WIP)
+The extension mechanism (🟠WIP)
 =======================
 
 ```{admonition} Disclaimer

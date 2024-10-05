@@ -1,4 +1,4 @@
-A first Vertex Attribute
+A first Vertex Attribute 🟢
 ========================
 
 ```{lit-setup}

@@ -1,4 +1,4 @@
-Hello WebGPU
+Hello WebGPU 🟢
 ============
 
 ```{lit-setup}

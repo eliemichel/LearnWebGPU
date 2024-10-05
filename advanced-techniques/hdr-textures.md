@@ -1,4 +1,4 @@
-High Dynamic Range Textures (🚧WIP)
+High Dynamic Range Textures (🟠WIP)
 ===========================
 
 ````{tab} With webgpu.hpp

@@ -1,4 +1,4 @@
-Opening a window
+Opening a window 🟢
 ================
 
 ```{lit-setup}

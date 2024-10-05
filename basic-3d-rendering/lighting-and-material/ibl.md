@@ -1,4 +1,4 @@
-Image-Based Lighting (🚧WIP)
+Image-Based Lighting (🟠WIP)
 ====================
 
 ````{tab} With webgpu.hpp

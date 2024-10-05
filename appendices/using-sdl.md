@@ -1,4 +1,4 @@
-Using SDL for Window Management
+Using SDL for Window Management 🟡
 ===============================
 
 ````{tab} With webgpu.hpp

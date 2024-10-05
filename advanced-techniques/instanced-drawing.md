@@ -1,4 +1,4 @@
-Instanced Drawing (🛑TODO)
+Instanced Drawing (🔴TODO)
 =================
 
 Drawing the **same geometry multiple times** is very common. It happens when **scattering objects** like rocks or trees on a terrain, when drawing **particle systems**, etc.

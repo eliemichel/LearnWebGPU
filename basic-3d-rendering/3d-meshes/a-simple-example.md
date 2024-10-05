@@ -1,4 +1,4 @@
-A simple example
+A simple example 🟡
 ================
 
 ````{tab} With webgpu.hpp

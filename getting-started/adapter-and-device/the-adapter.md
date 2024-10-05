@@ -1,4 +1,4 @@
-The Adapter
+The Adapter 🟢
 ===========
 
 ```{lit-setup}

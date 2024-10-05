@@ -1,4 +1,4 @@
-Sampler
+Sampler 🟡
 =======
 
 ````{tab} With webgpu.hpp

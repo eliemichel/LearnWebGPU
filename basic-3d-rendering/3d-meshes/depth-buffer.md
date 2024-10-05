@@ -1,4 +1,4 @@
-Depth buffer
+Depth buffer 🟡
 ============
 
 ````{tab} With webgpu.hpp

@@ -1,4 +1,4 @@
-Building for the Web
+Building for the Web 🟡
 ====================
 
 ```{warning}

@@ -1,4 +1,4 @@
-The Device
+The Device 🟢
 ==========
 
 ```{lit-setup}

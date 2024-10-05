@@ -1,4 +1,4 @@
-Index Buffer
+Index Buffer 🟢
 ============
 
 ```{lit-setup}

@@ -1,4 +1,4 @@
-Basic shading
+Basic shading 🟡
 =============
 
 ````{tab} With webgpu.hpp

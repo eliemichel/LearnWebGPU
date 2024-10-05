@@ -1,4 +1,4 @@
-Hello Triangle
+Hello Triangle 🟢
 ==============
 
 ```{lit-setup}

@@ -1,4 +1,4 @@
-Cubemap Conversion (🚧WIP)
+Cubemap Conversion (🟠WIP)
 ==================
 
 *Resulting code:* [`step220`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step220)

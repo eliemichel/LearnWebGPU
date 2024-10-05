@@ -1,4 +1,4 @@
-Teaching native graphics in 2023
+Teaching native graphics in 2023 🟢
 ================================
 
 *This is a more detailed explaination of the section [Why WebGPU](../introduction.md#why-webgpu) of the lecture's introduction.*

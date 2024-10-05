@@ -1,4 +1,4 @@
-With `wgpu-native` (🚧WIP)
+With `wgpu-native` (🟠WIP)
 ==================
 
 *Resulting code:* [`wgpu`](https://github.com/eliemichel/wgpu/tree/eliemichel/foo), [`wgpu-native`](https://github.com/eliemichel/wgpu-native/tree/eliemichel/foo) and [`step030-test-foo-extension`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step030-test-foo-extension)

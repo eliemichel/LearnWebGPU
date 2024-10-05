@@ -1,4 +1,4 @@
-With Dawn (🚧WIP)
+With Dawn (🟠WIP)
 =========
 
 *Resulting code:* [`dawn:eliemichel/foo`](https://github.com/eliemichel/Dawn/tree/eliemichel/foo) and [`step030-test-foo-extension-dawn`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step030-test-foo-extension-dawn)

@@ -1,4 +1,4 @@
-Simple GUI
+Simple GUI 🟡
 ==========
 
 ````{tab} With webgpu.hpp

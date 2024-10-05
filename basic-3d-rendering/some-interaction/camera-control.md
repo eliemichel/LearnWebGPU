@@ -1,4 +1,4 @@
-Camera control
+Camera control 🟡
 ==============
 
 ````{tab} With webgpu.hpp
