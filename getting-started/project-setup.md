@@ -67,7 +67,9 @@ project(
 	VERSION 0.1.0 # any version number
 	LANGUAGES CXX C # programming languages used by the project
 )
+
 {{Define app target}}
+
 {{Recommended extras}}
 ```
 

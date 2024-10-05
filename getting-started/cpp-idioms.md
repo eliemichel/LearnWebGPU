@@ -450,14 +450,18 @@ surface.present();
 #endif
 ```
 
-```{lit} C++, Define app target (replace, hidden)
+```{lit} CMake, Define app target (replace, hidden)
 {{Dependency subdirectories}}
 
 add_executable(App
-	main.cpp
+	{{App source files}}
 )
 
 {{Link libraries}}
+```
+
+```{lit} CMake, App source files (replace, hidden)
+main.cpp
 ```
 
 ```{lit} C++, file: webgpu-utils.h (replace, hidden)

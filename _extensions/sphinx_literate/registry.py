@@ -441,6 +441,7 @@ class CodeBlockRegistry:
             )
             raise ExtensionError(message, modname="sphinx_literate")
 
+        assert(lit is not None)
         self._blocks[key] = lit
 
     def _override_codeblock(self, lit: CodeBlock, relation_to_prev: str):
@@ -459,9 +460,11 @@ class CodeBlockRegistry:
             # Add to the list of block with no parent, even though the
             # relation_to_prev is not NEW. This will be addressed when
             # resolving missings.
+            assert(lit is not None)
             self._blocks[lit.key] = lit
             lit.prev = None
         elif existing.tangle_root != lit.tangle_root:
+            assert(lit is not None)
             self._blocks[lit.key] = lit
             lit.prev = existing
         else:
@@ -479,7 +482,6 @@ class CodeBlockRegistry:
         defined before the other one (matters when resolving missing blocks).
         The other registry must no longer be used after this.
         """
-        X = next(iter(other._blocks.values()))
         # Merge tangle hierarchies
         for h in other._hierarchy.values():
             self.set_tangle_parent(h.root, h.parent, h.source_location, h.fetch_files)
@@ -511,6 +513,9 @@ class CodeBlockRegistry:
             # If found, register it as previous literate block
             if existing:
                 child_lit = self.get_by_key(missing.key)
+                if child_lit.prev is not None:
+                    print(f"ERROR! Block '{missing.key}' already has a prev block!")
+                assert(child_lit.prev is None)
                 child_lit.prev = existing
             else:
                 new_missing_list.append(missing)
@@ -724,6 +729,8 @@ class CodeBlockRegistry:
             bb = b
             while bb is not None:
                 if bb.prev is None and bb.relation_to_prev != 'NEW':
+                    if bb.key not in missing_by_key:
+                        print(f"bb.key = {bb.key}")
                     assert(bb.key in missing_by_key)
                     assert(missing_by_key[bb.key].relation_to_prev == bb.relation_to_prev)
                 bb = bb.next
