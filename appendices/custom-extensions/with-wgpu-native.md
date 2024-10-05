@@ -41,6 +41,8 @@ To point `wgpu-native` to our custom `wgpu`, we can modify its `wgpu-native/Carg
 [patch."https://github.com/gfx-rs/wgpu"]
 wgpu-core = { path = "../wgpu/wgpu-core" }
 wgpu-types = { path = "../wgpu/wgpu-types" }
+wgpu-hal = { path = "../wgpu/wgpu-hal" }
+naga = { path = "../wgpu/naga" }
 ```
 
 ````{note}
