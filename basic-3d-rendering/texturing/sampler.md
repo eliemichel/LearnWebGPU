@@ -494,7 +494,7 @@ for (uint32_t i = 0; i < mipLevelSize.width; ++i) {
 
 You should now see a **gradient** depending on the distance of the points to the camera. Each color of the gradient corresponds to texels sampled from a different mip level.
 
-Again, **the sampler automatically figures out** which level to sample. It does so based on the difference of UV coordinate between two neighbor pixels.
+Again, **the sampler automatically figures out** which level to sample. It does so based on the difference of UV coordinate between two neighboring pixels.
 
 ```{image} /images/min-pyramid-light.svg
 :align: center

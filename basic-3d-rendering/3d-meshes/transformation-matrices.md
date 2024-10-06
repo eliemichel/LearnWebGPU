@@ -186,7 +186,7 @@ position = M * vec4f(position, 1.0);
 Mathematically, the code above makes sense: a non-square 3x4 matrix takes an input vector of size 4 and returns an output of size 3. However, **WGSL only supports square matrices** (and so do other shading languages).
 ```
 
-There would anyway be only little use of non-square matrices, because this prevents us from **chaining transforms**. Instead of returning a vector $(x, y, z)$, we would rather return the vector $(x, y, z, 1.0)$ so that we may apply again another transform. This should be easy:
+There would be little use of non-square matrices anyway, because this prevents us from **chaining transforms**. Instead of returning a vector $(x, y, z)$, we would rather return the vector $(x, y, z, 1.0)$ so that we may again apply yet another transform. This should be easy:
 
 ```rust
 // Option A

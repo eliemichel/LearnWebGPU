@@ -52,7 +52,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
 ```
 
 ```{important}
-It is important that the conversion to integers (`vec2i`) is done in the fragment shader rather than in the vertex shader, because integer vertex output do not get interpolated by the rasterizer.
+It is important that the conversion to integers (`vec2i`) is done in the fragment shader rather than in the vertex shader, because integer vertex output does not get interpolated by the rasterizer.
 ```
 
 ````{note}

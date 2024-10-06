@@ -128,7 +128,7 @@ requiredLimits.limits.maxInterStageShaderComponents = 11;
 ````
 
 ```{caution}
-We normalize `V` **in the fragment shader** because even if all `out.viewDirection` are normalized, their interpolation after the rasterization is in general no longer perfectly normalized.
+We normalize `V` **in the fragment shader** because even if all `out.viewDirection` values are normalized, their interpolation after the rasterization is in general no longer perfectly normalized.
 ```
 
 So how do we compute the `viewDirection` in the vertex exactly? We can split the line that populates `out.position` in order to get the **world space coordinates** of the current vertex, prior to projecting it:
