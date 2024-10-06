@@ -133,6 +133,10 @@ This is given by the `main` branch of my distribution repository:
 
  - [WebGPU any distribution](https://github.com/eliemichel/WebGPU-distribution/archive/refs/tags/main-v0.2.0-beta1.zip)
 
+```{tip}
+The README of that resposity has instructions for how to add it to your project using FetchContent_Declare. If you do that, you will likely be using a newer version of Dawn or wgpu-native than the one this was written against. As a result, the examples in this book may not compile for you. See below for how to download the version this book was written against.
+```
+
 **Pros**
  - You can have two `build` at the same time, one that uses Dawn and one that uses `wgpu-native`
 
