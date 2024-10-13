@@ -285,6 +285,34 @@ The `CMAKE_BUILD_TYPE` option is a built-in option of CMake that is very commonl
 When using some CMake generators, like the Visual Studio one, this is ignored because the generated solution can switch from `Debug` to `Release` mode directly within the IDE instead of asking CMake.
 ```
 
+### Building for the Web
+
+> 😒 It is still not working when I try to build with emscripten!
+
+Indeed, a Web page does not have access to one's filesystem (for good security reasons), plus it does not even make sense because the client will not have these files.
+
+What we need to do in this case is to **ask emscripten to bundle the files within the application**. This is easily done with the [`--preload-file`](https://emscripten.org/docs/porting/files/packaging_files.html) link option, that preloads our content in a **virtual filesystem**.
+
+```{lit} CMake, Emscripten-specific options (append, also for tangle root "Vanilla")
+target_link_options(App PRIVATE
+	--preload-file "${CMAKE_CURRENT_SOURCE_DIR}/resources"
+)
+```
+
+This approach enables our C++ code to behave **as if there were files on a disk**, while in reality it is just a portion of data shipped with the app.
+
+````{note}
+We could precise `@resources` at the end of the `--preload-file` option to mean that the directory must be mounted at path `/resources` in the virtual filesystem. By default, the path of the preloaded file relative to `CMakeLists.txt` is used.
+
+```CMake
+target_link_options(App PRIVATE
+	-sASYNCIFY
+	--preload-file "${CMAKE_CURRENT_SOURCE_DIR}/resources@resources"
+	#                                                    ^^^^^^^^^^ here
+)
+```
+````
+
 Resource Manager
 ----------------
 
