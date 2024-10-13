@@ -1,4 +1,4 @@
-C++ wrapper <span class="bullet">🟡</span>
+C++ wrapper <span class="bullet">🟢</span>
 ===========
 
 ```{lit-setup}

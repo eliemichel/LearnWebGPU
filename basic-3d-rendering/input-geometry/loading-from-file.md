@@ -20,10 +20,6 @@ Loading from file <span class="bullet">🟢</span>
 *Resulting code:* [`step037-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step037-vanilla)
 ````
 
-````{tab} With Dawn
-*Resulting code:* [`step037-dawn`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step037-dawn)
-````
-
 Now that we are familiar with the representation of geometric data that the GPU expect, we can load it from a file instead of hard-coding it in the source code. This is the occasion to introduce some basic **resource management** to our project (although this is not specific to WebGPU).
 
 File format
@@ -163,25 +159,31 @@ We can replace the definition of the `pointData` and `indexData` vectors by a ca
 
 ```{lit} C++, InitializeBuffers method (replace, also for tangle root "Vanilla")
 void Application::InitializeBuffers() {
-	// Define data vectors, but without filling them in
-	std::vector<float> pointData;
-	std::vector<uint16_t> indexData;
+	// 1. Load from disk into CPU-side vectors pointData and indexData
+	{{Load geometry data from file}}
 
-	// Here we use the new 'loadGeometry' function:
-	bool success = loadGeometry("resources/webgpu.txt", pointData, indexData);
-
-	// Check for errors
-	if (!success) {
-		std::cerr << "Could not load geometry!" << std::endl;
-		exit(1);
-	}
-
-	// We now store the index count rather than the vertex count
-	indexCount = static_cast<uint32_t>(indexData.size());
-
+	// 2. Create GPU buffers and upload data to them
 	{{Create point buffer}}
 	{{Create index buffer}}
 }
+```
+
+```{lit} C++, Load geometry data from file (also for tangle root "Vanilla")
+// Define data vectors, but without filling them in
+std::vector<float> pointData;
+std::vector<uint16_t> indexData;
+
+// Here we use the new 'loadGeometry' function:
+bool success = loadGeometry("resources/webgpu.txt", pointData, indexData);
+
+// Check for errors
+if (!success) {
+	std::cerr << "Could not load geometry!" << std::endl;
+	exit(1);
+}
+
+// We now store the index count rather than the vertex count
+indexCount = static_cast<uint32_t>(indexData.size());
 ```
 
 A **problem** we have with this hard-coded relative path is that its interpretation depends on the directory from which you run your executable:
@@ -473,27 +475,22 @@ bool success = ResourceManager::loadGeometry(RESOURCE_DIR "/webgpu.txt", pointDa
 //             ^^^^^^^^^^^^^^^^^ don't forget this
 ```
 
-```{lit} C++, InitializeBuffers method (hidden, replace, also for tangle root "Vanilla")
-void Application::InitializeBuffers() {
-	// Define data vectors, but without filling them in
-	std::vector<float> pointData;
-	std::vector<uint16_t> indexData;
+```{lit} C++, Load geometry data from file (hidden, replace, also for tangle root "Vanilla")
+// Define data vectors, but without filling them in
+std::vector<float> pointData;
+std::vector<uint16_t> indexData;
 
-	// Here we use the new 'ResourceManager::loadGeometry' function:
-	bool success = ResourceManager::loadGeometry(RESOURCE_DIR "/webgpu.txt", pointData, indexData);
+// Here we use the new 'ResourceManager::loadGeometry' function:
+bool success = ResourceManager::loadGeometry(RESOURCE_DIR "/webgpu.txt", pointData, indexData);
 
-	// Check for errors
-	if (!success) {
-		std::cerr << "Could not load geometry!" << std::endl;
-		exit(1);
-	}
-
-	// We now store the index count rather than the vertex count
-	indexCount = static_cast<uint32_t>(indexData.size());
-
-	{{Create point buffer}}
-	{{Create index buffer}}
+// Check for errors
+if (!success) {
+	std::cerr << "Could not load geometry!" << std::endl;
+	exit(1);
 }
+
+// We now store the index count rather than the vertex count
+indexCount = static_cast<uint32_t>(indexData.size());
 ```
 
 ### Loading shaders
@@ -842,8 +839,4 @@ We are going to come back on these from time to time to refine them. We are now 
 
 ````{tab} Vanilla webgpu.h
 *Resulting code:* [`step037-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step037-vanilla)
-````
-
-````{tab} With Dawn
-*Resulting code:* [`step037-dawn`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step037-dawn)
 ````
