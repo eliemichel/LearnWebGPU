@@ -182,19 +182,19 @@ uniformBuffer = wgpuDeviceCreateBuffer(device, &bufferDesc);
 ```
 ````
 
-Then use `Queue::writeBuffer` to upload a value:
+Then use `Queue::writeBuffer` to upload a value in the first float of the buffer:
 
 ````{tab} With webgpu.hpp
 ```{lit} C++, Upload uniform values
 float currentTime = 1.0f;
-queue.writeBuffer(uniformBuffer, 0, &currentTime, 4 * sizeof(float));
+queue.writeBuffer(uniformBuffer, 0, &currentTime, sizeof(float));
 ```
 ````
 
 ````{tab} Vanilla webgpu.h
 ```{lit} C++, Upload uniform values (for tangle root "Vanilla")
 float currentTime = 1.0f;
-wgpuQueueWriteBuffer(queue, uniformBuffer, 0, &currentTime, 4 * sizeof(float));
+wgpuQueueWriteBuffer(queue, uniformBuffer, 0, &currentTime, sizeof(float));
 ```
 ````
 
