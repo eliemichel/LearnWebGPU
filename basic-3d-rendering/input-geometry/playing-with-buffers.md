@@ -353,7 +353,7 @@ while (!ready) {
 }
 ```
 
-You could now see `Buffer 2 mapped with status 0` (0 being the value of `BufferMapAsyncStatus::Success`) when running your program. **However**, we never change the `ready` variable to `true`! So the program then **halts forever**... not great. That is why the next section shows how to pass some context to the callback.
+You could now see `Buffer 2 mapped with status 1` (1 being the value of `BufferMapAsyncStatus::Success`) when running your program. **However**, we never change the `ready` variable to `true`! So the program then **halts forever**... not great. That is why the next section shows how to pass some context to the callback.
 
 ### Mapping context
 
