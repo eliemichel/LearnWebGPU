@@ -69,7 +69,7 @@ requiredLimits.limits.maxUniformBufferBindingSize = 16 * 4;
 Shader side
 -----------
 
-In order to animate our scene, we create a uniform called `uTime` that we update each frame with the current time, expressed in second (as provided by `glfwGetTime()`).
+In order to animate our scene, we create a uniform called `uTime` that we update each frame with the current time, expressed in seconds (as provided by `glfwGetTime()`).
 
 ```{note}
 I usually **prefix** uniform variables with a 'u' so that it is easy to figure out when reading a long shader **when a variable is a uniform** rather than a local variable.
