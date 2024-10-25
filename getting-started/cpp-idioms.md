@@ -352,6 +352,7 @@ if (!targetView) return;
 TextureView Application::GetNextSurfaceTextureView() {
     {{Get the next surface texture}}
     {{Create surface texture view}}
+    {{Release the texture}}
     return targetView;
 }
 ```
@@ -381,6 +382,14 @@ viewDescriptor.baseArrayLayer = 0;
 viewDescriptor.arrayLayerCount = 1;
 viewDescriptor.aspect = TextureAspect::All;
 TextureView targetView = texture.createView(viewDescriptor);
+```
+
+```{lit} C++, Release the texture (replace, hidden)
+#ifndef WEBGPU_BACKEND_WGPU
+    // We no longer need the texture, only its view
+    // (NB: with wgpu-native, surface textures must not be manually released)
+    Texture(surfaceTexture.texture).release();
+#endif // WEBGPU_BACKEND_WGPU
 ```
 
 ```{lit} C++, Create Command Encoder (replace, hidden)
