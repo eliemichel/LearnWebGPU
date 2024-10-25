@@ -1,8 +1,15 @@
 More uniforms <span class="bullet">🟡</span>
 =============
 
-```{admonition} 🚧 WIP
-From this chapter on, the guide uses a previous version of the accompanying code (in particular, it does not define an `Application` class but rather puts everything in a monolithic `main` function). **I am currently refreshing it** chapter by chapter and this is **where I am currently working**!
+```{lit-setup}
+:tangle-root: 043 - More uniforms - vanilla
+:parent: 039 - A first uniform - vanilla
+:alias: Vanilla
+```
+
+```{lit-setup}
+:tangle-root: 043 - More uniforms
+:parent: 039 - A first uniform
 ```
 
 ````{tab} With webgpu.hpp

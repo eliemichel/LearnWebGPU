@@ -335,7 +335,7 @@ Retaining `bindGroupLayout` is also needed when we create the bind group that go
 
 ### Binding layout
 
-The `BindGroupLayoutEntry` could have been called `BindingLayout` imho. The first setting is the binding index, as used in the shader's `@binding` attribute. Then the `visibility` field tells which stage requires access to this resource, so that it is not needlessly provided to all stages.
+The `BindGroupLayoutEntry` could have been called `BindingLayout`. The first setting is the binding index, as used in the shader's `@binding` attribute. Then the `visibility` field tells which stage requires access to this resource, so that it is not needlessly provided to all stages.
 
 ````{tab} With webgpu.hpp
 ```{lit} C++, Define bindingLayout
