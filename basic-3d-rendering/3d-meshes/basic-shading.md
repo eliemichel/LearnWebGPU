@@ -225,7 +225,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
 		<source src="../../_static/shading-fwd-normal.mp4" type="video/mp4">
 	</video>
 	<figcaption>
-		<p><span class="caption-text">These color are typical of the normal "palette".</span></p>
+		<p><span class="caption-text">These colors are typical of the normal "palette".</span></p>
 	</figcaption>
 </figure>
 
