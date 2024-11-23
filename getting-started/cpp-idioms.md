@@ -40,7 +40,11 @@ becomes with namespaces:
 ```C++
 // Using C++ webgpu.hpp
 wgpu::InstanceDescriptor desc = {};
-wgpu::Instance instance = wgpu::createInstance(&desc);
+wgpu::Instance instance = wgpu::createInstance(desc);
+```
+
+```{note}
+You may also notice that the `&` disappeared: this is because const Descriptor pointers become references in the wrapper!
 ```
 
 And of course you can start your source file with `using namespace wgpu;` to avoid spelling out `wgpu::` everywhere. Coupled with default descriptor, this leads to simply:
