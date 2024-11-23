@@ -40,7 +40,7 @@ becomes with namespaces:
 ```C++
 // Using C++ webgpu.hpp
 wgpu::InstanceDescriptor desc = {};
-wgpu::Instance instance = wgpu::createInstance(&desc);
+wgpu::Instance instance = wgpu::createInstance(desc);
 ```
 
 And of course you can start your source file with `using namespace wgpu;` to avoid spelling out `wgpu::` everywhere. Coupled with default descriptor, this leads to simply:
