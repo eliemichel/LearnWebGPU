@@ -195,4 +195,5 @@ translation_languages = [
     ("fr", "🇫🇷", "Français", "French"),
     ("kr", "🇰🇷", "한국인", "Korean"),
     ("it", "🇮🇹", "Italiano", "Italian"),
+    ("zh", "🇨🇳", "中文", "Chinese"),
 ]
