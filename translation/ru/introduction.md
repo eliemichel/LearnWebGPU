@@ -1,6 +1,14 @@
 Введение
 ============
 
+```{translation-warning} Outdated Translation, /introduction.md
+This is a **community translation** of [the original English page](%original%), which **has been updated** since it was translated and may thus no longer be in sync. You are welcome to [contribute](%contribute%)!
+```
+
+```{admonition} Incomplete Translation
+This is a **community translation** of [the original English page](/introduction.md), which is **not fully translated yet**. You are welcome to [contribute](https://github.com/eliemichel/LearnWebGPU/edit/main/translation/fr/introduction.md)!
+```
+
 Что такое графический API?
 -----------------------
 
