@@ -24,7 +24,7 @@ Requesting the device looks a lot like requesting the adapter, so we will use a 
 ```{lit} C++, Request device function
 /**
  * Utility function to get a WebGPU device, so that
- *     WGPUAdapter device = requestDeviceSync(adapter, options);
+ *     WGPUDevice device = requestDeviceSync(adapter, options);
  * is roughly equivalent to
  *     const device = await adapter.requestDevice(descriptor);
  * It is very similar to requestAdapter
