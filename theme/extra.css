@@ -125,4 +125,9 @@ figcaption p {
 	--color-admonition-title: var(--color-admonition-title--note);
 }
 
-
+.bullet {
+	font-size:0.5em;
+	vertical-align: text-top;
+	display: inline-block;
+	margin-top: 0.45em;
+}

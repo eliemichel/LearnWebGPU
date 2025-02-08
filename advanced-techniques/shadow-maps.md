@@ -1,4 +1,4 @@
-Shadow maps (🛑TODO)
+Shadow maps (<span class="bullet">🔴</span>TODO)
 ===========
 
 Basic shadow mapping:

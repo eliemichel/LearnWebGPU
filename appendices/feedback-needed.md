@@ -1,4 +1,4 @@
-Feedback needed
+Feedback needed <span class="bullet">🟢</span>
 ===============
 
 This guide is still a Work in Progress. Because it is not finished, to begin with, but also importantly because to feel satisfied I need more feedback about the following points.

@@ -1,4 +1,4 @@
-The Adapter
+The Adapter <span class="bullet">🟢</span>
 ===========
 
 ```{lit-setup}
@@ -265,7 +265,7 @@ wgpuAdapterRelease(adapter);
 ```
 
 ````{note}
-We will no longer need to use the `instance` once we have selected our **adapter**, so we can call `wgpuInstanceRelease(instance)` right after the adapter request **instead of at the very end**. The **underlying instance** object will keep on living until the adapter gets released but we do not need to manager this.
+We will no longer need to use the `instance` once we have selected our **adapter**, so we can call `wgpuInstanceRelease(instance)` right after the adapter request **instead of at the very end**. The **underlying instance** object will keep on living until the adapter gets released but we do not need to manage this.
 
 ```{lit} C++, Create things (hidden)
 {{Create WebGPU instance}}

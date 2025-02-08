@@ -1,4 +1,4 @@
-C++ wrapper
+C++ wrapper <span class="bullet">🟢</span>
 ===========
 
 ```{lit-setup}
@@ -40,7 +40,11 @@ becomes with namespaces:
 ```C++
 // Using C++ webgpu.hpp
 wgpu::InstanceDescriptor desc = {};
-wgpu::Instance instance = wgpu::createInstance(&desc);
+wgpu::Instance instance = wgpu::createInstance(desc);
+```
+
+```{note}
+You may also notice that the `&` disappeared: this is because const Descriptor pointers become references in the wrapper!
 ```
 
 And of course you can start your source file with `using namespace wgpu;` to avoid spelling out `wgpu::` everywhere. Coupled with default descriptor, this leads to simply:
@@ -352,6 +356,7 @@ if (!targetView) return;
 TextureView Application::GetNextSurfaceTextureView() {
     {{Get the next surface texture}}
     {{Create surface texture view}}
+    {{Release the texture}}
     return targetView;
 }
 ```
@@ -381,6 +386,14 @@ viewDescriptor.baseArrayLayer = 0;
 viewDescriptor.arrayLayerCount = 1;
 viewDescriptor.aspect = TextureAspect::All;
 TextureView targetView = texture.createView(viewDescriptor);
+```
+
+```{lit} C++, Release the texture (replace, hidden)
+#ifndef WEBGPU_BACKEND_WGPU
+    // We no longer need the texture, only its view
+    // (NB: with wgpu-native, surface textures must not be manually released)
+    Texture(surfaceTexture.texture).release();
+#endif // WEBGPU_BACKEND_WGPU
 ```
 
 ```{lit} C++, Create Command Encoder (replace, hidden)
@@ -450,14 +463,18 @@ surface.present();
 #endif
 ```
 
-```{lit} C++, Define app target (replace, hidden)
+```{lit} CMake, Define app target (replace, hidden)
 {{Dependency subdirectories}}
 
 add_executable(App
-	main.cpp
+	{{App source files}}
 )
 
 {{Link libraries}}
+```
+
+```{lit} CMake, App source files (replace, hidden)
+main.cpp
 ```
 
 ```{lit} C++, file: webgpu-utils.h (replace, hidden)

@@ -1,4 +1,4 @@
-The extension mechanism (🚧WIP)
+The extension mechanism (<span class="bullet">🟠</span>WIP)
 =======================
 
 ```{admonition} Disclaimer

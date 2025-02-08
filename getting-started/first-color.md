@@ -1,4 +1,4 @@
-First Color
+First Color <span class="bullet">🟢</span>
 ===========
 
 ```{lit-setup}
@@ -170,6 +170,7 @@ Since what we need is usually a **texture view** rather than the raw surface tex
 WGPUTextureView Application::GetNextSurfaceTextureView() {
     {{Get the next surface texture}}
     {{Create surface texture view}}
+    {{Release the texture}}
     return targetView;
 }
 ```
@@ -241,6 +242,16 @@ Of course we must release this view once we no longer need it, just before prese
 ```{lit} C++, Present the surface onto the window
 // At the end of the frame
 wgpuTextureViewRelease(targetView);
+```
+
+The texture itself must only be released, and actually we can do it right after creating the texture view, as the latter will hold its own reference to the texture that keeps it from being destroyed too early:
+
+```{lit} C++, Release the texture
+#ifndef WEBGPU_BACKEND_WGPU
+    // We no longer need the texture, only its view
+    // (NB: with wgpu-native, surface textures must not be manually released)
+    wgpuTextureRelease(surfaceTexture.texture);
+#endif // WEBGPU_BACKEND_WGPU
 ```
 
 ### Presenting

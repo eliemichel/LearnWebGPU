@@ -1,4 +1,4 @@
-Environmental Impact (🛑TODO)
+Environmental Impact (<span class="bullet">🔴</span>TODO)
 ====================
 
 It is important to be able to asses, at least roughly, the environmental impact of an application, if we want to be able to compare with other (potentially non-software based) solution to the problem they address.

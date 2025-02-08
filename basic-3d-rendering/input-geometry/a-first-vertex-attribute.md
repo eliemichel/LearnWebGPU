@@ -1,4 +1,4 @@
-A first Vertex Attribute
+A first Vertex Attribute <span class="bullet">🟢</span>
 ========================
 
 ```{lit-setup}
@@ -131,7 +131,7 @@ std::cout << "device.maxVertexAttributes: " << supportedLimits.limits.maxVertexA
 ```
 ````
 
-The spirit of the [adapter + device](../../getting-started/adapter-and-device/index.md) abstraction provided by WebGPU is to first check on the adapter that it has the capabilities we need, then we **require** the minimal limits we need during the device creation and if the creation succeeds we are **guarantied** to have the limits we asked for.
+The spirit of the [adapter + device](../../getting-started/adapter-and-device/index.md) abstraction provided by WebGPU is to first check on the adapter that it has the capabilities we need, then we **require** the minimal limits we need during the device creation and if the creation succeeds we are **guaranteed** to have the limits we asked for.
 
 And we get nothing more than required, so that if we forget to update the initial check when using more vertex buffers, the program fails. With this **good practice**, we limit the cases of *"it worked for me"* where the program runs correctly on your device but not on somebody else's, which can quickly become a nightmare.
 

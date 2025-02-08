@@ -1,4 +1,4 @@
-Hello WebGPU
+Hello WebGPU <span class="bullet">🟢</span>
 ============
 
 ```{lit-setup}
@@ -91,7 +91,7 @@ The pre-compiled binaries are provided by the `wgpu-native` project itself so yo
 
 Dawn gives much better error messages, and since it is written in C++ we can build it from source and thus inspect more deeply the stack trace in case of crash:
 
- - [Dawn for any platform](https://github.com/eliemichel/WebGPU-distribution/archive/refs/tags/dawn-6512.zip)
+ - [Dawn for any platform](https://github.com/eliemichel/WebGPU-distribution/archive/refs/tags/dawn-6536.zip)
 
 ```{note}
 The Dawn-based distribution I provide here fetches the source code of Dawn from its original repository, but in an as shallow as possible way, and pre-sets some options to avoid building parts that we do not use.
@@ -133,6 +133,10 @@ This is given by the `main` branch of my distribution repository:
 
  - [WebGPU any distribution](https://github.com/eliemichel/WebGPU-distribution/archive/refs/tags/main-v0.2.0-beta1.zip)
 
+```{tip}
+The README of that resposity has instructions for how to add it to your project using FetchContent_Declare. If you do that, you will likely be using a newer version of Dawn or wgpu-native than the one this was written against. As a result, the examples in this book may not compile for you. See below for how to download the version this book was written against.
+```
+
 **Pros**
  - You can have two `build` at the same time, one that uses Dawn and one that uses `wgpu-native`
 
@@ -155,7 +159,7 @@ add_subdirectory(webgpu)
 ```
 
 ```{important}
-The name 'webgpu' here designate the directory where GLFW is located, so there should be a file `webgpu/CMakeLists.txt`. Otherwise it means that `webgpu.zip` was not decompressed in the correct directory; you may either move it or adapt the `add_subdirectory` directive.
+The name 'webgpu' here designate the directory where webgpu is located, so there should be a file `webgpu/CMakeLists.txt`. Otherwise it means that `webgpu.zip` was not decompressed in the correct directory; you may either move it or adapt the `add_subdirectory` directive.
 ```
 
  4. Add the `webgpu` target as a dependency of our app, using the `target_link_libraries` command (after `add_executable(App main.cpp)`).

@@ -1,4 +1,4 @@
-RAII
+RAII <span class="bullet">🟡</span>
 ====
 
 *Resulting code:* [`gist`](https://gist.github.com/eliemichel/2e154152f981e3f16827ba4d17d1123a)

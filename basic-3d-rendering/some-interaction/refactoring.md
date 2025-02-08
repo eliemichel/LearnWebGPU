@@ -1,4 +1,4 @@
-Refactoring
+Refactoring <span class="bullet">🟡</span>
 ===========
 
 ````{tab} With webgpu.hpp

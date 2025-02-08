@@ -1,4 +1,4 @@
-Multiple Attributes
+Multiple Attributes <span class="bullet">🟢</span>
 ===================
 
 ```{lit-setup}
@@ -58,8 +58,13 @@ fn vs_main(in: VertexInput) -> /* ... */ {
 }
 ```
 
-```{lit} rust, Shader source literal (hidden, replace, also for tangle root "Vanilla")
+```{lit} C++, Shader source literal (hidden, replace, also for tangle root "Vanilla")
 const char* shaderSource = R"(
+{{Shader source}}
+)";
+```
+
+```{lit} rust, Shader source (hidden, also for tangle root "Vanilla")
 {{Shader prelude}}
 
 @vertex
@@ -67,7 +72,6 @@ const char* shaderSource = R"(
 
 @fragment
 {{Fragment shader}}
-)";
 ```
 
 ```{lit} rust, Shader prelude (hidden, also for tangle root "Vanilla")

@@ -71,6 +71,17 @@ The main body of the guide misses a few extra lines, refer to the [Building for 
 
 `````
 
+```{admonition}  🚧 Work in progress
+This guide is still **under construction**, and **the WebGPU standard is still evolving**. To help the reader tracking how up to date it is, we use the following signs in chapter's titles:
+
+🟢 **Up to date!** *Uses the latest version of [WebGPU-distribution](https://github.com/eliemichel/WebGPU-distribution).*  
+🟡 **Ready to read** *but uses an older version of WebGPU.*  
+🟠 **Work in progress**: *readable enough, but not complete.*  
+🔴 **TODO**: *we only scratched the surface.*  
+
+**NB:** When using the accompagnying code of a chapter, make sure to use **the very version** of `webgpu/` that it provides to avoid discrepancies.
+```
+
 Contents
 --------
 

@@ -1,4 +1,4 @@
-The Device
+The Device <span class="bullet">🟢</span>
 ==========
 
 ```{lit-setup}

@@ -1,8 +1,15 @@
-Loading from file
+Loading from file <span class="bullet">🟢</span>
 =================
 
-```{admonition} 🚧 WIP
-From this chapter on, the guide uses a previous version of the accompanying code (in particular, it does not define an `Application` class but rather puts everything in a monolithic `main` function). **I am currently refreshing it** chapter by chapter and this is **where I am currently working**!
+```{lit-setup}
+:tangle-root: 037 - Loading from file - vanilla
+:parent: 034 - Index Buffer - vanilla
+:alias: Vanilla
+```
+
+```{lit-setup}
+:tangle-root: 037 - Loading from file
+:parent: 034 - Index Buffer
 ```
 
 ````{tab} With webgpu.hpp
@@ -11,10 +18,6 @@ From this chapter on, the guide uses a previous version of the accompanying code
 
 ````{tab} Vanilla webgpu.h
 *Resulting code:* [`step037-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step037-vanilla)
-````
-
-````{tab} With Dawn
-*Resulting code:* [`step037-dawn`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step037-dawn)
 ````
 
 Now that we are familiar with the representation of geometric data that the GPU expect, we can load it from a file instead of hard-coding it in the source code. This is the occasion to introduce some basic **resource management** to our project (although this is not specific to WebGPU).
@@ -26,7 +29,7 @@ File format
 
 The file format I introduce here is not standard, but it is simple enough to parse. Here is the content of `webgpu.txt`, which I put in a `resources/` directory:
 
-```C++
+```{lit} C++, file: resources/webgpu.txt (also for tangle root "Vanilla")
 [points]
 # x   y      r   g   b
 
@@ -58,31 +61,39 @@ The file format I introduce here is not standard, but it is simple enough to par
 12 13 14
 ```
 
-It is basically the content of the `pointData` and `indexData` defined previously as C++ vectors, introduced by a line of the form `[section name]`. Lines that are empty or starting with a `#` are ignored.
+It is basically the content of the `pointData` and `indexData` defined previously directly in our C++ code (in `Application::InitializeBuffers()`), where a line of the form `[section name]` introduces each section. Lines that are empty or starting with a `#` are ignored.
 
 ````{note}
 We can already bump up the maximum buffer size limit:
 
-```C++
+```{lit} C++, Other device limits (append, also for tangle root "Vanilla")
+// We need buffers to support up to 15 points that have 5 float attributes each (x, y, r, g, b)
 requiredLimits.limits.maxBufferSize = 15 * 5 * sizeof(float);
 ```
 ````
 
 ### Parser
 
-I am not going to detail the parser. I believe it is rather simple to understand, and it is not the core topic of this lecture.
+I am not going to detail the parser. I believe it is rather simple to understand, and it is **not the core topic** of this lecture.
 
-Plus once we'll start using 3D data we will switch to a more standard format anyways.
+```{note}
+Once we'll start using **3D data** we will switch to a more **standard format** anyways.
+```
+
+You may simply copy this `loadGeometry` function at the beginning of the `main.cpp` file (we will later on move this to a dedicated `ResourceManager.cpp`):
 
 ```C++
+#include <vector>
 #include <filesystem>
 #include <fstream>
 #include <sstream>
 #include <string>
 
-namespace fs = std::filesystem;
-
-bool loadGeometry(const fs::path& path, std::vector<float>& pointData, std::vector<uint16_t>& indexData) {
+bool loadGeometry(
+	const std::filesystem::path& path,
+	std::vector<float>& pointData,
+	std::vector<uint16_t>& indexData
+) {
 	std::ifstream file(path);
 	if (!file.is_open()) {
 		return false;
@@ -105,9 +116,9 @@ bool loadGeometry(const fs::path& path, std::vector<float>& pointData, std::vect
 		getline(file, line);
 		
 		// overcome the `CRLF` problem
-	        if (!line.empty() && line.back() == '\r') {
-	          line.pop_back();
-	        }
+		if (!line.empty() && line.back() == '\r') {
+			line.pop_back();
+		}
 		
 		if (line == "[points]") {
 			currentSection = Section::Points;
@@ -144,22 +155,40 @@ Loading resources from disc
 
 ### Basic approach
 
-We can replace the definition of the `pointData` and `indexData` vectors by a call to our new `loadGeometry` function.
+We can replace the definition of the `pointData` and `indexData` vectors by a call to our new `loadGeometry` function in `Application::InitializeBuffers()`.
 
-```C++
-std::vector<float> pointData;
-std::vector<uint16_t> indexData;
+```{lit} C++, InitializeBuffers method (replace, also for tangle root "Vanilla")
+void Application::InitializeBuffers() {
+	// 1. Load from disk into CPU-side vectors pointData and indexData
+	{{Load geometry data from file}}
 
-bool success = loadGeometry("resources/webgpu.txt", pointData, indexData);
-if (!success) {
-	std::cerr << "Could not load geometry!" << std::endl;
-	return 1;
+	// 2. Create GPU buffers and upload data to them
+	{{Create point buffer}}
+	{{Create index buffer}}
 }
 ```
 
-A problem we have with this hard-coded relative path is that its interpretation depends on the directory from which you run your executable:
+```{lit} C++, Load geometry data from file (also for tangle root "Vanilla")
+// Define data vectors, but without filling them in
+std::vector<float> pointData;
+std::vector<uint16_t> indexData;
 
+// Here we use the new 'loadGeometry' function:
+bool success = loadGeometry("resources/webgpu.txt", pointData, indexData);
+
+// Check for errors
+if (!success) {
+	std::cerr << "Could not load geometry!" << std::endl;
+	exit(1);
+}
+
+// We now store the index count rather than the vertex count
+indexCount = static_cast<uint32_t>(indexData.size());
 ```
+
+A **problem** we have with this hard-coded relative path is that its interpretation depends on the directory from which you run your executable:
+
+```output
 my_project> ./build/App
 (Working all right)
 my_project> cd build
@@ -174,6 +203,8 @@ In the second case, your program tries to open `my_project/build/resources/webgp
  - **Option C** Use an absolute path that is automatically generated thanks to CMake. This is what we'll do.
  - **Option D** Use a command line argument to tell the program where to find the resource directory. This is an interesting option, which can be used in combination with *Option C*, but requires a bit more work.
  - **Option E** Automatically copy the resources in the directory from which your IDE launches the program. This will be a problem once we try to modify resources while the program is running (which is quite handy when writing shaders).
+
+I suggest we go for **Option C** for development, while enabling the possibility to easily switch to **Option A** when you want to distribute your program.
 
 ### Resource path resolution
 
@@ -192,17 +223,25 @@ When putting two *string literals* next to each others in a C or C++ source code
 
 To define `RESOURCE_DIR` in the `CMakeLists.txt` you can add this after creating the `App` target:
 
-```CMake
+```{lit} CMake, Set the RESOURCE_DIR define (also for tangle root "Vanilla")
 target_compile_definitions(App PRIVATE
 	RESOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/resources"
 )
 ```
 
-The expression `${CMAKE_CURRENT_SOURCE_DIR}` is replaced by the content of CMake's variable [`CMAKE_CURRENT_SOURCE_DIR`](https://cmake.org/cmake/help/latest/variable/CMAKE_CURRENT_SOURCE_DIR.html), which is a built-in variable containing the full path to the `CMakeLists.txt` file that you are editing.
+The expression `${CMAKE_CURRENT_SOURCE_DIR}` is replaced by the content of CMake's variable [`CMAKE_CURRENT_SOURCE_DIR`](https://cmake.org/cmake/help/latest/variable/CMAKE_CURRENT_SOURCE_DIR.html), which is a built-in variable containing the full path to the parent directory of the `CMakeLists.txt` file that you are editing.
 
 ```{note}
 When writing a CMake *function*, the `CMAKE_CURRENT_SOURCE_DIR` variable contains the directory of the `CMakeLists.txt` that is currently calling the function. If you want to refer to the directory of the `CMakeLists.txt` that defines the function, use [`CMAKE_CURRENT_LIST_DIR`](https://cmake.org/cmake/help/latest/variable/CMAKE_CURRENT_LIST_DIR.html) instead.
 ```
+
+```{figure} /images/loaded-webgpu-logo-transform-issue.png
+:align: center
+:class: with-shadow
+It should now load the data file and display something like this.
+```
+
+Hardly recognized the WebGPU logo? Don't worry, we will re-center it soon!
 
 ### Portability
 
@@ -210,7 +249,7 @@ When writing a CMake *function*, the `CMAKE_CURRENT_SOURCE_DIR` variable contain
 
 Yes indeed, but we can easily add an option to globally change the resource directory when building a release that we want to be able to distribute:
 
-```CMake
+```{lit} CMake, Set the RESOURCE_DIR define (replace, also for tangle root "Vanilla")
 # We add an option to enable different settings when developing the app than
 # when distributing it.
 option(DEV_MODE "Set up development helper settings" ON)
@@ -241,18 +280,306 @@ cmake -B build-release -DDEV_MODE=OFF -DCMAKE_BUILD_TYPE=Release
 The first one for comfort of development, the second one for the portability of a release.
 
 ```{tip}
-The `CMAKE_BUILD_TYPE` option is a built-in option of CMake that is very commonly used. Set it to `Debug` to compile your program with **debugging symbols* (see [debugging](/appendices/debugging.md)), at the expense of a slower and heavier executable. Set it to `Release` to have a fast and lightweight executable with no debugging safe-guard.
+The `CMAKE_BUILD_TYPE` option is a built-in option of CMake that is very commonly used. Set it to `Debug` to compile your program with **debugging symbols** (see [debugging](/appendices/debugging.md)), at the expense of a slower and heavier executable. Set it to `Release` to have a **fast and lightweight** executable with no debugging safe-guard.
 
-When using some CMake generators, like the Visual Studio one, this is ignored because the generated solution can switch from Debug to Release mode directly in the IDE instead of asking CMake.
+When using some CMake generators, like the Visual Studio one, this is ignored because the generated solution can switch from `Debug` to `Release` mode directly within the IDE instead of asking CMake.
 ```
 
-### Shaders
+### Building for the Web
 
-Now that we have a basic resource path resolution mechanism, I strongly suggest we use to load our shader code, instead of hard-coding it in the C++ source as we have been doing from the beginning. We can even include the whole shader module creation call:
+> 😒 It is still not working when I try to build with emscripten!
+
+Indeed, a Web page does not have access to one's filesystem (for good security reasons), plus it does not even make sense because the client will not have these files.
+
+What we need to do in this case is to **ask emscripten to bundle the files within the application**. This is easily done with the [`--preload-file`](https://emscripten.org/docs/porting/files/packaging_files.html) link option, that preloads our content in a **virtual filesystem**.
+
+```{lit} CMake, Emscripten-specific options (append, also for tangle root "Vanilla")
+target_link_options(App PRIVATE
+	--preload-file "${CMAKE_CURRENT_SOURCE_DIR}/resources"
+)
+```
+
+This approach enables our C++ code to behave **as if there were files on a disk**, while in reality it is just a portion of data shipped with the app.
+
+````{note}
+We could precise `@resources` at the end of the `--preload-file` option to mean that the directory must be mounted at path `/resources` in the virtual filesystem. By default, the path of the preloaded file relative to `CMakeLists.txt` is used.
+
+```CMake
+target_link_options(App PRIVATE
+	-sASYNCIFY
+	--preload-file "${CMAKE_CURRENT_SOURCE_DIR}/resources@resources"
+	#                                                    ^^^^^^^^^^ here
+)
+```
+````
+
+Resource Manager
+----------------
+
+In order to keep our project organized, I suggest we create a new `ResourceManager` class dedicated to all our resource **input/output procedures**, and in particular our new `loadGeometry`.
+
+As advised when adding a C++ class, we add both a header file `ResourceManager.h` and an implementation file `ResourceManager.cpp`. We can already list them in our `CMakeLists.txt`:
+
+```{lit} CMake, Define app target (replace, hidden, also for tangle root "Vanilla")
+{{Dependency subdirectories}}
+
+add_executable(App
+	{{App source files}}
+)
+
+{{Link libraries}}
+
+{{Set the RESOURCE_DIR define}}
+```
+
+```{lit} CMake, App source files (append, also for tangle root "Vanilla")
+# In the list of files of add_executable(App ...):
+ResourceManager.h
+ResourceManager.cpp
+```
+
+### Header file
+
+The structure of a class header file always looks like this:
+
+```{lit} C++, file: ResourceManager.h (also for tangle root "Vanilla")
+// ResourceManager.h
+#pragma once
+{{ResourceManager.h includes}}
+
+class ResourceManager {
+public:
+	{{Public ResourceManager members}}
+
+private:
+	{{Private ResourceManager members}}
+};
+```
+
+We can declare in `public` members our `loadGeometry` function:
+
+```{lit} C++, Public ResourceManager members (also for tangle root "Vanilla")
+/**
+ * Load a file from `path` using our ad-hoc format and populate the `pointData`
+ * and `indexData` vectors.
+ */
+static bool loadGeometry(
+	const std::filesystem::path& path,
+	std::vector<float>& pointData,
+	std::vector<uint16_t>& indexData
+);
+```
+
+```{note}
+This method (like other loading methods of this guide) is defined as `static` so that **we do not need an instance** of the `ResourceManager` class. The `ResourceManager` class is actually only used as **some kind of namespace** here. I leave it as a class anyways because in a more advanced scenario you may want to turn this into a instantiable class.
+```
+
+Note that we need to add these includes:
+
+```{lit} C++, ResourceManager.h includes (also for tangle root "Vanilla")
+// Add to ResourceManager.h includes
+#include <vector>
+#include <filesystem>
+```
+
+````{note}
+We do not have any `private` member for now.
+
+```{lit} C++, Private ResourceManager members (hidden, also for tangle root "Vanilla")
+```
+````
+
+### Implementation file
+
+The implementation file only contains the definition of our `loadGeometry` function. **Do not forget** to prefix it with `ResourceManager::` and to include `"ResourceManager.h"`:
+
+```C++
+// In ResourceManager.cpp
+#include "ResourceManager.h"
+
+#include <fstream>
+#include <sstream>
+#include <string>
+
+bool ResourceManager::loadGeometry(
+	const std::filesystem::path& path,
+	std::vector<float>& pointData,
+	std::vector<uint16_t>& indexData
+) {
+	// [...] Copy the content of the `loadGeometry()` defined above.
+}
+```
+
+```{lit} C++, file: ResourceManager.cpp (hidden, also for tangle root "Vanilla")
+// ResourceManager.cpp
+#include "ResourceManager.h"
+{{Other ResourceManager.cpp includes}}
+
+{{ResourceManager member definitions}}
+```
+
+```{lit} C++, Other ResourceManager.cpp includes (hidden, also for tangle root "Vanilla")
+// Add to ResourceManager.cpp includes
+#include <fstream>
+#include <sstream>
+#include <string>
+```
+
+```{lit} C++, ResourceManager member definitions (hidden, also for tangle root "Vanilla")
+bool ResourceManager::loadGeometry(
+	const std::filesystem::path& path,
+	std::vector<float>& pointData,
+	std::vector<uint16_t>& indexData
+) {
+	std::ifstream file(path);
+	if (!file.is_open()) {
+		return false;
+	}
+
+	pointData.clear();
+	indexData.clear();
+
+	enum class Section {
+		None,
+		Points,
+		Indices,
+	};
+	Section currentSection = Section::None;
+
+	float value;
+	uint16_t index;
+	std::string line;
+	while (!file.eof()) {
+		getline(file, line);
+		
+		// overcome the `CRLF` problem
+		if (!line.empty() && line.back() == '\r') {
+			line.pop_back();
+		}
+		
+		if (line == "[points]") {
+			currentSection = Section::Points;
+		}
+		else if (line == "[indices]") {
+			currentSection = Section::Indices;
+		}
+		else if (line[0] == '#' || line.empty()) {
+			// Do nothing, this is a comment
+		}
+		else if (currentSection == Section::Points) {
+			std::istringstream iss(line);
+			// Get x, y, r, g, b
+			for (int i = 0; i < 5; ++i) {
+				iss >> value;
+				pointData.push_back(value);
+			}
+		}
+		else if (currentSection == Section::Indices) {
+			std::istringstream iss(line);
+			// Get corners #0 #1 and #2
+			for (int i = 0; i < 3; ++i) {
+				iss >> index;
+				indexData.push_back(index);
+			}
+		}
+	}
+	return true;
+}
+```
+
+### Usage
+
+To use this new class in our `main.cpp` file, we must take care of including its header file:
+
+```{lit} C++, Includes (append, also for tangle root "Vanilla")
+// In main.cpp
+#include "ResourceManager.h"
+```
+
+And we must prefix `loadGeometry` with `ResourceManager::` when calling our static method:
+
+```C++
+bool success = ResourceManager::loadGeometry(RESOURCE_DIR "/webgpu.txt", pointData, indexData);
+//             ^^^^^^^^^^^^^^^^^ don't forget this
+```
+
+```{lit} C++, Load geometry data from file (hidden, replace, also for tangle root "Vanilla")
+// Define data vectors, but without filling them in
+std::vector<float> pointData;
+std::vector<uint16_t> indexData;
+
+// Here we use the new 'ResourceManager::loadGeometry' function:
+bool success = ResourceManager::loadGeometry(RESOURCE_DIR "/webgpu.txt", pointData, indexData);
+
+// Check for errors
+if (!success) {
+	std::cerr << "Could not load geometry!" << std::endl;
+	exit(1);
+}
+
+// We now store the index count rather than the vertex count
+indexCount = static_cast<uint32_t>(indexData.size());
+```
+
+### Loading shaders
+
+Now that we have a basic resource management mechanism, I strongly suggest we also use it to **load our shader code**, instead of hard-coding it in the C++ source as we have been doing from the beginning. We can even include the whole shader module creation boilerplate in our new `ResourceManager::loadShaderModule()`.
+
+Let us first declare it in `ResourceManager.h`:
 
 ````{tab} With webgpu.hpp
-```C++
-ShaderModule loadShaderModule(const fs::path& path, Device device) {
+```{lit} C++, Public ResourceManager members (append)
+/**
+ * Create a shader module for a given WebGPU `device` from a WGSL shader source
+ * loaded from file `path`.
+ */
+static wgpu::ShaderModule loadShaderModule(
+	const std::filesystem::path& path,
+	wgpu::Device device
+);
+```
+````
+
+````{tab} Vanilla webgpu.h
+```{lit} C++, Public ResourceManager members (append, for tangle root "Vanilla")
+/**
+ * Create a shader module for a given WebGPU `device` from a WGSL shader source
+ * loaded from file `path`.
+ */
+static WGPUShaderModule loadShaderModule(
+	const std::filesystem::path& path,
+	WGPUDevice device
+);
+```
+````
+
+We must not forget to include the webgpu header in `ResourceManager.h`:
+
+`````{tab} With webgpu.hpp
+```{lit} C++, ResourceManager.h includes (append)
+#include <webgpu/webgpu.hpp>
+```
+
+````{caution}
+Do **not** call `using namespace wgpu` in a **header file**, otherwise it forces all files that include this header to accept to use the `wgpu` namespace, which may create conflicts. This is why we prefix with `wgpu::` in the header, but of course we may call this in the implementation (.cpp) file:
+
+```{lit} C++, Other ResourceManager.cpp includes (append)
+using namespace wgpu;
+```
+````
+`````
+
+````{tab} Vanilla webgpu.h
+```{lit} C++, ResourceManager.h includes (append, for tangle root "Vanilla")
+#include <webgpu/webgpu.h>
+```
+````
+
+And we may now define it in `ResourceManager.cpp`:
+
+````{tab} With webgpu.hpp
+```{lit} C++, ResourceManager member definitions (append)
+ShaderModule ResourceManager::loadShaderModule(const std::filesystem::path& path, Device device) {
 	std::ifstream file(path);
 	if (!file.is_open()) {
 		return nullptr;
@@ -267,9 +594,12 @@ ShaderModule loadShaderModule(const fs::path& path, Device device) {
 	shaderCodeDesc.chain.next = nullptr;
 	shaderCodeDesc.chain.sType = SType::ShaderModuleWGSLDescriptor;
 	shaderCodeDesc.code = shaderSource.c_str();
+
 	ShaderModuleDescriptor shaderDesc{};
+#ifdef WEBGPU_BACKEND_WGPU
 	shaderDesc.hintCount = 0;
 	shaderDesc.hints = nullptr;
+#endif
 	shaderDesc.nextInChain = &shaderCodeDesc.chain;
 	return device.createShaderModule(shaderDesc);
 }
@@ -277,8 +607,8 @@ ShaderModule loadShaderModule(const fs::path& path, Device device) {
 ````
 
 ````{tab} Vanilla webgpu.h
-```C++
-WGPUShaderModule loadShaderModule(const fs::path& path, WGPUDevice device) {
+```{lit} C++, ResourceManager member definitions (append, for tangle root "Vanilla")
+WGPUShaderModule ResourceManager::loadShaderModule(const std::filesystem::path& path, WGPUDevice device) {
 	std::ifstream file(path);
 	if (!file.is_open()) {
 		return nullptr;
@@ -293,31 +623,57 @@ WGPUShaderModule loadShaderModule(const fs::path& path, WGPUDevice device) {
 	shaderCodeDesc.chain.next = nullptr;
 	shaderCodeDesc.chain.sType = WGPUSType_ShaderModuleWGSLDescriptor;
 	shaderCodeDesc.code = shaderSource.c_str();
+
 	WGPUShaderModuleDescriptor shaderDesc{};
 	shaderDesc.nextInChain = nullptr;
+#ifdef WEBGPU_BACKEND_WGPU
 	shaderDesc.hintCount = 0;
 	shaderDesc.hints = nullptr;
+#endif
 	shaderDesc.nextInChain = &shaderCodeDesc.chain;
 	return wgpuDeviceCreateShaderModule(device, &shaderDesc);
 }
 ```
 ````
 
-Move the original content of the shaderSource variable into `resources/shader.wgsl` and replace the module creation step by:
+We then move the original content of the shaderSource variable into `resources/shader.wgsl`:
+
+```{lit} rust, file: resources/shader.wgsl (also for tangle root "Vanilla")
+// In a new file 'resources/shader.wgsl'
+// Move the content of the global `shaderSource` variable (and remove that variable from main.cpp)
+{{Shader source}}
+```
+
+```{lit} C++, Shader source literal (hidden, replace, also for tangle root "Vanilla")
+```
+
+And we replace the module creation step in `Application::InitializePipeline()` by:
 
 ````{tab} With webgpu.hpp
-```C++
+```{lit} C++, Create Shader Module (replace)
 std::cout << "Creating shader module..." << std::endl;
-ShaderModule shaderModule = loadShaderModule(RESOURCE_DIR "/shader.wgsl", device);
+ShaderModule shaderModule = ResourceManager::loadShaderModule(RESOURCE_DIR "/shader.wgsl", device);
 std::cout << "Shader module: " << shaderModule << std::endl;
+
+// Check for errors
+if (shaderModule == nullptr) {
+	std::cerr << "Could not load shader!" << std::endl;
+	exit(1);
+}
 ```
 ````
 
 ````{tab} Vanilla webgpu.h
-```C++
+```{lit} C++, Create Shader Module (replace, for tangle root "Vanilla")
 std::cout << "Creating shader module..." << std::endl;
-WGPUShaderModule shaderModule = loadShaderModule(RESOURCE_DIR "/shader.wgsl", device);
+WGPUShaderModule shaderModule = ResourceManager::loadShaderModule(RESOURCE_DIR "/shader.wgsl", device);
 std::cout << "Shader module: " << shaderModule << std::endl;
+
+// Check for errors
+if (shaderModule == nullptr) {
+	std::cerr << "Could not load shader!" << std::endl;
+	exit(1);
+}
 ```
 ````
 
@@ -334,7 +690,7 @@ indexData is aligned to 4 bytes, so if we use u32 its fine, if we use u16 we nee
 
 ### Transform
 
-If you run the program now you should get something like this:
+So, as we noticed earlier, our shape is not well centered:
 
 ```{figure} /images/loaded-webgpu-logo-transform-issue.png
 :align: center
@@ -344,8 +700,9 @@ Our loaded shape is a bit off, we should move it to better center it!
 
 So how do we "move" the object? Similarly to how we fixed the ratio issue in the previous chapter, we can do it in the **vertex shader**, by adding something to the `x` and `y` coordinates:
 
-```rust
-let offset = vec2f(-0.6875, -0.463);
+```{lit} rust, Vertex shader position( replace, also for tangle root "Vanilla")
+let ratio = 640.0 / 480.0; // The width and height of the target surface
+let offset = vec2f(-0.6875, -0.463); // The offset that we want to apply to the position
 out.position = vec4f(in.position.x + offset.x, (in.position.y + offset.y) * ratio, 0.0, 1.0);
 ```
 
@@ -391,13 +748,13 @@ Color picking the big triangle in a screenshot of our windows shows a color of $
 
 Oh oh, it does not match. What is happening? We have a **color space** issue, meaning that we are expressing colors in a given space, but they end up being interpreted differently. This may happen in a lot of contexts, so it is quite useful to be aware of the basics (although color science is a non-trivial matter in general).
 
-Our problem here comes from the `swapChainFormat`. Let us print it:
+Our problem here comes from the `surfaceFormat`. Let us print it:
 
 ```C++
-std::cout << "Swapchain format: " << swapChainFormat << std::endl;
+std::cout << "Surface format: " << surfaceFormat << std::endl;
 ```
 
-This gives *Swapchain format: 24*. The "24" must be compared to the values of the `WGPUTextureFormat` enum in `webgpu.h`. Be aware that values there are expressed in base 16 (number literals start with `0x`), so we are looking for `24 = 1 * 16 + 8 = 0x18`.
+This gives *Surface format: 24*. The "24" must be compared to the values of the `WGPUTextureFormat` enum in `webgpu.h`. Be aware that values there are expressed in base 16 (number literals start with `0x`), so we are looking for `24 = 1 * 16 + 8 = 0x18`.
 
 ````{note}
 To avoid the need to manually handle enum values, I recommend to have a look at [magic_enum](https://github.com/Neargye/magic_enum/blob/master/include/magic_enum.hpp). After you copy this file to your source tree you can simply do the following:
@@ -407,10 +764,10 @@ To avoid the need to manually handle enum values, I recommend to have a look at 
 
 // [...]
 
-std::cout << "Swapchain format: " << magic_enum::enum_name<WGPUTextureFormat>(swapChainFormat) << std::endl;
+std::cout << "Surface format: " << magic_enum::enum_name<WGPUTextureFormat>(surfaceFormat) << std::endl;
 ```
 
-Thanks to advanced C++ template mechanism, this library is able to output *Swapchain format: WGPUTextureFormat_BGRA8UnormSrgb*!
+Thanks to advanced C++ template mechanism, this library is able to output *Surface format: WGPUTextureFormat_BGRA8UnormSrgb*!
 ````
 
 ```{admonition} Dawn
@@ -445,7 +802,7 @@ The sRGB color space has been designed specifically to address the non-linearity
 ```
 
 ```{important}
-The sRGB color space is so much the standard that it is the one used by all common image file formats, like PNG and JPG. As a consequence, when not doing any color conversion, everything we do, including the color picking tool, is in sRGB.
+The sRGB color space is so much of a **standard** that it is the one used by all common image file formats, like PNG and JPG. As a consequence, when not doing any color conversion, everything we do, including the color picking tool, is in sRGB.
 
 **However**, WebGPU assumes that the colors output by the fragment shader are linear, so when setting the surface format to `BGRA8UnormSrgb` it performs a *linear to sRGB* conversion. **This is what causes our colors to be wrong!**
 ```
@@ -455,12 +812,12 @@ The sRGB color space is so much the standard that it is the one used by all comm
 An easy-fix is to force a non-sRGB texture format:
 
 ```C++
-TextureFormat swapChainFormat = TextureFormat::BGRA8Unorm;
+TextureFormat surfaceFormat = TextureFormat::BGRA8Unorm;
 ```
 
 But ignoring the preferred format of the target surface may result in performance issues (the driver would need to convert formats all the time). Instead, we will handle the **color space conversion in the fragment shader**. A good approximation of the rRGB conversion is $R_{\text{linear}} = R_{\text{sRGB}}^{2.2}$:
 
-```rust
+```{lit} rust, Fragment shader body (replace, also for tangle root "Vanilla")
 // We apply a gamma-correction to the color
 // We need to convert our input sRGB color into linear before the target
 // surface converts it back to sRGB.
@@ -510,8 +867,4 @@ We are going to come back on these from time to time to refine them. We are now 
 
 ````{tab} Vanilla webgpu.h
 *Resulting code:* [`step037-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step037-vanilla)
-````
-
-````{tab} With Dawn
-*Resulting code:* [`step037-dawn`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step037-dawn)
 ````

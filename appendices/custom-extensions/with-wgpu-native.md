@@ -1,4 +1,4 @@
-With `wgpu-native` (🚧WIP)
+With `wgpu-native` (<span class="bullet">🟠</span>WIP)
 ==================
 
 *Resulting code:* [`wgpu`](https://github.com/eliemichel/wgpu/tree/eliemichel/foo), [`wgpu-native`](https://github.com/eliemichel/wgpu-native/tree/eliemichel/foo) and [`step030-test-foo-extension`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step030-test-foo-extension)
@@ -41,6 +41,8 @@ To point `wgpu-native` to our custom `wgpu`, we can modify its `wgpu-native/Carg
 [patch."https://github.com/gfx-rs/wgpu"]
 wgpu-core = { path = "../wgpu/wgpu-core" }
 wgpu-types = { path = "../wgpu/wgpu-types" }
+wgpu-hal = { path = "../wgpu/wgpu-hal" }
+naga = { path = "../wgpu/naga" }
 ```
 
 ````{note}

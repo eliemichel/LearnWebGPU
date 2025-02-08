@@ -1,4 +1,4 @@
-Cubemap Prefiltering (🚧WIP)
+Cubemap Prefiltering (<span class="bullet">🟠</span>WIP)
 ====================
 
 *Resulting code:* [`step222`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step222)

@@ -1,4 +1,4 @@
-Deformation (🚧WIP)
+Deformation (<span class="bullet">🟠</span>WIP)
 ===========
 
 *Resulting code:* [`step240`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step240)

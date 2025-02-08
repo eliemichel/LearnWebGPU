@@ -1,4 +1,4 @@
-Depth buffer
+Depth buffer <span class="bullet">🟡</span>
 ============
 
 ````{tab} With webgpu.hpp

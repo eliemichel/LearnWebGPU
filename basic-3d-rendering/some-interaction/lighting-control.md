@@ -1,4 +1,4 @@
-Lighting control
+Lighting control <span class="bullet">🟡🟢</span>
 ================
 
 ````{tab} With webgpu.hpp
@@ -8,6 +8,10 @@ Lighting control
 ````{tab} Vanilla webgpu.h
 *Resulting code:* [`step100-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step100-vanilla)
 ````
+
+```{important}
+**November 17, 2024:** This chapter is marked with a secondary **green bullet 🟢** only to draw attention because there is a preview of the accompanying code available for a more recent version of Dawn and `wgpu-native`: [`step100-next`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step100-next). The content of this chapter still relies on older versions.
+```
 
 Now that we have elements of GUI, we can use them to expose for instance the **lighting settings** to the user. We want them to be able to **live tweak** the direction and color of our light sources.
 
