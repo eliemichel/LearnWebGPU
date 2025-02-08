@@ -29,10 +29,10 @@ jobs:
       tangle-roots: ${{ steps.set-tangle-roots.outputs.roots }}
     steps:
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Setup Pages
-      uses: actions/configure-pages@v2
+      uses: actions/configure-pages@v5
 
     - name: Setup Python
       run: pip install -r requirements.txt
@@ -45,7 +45,7 @@ jobs:
       run: echo "roots=$(printf '['; find _build/tangle -maxdepth 1 -mindepth 1 -type d -printf '"%P", '; printf ']\n')" >> $GITHUB_OUTPUT
 
     - name: Upload artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: tangled-code
         path: _build/tangle
@@ -58,10 +58,10 @@ jobs:
       tangle-roots: ${{ steps.filter-tangle-roots.outputs.roots }}
     steps:
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Download current tangle
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: tangled-code
         path: current
@@ -126,7 +126,7 @@ jobs:
       run: ${{ matrix.install-deps }}
 
     - name: Download artifact
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: tangled-code
 
