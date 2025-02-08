@@ -100,7 +100,7 @@ bool Application::initWindowAndDevice() {
 ```{important}
 I did not show the lambda version right away because it is slightly misleading: **it is tempting** to use the **capturing context** of the lambda (the `[]` before the lambda's arguments) to provide `this` to the callback.
 
-However, **only non-capturing lambdas** may be casted to the raw function pointer that GLFW expects for a callback. This remark goes for any C API by the way.
+However, **only non-capturing lambdas** may be cast to the raw function pointer that GLFW expects for a callback. In fact, this is true for any C API.
 ```
 
 Resize event handler

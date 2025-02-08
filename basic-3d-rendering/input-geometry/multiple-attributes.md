@@ -37,7 +37,7 @@ fn vs_main(@location(0) in_position: vec2f, @location(1) in_color: vec3f) -> /* 
 }
 ```
 
-This works, but when the **number of input attribute grows**, we will prefer take instead a **single argument** whose type is a **custom struct** labeled with locations:
+This works, but when the **number of input attribute grows**, we will prefer to instead take a **single argument** whose type is a **custom struct** labeled with locations:
 
 ```{lit} rust, Define VertexInput struct (also for tangle root "Vanilla")
 /**
@@ -84,7 +84,7 @@ const char* shaderSource = R"(
 
 Nope. The vertex attributes are only provided to the vertex shader. However, **the fragment shader can receive whatever the vertex shader returns!** This is where the structure-based approach becomes handy.
 
-First of all, we change again the signature of `vs_main` to **return a custom struct** (instead of `@builtin(position) vec4f`):
+First of all, we once again change the signature of `vs_main` to **return a custom struct** (instead of `@builtin(position) vec4f`):
 
 ```{lit} rust, Vertex shader (replace, also for tangle root "Vanilla")
 fn vs_main(in: VertexInput) -> VertexOutput {
@@ -125,7 +125,7 @@ fn fs_main(@location(0) color: vec3f) -> @location(0) vec4f {
 }
 ```
 
-Or we can use a custom struct whose fields are labeled... like the `VertexOutput` itself. It could be a different one, as long as we stay consistent regarding `@location` indices.
+Or, we can use a custom struct whose fields are labeled... like the `VertexOutput` itself! It could be a different one, as long as we stay consistent regarding `@location` indices.
 
 ```{lit} rust, Fragment shader (replace, also for tangle root "Vanilla")
 // Or we can use a custom struct whose fields are labeled
@@ -263,7 +263,7 @@ vertexBufferLayout.attributes = vertexAttribs.data();
 ```
 ````
 
-The first thing we can remark is that now the **byte stride** of our position attribute $(x,y)$ has changed from `2 * sizeof(float)` to `5 * sizeof(float)`:
+The first thing to remark on is that now the **byte stride** of our position attribute $(x,y)$ has changed from `2 * sizeof(float)` to `5 * sizeof(float)`:
 
 ````{tab} With webgpu.hpp
 ```{lit} C++, Describe buffer stride and step mode (replace)
