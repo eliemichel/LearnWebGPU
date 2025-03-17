@@ -95,10 +95,3 @@ basic-compute/index
 advanced-techniques/index
 appendices/index
 ```
-
-```{toctree}
-:titlesonly:
-:hidden:
-
-next/index
-```
