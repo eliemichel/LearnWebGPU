@@ -234,6 +234,7 @@ viewDescriptor.mipLevelCount = 1;
 viewDescriptor.baseArrayLayer = 0;
 viewDescriptor.arrayLayerCount = 1;
 viewDescriptor.aspect = WGPUTextureAspect_All;
+viewDescriptor.usage = WGPUTextureUsage_RenderAttachment | WGPUTextureUsage_TextureBinding;
 WGPUTextureView targetView = wgpuTextureCreateView(surfaceTexture.texture, &viewDescriptor);
 ```
 
