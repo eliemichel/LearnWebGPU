@@ -164,10 +164,10 @@ Now that our surface is configured, we can ask it **at each frame** for the **ne
 {{Present the surface onto the window}}
 ```
 
-Since what we need is usually a **texture view** rather than the raw surface texture, we may create a dedicated function `GetNextSurfaceTextureView()` in our application class.
+Since what we need is usually a **texture view** rather than the raw surface texture, we may create a dedicated function `GetNextSurfaceViewData()` in our application class.
 
-```{lit} C++, GetNextSurfaceTextureView method
-WGPUTextureView Application::GetNextSurfaceTextureView() {
+```{lit} C++, GetNextSurfaceViewData method
+std::pair<WGPUSurfaceTexture, WGPUTextureView> Application::GetNextSurfaceViewData() {
     {{Get the next surface texture}}
     {{Create surface texture view}}
     {{Release the texture}}
@@ -176,14 +176,14 @@ WGPUTextureView Application::GetNextSurfaceTextureView() {
 ```
 
 ```{lit} C++, Application implementation (append, hidden)
-{{GetNextSurfaceTextureView method}}
+{{GetNextSurfaceViewData method}}
 ```
 
 We then simply call this function at the beginning of the main loop and check that it returns a valid view:
 
 ```{lit} C++, Get the next target texture view
 // Get the next target texture view
-WGPUTextureView targetView = GetNextSurfaceTextureView();
+auto [surfaceTexture, targetView] = surfacePresent();
 if (!targetView) return;
 ```
 
@@ -192,7 +192,7 @@ Do not forget to **declare the method** in the `Application` class declaration. 
 
 ```{lit} C++, Private methods (insert in {{Application class}} after "bool IsRunning();")
 private:
-    WGPUTextureView GetNextSurfaceTextureView();
+    WGPUTextureView surfacePresent();
 ```
 ````
 
@@ -250,7 +250,7 @@ The texture itself must only be released, and actually we can do it right after 
 ```{lit} C++, Release the texture
 #ifndef WEBGPU_BACKEND_WGPU
     // We no longer need the texture, only its view
-    // (NB: with wgpu-native, surface textures must not be manually released)
+    // (NB: with wgpu-native, surface textures must be release after the call to wgpuSurfacePresent)
     wgpuTextureRelease(surfaceTexture.texture);
 #endif // WEBGPU_BACKEND_WGPU
 ```
@@ -261,6 +261,10 @@ Finally, once the texture is filled in and released, we can tell the surface to 
 
 ```{lit} C++, Present the surface onto the window (append)
 wgpuSurfacePresent(surface);
+
+#ifdef WEBGPU_BACKEND_WGPU
+    wgpuTextureRelease(surfaceTexture.texture);
+#endif
 ```
 
 ````{admonition} Building for the Web
