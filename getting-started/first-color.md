@@ -183,7 +183,7 @@ We then simply call this function at the beginning of the main loop and check th
 
 ```{lit} C++, Get the next target texture view
 // Get the next target texture view
-auto [surfaceTexture, targetView] = surfacePresent();
+auto [surfaceTexture, targetView] = GetNextSurfaceTextureView();
 if (!targetView) return;
 ```
 
@@ -192,7 +192,7 @@ Do not forget to **declare the method** in the `Application` class declaration. 
 
 ```{lit} C++, Private methods (insert in {{Application class}} after "bool IsRunning();")
 private:
-    WGPUTextureView surfacePresent();
+    WGPUTextureView GetNextSurfaceTextureView();
 ```
 ````
 
