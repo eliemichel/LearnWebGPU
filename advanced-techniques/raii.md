@@ -115,7 +115,6 @@ public:
 
 	// And whenever it gets destroyed, we free the resource
 	~Buffer() {
-		m_raw.destroy();
 		m_raw.release();
 	}
 
@@ -126,6 +125,10 @@ private:
 };
 
 // namespace raii
+```
+
+```{caution}
+When implementing a RAII idiom, it is very important to keep in mind that, as for any class, **the destructor shall not raise exceptions**! The WebGPU API promises that releasing an object does not causes exception, so we should be fine here.
 ```
 
 This somehow works... until we meet this kind of scheme:
@@ -213,7 +216,6 @@ Buffer(Buffer&& other) {
 // And we need to slightly change the destructor:
 ~Buffer() {
 	if (!m_raw) return;
-	m_raw.destroy();
 	m_raw.release();
 }
 ```

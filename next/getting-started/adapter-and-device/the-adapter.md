@@ -4,9 +4,10 @@ The Adapter <span class="bullet">🟢</span>
 ```{lit-setup}
 :tangle-root: 005 - The Adapter - Next
 :parent: 001 - Hello WebGPU - Next
+:debug:
 ```
 
-*Resulting code:* [`step005`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step005)
+*Resulting code:* [`step005-next`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step005-next)
 
 Before getting our hands on a **device**, we need to select an **adapter**. The same host system may expose **multiple adapters** if it has access to multiple physical GPUs. It may also have an adapter that represents an emulated/virtual device.
 
@@ -70,51 +71,81 @@ The last argument and the return type `WGPUFuture` go together, and reveal yet a
 Asynchronous functions are used in multiple places in the WebGPU API, whenever an operation may take time. Actually, **none of the WebGPU functions** takes time to return. This way, the CPU program that we are writing never gets blocked by a lengthy operation!
 ```
 
-**WIP line**
+Let us now look at the **callback info** that `wgpuInstanceRequestAdapter` expects. Here is the definition of the `WGPURequestAdapterCallbackInfo` function type:
 
-To understand this callback mechanism a bit better, here is the definition of the `WGPURequestAdapterCallback` function type:
+```C++
+// Definition of the WGPURequestAdapterCallbackInfo function type as defined in webgpu.h
+struct WGPURequestAdapterCallbackInfo {
+    WGPUChainedStruct * nextInChain;
+    WGPUCallbackMode mode;
+    WGPURequestAdapterCallback callback;
+    WGPU_NULLABLE void* userdata1;
+    WGPU_NULLABLE void* userdata2;
+};
+```
+
+The main element of this structure is the `callback` field, which is a **function pointer** whose type `WGPURequestAdapterCallback` is defined as follows:
 
 ```C++
 // Definition of the WGPURequestAdapterCallback function type as defined in webgpu.h
 typedef void (*WGPURequestAdapterCallback)(
 	WGPURequestAdapterStatus status,
 	WGPUAdapter adapter,
-	char const * message,
-	void * userdata
+	struct WGPUStringView message,
+	void* userdata1,
+	void* userdata2
 );
 ```
 
-The callback is a **function** that receives the **requested adapter** as an argument, together with **status** information (that tells whether the request failed and why), as well as this mysterious `userdata` **pointer**.
+This is the **callback function** that receives the **requested adapter** as an argument, together with **status** information (that tells whether the request failed and why), when the request ends.
 
-This `userdata` pointer can be anything, it is not interpreted by WebGPU, but only **forwarded** from the initial call to `wgpuInstanceRequestAdapter` to the callback, as a mean to **share some context information**:
+This function also also receive these mysterious `userdata` **pointers** that have the same name than in the **callback info**. These pointers can be **anything you want**, they are a mean to **pass some context information** from the call to `wgpuInstanceRequestAdapter` to the body of the callback.
+
+```{note}
+When directly using the C API like we do here, we generally only need one of the two `userdata` pointers. The second is used when building higher level abstractions around the callback.
+```
+
+Here is a rough example to **illustrate the `userdata` mechanism**:
 
 ```C++
+// This is our callback function, whose signature corresponds to WGPURequestAdapterCallback
 void onAdapterRequestEnded(
 	WGPURequestAdapterStatus status, // a success status
 	WGPUAdapter adapter, // the returned adapter
-	char const* message, // error message, or nullptr
-	void* userdata // custom user data, as provided when requesting the adapter
+	struct WGPUStringView message, // optional error message
+	void* userdata1, // custom user data, as provided when requesting the adapter
+	void* userdata2  // second custom user data
 ) {
 	// [...] Do something with the adapter
 
-	// Manipulate user data
-	bool* pRequestEnded = reinterpret_cast<bool*>(userdata);
+	// Manipulate user data: we access here the 'requestEnded' variable
+	// that is defined in the main() function below.
+	bool* pRequestEnded = reinterpret_cast<bool*>(userdata1);
 	*pRequestEnded = true;
 }
 
-// [...]
+int main(int, char**) {
+	// [...]
 
-// In main():
-bool requestEnded = false;
-wgpuInstanceRequestAdapter(
-	instance /* equivalent of navigator.gpu */,
-	&options,
-	onAdapterRequestEnded,
-	&requestEnded // custom user data is simply a pointer to a boolean in this case
-);
+	bool requestEnded = false;
+
+	// Build callback info
+	WGPURequestAdapterCallbackInfo callbackInfo = {
+	    /* nextInChain = */ nullptr,
+	    /* mode = */ WGPUCallbackMode_AllowSpontaneous,
+	    /* callback = */ onAdapterRequestEnded,
+	    /* userdata1 = */ &requestEnded, // custom user data is simply a pointer to a boolean in this case
+	    /* userdata2 = */ false
+	};
+
+	// Start the request
+	wgpuInstanceRequestAdapter(instance, &options, callbackInfo);
+
+	// [...]
+}
 ```
 
-We see in the next section a more advanced use of this context in order to retrieve the adapter once the request is done.
+We see in the next section a **more complete use** of this context in order to retrieve the adapter once the request is done.
 
 ````{admonition} Note - JavaScript API
 :class: foldable note
@@ -162,7 +193,7 @@ We can wrap the whole adapter request in the following `requestAdapterSync()` fu
 /**
  * Utility function to get a WebGPU adapter, so that
  *     WGPUAdapter adapter = requestAdapterSync(options);
- * is roughly equivalent to
+ * is roughly equivalent to the JavaScript
  *     const adapter = await navigator.gpu.requestAdapter(options);
  */
 WGPUAdapter requestAdapterSync(WGPUInstance instance, WGPURequestAdapterOptions const * options) {
@@ -179,26 +210,36 @@ WGPUAdapter requestAdapterSync(WGPUInstance instance, WGPURequestAdapterOptions 
 	// global scope. It must be non-capturing (the brackets [] are empty) so
 	// that it behaves like a regular C function pointer, which is what
 	// wgpuInstanceRequestAdapter expects (WebGPU being a C API). The workaround
-	// is to convey what we want to capture through the pUserData pointer,
+	// is to convey what we want to capture through the userdata1 pointer,
 	// provided as the last argument of wgpuInstanceRequestAdapter and received
 	// by the callback as its last argument.
-	auto onAdapterRequestEnded = [](WGPURequestAdapterStatus status, WGPUAdapter adapter, char const * message, void * pUserData) {
-		UserData& userData = *reinterpret_cast<UserData*>(pUserData);
+	auto onAdapterRequestEnded = [](
+		WGPURequestAdapterStatus status,
+		WGPUAdapter adapter,
+		WGPUStringView message,
+		void* userdata1,
+		void* /* userdata2 */
+	) {
+		UserData& userData = *reinterpret_cast<UserData*>(userdata1);
 		if (status == WGPURequestAdapterStatus_Success) {
 			userData.adapter = adapter;
 		} else {
-			std::cout << "Could not get WebGPU adapter: " << message << std::endl;
+			{{Display error message}}
 		}
 		userData.requestEnded = true;
 	};
 
+	// Build the callback info
+	WGPURequestAdapterCallbackInfo callbackInfo = {
+		/* nextInChain = */ nullptr,
+		/* mode = */ WGPUCallbackMode_AllowSpontaneous,
+		/* callback = */ onAdapterRequestEnded,
+		/* userdata1 = */ &userData,
+		/* userdata2 = */ false
+	};
+
 	// Call to the WebGPU request adapter procedure
-	wgpuInstanceRequestAdapter(
-		instance /* equivalent of navigator.gpu */,
-		options,
-		onAdapterRequestEnded,
-		(void*)&userData
-	);
+	wgpuInstanceRequestAdapter(instance, options, callbackInfo);
 
 	// We wait until userData.requestEnded gets true
 	{{Wait for request to end}}
@@ -214,21 +255,68 @@ WGPUAdapter requestAdapterSync(WGPUInstance instance, WGPURequestAdapterOptions 
 {{Request adapter function}}
 ```
 
-In the main function, after creating the WebGPU instance, we can get the adapter:
+There are **two missing blocks** in this function: **(a)** handling the error message, which has type `WGPUStringView` and **(b)** waiting for the request to end.
 
-```{lit} C++, Request adapter
-std::cout << "Requesting adapter..." << std::endl;
+#### Displaying `WGPUStringView`
 
-WGPURequestAdapterOptions adapterOpts = {};
-adapterOpts.nextInChain = nullptr;
-WGPUAdapter adapter = requestAdapterSync(instance, &adapterOpts);
+All strings of text in the WebGPU native API use the type `WGPUStringView`. This is very close to a regular `const char *`, except that it **may or may not be null terminated**. Let's has a look at its definition:
 
-std::cout << "Got adapter: " << adapter << std::endl;
+```C++
+struct WGPUStringView {
+    WGPU_NULLABLE char const * data;
+    size_t length;
+};
+```
+
+The `data` field is the address of the **first character** of the string. The `length` field tells how many consecutive characters after this address constitute the string. In this regard, it is close to a [`std::string_view`](https://en.cppreference.com/w/cpp/string/basic_string_view).
+
+**But** the `length` field may also be set to the **special value** `WGPU_STRLEN`. In this case, the string is **null-terminated**, meaning it consists in all the characters that follow the address at which `data` points, until one of them is the special null character `'\0'`.
+
+This special case makes it easy enough to build a `WGPUStringView`:
+
+```C++
+WGPUStringView myStringView = {
+    /* data = */ "lorem ipsum, dolor sit amet", // string literals like this one have an implicit \0 at the end
+    /* length = */ WGPU_STRLEN; // special value meaning "look for \0 to find the end of the string"
+};
+```
+
+In order to convert back, I suggest we create a **small utility function** to turn a `WGPUStringView` into a `std::string_view`, which plays along well with C++ standard library:
+
+```{lit} C++, Define toStdStringView
+std::string_view toStdStringView(WGPUStringView wgpuStringView) {
+	return
+		wgpuStringView.length == WGPU_STRLEN
+		? std::string_view(wgpuStringView.data)
+		: std::string_view(wgpuStringView.data, wgpuStringView.length);
+}
+```
+
+Note that this requires the `string_view` header:
+
+```{lit} C++, Includes (append)
+#include <string_view>
+```
+
+````{note}
+We define this **before** the `requestAdapterSync` function:
+
+```{lit} C++, Utility functions (prepend)
+{{Define toStdStringView}}
+```
+````
+
+Finally, to display the error message, we may now use a regular `std::cout`:
+
+```{lit} C++, Display error message
+std::cerr << "Error while requesting adapter: " << toStdStringView(message) << std::endl;
 ```
 
 #### Waiting for the request to end
 
-You may have noticed the comment above saying **we need to wait** for the request to end, i.e. for the callback to be invoked, before returning.
+We know how to request the adpater, and how to handle the response. But we do not know yet **how to wait** for the request to end before returning to the main function.
+
+**WIP line**
 
 When using the **native** API (Dawn or `wgpu-native`), it is in practice **not needed**, we know that when the `wgpuInstanceRequestAdapter` function returns its callback has been called.
 
@@ -255,6 +343,20 @@ Also do not forget to include `emscripten.h` in order to use `emscripten_sleep`:
 #ifdef __EMSCRIPTEN__
 #  include <emscripten.h>
 #endif // __EMSCRIPTEN__
+```
+
+#### Using our helper function
+
+Now that our `requestAdapterSync` function is complete, we can call it in out main function. After creating the WebGPU instance, we get the adapter as follows:
+
+```{lit} C++, Request adapter
+std::cout << "Requesting adapter..." << std::endl;
+
+WGPURequestAdapterOptions adapterOpts = {};
+adapterOpts.nextInChain = nullptr;
+WGPUAdapter adapter = requestAdapterSync(instance, &adapterOpts);
+
+std::cout << "Got adapter: " << adapter << std::endl;
 ```
 
 ### Destruction
@@ -460,5 +562,6 @@ Conclusion
  - The very first thing to do with WebGPU is to get the **adapter**.
  - Once we have an adapter, we can inspect its **capabilities** (limits, features) and properties.
  - We learned to use **asynchronous functions** and **double call** enumeration functions.
+ - We have learned about `WGPUStringView`.
 
-*Resulting code:* [`step005`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step005)
+*Resulting code:* [`step005-next`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step005-next)

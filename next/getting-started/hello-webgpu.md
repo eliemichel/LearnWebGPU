@@ -4,10 +4,10 @@ Hello WebGPU <span class="bullet">🟢</span>
 ```{lit-setup}
 :tangle-root: 001 - Hello WebGPU - Next
 :parent: 000 - Project setup - Next
-:fetch-files: ../data/webgpu-distribution-v0.3.0-alpha.zip
+:fetch-files: ../../data/webgpu-distribution-v0.3.0-alpha.zip
 ```
 
-*Resulting code:* [`step001`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step001)
+*Resulting code:* [`step001-next`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step001-next)
 
 WebGPU is a *Render Hardware Interface* (RHI), which means that it is a programming library meant to provide a **unified interface** for multiple underlying graphics hardware and operating system setups.
 
@@ -290,4 +290,4 @@ Conclusion
 
 In this chapter we set up WebGPU and learnt that there are **multiple backends** available. We also saw the basic idioms of **object creation and destruction** that will be used all the time in WebGPU API!
 
-*Resulting code:* [`step001`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step001)
+*Resulting code:* [`step001-next`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step001-next)

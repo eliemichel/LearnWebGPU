@@ -3,7 +3,7 @@ from os.path import join, dirname
 
 # Config
 clone_root = join(dirname(dirname(dirname(__file__))), "LearnWebGPU-Code-folded")
-cherry_picked_commit = "78cfc364bdcd1e469567946ee696849bd2f74029"
+cherry_picked_commit = "56fc8cf54bf37e46f452ba44ff305b1e6068766f"
 all_branches = [
     #"step000",
     #"step001",
