@@ -171,7 +171,7 @@ std::pair<WGPUSurfaceTexture, WGPUTextureView> Application::GetNextSurfaceViewDa
     {{Get the next surface texture}}
     {{Create surface texture view}}
     {{Release the texture}}
-    return targetView;
+    return { surfaceTexture, targetView };
 }
 ```
 
@@ -183,7 +183,7 @@ We then simply call this function at the beginning of the main loop and check th
 
 ```{lit} C++, Get the next target texture view
 // Get the next target texture view
-auto [surfaceTexture, targetView] = GetNextSurfaceTextureView();
+auto [ surfaceTexture, targetView ] = GetNextSurfaceViewData();
 if (!targetView) return;
 ```
 
@@ -192,7 +192,7 @@ Do not forget to **declare the method** in the `Application` class declaration. 
 
 ```{lit} C++, Private methods (insert in {{Application class}} after "bool IsRunning();")
 private:
-    WGPUTextureView GetNextSurfaceTextureView();
+    std::pair<WGPUSurfaceTexture, WGPUTextureView> GetNextSurfaceViewData();
 ```
 ````
 
@@ -215,7 +215,7 @@ We only deal with the obvious failure case and ignore the suboptimal flag for no
 
 ```{lit} C++, Get the next surface texture (append)
 if (surfaceTexture.status != WGPUSurfaceGetCurrentTextureStatus_Success) {
-    return nullptr;
+    return { surfaceTexture, nullptr };
 }
 ```
 
@@ -234,7 +234,6 @@ viewDescriptor.mipLevelCount = 1;
 viewDescriptor.baseArrayLayer = 0;
 viewDescriptor.arrayLayerCount = 1;
 viewDescriptor.aspect = WGPUTextureAspect_All;
-viewDescriptor.usage = WGPUTextureUsage_RenderAttachment | WGPUTextureUsage_TextureBinding;
 WGPUTextureView targetView = wgpuTextureCreateView(surfaceTexture.texture, &viewDescriptor);
 ```
 

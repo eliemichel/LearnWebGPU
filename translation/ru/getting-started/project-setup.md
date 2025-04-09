@@ -10,7 +10,7 @@ This is a **community translation** of [the original English page](/introduction
 ```
 
 ```{lit-setup}
-:tangle-root: 000 - Project setup
+:tangle-root: ru/000 - Project setup
 ```
 
 *Итоговый код:* [`step000`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step000)
@@ -51,7 +51,7 @@ sudo apt install cmake build-essential
 
 Начнем с классического "Hello, world!" в `main.cpp`:
 
-```{lit} C++, файл: main.cpp
+```{lit} C++, file: main.cpp
 #include <iostream>
 
 int main (int, char**) {
@@ -68,7 +68,7 @@ add_executable(App main.cpp)
 
 CMake  также ожидает в начале файла `CMakeLists.txt` указания версии CMake, для которой написан файл (минимальная поддерживаемая...ваша версия), и некоторой информации о проекте:
 
-```{lit} CMake, файл: CMakeLists.txt
+```{lit} CMake, file: CMakeLists.txt
 cmake_minimum_required(VERSION 3.0...3.25)
 project(
 	LearnWebGPU # имя проекта, которое также будет именем решения Visual Studio, если вы его используете

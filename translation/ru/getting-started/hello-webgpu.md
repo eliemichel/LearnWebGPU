@@ -10,9 +10,9 @@ This is a **community translation** of [the original English page](/introduction
 ```
 
 ```{lit-setup}
-:tangle-root: 001 - Hello WebGPU
-:parent: 000 - Project setup
-:fetch-files: ../data/webgpu-distribution-v0.2.0-beta2.zip
+:tangle-root: ru/001 - Hello WebGPU
+:parent: ru/000 - Project setup
+:fetch-files: ../../data/webgpu-distribution-v0.2.0-beta2.zip
 ```
 
 *Итоговый код:* [`step001`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step001)
@@ -209,8 +209,8 @@ target_copy_webgpu_binaries(App)
 #include <iostream>
 ```
 
-```{lit} C++, файл: main.cpp
-{{Includes}}
+```{lit} C++, file: main.cpp
+{{Инклуды}}
 
 int main (int, char**) {
     {{Создаем WebGPU instance}}

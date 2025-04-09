@@ -348,22 +348,22 @@ glfwTerminate();
 
 ```{lit} C++, Get the next target texture view (replace, hidden)
 // Get the next target texture view
-TextureView targetView = GetNextSurfaceTextureView();
+auto [ surfaceTexture, targetView ] = GetNextSurfaceViewData();
 if (!targetView) return;
 ```
 
-```{lit} C++, GetNextSurfaceTextureView method (replace, hidden)
-TextureView Application::GetNextSurfaceTextureView() {
+```{lit} C++, GetNextSurfaceViewData method (replace, hidden)
+std::pair<SurfaceTexture, TextureView> Application::GetNextSurfaceViewData() {
     {{Get the next surface texture}}
     {{Create surface texture view}}
     {{Release the texture}}
-    return targetView;
+    return { surfaceTexture, targetView };
 }
 ```
 
 ```{lit} C++, Private methods (replace, hidden)
 private:
-    TextureView GetNextSurfaceTextureView();
+    std::pair<SurfaceTexture, TextureView> GetNextSurfaceViewData();
 ```
 
 ```{lit} C++, Get the next surface texture (replace, hidden)
@@ -371,7 +371,7 @@ SurfaceTexture surfaceTexture;
 surface.getCurrentTexture(&surfaceTexture);
 Texture texture = surfaceTexture.texture;
 if (surfaceTexture.status != SurfaceGetCurrentTextureStatus::Success) {
-    return nullptr;
+    return { surfaceTexture, nullptr };
 }
 ```
 
