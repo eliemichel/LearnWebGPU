@@ -9,7 +9,18 @@ The Adapter <span class="bullet">🟢</span>
 
 *Resulting code:* [`step005-next`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step005-next)
 
-Before getting our hands on a **device**, we need to select an **adapter**. The same host system may expose **multiple adapters** if it has access to multiple physical GPUs. It may also have an adapter that represents an emulated/virtual device.
+Before getting our hands on a WebGPU **device**, we need to select an **adapter**.
+
+```{tip}
+This chapter is a bit dense because it is also the occasion to **introduce multiple key concepts** of the WebGPU API, in particular the **asynchronous functions** and the `WGPUStringView` (that represents **character strings**).
+
+Take the time to understand these concepts, it is going to pay off later on!
+```
+
+Why do we need an adapter?
+--------------------------
+
+The same host system may expose **multiple adapters** if it has access to multiple physical GPUs. It may also have an adapter that represents an emulated/virtual device.
 
 ```{note}
 It is common that high-end laptops have **two physical GPUs**, a **high performance** one (sometimes called *discrete*) and a **low energy** consumption one (that is usually integrated inside the CPU chip).
@@ -112,7 +123,7 @@ Here is a rough example to **illustrate the `userdata` mechanism**:
 void onAdapterRequestEnded(
 	WGPURequestAdapterStatus status, // a success status
 	WGPUAdapter adapter, // the returned adapter
-	struct WGPUStringView message, // optional error message
+	WGPUStringView message, // optional error message
 	void* userdata1, // custom user data, as provided when requesting the adapter
 	void* userdata2  // second custom user data
 ) {
@@ -316,7 +327,21 @@ std::cerr << "Error while requesting adapter: " << toStdStringView(message) << s
 
 We know how to request the adpater, and how to handle the response. But we do not know yet **how to wait** for the request to end before returning to the main function.
 
-**WIP line**
+To keep track of ongoing asynchronous operations, each function that starts such an operation **returns a `WGPUFuture`**, which is some sort of internal ID that **identifies the operation**.
+
+```C++
+WGPUFuture adapterRequest = wgpuInstanceRequestAdapter(instance, &options, callbackInfo);
+```
+
+```{note}
+Although it is technically just an integer value, the `WGPUFuture` should be treated as an **opaque handle**, i.e., one should not try to deduce anything from the very value of this ID.
+```
+
+**WIP line** *Maybe move this section up after Asynchronous function*
+
+```C++
+WGPUWaitStatus wgpuInstanceWaitAny(WGPUInstance, size_t futureCount, WGPUFutureWaitInfo * futures, 0 /* timeoutNS */);
+```
 
 When using the **native** API (Dawn or `wgpu-native`), it is in practice **not needed**, we know that when the `wgpuInstanceRequestAdapter` function returns its callback has been called.
 
@@ -561,7 +586,11 @@ Conclusion
 
  - The very first thing to do with WebGPU is to get the **adapter**.
  - Once we have an adapter, we can inspect its **capabilities** (limits, features) and properties.
- - We learned to use **asynchronous functions** and **double call** enumeration functions.
+ - We learned to use **asynchronous functions**.
  - We have learned about `WGPUStringView`.
+
+```{note}
+For more information about asynchronous operations in WebGPU, you may consult the [official specification](https://webgpu-native.github.io/webgpu-headers/Asynchronous-Operations.html).
+```
 
 *Resulting code:* [`step005-next`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step005-next)
