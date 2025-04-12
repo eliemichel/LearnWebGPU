@@ -163,7 +163,7 @@ int main (int, char**) {
 
     {{Check WebGPU instance}}
 
-    {{Destroy WebGPU instance}}
+    {{Release WebGPU instance}}
 
     return 0;
 }
@@ -245,7 +245,7 @@ wgpuSomethingRelease(sth);
 
 In particular, we need to release the global WebGPU instance:
 
-```{lit} C++, Destroy WebGPU instance
+```{lit} C++, Release WebGPU instance
 // We clean up the WebGPU instance
 wgpuInstanceRelease(instance);
 ```

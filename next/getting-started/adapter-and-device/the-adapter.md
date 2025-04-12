@@ -82,6 +82,8 @@ The last argument and the return type `WGPUFuture` go together, and reveal yet a
 Asynchronous functions are used in multiple places in the WebGPU API, whenever an operation may take time. Actually, **none of the WebGPU functions** takes time to return. This way, the CPU program that we are writing never gets blocked by a lengthy operation!
 ```
 
+#### Callback info
+
 Let us now look at the **callback info** that `wgpuInstanceRequestAdapter` expects. Here is the definition of the `WGPURequestAdapterCallbackInfo` function type:
 
 ```C++
@@ -121,11 +123,11 @@ Here is a rough example to **illustrate the `userdata` mechanism**:
 ```C++
 // This is our callback function, whose signature corresponds to WGPURequestAdapterCallback
 void onAdapterRequestEnded(
-	WGPURequestAdapterStatus status, // a success status
-	WGPUAdapter adapter, // the returned adapter
-	WGPUStringView message, // optional error message
+	WGPURequestAdapterStatus /* status */, // a success status
+	WGPUAdapter /* adapter */, // the returned adapter
+	WGPUStringView /* message */, // optional error message
 	void* userdata1, // custom user data, as provided when requesting the adapter
-	void* userdata2  // second custom user data
+	void* /* userdata2 */  // second custom user data
 ) {
 	// [...] Do something with the adapter
 
@@ -142,12 +144,16 @@ int main(int, char**) {
 
 	// Build callback info
 	WGPURequestAdapterCallbackInfo callbackInfo = {
-	    /* nextInChain = */ nullptr,
-	    /* mode = */ WGPUCallbackMode_AllowSpontaneous,
-	    /* callback = */ onAdapterRequestEnded,
-	    /* userdata1 = */ &requestEnded, // custom user data is simply a pointer to a boolean in this case
-	    /* userdata2 = */ false
+		/* nextInChain = */ nullptr,
+		/* mode = */ WGPUCallbackMode_AllowProcessEvents, // more on this later
+		/* callback = */ onAdapterRequestEnded,
+		/* userdata1 = */ &requestEnded, // custom user data is simply a pointer to a boolean in this case
+		/* userdata2 = */ false
 	};
+
+	// Adapter options
+	WGPURequestAdapterOptions options = {};
+	options.nextInChain = nullptr;
 
 	// Start the request
 	wgpuInstanceRequestAdapter(instance, &options, callbackInfo);
@@ -156,7 +162,82 @@ int main(int, char**) {
 }
 ```
 
-We see in the next section a **more complete use** of this context in order to retrieve the adapter once the request is done.
+#### Waiting for the request to end
+
+We know how to **start the request** and how to **handle the response**. But we do not know yet **how to wait** for the request to end before returning to the main function.
+
+##### The bad idea
+
+It might be tempting to just wait in a loop until the value of `requestEnded` becomes true, but this is a **terrible idea**.
+
+```C++
+// Start the request
+wgpuInstanceRequestAdapter(instance, &options, callbackInfo);
+
+// Do NOT do this! It is a BAD IDEA
+while (!requestEnded) {
+	// Even if waiting for 200ms before testing again, this is a terrible idea
+	std::this_thread::sleep_for(std::chrono::milliseconds(200));
+}
+```
+
+````{note}
+This requires the following includes:
+
+```{lit} C++, Includes (append)
+#include <thread>
+#include <chrono>
+```
+````
+
+This could work if the asynchronous operation was running in a different thread, but **asynchronous does not mean multi-threaded**! Nothing can happen magically while our program is "busy" with this **infinite loop**.
+
+The idea is rather that **we regularly hand out the execution to the WebGPU instance**, so that the instances checks on what async operation it can complete, and it is only within these moments that callbacks may get invoked.
+
+```{admonition} wgpu-native
+As of version v24.0.0.2, `wgpu-native` does not fully implement the asynchronous operation API and is thus sometimes **more permissive**. In this case, it would work because the callback is actually invoked right away within the call to `wgpuInstanceRequestAdapter`, even though we did not set the callback mode to `WGPUCallbackMode_AllowSpontaneous`.
+```
+
+##### A good way
+
+The closer correct solution to what we have been trying to do is to **ask WebGPU to process pending operations** within the loop:
+
+```C++
+// Start the request
+wgpuInstanceRequestAdapter(instance, &options, callbackInfo);
+
+while (!requestEnded) {
+	// Hand the execution to the WebGPU instance so that it can check for
+	// pending async operations, in which case it invokes our callbacks.
+	wgpuInstanceProcessEvents(instance);
+
+	// Waiting for 200ms to avoid asking too often to process events
+	std::this_thread::sleep_for(std::chrono::milliseconds(200));
+}
+```
+
+```{note}
+This works, as long as the **callback mode** we set in the callback info is at least `WGPUCallbackMode_AllowProcessEvents` but would not work with `WGPUCallbackMode_WaitAnyOnly`.
+```
+
+This is an OK solution, although we still need to manage ourselves the `requestEnded` test and the `sleep()` operation. This solution is **all right for the adapter/device request** and I do not want to make this chapter any longer, so we will wait for chapter [The Command Queue](../the-command-queue.md) to see **another way**, which gives finer control over the pending asynchronous operations.
+
+##### With emscripten
+
+In order to use `std::this_thread::sleep_for` (or equivalently `emscripten_sleep`) with emscripten, we must add a **custom link option** in `CMakeLists.txt`, in the `if (EMSCRIPTEN)` block:
+
+```{lit} CMake, Emscripten-specific options (append)
+# Enable the use of this_thread::sleep_for()/emscripten_sleep()
+target_link_options(App PRIVATE -sASYNCIFY)
+```
+
+```{important}
+Failing to add this option leads to a web page that hangs forever whenever you try to sleep (or a more explicit error message, if you use `emscripten_sleep`).
+```
+
+```{note}
+Using `ASYNCIFY` has an impact on the size of the WebAssembly module. It is possible to avoid using this option by moving all steps of the app initialization into the main animation callback. This is exemplified in [`step030-no-asyncify`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step030-no-asyncify) (slightly outdated, but the design pattern holds).
+```
 
 ````{admonition} Note - JavaScript API
 :class: foldable note
@@ -194,11 +275,7 @@ I try however to **avoid stacking up too many levels of abstraction** in this gu
 
 ### Request
 
-We can wrap the whole adapter request in the following `requestAdapterSync()` function, which I provide so that we do not spend too much time on **boilerplate** code (the important part here is that you get the idea of the **asynchronous callback** described above):
-
-```{lit} C++, Includes (append)
-#include <cassert>
-```
+We can now wrap the whole adapter request in the following `requestAdapterSync()` function, which I provide so that we do not spend too much time on **boilerplate** code (the important part here is that you get the idea of the **asynchronous callback** described above):
 
 ```{lit} C++, Request adapter function
 /**
@@ -253,9 +330,14 @@ WGPUAdapter requestAdapterSync(WGPUInstance instance, WGPURequestAdapterOptions 
 	wgpuInstanceRequestAdapter(instance, options, callbackInfo);
 
 	// We wait until userData.requestEnded gets true
-	{{Wait for request to end}}
+	while (!userData.requestEnded) {
+		// Hand the execution to the WebGPU instance so that it can check for
+		// pending async operations, in which case it invokes our callbacks.
+		wgpuInstanceProcessEvents(instance);
 
-	assert(userData.requestEnded);
+		// Waiting for 200 ms to avoid asking too often to process events
+		std::this_thread::sleep_for(std::chrono::milliseconds(200));
+	}
 
 	return userData.adapter;
 }
@@ -266,7 +348,7 @@ WGPUAdapter requestAdapterSync(WGPUInstance instance, WGPURequestAdapterOptions 
 {{Request adapter function}}
 ```
 
-There are **two missing blocks** in this function: **(a)** handling the error message, which has type `WGPUStringView` and **(b)** waiting for the request to end.
+The only **missing block** in this function is **the handling error messages**, which has type `WGPUStringView`.
 
 #### Displaying `WGPUStringView`
 
@@ -323,53 +405,6 @@ Finally, to display the error message, we may now use a regular `std::cout`:
 std::cerr << "Error while requesting adapter: " << toStdStringView(message) << std::endl;
 ```
 
-#### Waiting for the request to end
-
-We know how to request the adpater, and how to handle the response. But we do not know yet **how to wait** for the request to end before returning to the main function.
-
-To keep track of ongoing asynchronous operations, each function that starts such an operation **returns a `WGPUFuture`**, which is some sort of internal ID that **identifies the operation**.
-
-```C++
-WGPUFuture adapterRequest = wgpuInstanceRequestAdapter(instance, &options, callbackInfo);
-```
-
-```{note}
-Although it is technically just an integer value, the `WGPUFuture` should be treated as an **opaque handle**, i.e., one should not try to deduce anything from the very value of this ID.
-```
-
-**WIP line** *Maybe move this section up after Asynchronous function*
-
-```C++
-WGPUWaitStatus wgpuInstanceWaitAny(WGPUInstance, size_t futureCount, WGPUFutureWaitInfo * futures, 0 /* timeoutNS */);
-```
-
-When using the **native** API (Dawn or `wgpu-native`), it is in practice **not needed**, we know that when the `wgpuInstanceRequestAdapter` function returns its callback has been called.
-
-However, when using **Emscripten**, we need to hand the control **back to the browser** until the adapter is ready. In JavaScript, this would be using the `await` keyword. Instead, Emscripten provides the `emscripten_sleep` function that interrupts the C++ module for a couple of milliseconds:
-
-```{lit} C++, Wait for request to end
-#ifdef __EMSCRIPTEN__
-	while (!userData.requestEnded) {
-		emscripten_sleep(100);
-	}
-#endif // __EMSCRIPTEN__
-```
-
-In order to use this, we must add a **custom link option** in `CMakeLists.txt`, in the `if (EMSCRIPTEN)` block:
-
-```{lit} CMake, Emscripten-specific options (append)
-# Enable the use of emscripten_sleep()
-target_link_options(App PRIVATE -sASYNCIFY)
-```
-
-Also do not forget to include `emscripten.h` in order to use `emscripten_sleep`:
-
-```{lit} C++, Includes (append)
-#ifdef __EMSCRIPTEN__
-#  include <emscripten.h>
-#endif // __EMSCRIPTEN__
-```
-
 #### Using our helper function
 
 Now that our `requestAdapterSync` function is complete, we can call it in out main function. After creating the WebGPU instance, we get the adapter as follows:
@@ -384,27 +419,16 @@ WGPUAdapter adapter = requestAdapterSync(instance, &adapterOpts);
 std::cout << "Got adapter: " << adapter << std::endl;
 ```
 
-### Destruction
+Looking at the overall structure of our program, this goes right after the creation of the instance, before the main part of the program:
 
-Like for the WebGPU instance, we must release the adapter:
-
-```{lit} C++, Destroy adapter
-wgpuAdapterRelease(adapter);
-```
-
-````{note}
-We will no longer need to use the `instance` once we have selected our **adapter**, so we can call `wgpuInstanceRelease(instance)` right after the adapter request **instead of at the very end**. The **underlying instance** object will keep on living until the adapter gets released but we do not need to manage this.
-
-```{lit} C++, Create things (hidden)
+```{lit} C++, Create things
+// Create all WebGPU object we use throughout the program
 {{Create WebGPU instance}}
 {{Check WebGPU instance}}
 {{Request adapter}}
-// We no longer need to use the instance once we have the adapter
-{{Destroy WebGPU instance}}
 ```
-````
 
-```{lit} C++, file: main.cpp (replace, hidden)
+```{lit} C++, file: main.cpp (replace)
 {{Includes}}
 
 {{Utility functions in main.cpp}}
@@ -414,7 +438,7 @@ int main() {
 
 	{{Main body}}
 
-	{{Destroy things}}
+	{{Release things}}
 
 	return 0;
 }
@@ -427,12 +451,30 @@ int main() {
 ```{lit} C++, Main body (hidden)
 ```
 
-```{lit} C++, Destroy things (hidden)
-{{Destroy adapter}}
+
+### Destruction
+
+Like for the WebGPU instance, we must release the adapter once we no longer use it:
+
+```{lit} C++, Release adapter
+wgpuAdapterRelease(adapter);
+```
+
+This goes next to destroying the instance:
+
+```{lit} C++, Release things
+{{Release adapter}}
+{{Release WebGPU instance}}
+```
+
+```{note}
+The adapter keeps a reference to its parent instance, so it is OK to release the instance first, it will keep on living until the adapter is destroyed and releases on its turn the instance.
 ```
 
 Inspecting the adapter
 ----------------------
+
+All right, **we finally have an adapter**!
 
 The adapter object provides **information about the underlying implementation** and hardware, and about what it is able or not to do. It advertises the following information:
 
@@ -440,49 +482,39 @@ The adapter object provides **information about the underlying implementation** 
  - **Features** are non-mandatory **extensions** of WebGPU, that adapters may or may not support. They can be listed using `wgpuAdapterEnumerateFeatures` or tested individually with `wgpuAdapterHasFeature`.
  - **Properties** are extra information about the adapter, like its name, vendor, etc. Properties are retrieved using `wgpuAdapterGetProperties`.
 
-```{note}
-In the accompanying code, adapter capability inspection is enclosed in the `inspectAdapter()` function.
-```
+````{note}
+To avoid ending up with a huge `main()` function, I suggest to enclose the adapter capability inspection in a dedicated `inspectAdapter()` function:
 
-```{lit} C++, Utility functions (append, hidden)
+```{lit} C++, Utility functions (append)
 void inspectAdapter(WGPUAdapter adapter) {
 	{{Inspect adapter}}
 }
 ```
 
-```{lit} C++, Request adapter (append, hidden)
+We call this right after creating the adapter:
+
+```{lit} C++, Create things (append)
 inspectAdapter(adapter);
 ```
+````
 
 ### Limits
 
 We can first list the limits that our adapter supports with `wgpuAdapterGetLimits`. This function takes as argument a `WGPUSupportedLimits` object where it writes the limits:
 
 ```{lit} C++, Inspect adapter
-#ifndef __EMSCRIPTEN__
-WGPUSupportedLimits supportedLimits = {};
+WGPULimits supportedLimits = {};
 supportedLimits.nextInChain = nullptr;
 
-#ifdef WEBGPU_BACKEND_DAWN
 bool success = wgpuAdapterGetLimits(adapter, &supportedLimits) == WGPUStatus_Success;
-#else
-bool success = wgpuAdapterGetLimits(adapter, &supportedLimits);
-#endif
 
 if (success) {
 	std::cout << "Adapter limits:" << std::endl;
-	std::cout << " - maxTextureDimension1D: " << supportedLimits.limits.maxTextureDimension1D << std::endl;
-	std::cout << " - maxTextureDimension2D: " << supportedLimits.limits.maxTextureDimension2D << std::endl;
-	std::cout << " - maxTextureDimension3D: " << supportedLimits.limits.maxTextureDimension3D << std::endl;
-	std::cout << " - maxTextureArrayLayers: " << supportedLimits.limits.maxTextureArrayLayers << std::endl;
+	std::cout << " - maxTextureDimension1D: " << supportedLimits.maxTextureDimension1D << std::endl;
+	std::cout << " - maxTextureDimension2D: " << supportedLimits.maxTextureDimension2D << std::endl;
+	std::cout << " - maxTextureDimension3D: " << supportedLimits.maxTextureDimension3D << std::endl;
+	std::cout << " - maxTextureArrayLayers: " << supportedLimits.maxTextureArrayLayers << std::endl;
 }
-#endif // NOT __EMSCRIPTEN__
-```
-
-```{admonition} Implementation divergences
-The procedure `wgpuAdapterGetLimits` returns a boolean in `wgpu-native` but a `WGPUStatus` in Dawn.
-
-Also, as of April 1st, 2024, `wgpuAdapterGetLimits` is not implemented yet on Google Chrome, hence the `#ifndef __EMSCRIPTEN__` above.
 ```
 
 Here is an example of what you could see:
@@ -503,68 +535,95 @@ There are **many more limits**, that we will progressively introduce in the next
 
 ### Features
 
-Let us now focus on the `wgpuAdapterEnumerateFeatures` function, which enumerates the features of the WebGPU implementation, because its usage is very typical from WebGPU native.
+Let us now focus on the `wgpuAdapterGetFeatures` function, which enumerates the features of the WebGPU implementation, because its usage is very typical from WebGPU native.
 
-We call the function **twice**. The **first time**, we provide a null pointer as the return, and as a consequence the function only returns the **number of features**, but not the features themselves.
-
-We then dynamically **allocate memory** for storing this many items of result, and call the same function a **second time**, this time with a pointer to where the result should store its result.
-
-```{lit} C++, Includes (append)
-#include <vector>
-```
+This is a *getter* function that may dynamically allocate memory, for the array of features. For this reason, it is accompanied with a freeing counterpart, namely `wgpuSupportedFeaturesFreeMembers`:
 
 ```{lit} C++, Inspect adapter (append)
-std::vector<WGPUFeatureName> features;
+// Prepare the struct where features will be listed
+WGPUSupportedFeatures features;
 
-// Call the function a first time with a null return address, just to get
-// the entry count.
-size_t featureCount = wgpuAdapterEnumerateFeatures(adapter, nullptr);
-
-// Allocate memory (could be a new, or a malloc() if this were a C program)
-features.resize(featureCount);
-
-// Call the function a second time, with a non-null return address
-wgpuAdapterEnumerateFeatures(adapter, features.data());
+// Get adapter features. This may allocate memory that we must later free with wgpuSupportedFeaturesFreeMembers()
+wgpuAdapterGetFeatures(adapter, &features);
 
 std::cout << "Adapter features:" << std::endl;
 std::cout << std::hex; // Write integers as hexadecimal to ease comparison with webgpu.h literals
-for (auto f : features) {
-	std::cout << " - 0x" << f << std::endl;
+for (size_t i = 0; i < features.featureCount; ++i) {
+	std::cout << " - 0x" << features.features[i] << std::endl;
 }
 std::cout << std::dec; // Restore decimal numbers
+
+// Free the memory that had potentially been allocated by wgpuAdapterGetFeatures()
+wgpuSupportedFeaturesFreeMembers(features);
+// One shall no longer use features beyond this line.
 ```
 
 The features are numbers corresponding to the enum `WGPUFeatureName` defined in `webgpu.h`. We use `std::hex` to display them as hexadecimal values, because this is how they are listed in `webgpu.h`.
 
+You may get for instance:
+
+```
+Adapter features:
+ - 0x1
+ - 0x2
+ - 0x4
+ - 0x3
+ - 0x9
+ - 0xa
+ - 0xb
+ - 0xc
+ - 0xd
+ - 0x10
+ - 0x30001
+ - 0x30002
+ - 0x30003
+ - 0x30004
+ - 0x30005
+ - 0x30006
+ - 0x30007
+ - 0x30008
+ - 0x30009
+ - 0x3000a
+ - 0x3000b
+ - 0x30025
+ - 0x30024
+ - 0x3000e
+ - 0x3000f
+ - 0x30010
+ - 0x30017
+ - 0x3001a
+ - 0x3001b
+ - 0x3001c
+ - 0x3001d
+ - 0x3001e
+ - 0x3001f
+ - 0x30021
+ - 0x30022
+ - 0x30023
+```
+
 You may notice very high numbers apparently not defined in this enum. These are **extensions** provided by our native implementation (e.g., defined in `wgpu.h` instead of `webgpu.h` in the case of `wgpu-native`).
 
-### Properties
+### Information
 
-Lastly we can have a look at the adapter's properties, that contain information that we may want to display to the end user:
+Lastly we can have a look at the adapter information, which contain properties that we may want to display to the end user. Here again, there is both a getter (`wgpuAdapterGetInfo`) and a free function (`wgpuAdapterInfoFreeMembers`). Notice how we also reuse our `toStdStringView` utility function:
 
 ```{lit} C++, Inspect adapter (append)
-WGPUAdapterProperties properties = {};
+WGPUAdapterInfo properties;
 properties.nextInChain = nullptr;
-wgpuAdapterGetProperties(adapter, &properties);
+wgpuAdapterGetInfo(adapter, &properties);
 std::cout << "Adapter properties:" << std::endl;
 std::cout << " - vendorID: " << properties.vendorID << std::endl;
-if (properties.vendorName) {
-	std::cout << " - vendorName: " << properties.vendorName << std::endl;
-}
-if (properties.architecture) {
-	std::cout << " - architecture: " << properties.architecture << std::endl;
-}
+std::cout << " - vendorName: " << toStdStringView(properties.vendor) << std::endl;
+std::cout << " - architecture: " << toStdStringView(properties.architecture) << std::endl;
 std::cout << " - deviceID: " << properties.deviceID << std::endl;
-if (properties.name) {
-	std::cout << " - name: " << properties.name << std::endl;
-}
-if (properties.driverDescription) {
-	std::cout << " - driverDescription: " << properties.driverDescription << std::endl;
-}
+std::cout << " - name: " << toStdStringView(properties.device) << std::endl;
+std::cout << " - driverDescription: " << toStdStringView(properties.description) << std::endl;
 std::cout << std::hex;
 std::cout << " - adapterType: 0x" << properties.adapterType << std::endl;
 std::cout << " - backendType: 0x" << properties.backendType << std::endl;
 std::cout << std::dec; // Restore decimal numbers
+wgpuAdapterInfoFreeMembers(properties);
 ```
 
 Here is a sample result with my nice Titan RTX:
@@ -576,13 +635,15 @@ Adapter properties:
  - architecture:
  - deviceID: 7682
  - name: NVIDIA TITAN RTX
- - driverDescription: 536.23
- - adapterType: 0x0
- - backendType: 0x5
+ - driverDescription: 560.94
+ - adapterType: 0x1
+ - backendType: 0x6
 ```
 
 Conclusion
 ----------
+
+Congratulation, this was not an easy chapter, but we met with **a lot of important idioms** that we will be able to reuse later on. We saw in particular that:
 
  - The very first thing to do with WebGPU is to get the **adapter**.
  - Once we have an adapter, we can inspect its **capabilities** (limits, features) and properties.
