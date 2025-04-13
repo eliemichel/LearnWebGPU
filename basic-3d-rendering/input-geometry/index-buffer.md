@@ -229,7 +229,7 @@ bufferDesc.size = (bufferDesc.size + 3) & ~3; // round up to the next multiple o
 This means that we must also make sure that `indexData.size()` is a multiple of 2 (because `sizeof(uint16_t)` is 2):
 
 ```{lit} C++, Fix buffer size (append, also for tangle root "Vanilla")
-indexData.resize(indexData.size() + 1 & ~1); // round up to the next multiple of 2
+indexData.resize((indexData.size() + 1) & ~1); // round up to the next multiple of 2
 ```
 ````
 
