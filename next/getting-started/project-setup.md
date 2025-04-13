@@ -151,6 +151,15 @@ if (XCODE)
 endif()
 ```
 
+Lastly, we can ensure that when using Visual Studio the default target that builds and runs when pressing F5 is our `App` target:
+
+```{lit} CMake, Recommended extras (append)
+# NB: This only works if put in the top-level CMakeLists.txt
+set_directory_properties(PROPERTIES
+	VS_STARTUP_PROJECT App
+)
+```
+
 Conclusion
 ----------
 

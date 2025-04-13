@@ -12,4 +12,5 @@ Contents
 :titlesonly:
 
 the-adapter
+the-device
 ```

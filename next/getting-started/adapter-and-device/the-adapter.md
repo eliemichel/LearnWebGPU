@@ -194,7 +194,7 @@ This could work if the asynchronous operation was running in a different thread,
 The idea is rather that **we regularly hand out the execution to the WebGPU instance**, so that the instances checks on what async operation it can complete, and it is only within these moments that callbacks may get invoked.
 
 ```{admonition} wgpu-native
-As of version v24.0.0.2, `wgpu-native` does not fully implement the asynchronous operation API and is thus sometimes **more permissive**. In this case, it would work because the callback is actually invoked right away within the call to `wgpuInstanceRequestAdapter`, even though we did not set the callback mode to `WGPUCallbackMode_AllowSpontaneous`.
+As of version `v24.0.0.2`, `wgpu-native` does not fully implement the asynchronous operation API and is thus sometimes **more permissive**. In this case, it would work because the callback is actually invoked right away within the call to `wgpuInstanceRequestAdapter`, even though we did not set the callback mode to `WGPUCallbackMode_AllowSpontaneous`.
 ```
 
 ##### A good way
@@ -217,6 +217,10 @@ while (!requestEnded) {
 
 ```{note}
 This works, as long as the **callback mode** we set in the callback info is at least `WGPUCallbackMode_AllowProcessEvents` but would not work with `WGPUCallbackMode_WaitAnyOnly`.
+```
+
+```{admonition} wgpu-native
+As of version `v24.0.0.2`, `wgpu-native` does not implement `wgpuInstanceProcessEvents`. In this very case, we may skip it because the adapter requests ends right within the call to `wgpuInstanceRequestAdapter`.
 ```
 
 This is an OK solution, although we still need to manage ourselves the `requestEnded` test and the `sleep()` operation. This solution is **all right for the adapter/device request** and I do not want to make this chapter any longer, so we will wait for chapter [The Command Queue](../the-command-queue.md) to see **another way**, which gives finer control over the pending asynchronous operations.
@@ -344,10 +348,10 @@ WGPUAdapter requestAdapterSync(WGPUInstance instance, WGPURequestAdapterOptions 
 	// Build the callback info
 	WGPURequestAdapterCallbackInfo callbackInfo = {
 		/* nextInChain = */ nullptr,
-		/* mode = */ WGPUCallbackMode_AllowSpontaneous,
+		/* mode = */ WGPUCallbackMode_AllowProcessEvents,
 		/* callback = */ onAdapterRequestEnded,
 		/* userdata1 = */ &userData,
-		/* userdata2 = */ false
+		/* userdata2 = */ nullptr
 	};
 
 	// Call to the WebGPU request adapter procedure
@@ -364,7 +368,7 @@ WGPUAdapter requestAdapterSync(WGPUInstance instance, WGPURequestAdapterOptions 
 	while (!userData.requestEnded) {
 		// Waiting for 200 ms to avoid asking too often to process events
 #ifdef __EMSCRIPTEN__
-		emscripten_sleep(100);
+		emscripten_sleep(200);
 #else
 		std::this_thread::sleep_for(std::chrono::milliseconds(200));
 #endif
@@ -424,11 +428,23 @@ Note that this requires the `string_view` header:
 #include <string_view>
 ```
 
+And since we are at it, I suggest we define some opposite conversion functions:
+
+```{lit} C++, Define toWgpuStringView
+WGPUStringView toWgpuStringView(std::string_view stdStringView) {
+	return { stdStringView.data(), stdStringView.size() };
+}
+WGPUStringView toWgpuStringView(const char* cString) {
+	return { cString, WGPU_STRLEN };
+}
+```
+
 ````{note}
-We define this **before** the `requestAdapterSync` function:
+We define these **before** the `requestAdapterSync` function:
 
 ```{lit} C++, Utility functions (prepend)
 {{Define toStdStringView}}
+{{Define toWgpuStringView}}
 ```
 ````
 

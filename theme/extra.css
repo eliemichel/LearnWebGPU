@@ -54,9 +54,11 @@ figcaption p {
 	margin: 0 .5rem;
 	transition: max-height 0.1s;
 	transition: margin 0.1s;
+	overflow: hidden;
 }
 .admonition.foldable.open > * {
 	max-height: inherit;
+	overflow: inherit;
 	margin: .5rem;
 }
 .admonition.foldable > .admonition-title {
