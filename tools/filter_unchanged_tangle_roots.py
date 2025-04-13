@@ -1,6 +1,6 @@
 """
 Only keep the ones that changed
-filter_unchanged_tangle_roots.py <roots_json> <current> <previous>
+filter_unchanged_tangle_roots.py <current> <previous>
 """
 
 import json
@@ -15,13 +15,6 @@ parser = argparse.ArgumentParser(
 	description="""
 	Only keep directories whose content changed between current and previous
 	tangled trees.
-	""",
-)
-
-parser.add_argument(
-	"roots_json",
-	help="""
-	List of directories to filter, as a json array
 	""",
 )
 
@@ -57,16 +50,16 @@ def hash_dir(dirname):
 	return h.digest()
 
 def main(args):
-	sys.stderr.write(f"input: {args.roots_json}\n")
-	# Dirty fix to transform ["foo", "bar",] into ["foo", "bar"]
-	clean_roots_json = '[' + args.roots_json.strip('[]').strip().strip(',') + ']'
-
-	roots = json.loads(clean_roots_json, strict=False)
+	with open(join(args.current, "metadata.json"), 'r', encoding='utf-8') as f:
+		metadata = json.load(f)
+	roots = metadata["roots"]
+	sys.stderr.write(f"input: {json.dumps(roots)}\n")
 
 	def did_change(root):
 		current_hash = hash_dir(join(args.current, root))
 		previous_hash = hash_dir(join(args.previous, root))
 		return current_hash != previous_hash
+		
 	changed_roots = list(filter(did_change, roots))
 
 	sys.stderr.write(f"output: {changed_roots}\n")

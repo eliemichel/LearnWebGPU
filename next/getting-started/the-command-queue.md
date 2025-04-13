@@ -1,5 +1,10 @@
-The Command Queue
+The Command Queue <span class="bullet">🟢</span>
 =================
+
+```{lit-setup}
+:tangle-root: 015 - The Command Queue - Next
+:parent: 010 - The Device - Next
+```
 
 **WIP** *This is a pending paragraph, to remind myself that we promise in The Adapter to introduce `wgpuInstanceWaitAny` in here.*
 

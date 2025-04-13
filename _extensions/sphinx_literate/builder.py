@@ -10,6 +10,7 @@ from os.path import join, dirname, getmtime
 from typing import Any, Iterator, Set, Optional
 from zipfile import ZipFile
 import shutil
+import json
 
 from .registry import CodeBlock, CodeBlockRegistry
 from .tangle import tangle
@@ -80,6 +81,14 @@ class TangleBuilder(Builder):
                     )
                     raise ExtensionError(message, modname="sphinx_literate")
                 self.fetch_file(path, tangle_root)
+
+        # Write the list of tangle roots
+        metadata = {
+            "roots": registry.all_tangle_roots(),
+        }
+        metadata_filename = join(self.outdir, "metadata.json")
+        with open(metadata_filename, "w", encoding="utf-8") as f:
+            json.dump(metadata, f, indent=2)
 
     # Internal methods
 

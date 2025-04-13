@@ -25,8 +25,6 @@ jobs:
   # Tangle job
   tangle:
     runs-on: ubuntu-latest
-    outputs:
-      tangle-roots: ${{ steps.set-tangle-roots.outputs.roots }}
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -39,10 +37,6 @@ jobs:
 
     - name: Build with Sphinx
       run: make tangle
-
-    - name: List tangle roots
-      id: set-tangle-roots
-      run: echo "roots=$(printf '['; find _build/tangle -maxdepth 1 -mindepth 1 -type d -printf '"%P", '; printf ']\n')" >> $GITHUB_OUTPUT
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
@@ -93,13 +87,12 @@ jobs:
       if: failure() || success()
       id: filter-tangle-roots
       env:
-        roots: ${{ needs.tangle.outputs.tangle-roots }}
         downloadPreviousOutcome: ${{ steps.download-previous-tangle.outcome }}
       run: |-
         if [[ $downloadPreviousOutcome -eq "success" ]]
         then
           # Only keep the ones that changed
-          echo "roots=$(python tools/filter_unchanged_tangle_roots.py "$roots" current previous)" >> $GITHUB_OUTPUT
+          echo "roots=$(python tools/filter_unchanged_tangle_roots.py current previous)" >> $GITHUB_OUTPUT
         else
           # Just forward the list
           echo "roots=$roots" >> $GITHUB_OUTPUT
