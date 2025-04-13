@@ -128,7 +128,7 @@ jobs:
         cmake
         -S "${{ matrix.tangle-root }}"
         -B ${{github.workspace}}/build
-        -DWEBGPU_BACKEND=DAWN
+        -DWEBGPU_BACKEND=${{ contains(matrix.tangle-root, '- Next') && 'DAWN' || 'WGPU' }}
         -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
         -DGLFW_BUILD_WAYLAND=OFF
 
