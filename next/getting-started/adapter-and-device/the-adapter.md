@@ -4,7 +4,6 @@ The Adapter <span class="bullet">🟢</span>
 ```{lit-setup}
 :tangle-root: 005 - The Adapter - Next
 :parent: 001 - Hello WebGPU - Next
-:debug:
 ```
 
 *Resulting code:* [`step005-next`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step005-next)
@@ -148,7 +147,7 @@ int main(int, char**) {
 		/* mode = */ WGPUCallbackMode_AllowProcessEvents, // more on this later
 		/* callback = */ onAdapterRequestEnded,
 		/* userdata1 = */ &requestEnded, // custom user data is simply a pointer to a boolean in this case
-		/* userdata2 = */ false
+		/* userdata2 = */ nullptr
 	};
 
 	// Adapter options
@@ -224,15 +223,40 @@ This is an OK solution, although we still need to manage ourselves the `requestE
 
 ##### With emscripten
 
-In order to use `std::this_thread::sleep_for` (or equivalently `emscripten_sleep`) with emscripten, we must add a **custom link option** in `CMakeLists.txt`, in the `if (EMSCRIPTEN)` block:
+When our code runs in the main thread of a web page, **it must not completely sleep** like we do with `this_thread::sleep_for`, otherwise the page becomes unresponsive.
 
-```{lit} CMake, Emscripten-specific options (append)
-# Enable the use of this_thread::sleep_for()/emscripten_sleep()
-target_link_options(App PRIVATE -sASYNCIFY)
+Instead, we use the special `emscripten_sleep()`, which yields the control **back to the browser** for some time (a bit like calling `setTimeout` in JavaScript). We thus add an `#ifdef` branch inside our wait loop:
+
+```C++
+while (!requestEnded) {
+	wgpuInstanceProcessEvents(instance);
+
+	// Waiting for 200ms to avoid asking too often to process events
+#ifdef __EMSCRIPTEN__
+	emscripten_sleep(100);
+#else
+	std::this_thread::sleep_for(std::chrono::milliseconds(200));
+#endif
+}
 ```
 
-```{important}
-Failing to add this option leads to a web page that hangs forever whenever you try to sleep (or a more explicit error message, if you use `emscripten_sleep`).
+This requires to add `emscripten.h` to our includes:
+
+```{lit} C++, Includes (append)
+#ifdef __EMSCRIPTEN__
+#  include <emscripten.h>
+#endif
+```
+
+```{note}
+Since we are yielding back to the browser, it is not 100% necessary to call `wgpuInstanceProcessEvents` in this very case because the browser already does this during our 200 ms of sleep.
+```
+
+In order to use `emscripten_sleep()` with emscripten, we must add a **custom link option** in `CMakeLists.txt`, in the `if (EMSCRIPTEN)` block:
+
+```{lit} CMake, Emscripten-specific options (append)
+# Enable the use of emscripten_sleep()
+target_link_options(App PRIVATE -sASYNCIFY)
 ```
 
 ```{note}
@@ -330,13 +354,22 @@ WGPUAdapter requestAdapterSync(WGPUInstance instance, WGPURequestAdapterOptions 
 	wgpuInstanceRequestAdapter(instance, options, callbackInfo);
 
 	// We wait until userData.requestEnded gets true
-	while (!userData.requestEnded) {
-		// Hand the execution to the WebGPU instance so that it can check for
-		// pending async operations, in which case it invokes our callbacks.
-		wgpuInstanceProcessEvents(instance);
 
+	// Hand the execution to the WebGPU instance so that it can check for
+	// pending async operations, in which case it invokes our callbacks.
+	// NB: We test once before the loop not to wait for 200ms in case it is
+	// already ready
+	wgpuInstanceProcessEvents(instance);
+
+	while (!userData.requestEnded) {
 		// Waiting for 200 ms to avoid asking too often to process events
+#ifdef __EMSCRIPTEN__
+		emscripten_sleep(100);
+#else
 		std::this_thread::sleep_for(std::chrono::milliseconds(200));
+#endif
+
+		wgpuInstanceProcessEvents(instance);
 	}
 
 	return userData.adapter;
