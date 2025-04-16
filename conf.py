@@ -35,9 +35,12 @@ extensions = [
     "sphinx_copybutton",
     "sphinx_favicon",
     "sphinx_inline_tabs",
+
+    # Internal extensions (see _extensions directory)
     "style",
     "sphinx_literate",
     "translation",
+    "themed_figure",
 ]
 
 # Add any paths that contain templates here, relative to this directory.

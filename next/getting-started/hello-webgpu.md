@@ -75,7 +75,7 @@ This time, the name 'webgpu' is one of the **target** defined in `webgpu/CMakeLi
 
  5. One additional step is needed when using **dynamic linking** (i.e., when the WebGPU backend is distributed as a .so/.dll/.dylib file next to your executable): **call the function** `target_copy_webgpu_binaries(App)` at the end of `CMakeLists.txt` to makes sure that the .so/.dll/.dylib file is copied next to it.
 
-```{info}
+```{note}
 Whenever you **distribute** your application, make sure to also distribute this dynamic library file as well!
 ```
 

@@ -12,9 +12,9 @@ Now that we have a `WGPUDevice` object in our hands, we can use it to **sent dat
 Notice how I use the term ***send*** here: as we will highlight see in this chapter, **our C++ code never runs on the GPU**, all it does is sending bits to the GPU, where programs follow a different logic (and use **a different programming language**) that we will see in the [next chapter](./our-first-shader.md).
 ```
 
-```{figure} /images/command-queue.png
+```{themed-figure} /images/command-queue/queue_{theme}.svg
 :align: center
-:class: with-shadow
+
 The CPU instructs the GPU what to do by **sending commands** through a command queue.
 ```
 
@@ -48,14 +48,15 @@ Instead, the commands intended for the GPU are **batched** and fired through a *
 
 The CPU-side of our program, i.e., the C++ code that we write, lives in the **Content timeline**. The other side of the command queue is in the **Queue timeline**, running on the GPU.
 
+```{themed-figure} /images/command-queue/timelines_{theme}.svg
+:align: center
+
+**The order of instructions is conserved**, but they are not executed at the same time as they are sent. This is why any operation that reads back from the GPU is **asynchronous**.
+```
+
 ```{note}
 There is also a **Device timeline** defined in [WebGPU's documentation](https://www.w3.org/TR/webgpu/#programming-model-timelines). It corresponds to the GPU operations for which our code actually waits for an immediate answer (called "synchronous" calls), but unlike the JavaScript API, it is roughly the same as the content timeline in our C++ case.
 ```
-
-In the remainder of this chapter:
-
- - We see **how to manipulate the queue**.
- - We refine our control of **asynchronous operations**.
 
 Manipulating the Queue
 ----------------------
