@@ -161,3 +161,7 @@ A command buffer, which has type `WGPUCommandBuffer`, is not a buffer that we di
 ### Command encoder
 
 **WIP line**
+
+```{lit} C++, Create things (append, hidden)
+{{Get Queue}}
+```
