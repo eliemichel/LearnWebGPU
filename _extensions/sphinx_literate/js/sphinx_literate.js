@@ -142,6 +142,7 @@ const litBlockInfoStyle = `
 	border-radius: 0.3em;
 	padding: 0 0.3em;
 	padding-bottom: 0.05em;
+	max-width: calc(100% - 1.5em);
 }
 
 .wrapper a.lit-name {

@@ -1,4 +1,4 @@
-Playing with buffers
+Playing with buffers <span class="bullet">🔴</span>
 ====================
 
 **WIP** *In this version of the guide, this chapter moves back in the "getting started" section, between command queue and the first (compute) shader.*

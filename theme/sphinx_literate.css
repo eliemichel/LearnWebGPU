@@ -1,6 +1,8 @@
 .lit-block-wrapper {
 	position: relative;
+	overflow: hidden;
 }
+/*
 
 .lit-block-wrapper .lit-block-footer {
 	text-align: right;
@@ -18,3 +20,4 @@
 .lit-block-wrapper .lit-block-footer .lit-name {
 	color: rgba(0, 0, 0, 0.94);
 }
+*/

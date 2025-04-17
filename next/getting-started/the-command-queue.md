@@ -1,4 +1,4 @@
-The Command Queue <span class="bullet">🟢</span>
+The Command Queue <span class="bullet">🟠</span>
 =================
 
 ```{lit-setup}
@@ -30,6 +30,12 @@ They are not too far, but for high performance applications like real time graph
 
 ### Bandwidth
 
+```{themed-figure} /images/command-queue/bandwidth_{theme}.svg
+:align: center
+
+The bandwidth tells how much information can travel at the same time.
+```
+
 Since the GPU is meant for **massive parallel data processing**, its performance can easily be **bound by the memory transfers** rather than the actual computation.
 
 As it turns out, the **memory bandwidth limits** are more often hit within the GPU itself, **between its storage and its compute units**, but the CPU-GPU bandwidth is also limited, which one feels when trying to transfer large textures too often for instance.
@@ -39,6 +45,12 @@ The connection between the **CPU memory** (RAM) and **GPU memory (vRAM)** depend
 ```
 
 ### Latency
+
+```{themed-figure} /images/command-queue/latency_{theme}.svg
+:align: center
+
+The latency is the time it takes for each bit to travel.
+```
 
 **Even the smallest bit of information** needs some time for the round trip to and back from the GPU. As a consequence, functions that send instructions to the GPU return almost immediately: they **do not wait for the instruction to have actually been executed** because that would require to wait for the GPU to transfer back the "I'm done" information.
 
@@ -86,7 +98,7 @@ Looking at `webgpu.h`, we find mainly **3 different means** to submit work to th
  - `wgpuQueueWriteBuffer` sends **data** from a CPU-side buffer to a **GPU-side buffer**.
  - `wgpuQueueWriteTexture` sends **data** from a CPU-side buffer to a **GPU-side texture**.
 
-We can note that all these functions have a `void` return type: they send instructions/data to the GPU and return immediately **without waiting from an answer from the GPU**.
+Again, we can note that all these functions have a `void` return type: they send instructions/data to the GPU and return immediately **without waiting from an answer from the GPU**.
 
 The only way to **get information back** is through `wgpuQueueOnSubmittedWorkDone`, which is an **asynchronous operation** that gets invoked once the GPU confirms that it has (tried to) execute the commands. We show an example below.
 
@@ -160,8 +172,56 @@ A command buffer, which has type `WGPUCommandBuffer`, is not a buffer that we di
 
 ### Command encoder
 
-**WIP line**
+A command encoder is created following **the usual object creation idiom** of WebGPU:
+
+```{lit} C++, Create Command Encoder
+WGPUCommandEncoderDescriptor encoderDesc = WGPU_COMMAND_ENCODER_DESCRIPTOR_INIT;
+encoderDesc.label = toWgpuStringView("My command encoder");
+WGPUCommandEncoder encoder = wgpuDeviceCreateCommandEncoder(device, &encoderDesc);
+```
+
+We can now use the encoder to write instructions. Since we do not have any object to manipulate yet we stick with simple **debug placeholder** for now:
+
+```{lit} C++, Add commands
+wgpuCommandEncoderInsertDebugMarker(encoder, toWgpuStringView("Do one thing"));
+wgpuCommandEncoderInsertDebugMarker(encoder, toWgpuStringView("Do another thing"));
+```
+
+And then finally we **generate the command buffer** from the encoder using `wgpuCommandEncoderFinish`. This requires an extra descriptor (because it is a point where there can be extensions):
+
+```{lit} C++, Finish encoding and submit
+WGPUCommandBufferDescriptor cmdBufferDescriptor = WGPU_COMMAND_BUFFER_DESCRIPTOR_INIT;
+cmdBufferDescriptor.label = toWgpuStringView("Command buffer");
+WGPUCommandBuffer command = wgpuCommandEncoderFinish(encoder, &cmdBufferDescriptor);
+wgpuCommandEncoderRelease(encoder); // release encoder after it's finished
+
+// Finally submit the command queue
+std::cout << "Submitting command..." << std::endl;
+wgpuQueueSubmit(queue, 1, &command);
+wgpuCommandBufferRelease(command);
+std::cout << "Command submitted." << std::endl;
+```
+
+```{lit} C++, Test command encoding (hidden)
+{{Get Queue}}
+{{Create Command Encoder}}
+{{Add commands}}
+{{Finish encoding and submit}}
+{{Wait for completion}}
+```
 
 ```{lit} C++, Create things (append, hidden)
-{{Get Queue}}
+{{Test command encoding}}
 ```
+
+Waiting for completion
+----------------------
+
+**WIP line** *We use `wgpuQueueOnSubmittedWorkDone`*
+
+```{lit} C++, Wait for completion
+// TODO
+```
+
+Conclusion
+----------
