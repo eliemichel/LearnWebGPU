@@ -1,10 +1,12 @@
-The Command Queue <span class="bullet">🟠</span>
+The Command Queue <span class="bullet">🟢</span>
 =================
 
 ```{lit-setup}
 :tangle-root: 015 - The Command Queue - Next
 :parent: 010 - The Device - Next
 ```
+
+*Resulting code:* [`step015-next`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step015-next)
 
 Now that we have a `WGPUDevice` object in our hands, we can use it to **sent data and instructions** to the GPU. We learn in this chapter a **key concept** of WebGPU (and of most modern graphics APIs as well), namely **the command queue**.
 
@@ -33,7 +35,7 @@ They are not too far, but for high performance applications like real time graph
 ```{themed-figure} /images/command-queue/bandwidth_{theme}.svg
 :align: center
 
-The bandwidth tells how much information can travel at the same time.
+The bandwidth tells **how much information** can travel at the same time.
 ```
 
 Since the GPU is meant for **massive parallel data processing**, its performance can easily be **bound by the memory transfers** rather than the actual computation.
@@ -49,7 +51,7 @@ The connection between the **CPU memory** (RAM) and **GPU memory (vRAM)** depend
 ```{themed-figure} /images/command-queue/latency_{theme}.svg
 :align: center
 
-The latency is the time it takes for each bit to travel.
+The latency is **the time it takes** for each bit to travel.
 ```
 
 **Even the smallest bit of information** needs some time for the round trip to and back from the GPU. As a consequence, functions that send instructions to the GPU return almost immediately: they **do not wait for the instruction to have actually been executed** because that would require to wait for the GPU to transfer back the "I'm done" information.
@@ -217,11 +219,136 @@ std::cout << "Command submitted." << std::endl;
 Waiting for completion
 ----------------------
 
-**WIP line** *We use `wgpuQueueOnSubmittedWorkDone`*
+As repeated and illustrated above, instructions that are submitted to the GPU get executed at their own pace. In many cases, it is not a big issue (as long as the instructions are executed in the right order).
+
+Sometimes however, we really want to **have the CPU wait until submitted instructions have been executed**. For that, we may use the function `wgpuQueueOnSubmittedWorkDone`. This creates **an asynchronous operation that does nothing on the GPU side**. Or, more exactly, nothing else than signaling that everything received before has been executed.
+
+Like any asynchronous operation, it takes a **callback info** as argument and returns a `WGPUFuture`. In this case, it only takes one other argument, namely the queue into which we push the operation:
+
+```C++
+// Signature of the wgpuQueueOnSubmittedWorkDone function in webgpu.h
+WGPUFuture wgpuQueueOnSubmittedWorkDone(
+	WGPUQueue queue,
+	WGPUQueueWorkDoneCallbackInfo callbackInfo
+);
+```
+
+As usual, the callback info contains a `nextInChain` pointer for extensions, a `mode`, two `userdata` pointers and a `callback` function pointer. The latter must have the following type:
+
+```C++
+// Definition of the WGPUQueueWorkDoneCallback function type in webgpu.h
+typedef void (*WGPUQueueWorkDoneCallback)(
+	WGPUQueueWorkDoneStatus status,
+	void* userdata1,
+	void* userdata2
+);
+```
+
+In other words, all it receives besides our potential `userdata` pointers is a status.
+
+````{warning}
+The returned status **does not** tell about the success of **other** operations. All it says is whether querying for the moment where submitted work was done did succeed or not. Possible values are:
+
+- `WGPUQueueWorkDoneStatus_Success` when the query operation went well.
+- `WGPUQueueWorkDoneStatus_InstanceDropped` when the WebGPU instanced was dropped before previous instructions where executed. This callback is executed nonetheless, but with this special status value.
+- `WGPUQueueWorkDoneStatus_Error` when something went wrong in the process (it's probably a bad sign about the overall course of your program).
+````
+
+Inspired by what we did when requesting the adapter and device, we can create a callback that takes a boolean as first user pointer and turn it on whenever the callback is invoked:
 
 ```{lit} C++, Wait for completion
-// TODO
+// Our callback invoked when GPU instructions have been executed
+auto onQueuedWorkDone = [](
+	WGPUQueueWorkDoneStatus status,
+	void* userdata1,
+	void* /* userdata2 */
+) {
+	// Display a warning when status is not success
+	if (status != WGPUQueueWorkDoneStatus_Success) {
+		std::cout << "Warning: wgpuQueueOnSubmittedWorkDone failed, this is suspicious!" << std::endl;
+	}
+
+	// Interpret userdata1 as a pointer to a boolean (and turn it into a
+	// mutable reference), then turn it to 'true'
+	bool& workDone = *reinterpret_cast<bool*>(userdata1);
+	workDone = true;
+};
+
+// Create the boolean that will be passed to the callback as userdata1
+// and initialize it to 'false'
+bool workDone = false;
+
+// Create the callback info
+WGPUQueueWorkDoneCallbackInfo callbackInfo = WGPU_QUEUE_WORK_DONE_CALLBACK_INFO_INIT;
+callbackInfo.mode = WGPUCallbackMode_AllowProcessEvents;
+callbackInfo.callback = onQueuedWorkDone;
+callbackInfo.userdata1 = &workDone; // pass the address of workDone
+
+// Add the async operation to the queue
+wgpuQueueOnSubmittedWorkDone(queue, callbackInfo);
+
+{{Wait for workDone to be true}}
+
+std::cout << "All queued instructions have been executed!" << std::endl;
 ```
+
+To wait for the callback to effectively get invoked and thus `workDone` to become `true`, we **reuse the same loop as before**, that calls `wgpuInstanceProcessEvents` interleaved with a small sleep:
+
+```{lit} C++, Wait for workDone to be true
+// Hand the execution to the WebGPU instance until onQueuedWorkDone gets invoked
+wgpuInstanceProcessEvents(instance);
+while (!workDone) {
+#ifdef __EMSCRIPTEN__
+	emscripten_sleep(200);
+#else
+	std::this_thread::sleep_for(std::chrono::milliseconds(200));
+#endif
+	wgpuInstanceProcessEvents(instance);
+}
+```
+
+```{note}
+Again, we will see in the [next chapter](playing-with-buffers.md) a more fine-grained method to wait for asynchronous operations, using the `WGPUFuture` handle returned by `wgpuQueueOnSubmittedWorkDone`, but for this case using `wgpuInstanceProcessEvents` works well.
+```
+
+You should finally see something like this in your program's output:
+
+```
+Submitting command...
+Command submitted.
+All queued instructions have been executed!
+Device 0000009EC06FF4F0 was lost: reason 3 (A valid external Instance reference no longer exists.)
+```
+
+````{tip}
+It is **normal that our device gets lost** at the end of our program. We can **have the reason change a bit** though by making sure the instance realizes that the device got released before deleting it on its turn. To do so, you may call `wgpuInstanceProcessEvents` between `wgpuDeviceRelease` and `wgpuInstanceRelease`:
+
+```C++
+// At the end
+wgpuQueueRelease(queue);
+wgpuDeviceRelease(device);
+// We clean up the WebGPU instance
+wgpuInstanceProcessEvents(instance); // <-- add this!
+wgpuInstanceRelease(instance);
+```
+
+You should now see something like this in your output:
+
+```
+Device 000000D266AFEF50 was lost: reason 2 (Device was destroyed.)
+```
+````
 
 Conclusion
 ----------
+
+We have seen a few important notions in this chapter:
+
+ - The CPU and GPU live in **different timelines**.
+ - Commands are streamed from CPU to GPU through a **command queue**.
+ - Queued command buffers must be encoded using a **command encoder**.
+ - We can **wait for enqueued commands** to be executed with `wgpuQueueOnSubmittedWorkDone`.
+
+This was a bit abstract because we can queue operations but we did not see any yet. In the next chapter we will start with **simple operations on memory buffers**, followed by **our first shader** to compute things on the GPU!
+
+*Resulting code:* [`step015-next`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step015-next)
