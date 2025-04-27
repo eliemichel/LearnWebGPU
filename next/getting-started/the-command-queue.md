@@ -212,7 +212,7 @@ std::cout << "Command submitted." << std::endl;
 {{Wait for completion}}
 ```
 
-```{lit} C++, Create things (append, hidden)
+```{lit} C++, Main body (append, hidden)
 {{Test command encoding}}
 ```
 
@@ -244,6 +244,10 @@ typedef void (*WGPUQueueWorkDoneCallback)(
 );
 ```
 
+```{note}
+In newer versions of WebGPU, an extra `WGPUStringView message` argument is added after the status.
+```
+
 In other words, all it receives besides our potential `userdata` pointers is a status.
 
 ````{warning}
@@ -253,6 +257,10 @@ The returned status **does not** tell about the success of **other** operations.
 - `WGPUQueueWorkDoneStatus_InstanceDropped` when the WebGPU instanced was dropped before previous instructions where executed. This callback is executed nonetheless, but with this special status value.
 - `WGPUQueueWorkDoneStatus_Error` when something went wrong in the process (it's probably a bad sign about the overall course of your program).
 ````
+
+```{note}
+In **newer versions** of WebGPU, `InstanceDropped` reason was renamed `CallbackCancelled`.
+```
 
 Inspired by what we did when requesting the adapter and device, we can create a callback that takes a boolean as first user pointer and turn it on whenever the callback is invoked:
 

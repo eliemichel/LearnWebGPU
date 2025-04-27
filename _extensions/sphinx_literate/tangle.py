@@ -25,8 +25,17 @@ def _tangle_rec(
 ) -> None:
     assert(lit is not None)
     tangle_info = _get_tangle_info(registry, lit, override_tangle_root)
+    comment_prefix = {
+        "c++": "//",
+        "javascript": "//",
+        "rust": "//",
+        "python": "#",
+        "cmake": "#",
+    }.get(lit.lexer.lower() if lit.lexer is not None else None, "//")
+    if lit.lexer is None:
+        print(f"######## {lit.format()} from {lit.source_location.format()}")
     if tangle_info is not None and tangle_info.debug:
-        tangled_content.append(prefix + f"// {{Begin block {lit.format()}}}")
+        tangled_content.append(prefix + f"{comment_prefix} {{Begin block {lit.format()}}}")
     for line in lit.all_content(registry, override_tangle_root):
         # TODO: use parse.parse_block_content here?
         subprefix = None
@@ -59,7 +68,7 @@ def _tangle_rec(
         else:
             tangled_content.append(prefix + line)
     if tangle_info is not None and tangle_info.debug:
-        tangled_content.append(prefix + f"// {{End block {lit.format()}}}")
+        tangled_content.append(prefix + f"{comment_prefix} {{End block {lit.format()}}}")
 
 #############################################################
 # Public

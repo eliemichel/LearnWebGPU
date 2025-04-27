@@ -405,6 +405,7 @@ class CodeBlockRegistry:
                 tangle_root = lit.tangle_root,
                 source_location = lit.source_location,
                 target = lit.target,
+                lexer = lit.lexer,
             )
             modifier.inserted_location = InsertLocation(placement, pattern)
             modifier.inserted_block = lit

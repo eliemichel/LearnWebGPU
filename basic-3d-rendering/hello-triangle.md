@@ -76,7 +76,7 @@ Other graphics APIs provide access to more programmable stages (geometry shader,
 As always, we build a descriptor in order to create the render pipeline:
 
 ````{tab} With webgpu.hpp
-```{lit} Create Render Pipeline
+```{lit} C++, Create Render Pipeline
 RenderPipelineDescriptor pipelineDesc;
 {{Describe render pipeline}}
 RenderPipeline pipeline = device.createRenderPipeline(pipelineDesc);
@@ -84,7 +84,7 @@ RenderPipeline pipeline = device.createRenderPipeline(pipelineDesc);
 ````
 
 ````{tab} Vanilla webgpu.h
-```{lit} Create Render Pipeline (for tangle root "Vanilla")
+```{lit} C++, Create Render Pipeline (for tangle root "Vanilla")
 WGPURenderPipelineDescriptor pipelineDesc{};
 pipelineDesc.nextInChain = nullptr;
 {{Describe render pipeline}}
@@ -587,13 +587,13 @@ private:
 ````{warning}
 Make sure not to locally **shadow** the class-level declaration of `pipeline` and `surfaceFormat` by re-declaring them when calling `createRenderPipeline` and `getPreferredFormat` respectively.
 
-```{lit} Create Render Pipeline (hidden, replace)
+```{lit} C++, Create Render Pipeline (hidden, replace)
 RenderPipelineDescriptor pipelineDesc;
 {{Describe render pipeline}}
 pipeline = device.createRenderPipeline(pipelineDesc);
 ```
 
-```{lit} Create Render Pipeline (hidden, replace, for tangle root "Vanilla")
+```{lit} C++, Create Render Pipeline (hidden, replace, for tangle root "Vanilla")
 WGPURenderPipelineDescriptor pipelineDesc{};
 pipelineDesc.nextInChain = nullptr;
 {{Describe render pipeline}}
