@@ -10,7 +10,7 @@ Before translating a page, make sure that your target language is listed in `con
 
 ```python
 translation_languages = [
-    ("en", "🇫🇷", "English", ""),
+    ("en", "🇺🇸", "English", ""),
     ("fr", "🇫🇷", "Français", "French"),
     ("kr", "🇰🇷", "한국인", "Korean"),
     ("it", "🇮🇹", "Italiano", "Italian"),

@@ -306,11 +306,7 @@ To wait for the callback to effectively get invoked and thus `workDone` to becom
 // Hand the execution to the WebGPU instance until onQueuedWorkDone gets invoked
 wgpuInstanceProcessEvents(instance);
 while (!workDone) {
-#ifdef __EMSCRIPTEN__
-	emscripten_sleep(200);
-#else
-	std::this_thread::sleep_for(std::chrono::milliseconds(200));
-#endif
+	sleepForMilliseconds(200);
 	wgpuInstanceProcessEvents(instance);
 }
 ```

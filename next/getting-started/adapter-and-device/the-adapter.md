@@ -367,11 +367,7 @@ WGPUAdapter requestAdapterSync(WGPUInstance instance, WGPURequestAdapterOptions 
 
 	while (!userData.requestEnded) {
 		// Waiting for 200 ms to avoid asking too often to process events
-#ifdef __EMSCRIPTEN__
-		emscripten_sleep(200);
-#else
-		std::this_thread::sleep_for(std::chrono::milliseconds(200));
-#endif
+		sleepForMilliseconds(200);
 
 		wgpuInstanceProcessEvents(instance);
 	}
@@ -384,6 +380,24 @@ WGPUAdapter requestAdapterSync(WGPUInstance instance, WGPURequestAdapterOptions 
 // All utility functions are regrouped here
 {{Request adapter function}}
 ```
+
+````{note}
+Since we are going to use it a couple of times, **I moved the `#ifdef EMSCRIPTEN` exception into a dedicated utility function** `sleepForMilliseconds()` that we define before `requestAdapterSync()`:
+
+```{lit} C++, Utility functions (prepend, hidden)
+{{Define sleepForMilliseconds}}
+```
+
+```{lit} C++, Define sleepForMilliseconds
+void sleepForMilliseconds(unsigned int milliseconds) {
+#ifdef __EMSCRIPTEN__
+	emscripten_sleep(milliseconds);
+#else
+	std::this_thread::sleep_for(std::chrono::milliseconds(milliseconds));
+#endif
+}
+```
+````
 
 The only **missing block** in this function is **the handling error messages**, which has type `WGPUStringView`.
 

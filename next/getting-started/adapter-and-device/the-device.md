@@ -70,12 +70,7 @@ WGPUDevice requestDeviceSync(WGPUInstance instance, WGPUAdapter adapter, WGPUDev
 	// Hand the execution to the WebGPU instance until the request ended
 	wgpuInstanceProcessEvents(instance);
 	while (!userData.requestEnded) {
-#ifdef __EMSCRIPTEN__
-		emscripten_sleep(200);
-#else
-		std::this_thread::sleep_for(std::chrono::milliseconds(200));
-#endif
-
+		sleepForMilliseconds(200);
 		wgpuInstanceProcessEvents(instance);
 	}
 
@@ -111,6 +106,13 @@ WGPUStringView toWgpuStringView(std::string_view stdStringView);
  * Convert a C string into a WebGPU string view
  */
 WGPUStringView toWgpuStringView(const char* cString);
+
+/**
+ * Sleep for a given number of milliseconds.
+ * This works with both native builds and emscripten, provided that -sASYNCIFY
+ * compile option is provided when building with emscripten.
+ */
+void sleepForMilliseconds(unsigned int milliseconds);
 
 /**
  * Utility function to get a WebGPU adapter, so that

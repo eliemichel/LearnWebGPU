@@ -117,6 +117,12 @@ At this point, we need a little scenario for our example, so that we can determi
 Simple example
 --------------
 
+```{themed-figure} /images/playing-with-buffers/scenario_{theme}.svg
+:align: center
+
+In our simple **example scenario**, we copy a slice of Buffer A into Buffer B.
+```
+
 Let us say we want to **create 2 buffers**, **write** data in the first one (`bufferA`), **copy** it into the second one (`bufferB`) on the GPU-side, and finally **read** `bufferB` back on the CPU.
 
 So, we create a second buffer, with a second descriptor:
@@ -189,6 +195,7 @@ The `mappedAtCreation` field is of course only relevant for buffers that have de
 In order to write the initial value of our `bufferA`, we are interested in having it mapped at creation:
 
 ```{lit} C++, Fill in buffer descriptor A (append)
+// Map Buffer A at creation in order to upload its initial value
 bufferDescA.mappedAtCreation = true;
 ```
 
@@ -200,7 +207,7 @@ In newer versions of WebGPU, macros `WGPU_TRUE` and `WGPU_FALSE` are defined to 
 
 ### Freeing memory
 
-If you ever played with manual allocation using `malloc` or `new`, you must know that **we must always free our dynamically allocated memory**.
+If you ever played with manual allocation using `malloc` or `new`, you must know that **we always free our dynamically allocated memory**.
 
 In the case of `WGPUBuffer`, its associated memory in VRAM is freed as soon as all references to it are released. We thus simply release our buffers:
 
@@ -214,11 +221,11 @@ Sometimes, we want to **force freeing VRAM memory** even if there may **remain r
 Copying buffers
 ---------------
 
-Our GPU buffers are allocated in VRAM, we can now proceed with the GPU-side copy operation.
+Our GPU buffers are allocated in VRAM, we can now populate Buffer A and proceed with the GPU-side copy operation.
 
 ### Initial value
 
-Before copying, we need something to copy, so we will **set the initial value of `bufferA`**. Given that we had it **mapped at creation**, we can get **the address in RAM** where it is mapped and simply write in there!
+Before copying, we need something to copy, so we will **set the initial value of `bufferA`**. Given that we had it **mapped at creation**, we can get **the address in (CPU-side) RAM** where it is mapped and simply write in there!
 
 To get this address, we use the following function:
 
@@ -230,14 +237,17 @@ void * wgpuBufferGetMappedRange(WGPUBuffer buffer, size_t offset, size_t size);
 As you can see, this can be used to map only a sub range of the buffer, but in our case we want to **map the whole buffer**, so we can use the special sentinel value `WGPU_WHOLE_MAP_SIZE` to mean exactly that:
 
 ```{lit} C++, Write initial value in Buffer A
-uint8_t* bufferDataA = (uint8_t*)wgpuBufferGetMappedRange(bufferA, 0, WGPU_WHOLE_MAP_SIZE);
+// Get a pointer to the entire mapped buffer and interpret it as 8-bit unsigned integers
+uint8_t* bufferDataA = static_cast<uint8_t*>(
+	wgpuBufferGetMappedRange(bufferA, 0, WGPU_WHOLE_MAP_SIZE)
+);
 ```
 
-Note that I also **cast** the returned `void*` pointer into something we can actually write to, e.g., a `uint8_t` in this example. We can now simply write whatever we want:
+Note that I also **cast** the returned `void*` pointer into something we can actually write to, e.g., a `uint8_t` in this example. We can now simply **write whatever we want**:
 
 ```{lit} C++, Write initial value in Buffer A (append)
 // Write 0, 1, 2, 3, ... in bufferA
-for (int i = 0 ; i < 256 ; ++i) {
+for (size_t i = 0 ; i < 256 ; ++i) {
 	bufferDataA[i] = static_cast<uint8_t>(i);
 }
 ```
@@ -259,9 +269,18 @@ There are **other ways** to set the initial value of a buffer. If you want to **
 
 ### Copy operation
 
-**WIP** *In this version of the guide, this chapter moves back in the "getting started" section, between command queue and the first (compute) shader.*
+Okey, we have two buffers `bufferA` and `bufferB`, the former contains some values, and we want to **copy a slice** of it into the latter.
+
+Copying buffers is done using `wgpuCommandEncoderCopyBufferToBuffer`. From the name of this function, we know that **this instruction is sent through the command encoder** object that we created in the previous chapter.
+
+```{note}
+This will **replace the calls** to `wgpuCommandEncoderInsertDebugMarker` that we used previously to mock instructions.
+```
+
+The full buffer copy command defines a **source** and a **destination buffer**, but also **the offset at which the copy starts** in both source and offset, and the overall **number of bytes to copy**:
 
 ```C++
+// The signature of the wgpuCommandEncoderCopyBufferToBuffer function as it is in webgpu.h
 void wgpuCommandEncoderCopyBufferToBuffer(
 	WGPUCommandEncoder commandEncoder,
 	WGPUBuffer source,
@@ -272,28 +291,196 @@ void wgpuCommandEncoderCopyBufferToBuffer(
 );
 ```
 
+```{themed-figure} /images/playing-with-buffers/copy_{theme}.svg
+:align: center
+
+The command copies `size` bytes from byte `sourceOffset` of buffer `source` into the bytes starting at `destinationOffset` in `destination`.
+```
+
+In our case, we copy `bufferDescB.size` bytes (because buffer B is smaller than buffer A), and let us say we start at an offset of 16 in the source:
+
 ```{lit} C++, Add commands (replace)
 wgpuCommandEncoderCopyBufferToBuffer(
 	encoder,
 	bufferA,
-	16,
+	16, // sourceOffset
 	bufferB,
-	0,
+	0, // destinationOffset
 	bufferDescB.size
 );
 ```
 
-TODO: FIGURE!
+Did this work? The only way to know is to **read back the content of buffer B** and check that it contains $(16, 17, \dots, 47)$!
+
+Asynchronous read back
+----------------------
+
+As you may have expected, **the only way** to read data back from the GPU is through an **asynchronous operation**. This is by design, because reading may take a lot of time (relatively to simple CPU operations).
+
+### Mapping
+
+Reading from a buffer is done by **mapping it onto the CPU**. This is similar to the way we filled in our input buffer A above, except that this time **buffer B is not mapped by default**, so we need to ask for this with the following asynchronous operation:
+
+```C++
+// The signature of the wgpuBufferMapAsync function as it is in webgpu.h
+WGPUFuture wgpuBufferMapAsync(
+	WGPUBuffer buffer,
+	WGPUMapMode mode, // can be WGPUMapMode_Read or WGPUMapMode_Write
+	size_t offset,
+	size_t size,
+	WGPUBufferMapCallbackInfo callbackInfo
+);
+```
+
+We first introduced asynchronous operations in chapter [*The Adapter*](adapter-and-device/the-adapter.md#asynchronous-function), so you should already guess how to use this and in particular the `callbackInfo`. We will nonetheless take this opportunity to introduce below **a new way to wait for the operation to end**.
+
+Anyways let us start by **launching the operation**. We call `wgpuBufferMapAsync` for our buffer B, with a map mode of `WGPUMapMode_Read` (read-only). Like we did above, we can use `WGPU_WHOLE_MAP_SIZE` to mean that we want to map the entire buffer:
+
+```{lit} C++, Map buffer B
+{{Define callback handling the mapped buffer B}}
+
+{{Build callback info for mapping buffer B}}
+
+// And finally we launch the asynchronous operation
+WGPUFuture future = wgpuBufferMapAsync(
+	bufferB,
+	WGPUMapMode_Read,
+	0, // offset
+	WGPU_WHOLE_MAP_SIZE,
+	callbackInfo
+);
+```
+
+What should we do in the callback? We can **check that the mapping is successful** and anyways let the rest of the program know that the operation ended:
+
+```{lit} C++, Define callback handling the mapped buffer B
+// Context passed to `onBufferBMapped` through theuserdata pointer:
+struct OnBufferBMappedContext {
+	bool operationEnded = false; // Turned true as soon as the callback is invoked
+	bool mappingIsSuccessful = false; // Turned true only if mapping succeeded
+};
+
+// This function has the type WGPUBufferMapCallback as defined in webgpu.h
+auto onBufferBMapped = [](
+	WGPUMapAsyncStatus status,
+	struct WGPUStringView message,
+	void* userdata1,
+	void* /* userdata2 */
+) {
+	OnBufferBMappedContext& context = *reinterpret_cast<OnBufferBMappedContext*>(userdata1);
+	context.operationEnded = true;
+	if (status == WGPUMapAsyncStatus_Success) {
+		context.mappingIsSuccessful = true;
+	} else {
+		std::cout << "Could not map buffer B! Status: " << status << ", message: " << toStdStringView(message) << std::endl;
+	}
+};
+```
+
+```{lit} C++, Build callback info for mapping buffer B
+// We create an instance of the context shared with `onBufferBMapped`
+OnBufferBMappedContext context;
+
+// And we build the callback info:
+WGPUBufferMapCallbackInfo callbackInfo = WGPU_BUFFER_MAP_CALLBACK_INFO_INIT;
+callbackInfo.mode = WGPUCallbackMode_AllowProcessEvents;
+callbackInfo.callback = onBufferBMapped;
+callbackInfo.userdata1 = &context;
+```
+
+### Waiting for mapping
+
+We **start by waiting the same way** we did previously, using `wgpuInstanceProcessEvents`.
+
+```{note}
+We will then **complexify our scenario** a tiny bit with **a third buffer C** that we try to map at the same time and thus see the limitation of this approach.
+```
+
+```{lit} C++, Wait for mapping of buffer B
+// Process events until the map operation ended
+wgpuInstanceProcessEvents(instance);
+while (!context.operationEnded) {
+	sleepForMilliseconds(200);
+	wgpuInstanceProcessEvents(instance);
+}
+```
+
+Once the operation ended, and if it was successful, we can read and display our output buffer B on the CPU. **To recap**, here is the outline of our read back process:
+
+```{lit} C++, Map and display buffer B
+{{Map buffer B}}
+
+{{Wait for mapping of buffer B}}
+
+if (context.mappingIsSuccessful) {
+	{{Display buffer B}}
+}
+```
+
+````{note}
+We add the mapping **at the end of the main body**, right before releasing things. Note that this **replaces** the "Wait for completion" of the previous chapter, since the mapping will always happen **after the previously submitted commands**.
+
+```{lit} C++, Main body (append, hidden)
+{{Map and display buffer B}}
+```
+
+```{lit} C++, Wait for completion (replace, hidden)
+// Removed
+```
+````
+
+### Displaying output buffer
+
+Now that the buffer B is mapped, we can **get its CPU-side address** like we did to fill in the input buffer A.
+
+The **only difference** is that instead of `wgpuBufferGetMappedRange` we use `wgpuBufferGetConstMappedRange`, which returns a `const` pointer, because the buffer is mapped in **read-only** mode.
+
+```{lit} C++, Display buffer B
+// Get a (read-only) pointer to the buffer content
+const uint8_t* bufferDataB = static_cast<const uint8_t*>(
+	wgpuBufferGetConstMappedRange(bufferB, 0, WGPU_WHOLE_MAP_SIZE)
+);
+```
+
+With this pointer in hand, we can simply **print its content**:
+
+```{lit} C++, Display buffer B (append)
+// Display
+std::cout << "Buffer B: [";
+for (size_t i = 0 ; i < bufferDescB.size ; ++i) {
+	if (i > 0) std::cout << ", ";
+	std::cout << static_cast<int>(bufferDataB[i]); // cast to display as int rather than char
+}
+std::cout << "]" << std::endl;
+```
+
+And finally we **unmap the buffer** once we no longer need it:
+
+```{lit} C++, Display buffer B (append)
+// Unmap
+wgpuBufferUnmap(bufferB);
+// Do NOT use bufferDataB beyond this point!
+```
+
+At this stage, **you should see the following output**:
+
+```
+Buffer B: [16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47]
+```
+
+Like we expected, the values from index 16 to 47 (= offset 16 + size 32 - 1) were copied from buffer A to buffer B, **congrats**!
+
+Multiple simultaneous read backs
+--------------------------------
+
+Let us now **spice things up** a little bit by involving a **third buffer C**.
+
+**WIP** Add buffer C, add figure to compare
+
+### Waiting for mapping
+
 
 TODO: LIMITS!
-
-Troubleshooting
----------------
-
-In this section, we intentionally create errors and see what error message it gives. This is a good practice when learning an API, so that we can then more easily recognize these messages later on, when they occur in more complex scenarios.
-
-Asynchronous operations
------------------------
 
 ##### The good way
 
@@ -317,5 +504,16 @@ WGPUWaitStatus wgpuInstanceWaitAny(WGPUInstance instance, size_t futureCount, WG
 uint64_t timeoutNS = 200 * 1000; // 200 ms
 WGPUWaitStatus status = wgpuInstanceWaitAny(instance, 1, &adapterRequest, timeoutNS);
 ```
+
+Troubleshooting
+---------------
+
+In this section, we intentionally create errors and see what error message it gives. This is a good practice when learning an API, so that we can then more easily recognize these messages later on, when they occur in more complex scenarios.
+
+- Missing usage
+- Wrong WGPUMapMode_Read
+
+Conclusion
+----------
 
 *Resulting code:* [`step017-next`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step017-next)
