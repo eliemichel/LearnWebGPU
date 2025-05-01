@@ -223,7 +223,9 @@ This works, as long as the **callback mode** we set in the callback info is at l
 As of version `v24.0.0.2`, `wgpu-native` does not implement `wgpuInstanceProcessEvents`. In this very case, we may skip it because the adapter requests ends right within the call to `wgpuInstanceRequestAdapter`.
 ```
 
-This is an OK solution, although we still need to manage ourselves the `requestEnded` test and the `sleep()` operation. This solution is **all right for the adapter/device request** and I do not want to make this chapter any longer, so we will wait for chapter [Playing with buffers](../playing-with-buffers.md) to see **another way**, which gives finer control over the pending asynchronous operations.
+This is an OK solution, although we still need to manage ourselves the `requestEnded` test and the `sleep()` operation. This solution is **all right for the adapter/device request** and many simple cases.
+
+I do not want to make this chapter any longer, so I detail the **more advanced** approach in the [*Futures and asynchronous operations*](../../appendices/futures-and-asynchronous-operations.md) appendix.
 
 ##### With emscripten
 

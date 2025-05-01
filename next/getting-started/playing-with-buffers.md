@@ -15,7 +15,7 @@ In this chapter:
 
  - We see **how to allocate data buffers on the GPU**.
  - We see our first useful GPU command to **copy buffers**.
- - We refine our control of **asynchronous operations** to retrieve data from the GPU.
+ - We try breaking things to **get familiar with error messages**.
 
 Memory allocation
 -----------------
@@ -332,9 +332,11 @@ WGPUFuture wgpuBufferMapAsync(
 );
 ```
 
-We first introduced asynchronous operations in chapter [*The Adapter*](adapter-and-device/the-adapter.md#asynchronous-function), so you should already guess how to use this and in particular the `callbackInfo`. We will nonetheless take this opportunity to introduce below **a new way to wait for the operation to end**.
+We first introduced asynchronous operations in chapter [*The Adapter*](adapter-and-device/the-adapter.md#asynchronous-function), so you should already guess how to use this and in particular the `callbackInfo`.
 
-Anyways let us start by **launching the operation**. We call `wgpuBufferMapAsync` for our buffer B, with a map mode of `WGPUMapMode_Read` (read-only). Like we did above, we can use `WGPU_WHOLE_MAP_SIZE` to mean that we want to map the entire buffer:
+### Launching the operation
+
+We call `wgpuBufferMapAsync` for our buffer B, with a map mode of `WGPUMapMode_Read` (read-only). Like we did above, we can use `WGPU_WHOLE_MAP_SIZE` to mean that we want to map the entire buffer:
 
 ```{lit} C++, Map buffer B
 {{Define callback handling the mapped buffer B}}
@@ -342,7 +344,7 @@ Anyways let us start by **launching the operation**. We call `wgpuBufferMapAsync
 {{Build callback info for mapping buffer B}}
 
 // And finally we launch the asynchronous operation
-WGPUFuture future = wgpuBufferMapAsync(
+wgpuBufferMapAsync(
 	bufferB,
 	WGPUMapMode_Read,
 	0, // offset
@@ -377,6 +379,16 @@ auto onBufferBMapped = [](
 };
 ```
 
+````{note}
+Instead of remembering the status of the map operation, we could **retrieve this information later** with `wgpuBufferGetMapState()`, e.g.:
+
+```C++
+if (wgpuBufferGetMapState(bufferB) == WGPUBufferMapState_Mapped) {
+	// [...]
+}
+```
+````
+
 ```{lit} C++, Build callback info for mapping buffer B
 // We create an instance of the context shared with `onBufferBMapped`
 OnBufferBMappedContext context;
@@ -390,10 +402,10 @@ callbackInfo.userdata1 = &context;
 
 ### Waiting for mapping
 
-We **start by waiting the same way** we did previously, using `wgpuInstanceProcessEvents`.
+We can follow the same pattern than before, using `wgpuInstanceProcessEvents`.
 
 ```{note}
-We will then **complexify our scenario** a tiny bit with **a third buffer C** that we try to map at the same time and thus see the limitation of this approach.
+We could also use the approach proposed in the [*Futures and asynchronous operations*](../../appendices/futures-and-asynchronous-operations.md) appendix by using the `WGPUFuture` object returned by `wgpuBufferMapAsync()`.
 ```
 
 ```{lit} C++, Wait for mapping of buffer B
@@ -470,40 +482,10 @@ Buffer B: [16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 3
 
 Like we expected, the values from index 16 to 47 (= offset 16 + size 32 - 1) were copied from buffer A to buffer B, **congrats**!
 
-Multiple simultaneous read backs
---------------------------------
+Limits
+------
 
-Let us now **spice things up** a little bit by involving a **third buffer C**.
-
-**WIP** Add buffer C, add figure to compare
-
-### Waiting for mapping
-
-
-TODO: LIMITS!
-
-##### The good way
-
-**To keep track of ongoing asynchronous operations**, each function that starts such an operation **returns a `WGPUFuture`**, which is some sort of internal ID that **identifies the operation**:
-
-```C++
-WGPUFuture adapterRequest = wgpuInstanceRequestAdapter(instance, &options, callbackInfo);
-```
-
-```{note}
-Although it is technically just an integer value, the `WGPUFuture` should be treated as an **opaque handle**, i.e., one should not try to deduce anything from the very value of this ID.
-```
-
-This *future* can then be passed to `wgpuInstanceWaitAny` to mean "wait until this asynchronous operation completes"! Here is the signature of `wgpuInstanceWaitAny`:
-
-```C++
-WGPUWaitStatus wgpuInstanceWaitAny(WGPUInstance instance, size_t futureCount, WGPUFutureWaitInfo * futures, uint64_t timeoutNS);
-```
-
-```C++
-uint64_t timeoutNS = 200 * 1000; // 200 ms
-WGPUWaitStatus status = wgpuInstanceWaitAny(instance, 1, &adapterRequest, timeoutNS);
-```
+**WIP** TODO: LIMITS!
 
 Troubleshooting
 ---------------
