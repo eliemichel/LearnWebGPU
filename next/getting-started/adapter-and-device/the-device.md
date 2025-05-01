@@ -234,6 +234,10 @@ wgpuDeviceRelease(device);
 
 ````
 
+```{important}
+An adapter **may only provide one device** during its lifetime. It is then "**consumed**", meaning that if you need to **create another device**, you also need to **request a new adapter** (which may correspond to the same underlying physical device).
+```
+
 Device descriptor
 -----------------
 
@@ -407,21 +411,6 @@ deviceDesc.deviceLostCallbackInfo.mode = WGPUCallbackMode_AllowProcessEvents;
 
 This last callback is very important, as it defines a function that will be invoked **whenever something goes wrong** with the API. It this is very likely to happen, and the information messages passed to this callback are very valuable to help debugging our application, so we **must not overlook it**!
 
-````{caution}
-This callback info **does not have a `mode` field** because contrary to other callbacks, this one is en **event handler** that may be called repeatedly (as opposed to a *"future"* handler that is invoked only once).
-
-```
-// Definition of the WGPUUncapturedErrorCallbackInfo struct in webgpu.h
-struct WGPUUncapturedErrorCallbackInfo {
-    WGPUChainedStruct * nextInChain;
-    // No 'mode' field! Callback may be invoked at any time.
-    WGPUUncapturedErrorCallback callback;
-    WGPU_NULLABLE void* userdata1;
-    WGPU_NULLABLE void* userdata2;
-};
-```
-````
-
 Here again, we define a callback that displays information about the device error:
 
 ```{lit} C++, Device Error Callback
@@ -439,10 +428,27 @@ auto onDeviceError = [](
 };
 ```
 
-```C++
+And we set this callback in the descriptor's `uncapturedErrorCallbackInfo` field:
+
+```{lit} C++, Build device descriptor (append)
 {{Device Error Callback}}
 deviceDesc.uncapturedErrorCallbackInfo.callback = onDeviceError;
 ```
+
+````{caution}
+This callback info **does not have a `mode` field** because contrary to other callbacks, this one is en **event handler** that may be called repeatedly (as opposed to a *"future"* handler that is invoked only once).
+
+```
+// Definition of the WGPUUncapturedErrorCallbackInfo struct in webgpu.h
+struct WGPUUncapturedErrorCallbackInfo {
+    WGPUChainedStruct * nextInChain;
+    // No 'mode' field! Callback may be invoked at any time.
+    WGPUUncapturedErrorCallback callback;
+    WGPU_NULLABLE void* userdata1;
+    WGPU_NULLABLE void* userdata2;
+};
+```
+````
 
 Inspecting the device
 ---------------------

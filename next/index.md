@@ -82,5 +82,6 @@ Contents
 :titlesonly:
 
 introduction
+getting-started/index
 appendices/index
 ```
