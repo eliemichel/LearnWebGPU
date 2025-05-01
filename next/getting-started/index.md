@@ -12,5 +12,6 @@ hello-webgpu
 adapter-and-device/index
 the-command-queue
 playing-with-buffers
+dealing-with-errors
 our-first-shader
 ```
