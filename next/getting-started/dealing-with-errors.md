@@ -1,4 +1,4 @@
-Dealing with errors <span class="bullet">🟠</span>
+Dealing with errors <span class="bullet">🟢</span>
 ===================
 
 ```{lit-setup}
@@ -205,10 +205,51 @@ Note that the error occurs **while submitting the command buffer**. It is totall
 
 ### Wrong limits
 
-**WIP** TODO And maybe move the whole troubleshooting section to a dedicated chapter.
+If you still **display the device limits** like we did in chapter [*The Device*](adapter-and-device/the-device.md), you can see that there is one called `maxBufferSize`. Its default value is $268,435,456$, which corresponds to 256MB ($256 \times 1024 \times 1024$), and this is what you should see because **we did not ask for specific limits**, so we automatically get the **default**.
+
+```{tip}
+You can find the **default limits** in [Section 3.6.2. of the official WebGPU Specification](https://www.w3.org/TR/webgpu/#limit-default).
+```
+
+So, let us try and **exceed that limit**! What about asking for a 512MB buffer:
+
+```C++
+//bufferDescA.size = 256; // GOOD
+bufferDescA.size = 512 * 1024 * 1024; // BAD, 512MB is more than the default limit
+```
+
+Again, we get a **validation error** with a pretty clear message (remember to read the first error first):
+
+```
+Buffer size (536870912) exceeds the max buffer size limit (268435456). This adapter supports a higher maxBufferSize of 1099511627776, which can be specified in requiredLimits when calling requestDevice(). Limits differ by hardware, so always check the adapter limits prior to requesting a higher limit.
+ - While calling [Device "My Device"].CreateBuffer([BufferDescriptor ""Buffer A""]).
+```
+
+Interestingly, Dawn mentions here that although the **logical device** is limited to 256MB, the underlying **adapter** (hardware + driver) can support much more, so we could ask for a device with higher limits just **before requesting the device**:
+
+```C++
+// after WGPULimits requiredLimits = WGPU_LIMITS_INIT;
+requiredLimits.maxBufferSize = 512 * 1024 * 1024;
+```
+
+```{note}
+My adapter claims to support buffers of size 1024GB (1099511627776), which feels **a bit optimistic**, to say the least. I reported this [in Dawn's bug tracker](https://issues.chromium.org/issues/416064324), and invite you to do the same when you face something that you suspect to be a bug in Dawn.
+
+And **if the issue comes from this guide**, report it to [LearnWebGPU/issues](https://github.com/eliemichel/LearnWebGPU/issues) on GitHub instead.
+```
+
+If you do not interrupt your program at the first error, you can see that **it actually proceed without crashing**. Instead, it **keeps on giving insightful error messages**: this is because the validation error did not prevent `wgpuCreateBuffer` from returning a `WGPUBuffer` object, only it returned one that is **marked internally as invalid**:
+
+```
+[Invalid Buffer "Buffer A"] is invalid.
+ - While encoding [CommandEncoder "My command encoder"].CopyBufferToBuffer([Invalid Buffer "Buffer A"], 16, [Buffer "Buffer B"], 0, 32).
+ - While finishing [CommandEncoder "My command encoder"].
+```
 
 Conclusion
 ----------
+
+**Nothing new in the codebase** after this chapter, but **very valuable knowledge** in our heads to help us face more intricate scenarios: we are now ready to **run our first shader**!
 
 ```{note}
 To **learn more about error handling in WebGPU**, you can consult [the dedicated article](https://webgpu-native.github.io/webgpu-headers/Errors.html) in the official documentation of the WebGPU C API.

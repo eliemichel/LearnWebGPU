@@ -54,7 +54,7 @@ The connection between the **CPU memory** (RAM) and **GPU memory (vRAM)** depend
 The latency is **the time it takes** for each bit to travel.
 ```
 
-**Even the smallest bit of information** needs some time for the round trip to and back from the GPU. As a consequence, functions that send instructions to the GPU return almost immediately: they **do not wait for the instruction to have actually been executed** because that would require to wait for the GPU to transfer back the "I'm done" information.
+**Even the smallest bit of information** needs some time for the round trip to and back from the GPU (can be as long as 100µs). As a consequence, functions that send instructions to the GPU return almost immediately: they **do not wait for the instruction to have actually been executed** because that would require to wait for the GPU to transfer back the "I'm done" information.
 
 Instead, the commands intended for the GPU are **batched** and fired through a **command queue**. The GPU consumes this queue **whenever it is ready**. This is what we detail in this chapter.
 
