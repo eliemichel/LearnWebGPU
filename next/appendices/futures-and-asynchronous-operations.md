@@ -3,7 +3,7 @@ Futures and asynchronous operations <span class="bullet">🔴</span>
 
 **WIP**
 
-##### The good way
+## The good way
 
 **To keep track of ongoing asynchronous operations**, each function that starts such an operation **returns a `WGPUFuture`**, which is some sort of internal ID that **identifies the operation**:
 

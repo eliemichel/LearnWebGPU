@@ -92,12 +92,7 @@ This guide follows the principle of **Literate Programming**: the documentation 
 
 On the right-hand sidebar of the chapters that support it, you can enable/disable the display of these information:
 
-```{image} /images/literate-light.png
-:align: center
-:class: only-light
-```
-
-```{image} /images/literate-dark.png
+```{themed-figure} /images/literate-{theme}.png
 :align: center
 :class: only-dark
 ```
@@ -108,14 +103,9 @@ Everything is turned off by default to avoid visual clutter, but if you feel you
 
 If you encounter any typo or more important issue, feel free of fixing it by clicking the edit button present on top of each page!
 
-```{image} images/edit-light.png
+```{themed-figure} /images/edit-{theme}.png
 :alt: Use the edit button present on top of each page!
 :class: only-light
-```
-
-```{image} images/edit-dark.png
-:alt: Use the edit button present on top of each page!
-:class: only-dark
 ```
 
 More generally, you can discuss any technical or organizational choice through [the repo's issues](https://github.com/eliemichel/LearnWebGPU/issues). Any constructive and/or benevolent feedback is welcome!
