@@ -433,7 +433,7 @@ In order to convert back, I suggest we create a **small utility function** to tu
 std::string_view toStdStringView(WGPUStringView wgpuStringView) {
 	return
 		wgpuStringView.data == nullptr
-		? std::string()
+		? std::string_view()
 		: wgpuStringView.length == WGPU_STRLEN
 		? std::string_view(wgpuStringView.data)
 		: std::string_view(wgpuStringView.data, wgpuStringView.length);
