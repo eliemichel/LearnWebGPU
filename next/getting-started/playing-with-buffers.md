@@ -203,6 +203,10 @@ Technically, the field `mappedAtCreation` has type `WGPUBool`, which is actually
 In newer versions of WebGPU, macros `WGPU_TRUE` and `WGPU_FALSE` are defined to clarify this.
 ```
 
+```{admonition} TODO
+It is not required to specify usage `WGPUBufferUsage_MapWrite` to use `mappedAtCreation` actually!
+```
+
 ### Freeing memory
 
 If you ever played with manual allocation using `malloc` or `new`, you must know that **we always free our dynamically allocated memory**.

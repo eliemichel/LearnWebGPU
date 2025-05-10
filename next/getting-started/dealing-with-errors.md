@@ -4,7 +4,6 @@ Dealing with errors <span class="bullet">🟢</span>
 ```{lit-setup}
 :tangle-root: 018 - Dealing with errors - Next
 :parent: 017 - Playing with buffers - Next
-:debug:
 ```
 
 *Resulting code:* [`step018-next`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step018-next)
