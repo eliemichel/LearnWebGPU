@@ -242,6 +242,7 @@ Of course we must release this view once we no longer need it, just before prese
 ```{lit} C++, Present the surface onto the window
 // At the end of the frame
 wgpuTextureViewRelease(targetView);
+wgpuTextureRelease(surfaceTexture.texture);
 ```
 
 The texture itself must only be released, and actually we can do it right after creating the texture view, as the latter will hold its own reference to the texture that keeps it from being destroyed too early:
@@ -274,6 +275,7 @@ As a consequence, we **must not** call `wgpuSurfacePresent()` when building with
 ```{lit} C++, Present the surface onto the window (replace)
 // At the end of the frame
 wgpuTextureViewRelease(targetView);
+wgpuTextureRelease(surfaceTexture.texture);
 #ifndef __EMSCRIPTEN__
 wgpuSurfacePresent(surface);
 #endif
