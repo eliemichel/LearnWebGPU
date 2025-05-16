@@ -252,25 +252,9 @@ wgpuInstanceRelease(instance);
 
 ### Building for the Web
 
-The WebGPU distribution listed above are readily compatible with [Emscripten](https://emscripten.org/docs/getting_started/downloads.html) and if you have trouble with building your application for the web, you can consult [the dedicated appendix](../appendices/building-for-the-web.md).
+The WebGPU distribution listed above are readily compatible with [Emscripten](https://emscripten.org/docs/getting_started/downloads.html).
 
-As we will add a few options specific to the web build from time to time, we can add a section at the end of our `CMakeLists.txt`:
-
-```{lit} CMake, file: CMakeLists.txt (append)
-# Options that are specific to Emscripten
-if (EMSCRIPTEN)
-    {{Emscripten-specific options}}
-endif()
-```
-
-For now we only change the output extension so that it is an HTML web page (rather than a WebAssembly module or JavaScript library):
-
-```{lit} CMake, Emscripten-specific options
-# Generate a full web page rather than a simple WebAssembly module
-set_target_properties(App PROPERTIES SUFFIX ".html")
-```
-
-For some reason the instance descriptor **must be null** (which means "use default") when using Emscripten, so we can already use our `WEBGPU_BACKEND_EMSCRIPTEN` macro:
+For some reason though the instance descriptor **must be null** (which means "use default") when using Emscripten, so we can already use our `WEBGPU_BACKEND_EMSCRIPTEN` macro:
 
 ```{lit} C++, Create WebGPU instance (replace)
 // We create a descriptor
