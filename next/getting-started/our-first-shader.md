@@ -355,114 +355,176 @@ wgpuComputePipelineRelease(pipeline);
 
 What we see now is:
 
+- How to set up our buffers and their **usage**.
 - How to **bind buffers** to the compute pipeline.
 - How we run the pipeline, i.e., how we **dispatch** compute jobs.
 
 ### Buffers
 
-### TODO
+When binding a buffer as a `storage` variable of a shader, it must have the `Storage` usage. A problem we quickly face is that **the `Storage` usage is incompatible with the `MapRead` usage**.
 
-**WIP**
+We thus need to create **a third buffer** dedicated to retrieving data. We commonly call it **staging buffer**, or **map buffer**.
 
-We change a bit the definition of our buffers, so that (a) we initialize the input buffer with floats and (b) we add the `Storage` usage.
+We create these buffers, this time with a size that can **contain 64 float elements**:
 
-```{lit} C++, Fill in buffer descriptor A (replace)
-bufferDescA.size = 64 * sizeof(float);
-bufferDescA.usage = WGPUBufferUsage_CopySrc | WGPUBufferUsage_Storage;
-bufferDescA.label = toWgpuStringView("Input Buffer");
-bufferDescA.mappedAtCreation = true;
+```{lit} C++, Create buffers (replace)
+// Number of floats in the buffers
+size_t elementCount = 64;
+
+WGPUBufferDescriptor inputBufferDesc = WGPU_BUFFER_DESCRIPTOR_INIT;
+inputBufferDesc.label = toWgpuStringView("Input Buffer");
+inputBufferDesc.size = elementCount * sizeof(float);
+inputBufferDesc.usage = WGPUBufferUsage_Storage;
+inputBufferDesc.mappedAtCreation = true;
+WGPUBuffer inputBuffer = wgpuDeviceCreateBuffer(device, &inputBufferDesc);
+
+WGPUBufferDescriptor outputBufferDesc = WGPU_BUFFER_DESCRIPTOR_INIT;
+outputBufferDesc.label = toWgpuStringView("Output Buffer");
+outputBufferDesc.size = elementCount * sizeof(float);
+outputBufferDesc.usage = WGPUBufferUsage_Storage | WGPUBufferUsage_CopySrc;
+WGPUBuffer outputBuffer = wgpuDeviceCreateBuffer(device, &outputBufferDesc);
+
+WGPUBufferDescriptor stagingBufferDesc = WGPU_BUFFER_DESCRIPTOR_INIT;
+stagingBufferDesc.label = toWgpuStringView("Staging Buffer");
+stagingBufferDesc.size = elementCount * sizeof(float);
+stagingBufferDesc.usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_MapRead;
+WGPUBuffer stagingBuffer = wgpuDeviceCreateBuffer(device, &stagingBufferDesc);
+
+{{Initialize input buffer data}}
 ```
 
-Problem: usages `WGPUBufferUsage_Storage` and `WGPUBufferUsage_MapRead` are not compatible. We need to create an extra buffer dedicated to retrieving data. We commonly call it **staging buffer**, or **map buffer**.
+````{note}
+This replaces the buffers `bufferA` and `bufferB` used previously.
+````
 
-Since we already have the mechanism in place to read back from buffer B, let us **use buffer B as our staging buffer**, and create a new **buffer C** that is the **output of our shader**:
+And we release the buffers at the end of the program:
 
-```{lit} C++, Fill in buffer descriptor C
-// The buffer used as output of the shader
-bufferDescC.size = 64 * sizeof(float);
-bufferDescC.usage = WGPUBufferUsage_CopySrc | WGPUBufferUsage_Storage;
-bufferDescC.label = toWgpuStringView("Output Buffer");
+```{lit} C++, Release buffers (replace)
+wgpuBufferRelease(inputBuffer);
+wgpuBufferRelease(outputBuffer);
+wgpuBufferRelease(stagingBuffer);
 ```
 
-```{lit} C++, Fill in buffer descriptor B (replace)
-// The buffer used as staging buffer to map the output back to the CPU
-bufferDescB.size = 64 * sizeof(float);
-bufferDescB.usage = WGPUBufferUsage_MapRead | WGPUBufferUsage_CopyDst;
-bufferDescB.label = toWgpuStringView("Staging Buffer");
+When initializing the **input data**, we take care to **cast the mapped buffer as `float*`**:
+
+```{lit} C++, Initialize input buffer data
+float* inputBufferData = static_cast<float*>(
+	wgpuBufferGetMappedRange(inputBuffer, 0, WGPU_WHOLE_MAP_SIZE)
+);
+// Write 0.0, 0.1, 0.2, 0.3, ... in inputBuffer
+for (size_t i = 0 ; i < elementCount ; ++i) {
+	inputBufferData[i] = static_cast<float>(i) * 0.1f;
+}
+wgpuBufferUnmap(inputBuffer);
 ```
 
-```{lit} C++, Create things (append)
-WGPUBufferDescriptor bufferDescC = WGPU_BUFFER_DESCRIPTOR_INIT;
-{{Fill in buffer descriptor C}}
-WGPUBuffer bufferC = wgpuDeviceCreateBuffer(device, &bufferDescC);
+And finally we change the way we **display the result** by interpreting bits as float values:
+
+```{lit} C++, Map and display buffer B in main (replace)
+fetchBufferDataSync(instance, stagingBuffer, [&](const void* data) {
+	const float* floatData = static_cast<const float*>(data);	
+	std::cout << "Result: [";
+	for (size_t i = 0 ; i < elementCount ; ++i) {
+		if (i > 0) std::cout << ", ";
+		std::cout << floatData[i];
+	}
+	std::cout << "]" << std::endl;
+});
 ```
 
-```{lit} C++, Release things (prepend)
-wgpuBufferRelease(bufferC);
+### Bind group
+
+We have our buffers `inputBuffer` and `outputBuffer` as **C++ variable**, and we now want to **bind** them to the similarly named **WGSL variables** in our compute pipeline.
+
+```{important}
+The **variable names** have **no impact** on binding. They can have very different names on the C++ side and the WGSL side, and using similar names will not automate anything.
+```
+
+We specify the variable assignment through **bind group entries**, which we use below to create a bind group object. This should be self-explanatory:
+
+```{lit} C++, Define bind group entries
+std::vector<WGPUBindGroupEntry> bindGroupEntries(2, WGPU_BIND_GROUP_ENTRY_INIT);
+bindGroupEntries[0].binding = 0;
+bindGroupEntries[0].buffer = inputBuffer;
+bindGroupEntries[1].binding = 1;
+bindGroupEntries[1].buffer = outputBuffer;
 ```
 
 ```{note}
-I know, it is **a bit misleading** to go from **buffer A** to **buffer C** then **buffer B**. But again, this is to **avoid rewriting too much code** from the previous chapter.
+Here again, we use an `INIT` macro to **initialize the entries**, even if they are contained in a `std::vector`.
 ```
 
-```{lit} C++, Write initial value in Buffer A (replace)
-float* bufferDataA = static_cast<float*>(
-	wgpuBufferGetMappedRange(bufferA, 0, WGPU_WHOLE_MAP_SIZE)
-);
-// Write 0.0, 0.1, 0.2, 0.3, ... in bufferA
-for (size_t i = 0 ; i < 64 ; ++i) {
-	bufferDataA[i] = static_cast<float>(i) * 0.1f;
-}
-wgpuBufferUnmap(bufferA);
-```
+We now use these entries in the **bind group descriptor**. **Array values** in descriptors are always specified through the combination of **a pointer** (`entries`) and **a number of elements** (`entryCount`), which directly map to the `data()` and `size()` methods of a `std::vector` or `std::array`:
 
-And finally we change the way we display the result by interpreting bits as float values:
-
-```{lit} C++, Display buffer B (replace)
-const float* bufferDataB = static_cast<const float*>(
-	wgpuBufferGetConstMappedRange(bufferB, 0, WGPU_WHOLE_MAP_SIZE)
-);
-std::cout << "Result: [";
-for (size_t i = 0 ; i < 64 ; ++i) {
-	if (i > 0) std::cout << ", ";
-	std::cout << bufferDataB[i];
-}
-std::cout << "]" << std::endl;
-wgpuBufferUnmap(bufferB);
-```
-
-```{lit} C++, Create things (append)
-std::vector<WGPUBindGroupEntry> bindGroupEntries(2, WGPU_BIND_GROUP_ENTRY_INIT);
-bindGroupEntries[0].binding = 0;
-bindGroupEntries[0].buffer = bufferA;
-bindGroupEntries[1].binding = 1;
-bindGroupEntries[1].buffer = bufferC;
+```{lit} C++, Create bind group
+{{Define bind group entries}}
 
 WGPUBindGroupDescriptor bindGroupDesc = WGPU_BIND_GROUP_DESCRIPTOR_INIT;
 bindGroupDesc.entries = bindGroupEntries.data();
 bindGroupDesc.entryCount = bindGroupEntries.size();
-bindGroupDesc.layout = wgpuComputePipelineGetBindGroupLayout(pipeline, 0);
+{{Continue describing bind group}}
+
 WGPUBindGroup bindGroup = wgpuDeviceCreateBindGroup(device, &bindGroupDesc);
-wgpuBindGroupLayoutRelease(bindGroupDesc.layout);
 ```
 
-```{lit} C++, Release things (prepend)
-wgpuBindGroupRelease(bindGroup);
+There is one extra **important** thing to specify when we build a bind group, namely its **bind group layout**, which makes sure that the entries are compatible with the pipeline. We can retrieve the layout expected by the pipeline using `wgpuComputePipelineGetBindGroupLayout`:
+
+```{lit} C++, Continue describing bind group
+bindGroupDesc.layout = wgpuComputePipelineGetBindGroupLayout(pipeline, 0);
 ```
+
+````{caution}
+The layout is a **WebGPU object**, and getting it from the pipeline increases its internal reference count. We must thus **explicitly release** it once we no longer use it, namely right after `bindGroup` was created:
+
+```{lit} C++, Create bind group (append)
+wgpuBindGroupLayoutRelease(bindGroupDesc.layout);
+```
+````
+
+```{note}
+In this first shader example, we rely on the **automatic layout generation**. Since **we did not explicitly specify a layout** in the **pipeline descriptor**, WebGPU generated one for us. We will see later how to specify it ourselves to increase flexibility.
+```
+
+We now have our pipeline, our buffers and the bind group to connect them. We are **finally ready to invoke our shader**!
 
 Invocation
 ----------
 
+Like all GPU-side operation, running a shader is **invoked through the command queue**.
+
+```{note}
+You can remove the commands that we had so far between the creation of the `encoder` and its submission into the command queue.
+```
+
+If you look in `webgpu.h` at the methods of the encoder (the procedures starting with `wgpuCommandEncoder`), most of them are related to copying buffers and textures around. Except **two special ones**: `wgpuCommandEncoderBeginComputePass` and `wgpuCommandEncoderBeginRenderPass`. These return **specialized encoder objects**, namely `WGPUComputePassEncoder` and `WGPURenderPassEncoder`, that give access to commands dedicated to respectively **computing** and **3D rendering**.
+
+In our case, we use a **compute pass**. We **begin** the pass, encode compute-specific commands, then **end** the pass. A soon as the pass ended, we can **release** it:
+
 ```{lit} C++, Add commands (replace)
 WGPUComputePassEncoder computePass = wgpuCommandEncoderBeginComputePass(encoder, nullptr);
-wgpuComputePassEncoderSetPipeline(computePass, pipeline);
-wgpuComputePassEncoderSetBindGroup(computePass, 0, bindGroup, 0, nullptr);
-wgpuComputePassEncoderDispatchWorkgroups(computePass, 2, 1, 1);
+{{Add commands to compute pass}}
 wgpuComputePassEncoderEnd(computePass);
 wgpuComputePassEncoderRelease(computePass);
+```
 
+```{note}
+The "end" procedure does not automatically release the pass object, because higher level WebGPU wrappers usually need to handle the release process in a specific way.
+```
+
+**WIP**
+
+```{lit} C++, Add commands to compute pass
+wgpuComputePassEncoderSetPipeline(computePass, pipeline);
+wgpuComputePassEncoderSetBindGroup(computePass, 0, bindGroup, 0, nullptr);
+```
+
+```{lit} C++, Add commands to compute pass (append)
+wgpuComputePassEncoderDispatchWorkgroups(computePass, 2, 1, 1);
+```
+
+```{lit} C++, Add commands (append)
 // We copy the whole output buffer B into the staging buffer
-wgpuCommandEncoderCopyBufferToBuffer(encoder, bufferC, 0, bufferB, 0, bufferDescB.size);
+wgpuCommandEncoderCopyBufferToBuffer(encoder, outputBuffer, 0, stagingBuffer, 0, stagingBufferDesc.size);
 ```
 
 ```

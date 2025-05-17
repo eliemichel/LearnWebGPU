@@ -137,6 +137,10 @@ We create buffers **before the command encoding test** from previous chapter:
 
 ```{lit} C++, Create things (append)
 // Before encoding commands:
+{{Create buffers}}
+```
+
+```{lit} C++, Create buffers
 {{Create buffer A}}
 {{Create buffer B}}
 {{Write initial value in Buffer A}}
@@ -213,9 +217,14 @@ If you ever played with manual allocation using `malloc` or `new`, you must know
 
 In the case of `WGPUBuffer`, its associated memory in VRAM is freed as soon as all references to it are released. We thus simply release our buffers:
 
-```{lit} C++, Release things (prepend)
+```{lit} C++, Release buffers
+// At the end of the program:
 wgpuBufferRelease(bufferA);
 wgpuBufferRelease(bufferB);
+```
+
+```{lit} C++, Release things (prepend, hidden)
+{{Release buffers}}
 ```
 
 Sometimes, we want to **force freeing VRAM memory** even if there may **remain references** to our buffers somewhere else in our program (for instance through a **bind group**, an object that we will discover later). For this, we may call `wgpuBufferDestroy(buffer)`. Other references to the buffer are then no longer usable.
@@ -522,7 +531,7 @@ In our case, we use it in the main function to **display the content of buffer B
 
 ```{lit} C++, Map and display buffer B in main (replace)
 // In main()
-fetchBufferDataSync(instance, bufferB, [&](const void*data){
+fetchBufferDataSync(instance, bufferB, [&](const void* data) {
 	auto* bufferDataB = static_cast<const char*>(data);
 	std::cout << "Buffer B: [";
 	for (size_t i = 0 ; i < bufferDescB.size ; ++i) {
