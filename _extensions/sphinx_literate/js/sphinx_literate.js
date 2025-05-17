@@ -14,8 +14,8 @@ class Options {
 		this.changedEvent = new Event("litOptionsChanged");
 
 		this.defaultOptions = {
-			showBlockName: false,
-			showReferenceDetails: false,
+			showBlockName: true,
+			showReferenceDetails: true,
 			showReferenceLinks: false,
 			showHiddenLinks: false,
 			showHiddenBlocks: false,

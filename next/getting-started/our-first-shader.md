@@ -36,7 +36,7 @@ In this chapter, we **start with a compute pipeline** because it is **much simpl
 Everything we see for this compute pipeline will be **useful once we get to render pipelines**!
 ```
 
-In the remainder of this chapter, we introduce 3 key objects related to pipelines:
+In the remainder of this chapter, we introduce **3 key objects** related to pipelines:
 
 - The `WGPUComputePipeline` object, that represents **a compute pipeline** as a whole.
 - The `WGPUShaderModule` object, which represents a **GPU program**, written in WGSL, that we can use for the programmable stages of a pipeline.
@@ -47,7 +47,7 @@ We also introduce `WGPUPipelineLayout` and `WGPUBindGroupLayout` objects, which 
 Pipeline creation
 -----------------
 
-You may have guessed that creating a pipeline goes through the device, with a descriptor and a "create" function:
+You may have guessed that creating a pipeline goes through the device, with a **descriptor** and a **create** function:
 
 ```{lit} C++, Create compute pipeline
 WGPUComputePipelineDescriptor pipelineDesc = WGPU_COMPUTE_PIPELINE_DESCRIPTOR_INIT;
@@ -198,11 +198,11 @@ var<storage,read> inputBuffer: array<f32>;
 var<storage,read_write> outputBuffer: array<f32>;
 ```
 
-Three new things here, namely the group/binding attributes, the arguments after the `var` keyword and the `array` type.
+**Three new things** here, namely the group/binding attributes, the arguments after the `var` keyword and the `array` type.
 
 #### Binding attributes
 
-The pair group/binding is how we will **identify the resource on the C++ side**, when saying things like "*bind that `WGPUBuffer` object to the binding #0 of the compute pipeline*".
+The pair group/binding given by `@group(0) @binding(0)` is how we will **identify the resource on the C++ side**, when saying things like "*bind that `WGPUBuffer` object to the binding #0 of the compute pipeline*".
 
 ````{note}
 The **order** in which functions and global variables are declared **does not matter to the compiler**. It is however recommended to write binding declarations at the beginning for **better readability**:
@@ -218,7 +218,11 @@ The **order** in which functions and global variables are declared **does not ma
 
 #### Memory space and access mode
 
-The `inputBuffer` and `outputBuffer` variables are declared with the `var` keyword because they correspond to **an actual memory location** (as opposed to `let`-declared values), and here we specify **options** between the **angle brackets** (`<` and `>`) that follow.
+The `inputBuffer` and `outputBuffer` variables are declared with the `var` keyword because they correspond to **an actual memory location** (as opposed to `let`-declared values), and here we specify **options** between the **angle brackets** (`<` and `>`) that follow:
+
+```rust
+var<storage,read> inputBuffer
+```
 
 The `storage` option indicates that the variables `inputBuffer` and `outputBuffer` are **storage buffers**, as opposed to uniform buffers which we will see later on. Remember how we specified a **usage** when creating a buffer? This is again related to the fact that the best memory space for some data depends on how we use this data.
 
@@ -232,7 +236,7 @@ We use here a **runtime-sized array**, where the size will be determined from th
 
 ### Loading the module
 
-Okey, our shader code is ready! All we need now is to load it on the C++ side, into a `WGPUShaderModule` object.
+Okey, **our shader code is ready**! All we need now is to load it on the C++ side, into a `WGPUShaderModule` object.
 
 For more flexibility, the shader code should be loaded from a file, but for now **we simply write it in a multi-line string literal** at the beginning of our `main.cpp`:
 
@@ -282,8 +286,9 @@ struct WGPUShaderModuleDescriptor {
 
 So, **where do we set the source code**? We see here our first case of **extension**, which uses the `nextInChain` field that many structures contain.
 
-There is a `WGPUShaderSourceWGSL` struct, which is a **chained structure** that can be chained to a `WGPUShaderModuleDescriptor` to provide WGSL source code. The **first field** of a chained structure is always `WGPUChainedStruct chain` and is what `nextInChain` can point to:
+**TODO** *figure with chained structure*
 
+There exists a `WGPUShaderSourceWGSL` struct, which is a **chained structure** that can be chained to a `WGPUShaderModuleDescriptor` to provide WGSL source code. The **first field** of a chained structure is always `WGPUChainedStruct chain` and is what `nextInChain` can point to:
 
 ```{lit} C++, Describe shader module
 // We create a chained descriptor dedicated to the WGSL source:
@@ -315,7 +320,7 @@ Optionally, it is also advised to **name our module**, to better track error mes
 moduleDesc.label = toWgpuStringView("Our first compute shader");
 ```
 
-```{note}
+```{tip}
 Once we will load shader module from file, it is convenient to **label the module after the name of the file** it was loaded from.
 ```
 
@@ -352,6 +357,8 @@ What we see now is:
 
 - How to **bind buffers** to the compute pipeline.
 - How we run the pipeline, i.e., how we **dispatch** compute jobs.
+
+### Buffers
 
 ### TODO
 

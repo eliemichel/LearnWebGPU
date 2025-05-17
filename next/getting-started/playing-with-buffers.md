@@ -435,6 +435,10 @@ if (context.mappingIsSuccessful) {
 We add the mapping **at the end of the main body**, right before releasing things. Note that this **replaces** the "Wait for completion" of the previous chapter, since the mapping will always happen **after the previously submitted commands**.
 
 ```{lit} C++, Main body (append, hidden)
+{{Map and display buffer B in main}}
+```
+
+```{lit} C++, Map and display buffer B in main (hidden)
 {{Map and display buffer B}}
 ```
 
@@ -483,6 +487,83 @@ Buffer B: [16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 3
 ```
 
 Like we expected, the values from index 16 to 47 (= offset 16 + size 32 - 1) were copied from buffer A to buffer B, **congrats**!
+
+Utility function
+----------------
+
+As we just saw, WebGPU provides a **very flexible API** to retrieve buffer data, but this comes at the cost of **some verbosity**. Since fetching data back from GPU buffers to CPU code is something that we will **commonly need**, I suggest we introduce a **dedicated utility function**.
+
+We call this function `fetchBufferDataSync`, with the ending "Sync" meaning that this function **blocks the execution of our program** until it finishes its job (as opposed to "Async" functions).
+
+```{note}
+Such **synchronous functions** are convenient for debugging but can lead to performance limitations, which is why I suggest we **explicitly** write "Sync" in its name, to remember about it.
+```
+
+We declare this utility function in `webgpu-utils.h`, and take **3 arguments**:
+
+```{lit} C++, file: webgpu-utils.h (append)
+#include <functional>
+
+/**
+ * Fetch data from a GPU buffer back to the CPU.
+ * This function blocks until the data is available on CPU, then calls the
+ * `processBufferData` callback, and finally unmap the buffer.
+ */
+void fetchBufferDataSync(
+	WGPUInstance instance,
+	WGPUBuffer buffer,
+	std::function<void(const void*)> processBufferData
+);
+```
+
+The `buffer` is obviously the GPU resource that we want to fetch data from. The `instance` is needed to **wait for completion**, and the `processBufferData` is a C++ **callback** that `fetchBufferDataSync` calls when data is ready. This makes the function **flexible** by letting the caller tell what to do with the mapped data.
+
+In our case, we use it in the main function to **display the content of buffer B**, which is now as **simple** as calling `fetchBufferDataSync`:
+
+```{lit} C++, Map and display buffer B in main (replace)
+// In main()
+fetchBufferDataSync(instance, bufferB, [&](const void*data){
+	auto* bufferDataB = static_cast<const char*>(data);
+	std::cout << "Buffer B: [";
+	for (size_t i = 0 ; i < bufferDescB.size ; ++i) {
+		if (i > 0) std::cout << ", ";
+		std::cout << static_cast<int>(bufferDataB[i]); // cast to display as int rather than char
+	}
+	std::cout << "]" << std::endl;
+});
+```
+
+```{note}
+In order to access `bufferDescB` from inside the callback, we need to **capture** it. With `[&]`, we capture (by reference) everything that is in the local scope where `fetchBufferDataSync` is called.
+
+This is something we **cannot** do when manipulating the raw C callbacks expected by the WebGPU API. Capturing functions are a mechanism that C++ provides to automate what C callbacks do with "userdata" pointers.
+```
+
+As for the implementation of `fetchBufferDataSync` in `webgpu-utils.cpp`, we simply copy what we wrote in the previous [*Reading back*](#reading-back) section above:
+
+```{lit} C++, file: webgpu-utils.cpp (append)
+void fetchBufferDataSync(
+	WGPUInstance instance,
+	WGPUBuffer bufferB,
+	std::function<void(const void*)> processBufferData
+) {
+	// We copy here what used to be in main():
+	{{Map and display buffer B}}
+}
+```
+
+```{caution}
+In order to "just copy-paste" the body of this function, the second argument of `fetchBufferDataSync` is called `bufferB` instead of `buffer`. You may alternatively rename all occurrences of `bufferB` into `buffer` to make things cleaner.
+```
+
+There is **one thing to change** though, which is the moment we displayed the mapped buffer. Instead, for this utility function, we just call the `processBufferData` function that was provided:
+
+```{lit} C++, Display buffer B (replace)
+const void* bufferData = wgpuBufferGetConstMappedRange(bufferB, 0, WGPU_WHOLE_MAP_SIZE);
+processBufferData(bufferData);
+```
+
+You can try running your program again: it should not change anything, but we now have this convenient `fetchBufferDataSync()` in our toolbox!
 
 Conclusion
 ----------
