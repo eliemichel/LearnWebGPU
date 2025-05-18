@@ -15,4 +15,5 @@ playing-with-buffers
 dealing-with-errors
 our-first-shader
 opening-a-window
+first-color
 ```
