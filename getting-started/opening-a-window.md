@@ -73,6 +73,8 @@ cmake -B build -DGLFW_BUILD_WAYLAND=OFF
 Basic usage
 -----------
 
+In this section we get familiar with GLFW, without any WebGPU-specific consideration.
+
 ### Initialization
 
 First of all, any call to the GLFW library must be between its initialization and termination:
