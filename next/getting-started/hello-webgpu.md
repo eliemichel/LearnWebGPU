@@ -4,7 +4,7 @@ Hello WebGPU <span class="bullet">🟢</span>
 ```{lit-setup}
 :tangle-root: 001 - Hello WebGPU - Next
 :parent: 000 - Project setup - Next
-:fetch-files: ../../data/webgpu-distribution-v0.3.0-alpha.zip
+:fetch-files: ../../data/webgpu-distribution-v0.3.0-beta.zip
 ```
 
 *Resulting code:* [`step001-next`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step001-next)
