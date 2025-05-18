@@ -23,14 +23,14 @@ A *Render Hardware Interface* (RHI) like WebGPU is **not directly provided by th
 Installing WebGPU
 -----------------
 
-There exists mostly two implementations of the WebGPU native header:
+There exists mostly two cross-platform implementations of the WebGPU native header:
 
  - [wgpu-native](https://github.com/gfx-rs/wgpu-native), that is based on the Rust library [`wgpu`](https://github.com/gfx-rs/wgpu), which not only fuels Firefox but also a large portion of Rust graphics applications.
  - Google's [Dawn](https://dawn.googlesource.com/dawn), the implementation of WebGPU used by Chromium and its derivatives (Google Chrome, MS Edge, etc.).
 
 ```{figure} /images/different-backend.png
 :align: center
-There are (at least) two implementations of WebGPU, developed for the two main web engines.
+There are (at least) two implementations of WebGPU, developed for the main web engines.
 ```
 
 ```{note}

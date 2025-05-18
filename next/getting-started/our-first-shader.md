@@ -4,7 +4,6 @@ Our first shader <span class="bullet">🟠</span>
 ```{lit-setup}
 :tangle-root: 019 - Our first shader - Next
 :parent: 017 - Playing with buffers - Next
-:debug:
 ```
 
 *Resulting code:* [`step019-next`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step019-next)
@@ -66,13 +65,6 @@ The compute pipeline has **a single stage**, which is configured through `pipeli
 pipelineDesc.label = toWgpuStringView("Our simple pipeline");
 pipelineDesc.compute.module = shaderModule;
 pipelineDesc.compute.entryPoint = toWgpuStringView("computeStuff");
-```
-
-We still need to define this `shaderModule` object, so the order in which we must create objects is the following:
-
-```{lit} C++, TODO
-{{Create shader module}}
-{{Create compute pipeline}}
 ```
 
 Shader module
@@ -467,6 +459,10 @@ bindGroupDesc.entryCount = bindGroupEntries.size();
 WGPUBindGroup bindGroup = wgpuDeviceCreateBindGroup(device, &bindGroupDesc);
 ```
 
+```{lit} C++, Create things (append, hidden)
+{{Create bind group}}
+```
+
 There is one extra **important** thing to specify when we build a bind group, namely its **bind group layout**, which makes sure that the entries are compatible with the pipeline. We can retrieve the layout expected by the pipeline using `wgpuComputePipelineGetBindGroupLayout`:
 
 ```{lit} C++, Continue describing bind group
@@ -511,21 +507,48 @@ wgpuComputePassEncoderRelease(computePass);
 The "end" procedure does not automatically release the pass object, because higher level WebGPU wrappers usually need to handle the release process in a specific way.
 ```
 
-**WIP**
+We first need to tell our compute pass **which compute pipeline** to use using its `setPipeline` method, and we also specify our **bind group** with `setBindGroup`:
 
 ```{lit} C++, Add commands to compute pass
 wgpuComputePassEncoderSetPipeline(computePass, pipeline);
 wgpuComputePassEncoderSetBindGroup(computePass, 0, bindGroup, 0, nullptr);
 ```
 
-```{lit} C++, Add commands to compute pass (append)
-wgpuComputePassEncoderDispatchWorkgroups(computePass, 2, 1, 1);
+```{note}
+As you can see, the same pipeline can easily run on different bind groups.
 ```
 
+We can now instruct the GPU to run our pipeline by **dispatching a workgroups**. If you remember our discussion from the [*Concurrent threads*](#concurrent-threads) section above, a workgroup corresponds to **multiple threads** ($32 \times 1 \times 1$ in our case) and the number of workgroups is given by 3 values $x \times y \times z$. Since we want **one thread per element** in the buffer, we need to divide:
+
+```{lit} C++, Add commands to compute pass (append)
+uint32_t workgroupSizeX = 32; // the value specified in @workgroup_size(...)
+uint32_t workgroupCountX = divideAndCeil((uint32_t)elementCount, workgroupSizeX);
+wgpuComputePassEncoderDispatchWorkgroups(computePass, workgroupCountX, 1, 1);
+```
+
+The `divideAndCeil` function divides its arguments and ceils the result to the next integer value, to make sure that we have **at least** `elementCount` threads. We can define it as follows:
+
+```{lit} C++, file: webgpu-utils.cpp (append)
+uint32_t divideAndCeil(uint32_t p, uint32_t q) {
+	return (p + q - 1) / q;
+}
+```
+
+```{lit} C++, file: webgpu-utils.h (append, hidden)
+/**
+ * Divides p / q and ceil up to the next integer value
+ */
+uint32_t divideAndCeil(uint32_t p, uint32_t q);
+```
+
+Our pipeline finally runs! But remember that **we do not directly map the output buffer** back on the CPU, but rather a **staging buffer**. We must then **copy** our result to the staging buffer **after the end of the compute pass**:
+
 ```{lit} C++, Add commands (append)
-// We copy the whole output buffer B into the staging buffer
+// After the end of the compute pass, we copy the whole output buffer into the staging buffer
 wgpuCommandEncoderCopyBufferToBuffer(encoder, outputBuffer, 0, stagingBuffer, 0, stagingBufferDesc.size);
 ```
+
+And here we are, the result of our first shader is not so impressive, but we can congratulate ourselves!
 
 ```
 Result: [0, 0.2, 0.4, 0.6, 0.8, 1, 1.2, 1.4, 1.6, 1.8, 2, 2.2, 2.4, 2.6, 2.8, 3,
@@ -536,5 +559,7 @@ Result: [0, 0.2, 0.4, 0.6, 0.8, 1, 1.2, 1.4, 1.6, 1.8, 2, 2.2, 2.4, 2.6, 2.8, 3,
 
 Conclusion
 ----------
+
+We learned here important concepts, including the **compute shader grid**, the **WGSL** language and the notion of **binding**. We can actually **do a lot** already with this compute pipeline, but I am sure you would also like to see some **graphics things**, so in the next chapters we will **open a window** and fill it with our **first color**.
 
 *Resulting code:* [`step019-next`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step019-next)
