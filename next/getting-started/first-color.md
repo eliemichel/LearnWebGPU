@@ -4,6 +4,7 @@ First Color <span class="bullet">🟢</span>
 ```{lit-setup}
 :tangle-root: 025 - First Color - Next
 :parent: 020 - Opening a window - Next
+:debug:
 ```
 
 *Resulting code:* [`step025-next`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step025-next)
@@ -34,7 +35,7 @@ Remember that the GPU process runs at its own pace and that our CPU-issued comma
 ```
 
 <video autoplay loop muted inline nocontrols style="width:100%;height:auto;max-width:960px">
-    <source src="../_static/swapchain.mp4" type="video/mp4">
+    <source src="/_static/swapchain.mp4" type="video/mp4">
 </video>
 
 <p class="align-center">
@@ -164,29 +165,27 @@ Now that our surface is configured, we can ask it **at each frame** for the **ne
 {{Present the surface onto the window}}
 ```
 
-For the first step, we create a dedicated method `GetNextSurfaceViewData()` in our application class, which returns the raw `WGPUSurfaceTexture` provided by the surface as well as a **view** of this texture, which is what we will need to provide to the render pass below.
+For the first step, we create a dedicated method `GetNextSurfaceView()` in our application class, which returns a **texture view** onto which the render pass will draw.
 
-**WIP** *TODO: By the spec, it seems that returning WGPUTextureView should be enough*
-
-```{lit} C++, GetNextSurfaceViewData method
-std::pair<WGPUSurfaceTexture, WGPUTextureView> Application::GetNextSurfaceViewData() {
+```{lit} C++, GetNextSurfaceView method
+WGPUTextureView Application::GetNextSurfaceView() {
     {{Get the next surface texture}}
     {{Create surface texture view}}
     {{Release the texture}}
-    return { surfaceTexture, targetView };
+    return targetView;
 }
 ```
 
 ```{lit} C++, Application implementation (append, hidden)
-{{GetNextSurfaceViewData method}}
+{{GetNextSurfaceView method}}
 ```
 
 We then simply call this function at the beginning of the main loop and check that it returns a valid view:
 
 ```{lit} C++, Get the next target texture view
 // Get the next target texture view
-auto [ surfaceTexture, targetView ] = GetNextSurfaceViewData();
-if (!targetView) return;
+WGPUTextureView targetView = GetNextSurfaceView();
+if (!targetView) return; // no surface texture, we skip this frame
 ```
 
 ````{note}
@@ -194,7 +193,7 @@ Do not forget to **declare the method** in the `Application` class declaration. 
 
 ```{lit} C++, Private methods (insert in {{Application class}} after "bool IsRunning();")
 private:
-    std::pair<WGPUSurfaceTexture, WGPUTextureView> GetNextSurfaceViewData();
+    WGPUTextureView GetNextSurfaceView();
 ```
 ````
 
@@ -209,63 +208,58 @@ wgpuSurfaceGetCurrentTexture(surface, &surfaceTexture);
 
 We then have access to the following information:
 
- - `surfaceTexture.status` tells us whether the operation was **successful**, and if not gives some hint about why.
- - `surfaceTexture.suboptimal` may additionally note that despite the texture being successfully retrieved, the underlying surface changed and we should probably **reconfigure** it.
  - `surfaceTexture.texture` is the **texture** that we must draw on **during this frame**.
+ - `surfaceTexture.status` tells us whether the operation was **successful**, and if not gives some hint about why.
 
-We only deal with the obvious failure case and ignore the suboptimal flag for now:
+```{note}
+There are two slightly different cases of **success status**, namely `SuccessOptimal` and `SuccessSuboptimal`. The latter may arise when the window is being resized, and should be considered as "almost a failure", that we fix by reconfiguring the surface.
+```
+
+If the status is not a success we do not even create a view and just skip the frame:
 
 ```{lit} C++, Get the next surface texture (append)
-if (surfaceTexture.status != WGPUSurfaceGetCurrentTextureStatus_Success) {
-    return { surfaceTexture, nullptr };
+if (
+    surfaceTexture.status != WGPUSurfaceGetCurrentTextureStatus_SuccessOptimal &&
+    surfaceTexture.status != WGPUSurfaceGetCurrentTextureStatus_SuccessSuboptimal
+) {
+    return nullptr;
 }
 ```
 
 ### Texture view
 
-What we will need in the next section is not directly the surface texture, but a **texture view**, which may represent a sub-part of the texture, or expose it using a different format. We will come back on texture views in the [Texturing](/basic-3d-rendering/texturing/index.md) section of this guide, for now you may copy-paste the following boilerplate:
+What we will need in the next section is not directly the surface texture, but a **texture view**, which may represent a sub-part of the texture, or expose it using a different format.
+
+We will come back on texture views in the [Texturing](/basic-3d-rendering/texturing/index.md) section of this guide, for now we can leave **almost every field** of the descriptor to their **default value**:
 
 ```{lit} C++, Create surface texture view
-WGPUTextureViewDescriptor viewDescriptor;
-viewDescriptor.nextInChain = nullptr;
-viewDescriptor.label = "Surface texture view";
-viewDescriptor.format = wgpuTextureGetFormat(surfaceTexture.texture);
-viewDescriptor.dimension = WGPUTextureViewDimension_2D;
-viewDescriptor.baseMipLevel = 0;
-viewDescriptor.mipLevelCount = 1;
-viewDescriptor.baseArrayLayer = 0;
-viewDescriptor.arrayLayerCount = 1;
-viewDescriptor.aspect = WGPUTextureAspect_All;
+WGPUTextureViewDescriptor viewDescriptor = WGPU_TEXTURE_VIEW_DESCRIPTOR_INIT;
+viewDescriptor.label = toWgpuStringView("Surface texture view");
+viewDescriptor.dimension = WGPUTextureViewDimension_2D; // not to confuse with 2DArray
 WGPUTextureView targetView = wgpuTextureCreateView(surfaceTexture.texture, &viewDescriptor);
 ```
 
-Of course we must release this view once we no longer need it, just before presenting:
+As soon as we have this view, we can **release the texture**. The view indeed **holds a reference** to its parent texture, so as long as the view lives, the texture does as well.
+
+```{lit} C++, Release the texture
+// We no longer need the texture, only its view,
+// so we release it at the end of GetNextSurfaceViewData
+wgpuTextureRelease(surfaceTexture.texture);
+```
+
+The texture view is returned by `GetNextSurfaceViewData`, and we release it once we no longer need it, **after submitting the render pass** (which we introduce below):
 
 ```{lit} C++, Present the surface onto the window
 // At the end of the frame
 wgpuTextureViewRelease(targetView);
 ```
 
-The texture itself must only be released, and actually we can do it right after creating the texture view, as the latter will hold its own reference to the texture that keeps it from being destroyed too early:
-
-```{lit} C++, Release the texture
-#ifndef WEBGPU_BACKEND_WGPU
-    // We no longer need the texture, only its view
-    // (NB: with wgpu-native, surface textures must be release after the call to wgpuSurfacePresent)
-    wgpuTextureRelease(surfaceTexture.texture);
-#endif // WEBGPU_BACKEND_WGPU
-```
-
 ### Presenting
 
-Finally, once the texture is filled in and released, we can tell the surface to present the next texture of its swap chain (which may or may not be the texture we just drew onto, depending on the `presentMode`):
+Finally, once the texture is filled in and released, we can tell the surface to **present** the next texture of its swap chain (which may or may not be the texture we just drew onto, depending on the `presentMode`):
 
 ```{lit} C++, Present the surface onto the window (append)
 wgpuSurfacePresent(surface);
-
-#ifdef WEBGPU_BACKEND_WGPU
-    wgpuTextureRelease(surfaceTexture.texture);
-#endif
 ```
 
 ````{admonition} Building for the Web
@@ -297,14 +291,10 @@ We build a `WGPUCommandEncoder` called `encoder`, then submit it to the queue. I
 {{Finish encoding and submit}}
 ```
 
-If you look in `webgpu.h` at the methods of the encoder (the procedures starting with `wgpuCommandEncoder`), most of them are related to copying buffers and textures around. Except **two special ones**: `wgpuCommandEncoderBeginComputePass` and `wgpuCommandEncoderBeginRenderPass`. These return **specialized encoder objects**, namely `WGPUComputePassEncoder` and `WGPURenderPassEncoder`, that give access to commands dedicated to respectively **computing** and **3D rendering**.
-
-In our case, we use a **render pass**:
+In chapter [*Our first shader*](our-first-shader.md), we introduced the concept of **pass**, and played with the most simple one, namely the compute pass. This time, we play with the **render pass**, using the `wgpuCommandEncoderBeginRenderPass` function:
 
 ```{lit} C++, Encode Render Pass
-WGPURenderPassDescriptor renderPassDesc = {};
-renderPassDesc.nextInChain = nullptr;
-
+WGPURenderPassDescriptor renderPassDesc = WGPU_RENDER_PASS_DESCRIPTOR_INIT;
 {{Describe Render Pass}}
 
 WGPURenderPassEncoder renderPass = wgpuCommandEncoderBeginRenderPass(encoder, &renderPassDesc);
@@ -313,7 +303,7 @@ wgpuRenderPassEncoderEnd(renderPass);
 wgpuRenderPassEncoderRelease(renderPass);
 ```
 
-Note that we directly end the pass **without issuing** any other command. This is because the render pass has a built-in mechanism for **clearing the screen** when it begins, which we will set up through the descriptor.
+In general, we would need to set a specific **render pipeline** to run, but actually for this simple example we directly end the pass **without issuing** any other command: the render pass has a built-in mechanism for **clearing the screen** when it begins, which we will set up through the descriptor.
 
 ```{lit} C++, Use Render Pass (hidden)
 // Use the render pass here (we do nothing with the render pass for now)
@@ -326,7 +316,7 @@ A render pass leverages the 3D rendering circuits of the GPU to draw content int
 The number of attachment is variable, so the descriptor gets it through two fields: the number `colorAttachmentCount` of attachments and the address `colorAttachments` of the color attachment array. Since we **only use one** here, the address of the array is just the address of a single `WGPURenderPassColorAttachment` variable.
 
 ```{lit} C++, Describe Render Pass
-WGPURenderPassColorAttachment renderPassColorAttachment = {};
+WGPURenderPassColorAttachment renderPassColorAttachment = WGPU_RENDER_PASS_COLOR_ATTACHMENT_INIT;
 
 {{Describe the attachment}}
 
@@ -336,16 +326,10 @@ renderPassDesc.colorAttachments = &renderPassColorAttachment;
 
 The first important setting of the attachment is the **texture view** it must draw in.
 
-In our case, this is simply the `targetView` that we got from the surface, because we want to **directly draw on screen**, but in advanced pipelines it is very common to draw on **intermediate textures**, which are then fed to e.g., post-processing passes.
+In our case, this is simply the `targetView` that we got from the surface, because we want to **directly draw on screen**, but in advanced pipelines it is very common to draw on **intermediate textures**, which are then fed to post-processing passes for instance.
 
 ```{lit} C++, Describe the attachment
 renderPassColorAttachment.view = targetView;
-```
-
-There is a second target texture view called `resolveTarget`, but it is not relevant here because we do not use **multi-sampling** (more on this later).
-
-```{lit} C++, Describe the attachment (append)
-renderPassColorAttachment.resolveTarget = nullptr;
 ```
 
 The `loadOp` setting indicates the load operation to perform on the view **prior to executing** the render pass. It can be either read from the view or set to a default uniform color, namely the clear value. **When it does not matter**, use `WGPULoadOp_Clear` as it is likely more efficient.
@@ -357,29 +341,7 @@ And the `clearValue` is the value to **clear the screen** with, put anything you
 ```{lit} C++, Describe the attachment (append)
 renderPassColorAttachment.loadOp = WGPULoadOp_Clear;
 renderPassColorAttachment.storeOp = WGPUStoreOp_Store;
-renderPassColorAttachment.clearValue = WGPUColor{ 0.9, 0.1, 0.2, 1.0 };
-```
-
-There is a last member `depthSlice` to set in the attachment, that we must explicitly set to its undefined value because we do not use a depth buffer. This option is not supported by `wgpu-native` for now so we enclosed this within a `#ifdef`:
-
-```{lit} C++, Describe the attachment (append)
-#ifndef WEBGPU_BACKEND_WGPU
-renderPassColorAttachment.depthSlice = WGPU_DEPTH_SLICE_UNDEFINED;
-#endif // NOT WEBGPU_BACKEND_WGPU
-```
-
-### Misc
-
-There is also one special type of attachment, namely the **depth** and **stencil** attachment (it is a single attachment potentially containing two channels). We'll come back on this later on, for now we do not use it so we set it to null:
-
-```{lit} C++, Describe Render Pass (append)
-renderPassDesc.depthStencilAttachment = nullptr;
-```
-
-When **measuring the performance** of a render pass, it is not possible to use CPU-side timing functions, since the commands are not executed synchronously. Instead, the render pass can receive a set of timestamp queries. We do not use it in this example (see advanced chapter about [Benchmarking Time](/advanced-techniques/benchmarking/time.md) for more information).
-
-```{lit} C++, Describe Render Pass (append)
-renderPassDesc.timestampWrites = nullptr;
+renderPassColorAttachment.clearValue = WGPUColor{ 1.0, 0.8, 0.55, 1.0 };
 ```
 
 Conclusion
@@ -392,14 +354,10 @@ At this stage you should be able to get a colored window. This seems simple, but
  * The render pass draws to one or multiple **attachments**, which are texture views.
 
 
-```{figure} /images/first-color.png
+```{figure} /images/first-color/first-color.png
 :align: center
 :class: with-shadow
 Our first color!
-```
-
-```{note}
-When using Dawn, the displayed color is potentially different because the surface color format uses another color space. More on this [later](../basic-3d-rendering/input-geometry/loading-from-file.md)!
 ```
 
 We are now **ready with the basic WebGPU setup**, and can dive more deeply in the 3D rendering pipeline! The next chapter is a **bonus** that introduces a **more comfortable API** that benefits from C++ idioms.
