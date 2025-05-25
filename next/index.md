@@ -72,7 +72,7 @@ The main body of the guide misses a few extra lines, refer to the [Building for 
 `````
 
 ```{admonition}  🚧 Work in progress
-This is the "Next" version of the guide, which is not meant to be stable. Chapters are based on an alpha prerelease of [WebGPU-distribution](https://github.com/eliemichel/WebGPU-distribution), namely `v0.3.0-alpha2`. They do not always work with wgpu-native, and require to use emdawnwebgpu when building for the web.
+This is the "Next" version of the guide, which is not meant to be stable. Chapters are based on an early prerelease of [WebGPU-distribution](https://github.com/eliemichel/WebGPU-distribution), namely [`v0.3.0-beta`](https://github.com/eliemichel/WebGPU-distribution/releases/tag/v0.3.0-beta). They do not always work with wgpu-native, and require to use emdawnwebgpu when building for the web.
 ```
 
 Contents
@@ -83,5 +83,7 @@ Contents
 
 introduction
 getting-started/index
+basic-3d-rendering/index
+basic-compute/index
 appendices/index
 ```

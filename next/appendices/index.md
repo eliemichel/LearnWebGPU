@@ -9,4 +9,5 @@ Contents
 :titlesonly:
 
 futures-and-asynchronous-operations
+writing-a-zero-overhead-cpp-wrapper
 ```

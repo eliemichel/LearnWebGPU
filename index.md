@@ -79,7 +79,7 @@ This guide is still **under construction**, and **the WebGPU standard is still e
 🟠 **Work in progress**: *readable enough, but not complete.*  
 🔴 **TODO**: *we only scratched the surface.*  
 
-For a preview of the future version of this guide, you may have a look at the hidden [Next](next/index.md) section, but it is not meant to be stable.
+For a preview of the **future version** of this guide, you may have a look at the hidden [Next](next/index.md) section, but it is not meant to be stable.
 
 **NB:** When using the accompagnying code of a chapter, make sure to use **the very version** of `webgpu/` that it provides to avoid discrepancies.
 ```
