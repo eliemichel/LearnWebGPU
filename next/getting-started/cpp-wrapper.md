@@ -4,6 +4,7 @@ C++ wrapper <span class="bullet">🟠</span>
 ```{lit-setup}
 :tangle-root: 028 - C++ Wrapper - Next
 :parent: 025 - First Color - Next
+:debug:
 ```
 
 *Resulting code:* [`step028-next`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step028-next)
@@ -48,8 +49,10 @@ For now we place this in the `main.cpp`, but you could also create a dedicated `
 
 We now incrementally see the niceties that this wrapper introduces. Keep in mind that the C++ wrapper types are (almost) always **compatible with the C API**, so you can migrate your code **progressively**.
 
-Namespace
----------
+Core features
+-------------
+
+### Namespace
 
 The C interface could not make use of **namespaces**, since they only exist in C++, so you may have noticed that every single function starts with `wgpu` and every single structure starts with `WGPU`. A more C++ idiomatic way of doing this is to enclose all these functions into a **namespace**.
 
@@ -78,8 +81,7 @@ using namespace wgpu;
 Instance instance = createInstance();
 ```
 
-Objects
--------
+### Objects
 
 Beyond namespace, most functions are also **prefixed by the type of their first argument**, for instance:
 
@@ -139,8 +141,7 @@ Buffer buffer = device.createBuffer(descriptor);
 As you can see, descriptors can also be **initialized** using the generic `wgpu::Default` object instead of the long struct-specific INIT macro.
 ```
 
-Scoped enumerations
--------------------
+### Scoped enumerations
 
 Because enums are *unscoped* by default, the C API is forced to **prefix all values** that an enumeration can take with the name of the enum, leading to quite long names:
 
@@ -176,8 +177,27 @@ wgpu::RequestAdapterStatus::Success;
 The actual implementation use a little trickery so that enum names are scoped, but implicitly converted to and from the original WebGPU enum values.
 ```
 
-Capturing closures
-------------------
+### String View
+
+Instead of writing conversion functions like `toStdStringView` and `toWgpuStringView`, the wrapper defines a `wgpu::StringView` type that is able to automatically convert:
+
+```C++
+deviceDesc.defaultQueue.label = toWgpuStringView("The Default Queue");
+// [...]
+WGPUStringView message = /* ... */;
+std::cerr << "Uncaptured Error: " <<  toStdStringView(message) << std::endl;
+```
+
+becomes:
+
+```C++
+deviceDesc.defaultQueue.label = StringView("The Default Queue");
+// [...]
+StringView message = /* ... */;
+std::cerr << "Uncaptured Error: " <<  message << std::endl;
+```
+
+### Capturing closures
 
 Many asynchronous operations use callbacks. In order to provide some context to the callback's body, there are always two `void *userdata` arguments passed around. This can be simplified in C++ by using capturing closures.
 
@@ -223,6 +243,21 @@ buffer.mapAsync(buffer, MapMode::Read, 0, 16, CallbackMode::AllowProcessEvents, 
 A little difference between the C and C++ versions above is that the C version allocates the `Context` statically on the stack, while rooms for the C++ lambda gets allocated dynamically in the heap. If this bothers you, the wrapper provides an in-between that enables using the object notation but still expects you to create the callback info structure yourself.
 ```
 
+Extensions
+----------
+
+Besides the core zero-overhead features described above, the wrapper provides some utility features. When these are used, they add a bit of runtime code, but that likely corresponds to what you would manually write without using them.
+
+### Synchronous adapter and device requests
+
+As we have seen in the early chapters, it can be convenient to get a version of `Instance::requestAdapter` and `Adapter::requestDevice` that are blocking instead of asynchronous. The wrapper provides a `Instance::requestAdapterSync` and a `Adapter::requestDeviceSync` that are equivalent to the utility functions that we previously introduced.
+
+### Object pretty printing
+
+Object wrappers (Instance, Adapter, Device, etc.) provide an overload of `operator<<` so that printing them with `std::cout` does not just give a pointer address but also prefixes it with the type name, like `<wgpu::Device 0x1234567>` instead of just `0x1234567`.
+
+If you want to avoid this, just cast the object back to the raw type before printing it: `std::cout << (WGPUDevice)device < std::endl`.
+
 Conclusion
 ----------
 
@@ -231,3 +266,297 @@ From now on, I will be providing two versions of each code snippet: one that use
 Congratulations, you've made it to **the end of the "Getting Started" section**! It was not a small thing, you are now well equipped to explore and understand the various documentation about WebGPU. From here, you can decide to either move on to the [Graphics](../basic-3d-rendering/index.md) section and draw your first triangle, or go to the [Compute](../basic-compute/index.md) section and start playing with tensors.
 
 *Resulting code:* [`step028-next`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step028-next)
+
+
+```{lit} C++, Includes (replace, hidden)
+#include "webgpu-utils.h"
+
+#define WEBGPU_CPP_IMPLEMENTATION // NEW
+#include <webgpu/webgpu.hpp> // NEW
+#include <GLFW/glfw3.h>
+#include <glfw3webgpu.h>
+
+#ifdef __EMSCRIPTEN__
+#  include <emscripten.h>
+#endif
+
+#include <iostream>
+#include <thread>
+#include <chrono>
+#include <vector>
+#include <string_view>
+
+using namespace wgpu; // NEW
+```
+
+```{lit} C++, Private methods (replace, hidden)
+private:
+	TextureView GetNextSurfaceView(); // NEW
+```
+
+```{lit} C++, Application attributes (replace, hidden)
+GLFWwindow *window;
+wgpu::Instance instance; // NEW
+wgpu::Device device; // NEW
+wgpu::Queue queue; // NEW
+wgpu::Surface surface; // NEW
+```
+
+```{lit} C++, Initialize (replace, hidden)
+{{Open window and get adapter}}
+
+{{Request device}}
+
+queue = device.getQueue(); // NEW
+
+{{Surface Configuration}}
+
+// We no longer need to access the adapter
+adapter.release(); // NEW
+```
+
+```{lit} C++, Open window and get adapter (replace, hidden)
+// Open window
+glfwInit();
+glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API); // <-- extra info for glfwCreateWindow
+glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+window = glfwCreateWindow(640, 480, "Learn WebGPU", nullptr, nullptr);
+
+// Create instance ('instance' is now declared at the class level)
+instance = createInstance(); // NEW
+
+// Get adapter
+std::cout << "Requesting adapter..." << std::endl;
+{{Request adapter}}
+std::cout << "Got adapter: " << adapter << std::endl;
+```
+
+```{lit} C++, Request adapter (replace, hidden)
+{{Get the surface}}
+RequestAdapterOptions adapterOpts = Default; // NEW
+adapterOpts.compatibleSurface = surface;
+Adapter adapter = requestAdapterSync(instance, &adapterOpts); // TODO
+```
+
+```{lit} C++, Request device (replace, hidden)
+std::cout << "Requesting device..." << std::endl;
+DeviceDescriptor deviceDesc = Default; // NEW
+{{Build device descriptor}}
+device = requestDeviceSync(instance, adapter, &deviceDesc); // TODO
+std::cout << "Got device: " << device << std::endl;
+```
+
+```{lit} C++, Build device descriptor (replace, hidden)
+deviceDesc.label = StringView("My Device"); // NEW
+
+std::vector<FeatureName> features; // NEW
+{{List required features}}
+deviceDesc.requiredFeatureCount = features.size();
+deviceDesc.requiredFeatures = (WGPUFeatureName*)features.data(); // NEW
+
+// Make sure 'features' lives until the call to wgpuAdapterRequestDevice!
+Limits requiredLimits = Default; // NEW
+{{Specify required limits}}
+deviceDesc.requiredLimits = &requiredLimits;
+
+// Make sure that the 'requiredLimits' variable lives until the call to wgpuAdapterRequestDevice!
+deviceDesc.defaultQueue.label = StringView("The Default Queue"); // NEW
+
+{{Device Lost Callback}}
+
+{{Device Error Callback}}
+```
+
+```{lit} C++, Device Lost Callback (replace, hidden)
+auto onDeviceLost = []( // TODO: setter
+	WGPUDevice const * device,
+	WGPUDeviceLostReason reason,
+	struct WGPUStringView message,
+	void* /* userdata1 */,
+	void* /* userdata2 */
+) {
+	// All we do is display a message when the device is lost
+    std::cout
+    	<< "Device " << device << " was lost: reason " << reason
+    	<< " (" << StringView(message) << ")" // NEW
+    	<< std::endl;
+};
+deviceDesc.deviceLostCallbackInfo.callback = onDeviceLost;
+deviceDesc.deviceLostCallbackInfo.mode = WGPUCallbackMode_AllowProcessEvents;
+```
+
+```{lit} C++, Device Error Callback (replace, hidden)
+auto onDeviceError = []( // TODO: setter
+	WGPUDevice const * device,
+	WGPUErrorType type,
+	struct WGPUStringView message,
+	void* /* userdata1 */,
+	void* /* userdata2 */
+) {
+    std::cout
+    	<< "Uncaptured error in device " << device << ": type " << type
+    	<< " (" << StringView(message) << ")" // NEW
+    	<< std::endl;
+};
+deviceDesc.uncapturedErrorCallbackInfo.callback = onDeviceError;
+```
+
+```{lit} C++, Surface Configuration (replace, hidden)
+SurfaceConfiguration config = Default; // NEW
+{{Describe the surface configuration}}
+surface.configure(config); // NEW
+```
+
+```{lit} C++, Describe the surface configuration (replace, hidden)
+// Configuration of the textures created for the underlying swap chain
+config.width = 640;
+config.height = 480;
+config.device = device;
+{{Describe surface format}}
+config.presentMode = PresentMode::Fifo; // NEW
+config.alphaMode = CompositeAlphaMode::Auto; // NEW
+```
+
+```{lit} C++, Describe surface format (replace, hidden)
+SurfaceCapabilities capabilities = Default; // NEW
+
+// We get the capabilities for a pair of (surface, adapter).
+// If it works, this populates the `capabilities` structure
+Status status = surface.getCapabilities(adapter, &capabilities); // NEW
+if (status != Status::Success) { // NEW
+    return false;
+}
+
+// From the capabilities, we get the preferred format: it is always the first one!
+// (NB: There is always at least 1 format if the GetCapabilities was successful)
+config.format = capabilities.formats[0];
+
+// We no longer need to access the capabilities, so we release their memory.
+capabilities.freeMembers(); // NEW
+```
+
+```{lit} C++, Terminate (replace, hidden)
+surface.unconfigure(); // NEW
+queue.release(); // NEW
+{{Destroy surface}}
+device.release(); // NEW
+glfwDestroyWindow(window);
+glfwTerminate();
+```
+
+```{lit} C++, Destroy surface (replace, hidden)
+surface.release(); // NEW
+```
+
+```{lit} C++, Application implementation (replace, hidden)
+bool Application::Initialize() {
+	// Move the whole initialization here
+	{{Initialize}}
+	return true;
+}
+
+void Application::Terminate() {
+	// Move all the release/destroy/terminate calls here
+	{{Terminate}}
+}
+
+void Application::MainLoop() {
+	glfwPollEvents();
+	instance.processEvents(); // NEW
+
+	{{Main loop content}}
+}
+
+bool Application::IsRunning() {
+	return !glfwWindowShouldClose(window);
+}
+
+{{GetNextSurfaceView method}}
+```
+
+```{lit} C++, Get the next target texture view (replace, hidden)
+// Get the next target texture view
+TextureView targetView = GetNextSurfaceView(); // NEW
+if (!targetView) return; // no surface texture, we skip this frame
+```
+
+```{lit} C++, Create Command Encoder (replace, hidden)
+CommandEncoderDescriptor encoderDesc = Default; // NEW
+encoderDesc.label = StringView("My command encoder"); // NEW
+CommandEncoder encoder = device.createCommandEncoder(encoderDesc); // NEW
+```
+
+```{lit} C++, Encode Render Pass (replace, hidden)
+RenderPassDescriptor renderPassDesc = Default; // NEW
+{{Describe Render Pass}}
+
+RenderPassEncoder renderPass = encoder.beginRenderPass(renderPassDesc); // NEW
+{{Use Render Pass}}
+renderPass.end(); // NEW
+renderPass.release(); // NEW
+```
+
+```{lit} C++, Describe Render Pass (replace, hidden)
+RenderPassColorAttachment renderPassColorAttachment = Default; // NEW
+{{Describe the attachment}}
+renderPassDesc.colorAttachmentCount = 1;
+renderPassDesc.colorAttachments = &renderPassColorAttachment;
+```
+
+```{lit} C++, Describe the attachment (replace, hidden)
+renderPassColorAttachment.view = targetView;
+renderPassColorAttachment.loadOp = LoadOp::Clear; // NEW
+renderPassColorAttachment.storeOp = StoreOp::Store; // NEW
+renderPassColorAttachment.clearValue = Color{ 1.0, 0.8, 0.55, 1.0 }; // NEW
+```
+
+```{lit} C++, Finish encoding and submit (replace, hidden)
+CommandBufferDescriptor cmdBufferDescriptor = Default; // NEW
+cmdBufferDescriptor.label = StringView("Command buffer"); // NEW
+CommandBuffer command = encoder.finish(cmdBufferDescriptor); // NEW
+encoder.release(); // NEW // release encoder after it's finished
+
+// Finally submit the command queue
+std::cout << "Submitting command..." << std::endl;
+queue.submit(command); // NEW
+command.release(); // NEW
+std::cout << "Command submitted." << std::endl;
+```
+
+```{lit} C++, Present the surface onto the window (replace, hidden)
+targetView.release(); // NEW
+#ifndef __EMSCRIPTEN__
+surface.present(); // NEW
+#endif
+```
+
+```{lit} C++, GetNextSurfaceView method (replace, hidden)
+TextureView Application::GetNextSurfaceView() { // NEW
+	{{Get the next surface texture}}
+	{{Create surface texture view}}
+	{{Release the texture}}
+	return targetView;
+}
+```
+
+```{lit} C++, Get the next surface texture (replace, hidden)
+SurfaceTexture surfaceTexture = Default; // NEW
+surface.getCurrentTexture(&surfaceTexture); // NEW
+if (
+    surfaceTexture.status != SurfaceGetCurrentTextureStatus::SuccessOptimal && // NEW
+    surfaceTexture.status != SurfaceGetCurrentTextureStatus::SuccessSuboptimal
+) {
+    return nullptr;
+}
+```
+
+```{lit} C++, Create surface texture view (replace, hidden)
+TextureViewDescriptor viewDescriptor = Default; // NEW
+viewDescriptor.label = StringView("Surface texture view"); // NEW
+viewDescriptor.dimension = TextureViewDimension::_2D; // NEW // not to confuse with 2DArray
+TextureView targetView = Texture(surfaceTexture.texture).createView(viewDescriptor); // NEW, TODO
+```
+
+```{lit} C++, Release the texture (replace, hidden)
+Texture(surfaceTexture.texture).release(); // NEW, TODO
+```

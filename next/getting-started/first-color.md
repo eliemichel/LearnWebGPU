@@ -202,7 +202,7 @@ private:
 To get the texture to draw onto, we use `wgpuSurfaceGetCurrentTexture`. The "surface texture" is not really an object but rather a **container** for the **multiple things that this function returns**. It is thus up to us to create the `WGPUSurfaceTexture` container, which we pass to the function to write into it:
 
 ```{lit} C++, Get the next surface texture
-WGPUSurfaceTexture surfaceTexture;
+WGPUSurfaceTexture surfaceTexture = WGPU_SURFACE_TEXTURE_INIT;
 wgpuSurfaceGetCurrentTexture(surface, &surfaceTexture);
 ```
 
