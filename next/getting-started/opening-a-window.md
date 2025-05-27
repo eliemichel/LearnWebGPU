@@ -357,7 +357,7 @@ And since `main.cpp` also use the `Application` class, it also includes the head
 
 #ifdef __EMSCRIPTEN__
 #  include <emscripten.h>
-#endif __EMSCRIPTEN__
+#endif // __EMSCRIPTEN__
 ```
 
 ```{lit} C++, Includes (replace, hidden)
