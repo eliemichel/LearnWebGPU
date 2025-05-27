@@ -40,12 +40,12 @@ wgpuRenderPassEncoderDraw(renderPass, 3, 1, 0, 0);
 ```
 ````
 
-What is a bit verbose is the configuration of the **render pipeline**, and the creation of **shaders**. This is done only once when initializing the application.
+What is a bit verbose is the configuration of the **render pipeline**, and the creation of **shaders**. Luckily, we already introduced a lot of key concepts in chapter [*Our first shader*](../getting-started/our-first-shader.md), the main new element here is the render pipeline
 
 Render Pipeline
 ---------------
 
-In order to achieve high performance real-time 3D rendering, the GPU processes shapes through a predefined pipeline. The pipeline itself is **always the same** (it is generally burnt into the physical architecture of the hardware), but we can **configure** it in many ways. To do so, WebGPU provides a *Render Pipeline* object.
+In order to achieve high performance real-time 3D rendering, the GPU processes shapes through a predefined pipeline. The pipeline itself is **always the same** (it is generally built into the physical architecture of the hardware), but we can **configure** it in many ways. To do so, WebGPU provides a *Render Pipeline* object.
 
 ```{note}
 If you are familiar with OpenGL, you can see WebGPU's render pipeline as a memorized value for all the stateful functions that configure the rendering pipeline.

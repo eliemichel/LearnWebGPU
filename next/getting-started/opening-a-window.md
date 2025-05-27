@@ -5,6 +5,7 @@ Opening a window <span class="bullet">🟢</span>
 :tangle-root: 020 - Opening a window - Next
 :parent: 019 - Our first shader - Next
 :fetch-files: ../../data/glfw-3.4.0-light.zip, ../../data/glfw3webgpu-v1.3.0-alpha.zip
+:debug:
 ```
 
 *Resulting code:* [`step020-next`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step020-next)
