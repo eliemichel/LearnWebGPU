@@ -78,7 +78,7 @@ As always, we build a descriptor in order to create the render pipeline:
 ```{lit} C++, Create Render Pipeline
 RenderPipelineDescriptor pipelineDesc = Default;
 {{Describe render pipeline}}
-RenderPipeline pipeline = device.createRenderPipeline(pipelineDesc);
+pipeline = device.createRenderPipeline(pipelineDesc);
 ```
 ````
 
@@ -86,9 +86,27 @@ RenderPipeline pipeline = device.createRenderPipeline(pipelineDesc);
 ```{lit} C++, Create Render Pipeline (for tangle root "Vanilla")
 WGPURenderPipelineDescriptor pipelineDesc = WGPU_RENDER_PIPELINE_DESCRIPTOR_INIT;
 {{Describe render pipeline}}
-WGPURenderPipeline pipeline = wgpuDeviceCreateRenderPipeline(device, &pipelineDesc);
+pipeline = wgpuDeviceCreateRenderPipeline(device, &pipelineDesc);
 ```
 ````
+
+`````{note}
+Since we will need to **use the pipeline later** on in `MainLoop()`, we need to define the `pipeline` variable as a **class attribute** in `Application.h`:
+
+````{tab} With webgpu.hpp
+```{lit} C++, Application attributes (append)
+private:
+	wgpu::RenderPipeline pipeline;
+```
+````
+
+````{tab} Vanilla webgpu.h
+```{lit} C++, Application attributes (append, for tangle root "Vanilla")
+private:
+	WGPURenderPipeline pipeline;
+```
+````
+`````
 
 If you have a look at its definition in `webpgu.h`, you'll see that the render pipeline descriptor has quite many fields. But don't worry, for this first triangle, we can leave a lot of them to their default values!
 
@@ -96,15 +114,125 @@ If you have a look at its definition in `webpgu.h`, you'll see that the render p
 
 ````{tab} With webgpu.hpp
 ```{lit} C++, Describe render pipeline
-// TODO
+pipelineDesc.vertex.module = shaderModule;
+pipelineDesc.vertex.entryPoint = StringView("vs_main");
+
+FragmentState fragmentState = Default;
+fragmentState.module = shaderModule;
+fragmentState.entryPoint = StringView("fs_main");
+ColorTargetState colorTarget = Default;
+colorTarget.format = config.format;
+BlendState blendState = Default;
+colorTarget.blend = &blendState;
+fragmentState.targetCount = 1;
+fragmentState.targets = &colorTarget;
+pipelineDesc.fragment = &fragmentState;
 ```
 ````
 
 ````{tab} Vanilla webgpu.h
 ```{lit} C++, Describe render pipeline (for tangle root "Vanilla")
-// TODO
+pipelineDesc.vertex.module = shaderModule;
+pipelineDesc.vertex.entryPoint = toWgpuStringView("vs_main");
+
+WGPUFragmentState fragmentState = WGPU_FRAGMENT_STATE_INIT;
+fragmentState.module = shaderModule;
+fragmentState.entryPoint = toWgpuStringView("fs_main");
+WGPUColorTargetState colorTarget = WGPU_COLOR_TARGET_STATE_INIT;
+colorTarget.format = config.format;
+WGPUBlendState blendState = WGPU_BLEND_STATE_INIT;
+colorTarget.blend = &blendState;
+fragmentState.targetCount = 1;
+fragmentState.targets = &colorTarget;
+pipelineDesc.fragment = &fragmentState;
 ```
 ````
+
+````{tab} With webgpu.hpp
+```{lit} C++, Create Shader Module
+ShaderSourceWGSL wgslDesc = Default;
+wgslDesc.code = StringView(shaderSource);
+ShaderModuleDescriptor shaderDesc = Default;
+shaderDesc.label = StringView("Shader source from Application.cpp");
+shaderDesc.nextInChain = &wgslDesc.chain;
+ShaderModule shaderModule = device.createShaderModule(shaderDesc);
+```
+````
+
+````{tab} Vanilla webgpu.h
+```{lit} C++, Create Shader Module (for tangle root "Vanilla")
+WGPUShaderSourceWGSL wgslDesc = WGPU_SHADER_SOURCE_WGSL_INIT;
+wgslDesc.code = toWgpuStringView(shaderSource);
+WGPUShaderModuleDescriptor shaderDesc = WGPU_SHADER_MODULE_DESCRIPTOR_INIT;
+shaderDesc.label = toWgpuStringView("Shader source from Application.cpp");
+shaderDesc.nextInChain = &wgslDesc.chain;
+WGPUShaderModule shaderModule = wgpuDeviceCreateShaderModule(device, &shaderDesc);
+```
+````
+
+````{tab} With webgpu.hpp
+```{lit} C++, Initialize (append)
+{{Create Shader Module}}
+{{Create Render Pipeline}}
+shaderModule.release();
+```
+````
+
+````{tab} Vanilla webgpu.h
+```{lit} C++, Initialize (append, for tangle root "Vanilla")
+{{Create Shader Module}}
+{{Create Render Pipeline}}
+wgpuShaderModuleRelease(shaderModule);
+```
+````
+
+````{tab} With webgpu.hpp
+```{lit} C++, Terminate (prepend)
+pipeline.release();
+```
+````
+
+````{tab} Vanilla webgpu.h
+```{lit} C++, Terminate (prepend, for tangle root "Vanilla")
+wgpuRenderPipelineRelease(pipeline);
+```
+````
+
+```{lit} C++, Use Render Pass (replace, also for tangle root "Vanilla")
+{{Draw a triangle}}
+```
+
+```{lit} C++, Shader source (also for tangle root "Vanilla")
+const char* shaderSource = R"(
+@vertex
+fn vs_main(@builtin(vertex_index) in_vertex_index: u32) -> @builtin(position) vec4f {
+	var p = vec2f(0.0, 0.0);
+	if (in_vertex_index == 0u) {
+		p = vec2f(-0.45, 0.5);
+	} else if (in_vertex_index == 1u) {
+		p = vec2f(0.45, 0.5);
+	} else {
+		p = vec2f(0.0, -0.5);
+	}
+	return vec4f(p, 0.0, 1.0);
+}
+
+@fragment
+fn fs_main() -> @location(0) vec4f {
+	return vec4f(0.0, 0.4, 0.7, 1.0);
+}
+)";
+```
+
+```{lit} C++, Application implementation (prepend, also for tangle root "Vanilla")
+{{Shader source}}
+```
+
+```{figure} /images/hello-triangle/first-triangle.png
+:align: center
+:class: with-shadow
+Our first triangle rendered using WebGPU.
+```
 
 Conclusion
 ----------
