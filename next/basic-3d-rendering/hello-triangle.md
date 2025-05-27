@@ -94,6 +94,18 @@ If you have a look at its definition in `webpgu.h`, you'll see that the render p
 
 **WIP**
 
+````{tab} With webgpu.hpp
+```{lit} C++, Describe render pipeline
+// TODO
+```
+````
+
+````{tab} Vanilla webgpu.h
+```{lit} C++, Describe render pipeline (for tangle root "Vanilla")
+// TODO
+```
+````
+
 Conclusion
 ----------
 

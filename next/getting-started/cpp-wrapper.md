@@ -34,17 +34,25 @@ In case you get your implementation of WebGPU from somewhere else, you can still
 In this case, **pay attention to the versions** because your `webgpu.hpp` must be exactly compatible with the `webgpu.h` provided by your implementation of WebGPU. **If you have a doubt**, the best solution is to generate the `webgpu.hpp`yourself using either the [web service](https://eliemichel.github.io/WebGPU-Cpp/) or the `generate.py` script.
 ```
 
-This wrapper is made of a **single header** file. **Exactly one** of your source files must define `WEBGPU_CPP_IMPLEMENTATION` before `#include <webgpu/webgpu.hpp>`:
+This wrapper is made of a **single header** file. **Exactly one** of your source files must define `WEBGPU_CPP_IMPLEMENTATION` before `#include <webgpu/webgpu.hpp>`. What I usually do to make sure there is no mix up with other includes is to **create a dedicated file** `implementations.cpp`.
 
-```C++
+```{lit} C++, file: implementations.cpp
 // Define this in **exactly one** file
 #define WEBGPU_CPP_IMPLEMENTATION
 // Then include this anywhere you need the wrapper
 #include <webgpu/webgpu.hpp>
+// Make sure that subsequent includes do not also define the implementation
+#undef WEBGPU_CPP_IMPLEMENTATION
 ```
 
 ```{note}
-For now we place this in the `main.cpp`, but you could also create a dedicated `implementations.cpp` and put this there (we will do this once we add other single file libraries following the same idiom).
+We will use other single file libraries that use the same idiom, which we will add to this same `implementations.cpp`.
+```
+
+Don't forget to add this new file to the `CMakeLists.txt`:
+
+```{lit} CMake, App source files (append)
+implementations.cpp
 ```
 
 We now incrementally see the niceties that this wrapper introduces. Keep in mind that the C++ wrapper types are (almost) always **compatible with the C API**, so you can migrate your code **progressively**.
@@ -268,30 +276,20 @@ Congratulations, you've made it to **the end of the "Getting Started" section**!
 *Resulting code:* [`step028-next`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step028-next)
 
 
-```{lit} C++, Includes (replace, hidden)
-#include "webgpu-utils.h"
+```{lit} C++, Includes in Application.h (replace, hidden)
+#include <webgpu/webgpu.hpp>
 
-#define WEBGPU_CPP_IMPLEMENTATION // NEW
-#include <webgpu/webgpu.hpp> // NEW
-#include <GLFW/glfw3.h>
-#include <glfw3webgpu.h>
+// Forward-declare
+struct GLFWwindow;
+```
 
-#ifdef __EMSCRIPTEN__
-#  include <emscripten.h>
-#endif
-
-#include <iostream>
-#include <thread>
-#include <chrono>
-#include <vector>
-#include <string_view>
-
+```{lit} C++, Includes in Application.cpp (append, hidden)
 using namespace wgpu; // NEW
 ```
 
 ```{lit} C++, Private methods (replace, hidden)
 private:
-	TextureView GetNextSurfaceView(); // NEW
+	wgpu::TextureView GetNextSurfaceView(); // NEW
 ```
 
 ```{lit} C++, Application attributes (replace, hidden)

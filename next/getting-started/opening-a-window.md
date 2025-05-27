@@ -5,7 +5,6 @@ Opening a window <span class="bullet">🟢</span>
 :tangle-root: 020 - Opening a window - Next
 :parent: 019 - Our first shader - Next
 :fetch-files: ../../data/glfw-3.4.0-light.zip, ../../data/glfw3webgpu-v1.3.0-alpha.zip
-:debug:
 ```
 
 *Resulting code:* [`step020-next`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step020-next)
@@ -166,7 +165,7 @@ Application class
 
 ### Refactor
 
-Let us **reorganize our project a bit** so that it is more Web-friendly and clearer about the **initialization** versus **main loop** separation.
+Let us **reorganize our project a bit** so that it is clearer about the **initialization** versus **main loop** separation and so that is more Web-friendly .
 
 We create functions `Initialize()`, `MainLoop()` and `Terminate()` to split up the three key parts of our program. We also put **all the variables** that these functions share in a common class/struct, that we call for instance `Application`. For better readability, we may have `Initialize()`, `MainLoop()` and `Terminate()` be members of this class:
 
@@ -189,16 +188,6 @@ private:
 	// We put here all the variables that are shared between init and main loop
 	{{Application attributes}}
 };
-```
-
-```{lit} C++, file: main.cpp (replace, hidden)
-{{Includes}}
-
-{{Application class}}
-
-{{Main function}}
-
-{{Application implementation}}
 ```
 
 Our main function becomes as simple as this:
@@ -314,6 +303,82 @@ WGPUQueue queue;
 The `WGPUAdapter` is an intermediate step towards getting the device, that may be released in the initialization.
 ```
 
+### New files
+
+#### Includes
+
+Although we could keep everything in the same file, it is common practice to place such an `Application` class in a **dedicated pair of files**, with declarations in `Application.h` and definitions in `Application.cpp`.
+
+```{lit} C++, file: Application.h
+#pragma once
+{{Includes in Application.h}}
+
+{{Application class}}
+```
+
+```{lit} C++, file: Application.cpp
+{{Includes in Application.cpp}}
+
+{{Application implementation}}
+```
+
+The header file include as little files as possible, namely only what is needed to define the `Application` interface. In our case, we only need what defines WebGPU objects and the `GLFWwindow *window` pointer, and since the latter is a pointer, we can get along with only **forward-declaring** the struct `GLFWwindow`:
+
+```{lit} C++, Includes in Application.h
+// In Application.h
+#include <webgpu/webgpu.h>
+
+// Forward-declare
+struct GLFWwindow;
+```
+
+```{note}
+Forward declaring means "*a struct with this name will exist by the time you link the program*", and it thus allows to manipulate **references and pointers** to this struct, as long as we **do not try to call any of their members**. The compiler indeed only need to know "*its a pointer*" to allocate its memory.
+```
+
+The implementation file `Application.cpp` may include more things, and importantly start by including the `Application.h` file:
+
+```{lit} C++, Includes in Application.cpp
+// In Application.cpp
+#include "Application.h"
+#include "webgpu-utils.h"
+
+#include <GLFW/glfw3.h>
+
+#include <iostream>
+#include <vector>
+```
+
+And since `main.cpp` also use the `Application` class, it also includes the header:
+
+```{lit} C++, Includes in main.cpp
+// In main.cpp
+#include "Application.h"
+
+#ifdef __EMSCRIPTEN__
+#  include <emscripten.h>
+#endif __EMSCRIPTEN__
+```
+
+```{lit} C++, Includes (replace, hidden)
+{{Includes in main.cpp}}
+```
+
+```{lit} C++, file: main.cpp (replace)
+{{Includes}}
+
+{{Main function}}
+```
+
+#### CMake
+
+As we have seen with `webgpu-utils.cpp`, when we add new `.cpp` files we must **add them to the list of sources** in the `CMakeLists.txt`. The `.h` files are not mandatory in this list, but it is convenient to list them so that IDEs can better integrate them:
+
+```{lit} CMake, App source files (append)
+Application.h
+Application.cpp
+```
+
 ### Emscripten
 
 As mentioned multiple times above, explicitly writing the `while` loop is not possible when building for the **Web** (with Emscripten) because it **conflicts** with the web browser's own loop. We thus write the main loop differently in such a case:
@@ -417,7 +482,8 @@ The `glfw3webgpu` library is **very simple**, it is only made of 2 files so we c
 
 You can now get the surface by simply doing:
 
-```{lit} C++, Includes (append)
+```{lit} C++, Includes in Application.cpp (append)
+// In Application.cpp
 #include <glfw3webgpu.h>
 ```
 
@@ -445,7 +511,7 @@ Conclusion
 In this chapter we set up the following:
 
  - Use the [GLFW](https://www.glfw.org/) library to handle **windowing** (as well as user input, see later).
- - Refactor our code to separate **initialization** from **main loop**.
+ - Refactor our code to separate **initialization** from **main loop** and introduce the `Application` class.
  - **Connect WebGPU** to our window using the [glfw3webgpu](https://github.com/eliemichel/glfw3webgpu) extension.
 
 We are now ready to **display something** on this window!

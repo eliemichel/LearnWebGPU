@@ -4,7 +4,6 @@ First Color <span class="bullet">🟢</span>
 ```{lit-setup}
 :tangle-root: 025 - First Color - Next
 :parent: 020 - Opening a window - Next
-:debug:
 ```
 
 *Resulting code:* [`step025-next`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step025-next)
@@ -61,7 +60,6 @@ wgpuSurfaceUnconfigure(surface);
 ```
 
 #### Texture parameters
-
 
 Lastly, the surface needs to know the device to use to create the swap chain textures:
 
