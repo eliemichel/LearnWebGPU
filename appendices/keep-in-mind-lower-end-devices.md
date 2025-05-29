@@ -55,13 +55,22 @@ When requesting the WebGPU device from the WebGPU adapter (see chapters [*The Ad
 
 My advice would then be **do as much as possible to fit within the default limits**, and whenever you'd really like to ask for more, consider **providing a fallback** for people who do not support it.
 
+For the record, let me mention some if these limits (again, full list is [in the spec](https://www.w3.org/TR/webgpu/#limit-default)):
+
+- `maxTextureDimension2D`: **8192**
+- `maxTextureDimension3D`: **2048** (and you probably don't want to reach a $2048^3$ texture, that'd be 32GB per 32bit channel)
+- `maxSampledTexturesPerShaderStage`: **16** (maybe you want a texture array if you need to go further?)
+- `maxStorageBuffersPerShaderStage`: **8** (maybe you could split your pass, or regroup some buffers?)
+- `maxBufferSize`: **256 MiB** (that's quite a lot already, make sure the device actually has that much memory left)
+- ...
+
 ### Provide a fallback path
 
 Or maybe the higher-end path should be treated as the nice-to-have exception, rather than looking at the default as the painful exception.
 
 Let me reuse this figure from chapter [*The Adapter*](../getting-started/adapter-and-device/the-adapter.md):
 
-```{figure} /images/device-creation.png
+```{themed-figure} /images/the-adapter/limit-tiers_{theme}.svg
 :align: center
 In an advanced use of the adapter/device duality, we can set up multiple limit presets and select one depending on the adapter.
 ```

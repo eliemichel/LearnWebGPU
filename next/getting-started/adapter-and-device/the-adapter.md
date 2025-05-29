@@ -33,7 +33,7 @@ The idea is to limit the "it worked on my machine" issue you could encounter whe
 
 Only the capabilities selected for this device are then allowed in the rest of the application. This way, it is **not possible to inadvertently rely on capabilities specific to your own machine**.
 
-```{figure} /images/device-creation.png
+```{themed-figure} /images/the-adapter/limit-tiers_{theme}.svg
 :align: center
 In an advanced use of the adapter/device duality, we can set up multiple limit presets and select one depending on the adapter. In our case, we have a single preset and abort early if it is not supported.
 ```
