@@ -50,13 +50,13 @@ WGPUSurfaceConfiguration config = WGPU_SURFACE_CONFIGURATION_INIT;
 
 {{Describe the surface configuration}}
 
-wgpuSurfaceConfigure(surface, &config);
+wgpuSurfaceConfigure(m_surface, &config);
 ```
 
 This must be done **at the end of the initialization**. And at the end of the program, we can *unconfigure* the surface (to release the swap chain):
 
 ```{lit} C++, Terminate (prepend)
-wgpuSurfaceUnconfigure(surface);
+wgpuSurfaceUnconfigure(m_surface);
 ```
 
 #### Texture parameters
@@ -69,7 +69,7 @@ We must first specify the parameters used to **allocate the textures** for the u
 // Configuration of the textures created for the underlying swap chain
 config.width = 640;
 config.height = 480;
-config.device = device;
+config.device = m_device;
 {{Describe surface format}}
 ```
 
@@ -89,7 +89,7 @@ WGPUSurfaceCapabilities capabilities = WGPU_SURFACE_CAPABILITIES_INIT;
 
 // We get the capabilities for a pair of (surface, adapter).
 // If it works, this populates the `capabilities` structure
-WGPUStatus status = wgpuSurfaceGetCapabilities(surface, adapter, &capabilities);
+WGPUStatus status = wgpuSurfaceGetCapabilities(m_surface, adapter, &capabilities);
 if (status != WGPUStatus_Success) {
     return false;
 }
@@ -110,7 +110,7 @@ Make sure to place the call to `wgpuAdapterRelease` **after** the call to `wgpuS
 
 {{Request device}}
 
-queue = wgpuDeviceGetQueue(device);
+m_queue = wgpuDeviceGetQueue(m_device);
 
 {{Surface Configuration}}
 
@@ -201,7 +201,7 @@ To get the texture to draw onto, we use `wgpuSurfaceGetCurrentTexture`. The "sur
 
 ```{lit} C++, Get the next surface texture
 WGPUSurfaceTexture surfaceTexture = WGPU_SURFACE_TEXTURE_INIT;
-wgpuSurfaceGetCurrentTexture(surface, &surfaceTexture);
+wgpuSurfaceGetCurrentTexture(m_surface, &surfaceTexture);
 ```
 
 We then have access to the following information:
@@ -257,7 +257,7 @@ wgpuTextureViewRelease(targetView);
 Finally, once the texture is filled in and released, we can tell the surface to **present** the next texture of its swap chain (which may or may not be the texture we just drew onto, depending on the `presentMode`):
 
 ```{lit} C++, Present the surface onto the window (append)
-wgpuSurfacePresent(surface);
+wgpuSurfacePresent(m_surface);
 ```
 
 ````{admonition} Building for the Web
@@ -269,7 +269,7 @@ As a consequence, we **must not** call `wgpuSurfacePresent()` when building with
 // At the end of the frame
 wgpuTextureViewRelease(targetView);
 #ifndef __EMSCRIPTEN__
-wgpuSurfacePresent(surface);
+wgpuSurfacePresent(m_surface);
 #endif
 ```
 ````
@@ -288,6 +288,29 @@ We build a `WGPUCommandEncoder` called `encoder`, then submit it to the queue. I
 {{Encode Render Pass}}
 {{Finish encoding and submit}}
 ```
+
+````{note}
+Do not forget to rename `device` into `m_device` and `queue` into `m_queue` when reusing the encoder related code from earlier chapters.
+
+```{lit} C++, Create Command Encoder (replace, hidden)
+WGPUCommandEncoderDescriptor encoderDesc = WGPU_COMMAND_ENCODER_DESCRIPTOR_INIT;
+encoderDesc.label = toWgpuStringView("My command encoder");
+WGPUCommandEncoder encoder = wgpuDeviceCreateCommandEncoder(m_device, &encoderDesc);
+```
+
+```{lit} C++, Finish encoding and submit (replace, hidden)
+WGPUCommandBufferDescriptor cmdBufferDescriptor = WGPU_COMMAND_BUFFER_DESCRIPTOR_INIT;
+cmdBufferDescriptor.label = toWgpuStringView("Command buffer");
+WGPUCommandBuffer command = wgpuCommandEncoderFinish(encoder, &cmdBufferDescriptor);
+wgpuCommandEncoderRelease(encoder); // release encoder after it's finished
+
+// Finally submit the command queue
+std::cout << "Submitting command..." << std::endl;
+wgpuQueueSubmit(m_queue, 1, &command);
+wgpuCommandBufferRelease(command);
+std::cout << "Command submitted." << std::endl;
+```
+````
 
 In chapter [*Our first shader*](our-first-shader.md), we introduced the concept of **pass**, and played with the most simple one, namely the compute pass. This time, we play with the **render pass**, using the `wgpuCommandEncoderBeginRenderPass` function:
 

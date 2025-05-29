@@ -78,7 +78,7 @@ As always, we build a descriptor in order to create the render pipeline:
 ```{lit} C++, Create Render Pipeline
 RenderPipelineDescriptor pipelineDesc = Default;
 {{Describe render pipeline}}
-pipeline = device.createRenderPipeline(pipelineDesc);
+m_pipeline = m_device.createRenderPipeline(pipelineDesc);
 ```
 ````
 
@@ -86,24 +86,24 @@ pipeline = device.createRenderPipeline(pipelineDesc);
 ```{lit} C++, Create Render Pipeline (for tangle root "Vanilla")
 WGPURenderPipelineDescriptor pipelineDesc = WGPU_RENDER_PIPELINE_DESCRIPTOR_INIT;
 {{Describe render pipeline}}
-pipeline = wgpuDeviceCreateRenderPipeline(device, &pipelineDesc);
+m_pipeline = wgpuDeviceCreateRenderPipeline(m_device, &pipelineDesc);
 ```
 ````
 
 `````{note}
-Since we will need to **use the pipeline later** on in `MainLoop()`, we need to define the `pipeline` variable as a **class attribute** in `Application.h`:
+Since we will need to **use the pipeline later** on in `MainLoop()`, we need to define the `m_pipeline` variable as a **class attribute** in `Application.h` (hence the `m_` prefix):
 
 ````{tab} With webgpu.hpp
 ```{lit} C++, Application attributes (append)
 private:
-	wgpu::RenderPipeline pipeline;
+	wgpu::RenderPipeline m_pipeline = nullptr;
 ```
 ````
 
 ````{tab} Vanilla webgpu.h
 ```{lit} C++, Application attributes (append, for tangle root "Vanilla")
 private:
-	WGPURenderPipeline pipeline;
+	WGPURenderPipeline m_pipeline = nullptr;
 ```
 ````
 
@@ -111,13 +111,13 @@ And we release this in the `Terminate()` function:
 
 ````{tab} With webgpu.hpp
 ```{lit} C++, Terminate (prepend)
-pipeline.release();
+m_pipeline.release();
 ```
 ````
 
 ````{tab} Vanilla webgpu.h
 ```{lit} C++, Terminate (prepend, for tangle root "Vanilla")
-wgpuRenderPipelineRelease(pipeline);
+wgpuRenderPipelineRelease(m_pipeline);
 ```
 ````
 `````
@@ -174,7 +174,7 @@ wgslDesc.code = StringView(shaderSource);
 ShaderModuleDescriptor shaderDesc = Default;
 shaderDesc.nextInChain = &wgslDesc.chain; // connect the chained extension
 shaderDesc.label = StringView("Shader source from Application.cpp");
-ShaderModule shaderModule = device.createShaderModule(shaderDesc);
+ShaderModule shaderModule = m_device.createShaderModule(shaderDesc);
 ```
 ````
 
@@ -185,7 +185,7 @@ wgslDesc.code = toWgpuStringView(shaderSource);
 WGPUShaderModuleDescriptor shaderDesc = WGPU_SHADER_MODULE_DESCRIPTOR_INIT;
 shaderDesc.nextInChain = &wgslDesc.chain; // connect the chained extension
 shaderDesc.label = toWgpuStringView("Shader source from Application.cpp");
-WGPUShaderModule shaderModule = wgpuDeviceCreateShaderModule(device, &shaderDesc);
+WGPUShaderModule shaderModule = wgpuDeviceCreateShaderModule(m_device, &shaderDesc);
 ```
 ````
 
@@ -432,7 +432,7 @@ We are almost there! All we have to do is run our render pipeline in the `MainLo
 ```{lit} C++, Use Render Pass (replace)
 // [...] Begin render pass
 // Select which render pipeline to use
-renderPass.setPipeline(pipeline);
+renderPass.setPipeline(m_pipeline);
 // Draw 1 instance of a 3-vertices shape
 renderPass.draw(3, 1, 0, 0);
 // [...] End render pass
@@ -443,7 +443,7 @@ renderPass.draw(3, 1, 0, 0);
 ```{lit} C++, Use Render Pass (replace, for tangle root "Vanilla")
 // [...] Begin render pass
 // Select which render pipeline to use
-wgpuRenderPassEncoderSetPipeline(renderPass, pipeline);
+wgpuRenderPassEncoderSetPipeline(renderPass, m_pipeline);
 // Draw 1 instance of a 3-vertices shape
 wgpuRenderPassEncoderDraw(renderPass, 3, 1, 0, 0);
 // [...] End render pass

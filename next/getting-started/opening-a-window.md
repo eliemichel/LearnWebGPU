@@ -211,7 +211,13 @@ int main() {
 }
 ```
 
-And we can now move the window and device creation code to `Initialize()` (and set aside our compute pipeline experiment for now). The only thing that currently belongs to `MainLoop()` is the polling of GLFW events and WebGPU device:
+And we can now **move the window and device creation code** to `Initialize()` (and set aside our compute pipeline experiment for now). The only thing that currently belongs to `MainLoop()` is the polling of GLFW events and WebGPU device.
+
+While moving bits of code, turn all variables that are shared acros methods into **class attributes** (which are declared in the `class Application { /* ... */ }` block).
+
+```{important}
+To **help the reader distinguish class attributes** (a.k.a. member variables) from local variables, I will always **prefix them with `m_`** (as in "member"). This is one of the many naming convention tout one may encounter.
+```
 
 ```{lit} C++, Application implementation
 bool Application::Initialize() {
@@ -227,20 +233,32 @@ void Application::Terminate() {
 
 void Application::MainLoop() {
 	glfwPollEvents();
-	wgpuInstanceProcessEvents(instance);
+	wgpuInstanceProcessEvents(m_instance);
+	//                        ^^ We add this prefix to member variables
 
 	{{Main loop content}}
 }
 
 bool Application::IsRunning() {
-	return !glfwWindowShouldClose(window);
+	return !glfwWindowShouldClose(m_window);
 }
 ```
 
-```{lit} C++, Main loop content (hidden)
+```{caution}
+So **do not** move the `emscripten_sleep(100)` line to `MainLoop()`. This line is no longer needed once we **let the browser handle** the main loop, because the browser ticks its WebGPU backend itself.
 ```
 
-```{lit} C++, Initialize (hidden)
+````{admonition} Feeling lost? Unfold this for details about what to rewrite.
+:class: foldable
+
+Here I systematically list all the changes needed for this refactoring. Do not hesitate to activate more *Literate Options* on the right-hand side of this page in order to better see how to connect these code blocks.
+
+Alternatively, you may look at the *Resulting code:* [`step020-next`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step020-next).
+
+```{lit} C++, Main loop content
+```
+
+```{lit} C++, Initialize
 {{Open window and get adapter}}
 
 {{Request device}}
@@ -250,18 +268,18 @@ wgpuAdapterRelease(adapter);
 
 // The variable 'queue' is now declared at the class level
 // (do NOT prefix this line with 'WGPUQueue' otherwise it'd shadow the class attribute)
-queue = wgpuDeviceGetQueue(device);
+m_queue = wgpuDeviceGetQueue(m_device);
 ```
 
-```{lit} C++, Open window and get adapter (hidden)
+```{lit} C++, Open window and get adapter
 // Open window
 glfwInit();
 glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API); // <-- extra info for glfwCreateWindow
 glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-window = glfwCreateWindow(640, 480, "Learn WebGPU", nullptr, nullptr);
+m_window = glfwCreateWindow(640, 480, "Learn WebGPU", nullptr, nullptr);
 
 // Create instance ('instance' is now declared at the class level)
-instance = wgpuCreateInstance(nullptr);
+m_instance = wgpuCreateInstance(nullptr);
 
 // Get adapter
 std::cout << "Requesting adapter..." << std::endl;
@@ -269,34 +287,32 @@ std::cout << "Requesting adapter..." << std::endl;
 std::cout << "Got adapter: " << adapter << std::endl;
 ```
 
-```{lit} C++, Request device (replace, hidden)
+```{lit} C++, Request device (replace)
 std::cout << "Requesting device..." << std::endl;
 WGPUDeviceDescriptor deviceDesc = WGPU_DEVICE_DESCRIPTOR_INIT;
 {{Build device descriptor}}
 // NB: 'device' is now declared at the class level
-device = requestDeviceSync(instance, adapter, &deviceDesc);
-std::cout << "Got device: " << device << std::endl;
+m_device = requestDeviceSync(m_instance, adapter, &deviceDesc);
+std::cout << "Got device: " << m_device << std::endl;
 ```
 
-```{lit} C++, Terminate (hidden)
-wgpuQueueRelease(queue);
+```{lit} C++, Terminate
+wgpuQueueRelease(m_queue);
 {{Destroy surface}}
-wgpuDeviceRelease(device);
-glfwDestroyWindow(window);
+wgpuDeviceRelease(m_device);
+glfwDestroyWindow(m_window);
 glfwTerminate();
 ```
-
-```{important}
-So **do not** move the `emscripten_sleep(100)` line to `MainLoop()`. This line is no longer needed once we **let the browser handle** the main loop, because the browser ticks its WebGPU backend itself.
-```
+````
 
 Once you have moved everything, you should end up with the following class attributes shared across init/main:
 
 ```{lit} C++, Application attributes
-GLFWwindow *window;
-WGPUInstance instance;
-WGPUDevice device;
-WGPUQueue queue;
+// All these can be initialized to nullptr
+GLFWwindow *m_window = nullptr;
+WGPUInstance m_instance = nullptr;
+WGPUDevice m_device = nullptr;
+WGPUQueue m_queue = nullptr;
 ```
 
 ```{note}
@@ -453,10 +469,10 @@ It is now time to **connect our GLFW window to WebGPU**. This happens when **req
 {{Get the surface}}
 
 WGPURequestAdapterOptions adapterOpts = WGPU_REQUEST_ADAPTER_OPTIONS_INIT;
-adapterOpts.compatibleSurface = surface;
-//                              ^^^^^^^ Use the surface here
+adapterOpts.compatibleSurface = m_surface;
+//                              ^^^^^^^^^ Use the surface here
 
-WGPUAdapter adapter = requestAdapterSync(instance, &adapterOpts);
+WGPUAdapter adapter = requestAdapterSync(m_instance, &adapterOpts);
 ```
 
 **How do we get the surface?** This depends on the OS, and GLFW does not handle this for us, for it does not know WebGPU ([yet?](https://github.com/glfw/glfw/pull/2333)). So I provide you this function, in a **little extension** to GLFW3 called [`glfw3webgpu`](https://github.com/eliemichel/glfw3webgpu).
@@ -488,21 +504,21 @@ You can now get the surface by simply doing:
 ```
 
 ```{lit} C++, Get the surface
-surface = glfwCreateWindowWGPUSurface(instance, window);
+m_surface = glfwCreateWindowWGPUSurface(m_instance, m_window);
 ```
 
 ````{important}
 The **surface** lives independently from the adapter and device, so it **must not** be released **before the end** of the program like we do for the adapter and instance. It is thus defined as a class attribute of `Application`:
 
 ```{lit} C++, Application attributes (append)
-WGPUSurface surface;
+WGPUSurface m_surface = nullptr;
 ```
 ````
 
 Also don't forget to release the surface at the end, in the `Terminate()` method:
 
 ```{lit} C++, Destroy surface
-wgpuSurfaceRelease(surface);
+wgpuSurfaceRelease(m_surface);
 ```
 
 Conclusion

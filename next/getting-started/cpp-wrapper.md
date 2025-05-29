@@ -293,11 +293,11 @@ private:
 ```
 
 ```{lit} C++, Application attributes (replace, hidden)
-GLFWwindow *window;
-wgpu::Instance instance; // NEW
-wgpu::Device device; // NEW
-wgpu::Queue queue; // NEW
-wgpu::Surface surface; // NEW
+GLFWwindow *m_window = nullptr;
+wgpu::Instance m_instance = nullptr; // NEW
+wgpu::Device m_device = nullptr; // NEW
+wgpu::Queue m_queue = nullptr; // NEW
+wgpu::Surface m_surface = nullptr; // NEW
 ```
 
 ```{lit} C++, Initialize (replace, hidden)
@@ -305,7 +305,7 @@ wgpu::Surface surface; // NEW
 
 {{Request device}}
 
-queue = device.getQueue(); // NEW
+m_queue = m_device.getQueue(); // NEW
 
 {{Surface Configuration}}
 
@@ -318,10 +318,10 @@ adapter.release(); // NEW
 glfwInit();
 glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API); // <-- extra info for glfwCreateWindow
 glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-window = glfwCreateWindow(640, 480, "Learn WebGPU", nullptr, nullptr);
+m_window = glfwCreateWindow(640, 480, "Learn WebGPU", nullptr, nullptr);
 
 // Create instance ('instance' is now declared at the class level)
-instance = createInstance(); // NEW
+m_instance = createInstance(); // NEW
 
 // Get adapter
 std::cout << "Requesting adapter..." << std::endl;
@@ -332,16 +332,16 @@ std::cout << "Got adapter: " << adapter << std::endl;
 ```{lit} C++, Request adapter (replace, hidden)
 {{Get the surface}}
 RequestAdapterOptions adapterOpts = Default; // NEW
-adapterOpts.compatibleSurface = surface;
-Adapter adapter = requestAdapterSync(instance, &adapterOpts); // TODO
+adapterOpts.compatibleSurface = m_surface;
+Adapter adapter = requestAdapterSync(m_instance, &adapterOpts); // TODO
 ```
 
 ```{lit} C++, Request device (replace, hidden)
 std::cout << "Requesting device..." << std::endl;
 DeviceDescriptor deviceDesc = Default; // NEW
 {{Build device descriptor}}
-device = requestDeviceSync(instance, adapter, &deviceDesc); // TODO
-std::cout << "Got device: " << device << std::endl;
+m_device = requestDeviceSync(m_instance, adapter, &deviceDesc); // TODO
+std::cout << "Got device: " << m_device << std::endl;
 ```
 
 ```{lit} C++, Build device descriptor (replace, hidden)
@@ -402,14 +402,14 @@ deviceDesc.uncapturedErrorCallbackInfo.callback = onDeviceError;
 ```{lit} C++, Surface Configuration (replace, hidden)
 SurfaceConfiguration config = Default; // NEW
 {{Describe the surface configuration}}
-surface.configure(config); // NEW
+m_surface.configure(config); // NEW
 ```
 
 ```{lit} C++, Describe the surface configuration (replace, hidden)
 // Configuration of the textures created for the underlying swap chain
 config.width = 640;
 config.height = 480;
-config.device = device;
+config.device = m_device;
 {{Describe surface format}}
 config.presentMode = PresentMode::Fifo; // NEW
 config.alphaMode = CompositeAlphaMode::Auto; // NEW
@@ -420,7 +420,7 @@ SurfaceCapabilities capabilities = Default; // NEW
 
 // We get the capabilities for a pair of (surface, adapter).
 // If it works, this populates the `capabilities` structure
-Status status = surface.getCapabilities(adapter, &capabilities); // NEW
+Status status = m_surface.getCapabilities(adapter, &capabilities); // NEW
 if (status != Status::Success) { // NEW
     return false;
 }
@@ -434,16 +434,16 @@ capabilities.freeMembers(); // NEW
 ```
 
 ```{lit} C++, Terminate (replace, hidden)
-surface.unconfigure(); // NEW
-queue.release(); // NEW
+m_surface.unconfigure(); // NEW
+m_queue.release(); // NEW
 {{Destroy surface}}
-device.release(); // NEW
-glfwDestroyWindow(window);
+m_device.release(); // NEW
+glfwDestroyWindow(m_window);
 glfwTerminate();
 ```
 
 ```{lit} C++, Destroy surface (replace, hidden)
-surface.release(); // NEW
+m_surface.release(); // NEW
 ```
 
 ```{lit} C++, Application implementation (replace, hidden)
@@ -460,13 +460,13 @@ void Application::Terminate() {
 
 void Application::MainLoop() {
 	glfwPollEvents();
-	instance.processEvents(); // NEW
+	m_instance.processEvents(); // NEW
 
 	{{Main loop content}}
 }
 
 bool Application::IsRunning() {
-	return !glfwWindowShouldClose(window);
+	return !glfwWindowShouldClose(m_window);
 }
 
 {{GetNextSurfaceView method}}
@@ -481,7 +481,7 @@ if (!targetView) return; // no surface texture, we skip this frame
 ```{lit} C++, Create Command Encoder (replace, hidden)
 CommandEncoderDescriptor encoderDesc = Default; // NEW
 encoderDesc.label = StringView("My command encoder"); // NEW
-CommandEncoder encoder = device.createCommandEncoder(encoderDesc); // NEW
+CommandEncoder encoder = m_device.createCommandEncoder(encoderDesc); // NEW
 ```
 
 ```{lit} C++, Encode Render Pass (replace, hidden)
@@ -516,7 +516,7 @@ encoder.release(); // NEW // release encoder after it's finished
 
 // Finally submit the command queue
 std::cout << "Submitting command..." << std::endl;
-queue.submit(command); // NEW
+m_queue.submit(command); // NEW
 command.release(); // NEW
 std::cout << "Command submitted." << std::endl;
 ```
@@ -524,7 +524,7 @@ std::cout << "Command submitted." << std::endl;
 ```{lit} C++, Present the surface onto the window (replace, hidden)
 targetView.release(); // NEW
 #ifndef __EMSCRIPTEN__
-surface.present(); // NEW
+m_surface.present(); // NEW
 #endif
 ```
 
@@ -539,7 +539,7 @@ TextureView Application::GetNextSurfaceView() { // NEW
 
 ```{lit} C++, Get the next surface texture (replace, hidden)
 SurfaceTexture surfaceTexture = Default; // NEW
-surface.getCurrentTexture(&surfaceTexture); // NEW
+m_surface.getCurrentTexture(&surfaceTexture); // NEW
 if (
     surfaceTexture.status != SurfaceGetCurrentTextureStatus::SuccessOptimal && // NEW
     surfaceTexture.status != SurfaceGetCurrentTextureStatus::SuccessSuboptimal
