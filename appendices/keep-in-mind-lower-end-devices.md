@@ -32,6 +32,10 @@ This is arguably a **"chicken and egg" problem**: the **hardware renewal rate** 
 
 If what you write is a **research prototype** rather than an application targeting end users, **this still matters**. Don't underestimate your impact: uncertainty has a cost, so if your research was only tested on top-tier hardware, engineers who eventually **transfer your research** into end products may decide not to **risk** generalizing it to a wider range of devices. In other terms, **showing that a method works on the existing park of devices "as is" is a contribution**.
 
+```{seealso}
+For an upcoming talk at SIGGRAPH 2025, we recently surveyed 888 research papers to gathered the devices that authors work with. Turns out that **87% of GPUs reported in research papers** are available to **less than 20% of the consumer-level user base** at publication time. More information here: [https://eliemichel.github.io/sustainable-gpu-usage](https://eliemichel.github.io/sustainable-gpu-usage)
+```
+
 Suggested solutions
 -------------------
 
@@ -93,5 +97,19 @@ So, discuss this at the **cafeteria**, in **meetings**, etc. Bring it to the tab
 
 Afterword
 ---------
+
+### Statistics
+
+It is **not easy** to find accurate data about **the usage rate of a GPU**, i.e., the amount of users that have it at home (or in their pocket). In fact, **the only such public database** that I am aware of is the [Steam's monthly Hardware Survey](https://store.steampowered.com/hwsurvey/). This is incredibly valuable (thanks for sharing Steam), but is however **quite biased** since Steam users are more desktop PC gamers than the average Internet user.
+
+```{note}
+🙏 If you ever find public data about the distribution of GPU models among end users, I am very interested, please share!
+```
+
+We can however find rather detailed information about the **devices capabilities** thanks to some insightful reports. Specialized hardware websites sometimes share detail reviews and databases, like the [benchmarks](https://www.notebookcheck.net/Benchmarks-Tech.123.0.html) from NotebookCheck of the [GPU Specs Database](https://www.techpowerup.com/gpu-specs) from TechPowerUp.
+
+If you are interested in a **ranking** of GPUs for the task of path tracing, [Blender Open Data](https://opendata.blender.org/) benefits from a very active community. Another very valuable source of information about the specificities of many devices is [GPUinfo](https://gpuinfo.org/), which also relies on **crowd-sourced** reports.
+
+### Feedback
 
 I am well aware that this appendix is **a bit more opinionated** than the rest of the guide. If you would like to discuss this further, I warmly invite you to join [the Discord server](https://discord.gg/2Tar4Kt564)!
