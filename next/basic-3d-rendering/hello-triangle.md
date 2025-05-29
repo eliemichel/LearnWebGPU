@@ -1,4 +1,4 @@
-Hello Triangle <span class="bullet">🟠</span>
+Hello Triangle <span class="bullet">🟢</span>
 ==============
 
 ```{lit-setup}
@@ -10,7 +10,6 @@ Hello Triangle <span class="bullet">🟠</span>
 ```{lit-setup}
 :tangle-root: 030 - Hello Triangle - Next
 :parent: 028 - C++ Wrapper - Next
-:debug:
 ```
 
 ````{tab} With webgpu.hpp
@@ -132,8 +131,8 @@ Shader module
 Since the render pipeline descriptor needs the shader module, we **create this shader module** before:
 
 ````{tab} With webgpu.hpp
-```{lit} C++, Initialize (append)
-// In Initialize()
+```{lit} C++, Initialize pipeline
+// In Initialize() or in a dedicated InitializePipeline()
 {{Create Shader Module}}
 {{Create Render Pipeline}}
 shaderModule.release();
@@ -141,8 +140,8 @@ shaderModule.release();
 ````
 
 ````{tab} Vanilla webgpu.h
-```{lit} C++, Initialize (append, for tangle root "Vanilla")
-// In Initialize()
+```{lit} C++, Initialize pipeline (for tangle root "Vanilla")
+// In Initialize() or in a dedicated InitializePipeline()
 {{Create Shader Module}}
 {{Create Render Pipeline}}
 wgpuShaderModuleRelease(shaderModule);
@@ -395,13 +394,37 @@ fragmentState.targets = &colorTarget;
 
 We need to specify 2 aspects of the color target state:
 
-**1.** The expected **texture format** of the render pass attachment. For this, we look at the `config.format` which we set up when **configuring the surface**:
+**1.** The expected **texture format** of the render pass attachment. For this, we store the `config.format` from the **surface configuration** into an attribute `m_surfaceFormat` and reuse it here:
 
-````{tab} Vanilla webgpu.h
 ```{lit} C++, Describe color target state (also for tangle root "Vanilla")
-colorTarget.format = config.format;
+colorTarget.format = m_surfaceFormat;
+```
+
+`````{admonition} Details about the surface format attribute
+:class: foldable
+
+We add the `m_surfaceFormat` class attribute:
+
+````{tab} With webgpu.hpp
+```{lit} C++, Application attributes (append)
+private: // In Application.h
+	wgpu::TextureFormat m_surfaceFormat = wgpu::TextureFormat::Undefined;
 ```
 ````
+
+````{tab} Vanilla webgpu.h
+```{lit} C++, Application attributes (append, for tangle root "Vanilla")
+private: // In Application.h
+	WGPUTextureFormat m_surfaceFormat = WGPUTextureFormat_Undefined;
+```
+````
+
+And after building the surface configuration, we store its format:
+
+```{lit} C++, Surface Configuration (append, also for tangle root "Vanilla")
+m_surfaceFormat = config.format;
+```
+`````
 
 **2.** We must enable fragment blending through the nullable `colorTarget.blend`:
 
@@ -423,6 +446,40 @@ The `WGPUBlendState` describes the **formula** that blends the **fragment color*
 
 Wrapping up
 -----------
+
+### Dedicated method
+
+We could place everything in the `Initialize()` function, but it would end up being very long. Instead, I suggest we create a dedicated `InitializePipeline()` method, which we simply call in `Initialize()`:
+
+```{lit} C++, Initialize (append, also for tangle root "Vanilla")
+// At the end of Initialize()
+if (!InitializePipeline()) return false;
+```
+
+```{note}
+I will have all initialization methods **return a boolean status** so that they can **signal initialization failure**. We could also use **C++ exceptions** for this, or use a more complex object than a boolean to carry extra information about the failure.
+```
+
+We then declare this method in `Application.h`:
+
+```{lit} C++, Private methods (append, also for tangle root "Vanilla")
+// In Application.h
+private:
+    bool InitializePipeline();
+```
+
+And implement it in `Application.cpp`:
+
+```{lit} C++, InitializePipeline method (also for tangle root "Vanilla")
+bool Application::InitializePipeline() {
+    {{Initialize pipeline}}
+    return true;
+}
+```
+
+```{lit} C++, Application implementation (append, hidden, also for tangle root "Vanilla")
+{{InitializePipeline method}}
+```
 
 ### Drawing the triangle
 
@@ -462,14 +519,23 @@ And tadaam! You should finally see **a triangle**!
 Our first triangle rendered using WebGPU.
 ```
 
-### Dedicated method
-
-Before moving on to the next chapter, I suggest we clean up a bit our `Application` class by **moving the pipeline initialization into a dedicated method**.
-
-**WIP**
-
 Conclusion
 ----------
+
+This chapter introduced the **core skeleton** for rendering triangle-based shapes on the GPU. For now these are 2D graphics, but once everything will be in place, switching to 3D will be straightforward. We have seen two very important concepts:
+
+ - The **render pipeline**, which is based on the way the hardware actually works, with some parts fixed, for the sake of efficiency, and some parts are programmable.
+ - The **shaders**, which are the GPU-side programs driving the programmable stages of the pipeline.
+
+### What's next?
+
+The key algorithms and techniques of computer graphics used for 3D rendering are for a large part implemented in the shaders code. What we still miss at this point though is ways to **communicate** between the C++ code (CPU) and the shaders (GPU).
+
+The next two chapters focus on two ways to **feed input** to this render pipeline: **vertex** attributes, where there is one value per vertex, and **uniforms**, which define variable that are common to all vertices and fragments for a given call.
+
+We then take a break away from pipeline things with the switch to **3D meshes**, which is in the end less about code and more about math. We also introduce a bit of **interaction** with a basic **camera controller**. We then introduce a 3rd way to provide input resource, namely **textures**, and how to map them onto meshes.
+
+Storage textures, which are used the other way around, to get data out of the render pipeline, will be presented only in advanced chapters. Instead, the last chapter of this section is fully dedicated to the computer graphics matter of **lighting** and **material modeling**.
 
 ````{tab} With webgpu.hpp
 *Resulting code:* [`step030-next`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step030-next)

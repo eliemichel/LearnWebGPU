@@ -248,7 +248,7 @@ bool Application::IsRunning() {
 So **do not** move the `emscripten_sleep(100)` line to `MainLoop()`. This line is no longer needed once we **let the browser handle** the main loop, because the browser ticks its WebGPU backend itself.
 ```
 
-````{admonition} Feeling lost? Unfold this for details about what to rewrite.
+````{admonition} **Feeling lost?** Unfold this for details about what to rewrite.
 :class: foldable
 
 Here I systematically list all the changes needed for this refactoring. Do not hesitate to activate more *Literate Options* on the right-hand side of this page in order to better see how to connect these code blocks.
@@ -256,6 +256,7 @@ Here I systematically list all the changes needed for this refactoring. Do not h
 Alternatively, you may look at the *Resulting code:* [`step020-next`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step020-next).
 
 ```{lit} C++, Main loop content
+// Main loop is empty for now
 ```
 
 ```{lit} C++, Initialize
