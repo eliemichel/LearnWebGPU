@@ -480,7 +480,7 @@ WGPUAdapter adapter = requestAdapterSync(m_instance, &adapterOpts);
 
 ### GLFW3 WebGPU Extension
 
-**Download and unzip** [glfw3webgpu.zip](https://github.com/eliemichel/glfw3webgpu/releases/download/v1.2.0/glfw3webgpu-v1.2.0.zip) in your project's directory. There should now be a directory `glfw3webgpu` sitting next to your `main.cpp`. Like we have done before, we can **add this directory** and **link the target** it creates to our App:
+**Download and unzip** [glfw3webgpu.zip](https://github.com/eliemichel/glfw3webgpu/releases/download/v1.3.0-alpha/glfw3webgpu-v1.3.0-alpha.zip) in your project's directory. There should now be a directory `glfw3webgpu` sitting next to your `main.cpp`. Like we have done before, we can **add this directory** and **link the target** it creates to our App:
 
 ```{lit} CMake, glfw3webgpu subdirectory (insert in {{Dependency subdirectories}} after "add_subdirectory(webgpu)")
 # After adding glfw and webgpu directories:
