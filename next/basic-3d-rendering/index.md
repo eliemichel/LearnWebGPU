@@ -8,4 +8,5 @@ Contents
 :titlesonly:
 
 hello-triangle
+input-geometry/index
 ```

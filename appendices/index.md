@@ -9,6 +9,7 @@ Contents
 :titlesonly:
 
 teaching-native-graphics-in-2023
+keep-in-mind-lower-end-devices
 feedback-needed
 building-for-the-web
 using-sdl
