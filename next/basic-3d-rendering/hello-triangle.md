@@ -486,7 +486,7 @@ bool Application::InitializePipeline() {
 We are almost there! All we have to do is run our render pipeline in the `MainLoop()`, within the **render pass** that we have left empty in chapter [First Color](../getting-started/first-color.md):
 
 ````{tab} With webgpu.hpp
-```{lit} C++, Use Render Pass (replace)
+```{lit} C++, Draw a triangle (replace)
 // [...] Begin render pass
 // Select which render pipeline to use
 renderPass.setPipeline(m_pipeline);
@@ -497,7 +497,7 @@ renderPass.draw(3, 1, 0, 0);
 ````
 
 ````{tab} Vanilla webgpu.h
-```{lit} C++, Use Render Pass (replace, for tangle root "Vanilla")
+```{lit} C++, Draw a triangle (replace, for tangle root "Vanilla")
 // [...] Begin render pass
 // Select which render pipeline to use
 wgpuRenderPassEncoderSetPipeline(renderPass, m_pipeline);
@@ -506,6 +506,10 @@ wgpuRenderPassEncoderDraw(renderPass, 3, 1, 0, 0);
 // [...] End render pass
 ```
 ````
+
+```{lit} C++, Use Render Pass (replace, hidden, also for tangle root "Vanilla")
+{{Draw a triangle}}
+```
 
 ```{note}
 Only pay attention to the **first argument** of `renderPass.draw`/`wgpuRenderPassEncoderDraw` for now. This argument is the **number of vertices** that we want to draw.

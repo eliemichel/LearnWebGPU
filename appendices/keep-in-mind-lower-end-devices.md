@@ -106,7 +106,7 @@ It is **not easy** to find accurate data about **the usage rate of a GPU**, i.e.
 🙏 If you ever find public data about the distribution of GPU models among end users, I am very interested, please share!
 ```
 
-We can however find rather detailed information about the **devices capabilities** thanks to some insightful reports. Specialized hardware websites sometimes share detail reviews and databases, like the [benchmarks](https://www.notebookcheck.net/Benchmarks-Tech.123.0.html) from NotebookCheck of the [GPU Specs Database](https://www.techpowerup.com/gpu-specs) from TechPowerUp.
+We can however find rather detailed information about the **devices capabilities** thanks to some insightful reports. Specialized hardware websites sometimes share detail reviews and databases, like the [benchmarks](https://www.notebookcheck.net/Benchmarks-Tech.123.0.html) from NotebookCheck or the [GPU Specs Database](https://www.techpowerup.com/gpu-specs) from TechPowerUp.
 
 If you are interested in a **ranking** of GPUs for the task of path tracing, [Blender Open Data](https://opendata.blender.org/) benefits from a very active community. Another very valuable source of information about the specificities of many devices is [GPUinfo](https://gpuinfo.org/), which also relies on **crowd-sourced** reports.
 
