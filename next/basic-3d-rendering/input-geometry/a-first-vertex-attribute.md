@@ -347,7 +347,7 @@ We declare `m_vertexBuffer` and `m_vertexCount` as a members of our `Application
 ```{lit} C++, Application attributes (append)
 private: // Application attributes
 	wgpu::Buffer m_vertexBuffer;
-	uint32_t m_vertexCount;
+	//uint32_t m_vertexCount; // TODO
 ```
 ````
 
@@ -355,7 +355,7 @@ private: // Application attributes
 ```{lit} C++, Application attributes (append, for tangle root "Vanilla")
 private: // Application attributes
 	WGPUBuffer m_vertexBuffer;
-	uint32_t m_vertexCount;
+	//uint32_t m_vertexCount; // TODO
 ```
 ````
 
