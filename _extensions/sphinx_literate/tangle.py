@@ -31,6 +31,7 @@ def _tangle_rec(
         "rust": "//",
         "python": "#",
         "cmake": "#",
+        "bash": "#",
     }.get(lit.lexer.lower() if lit.lexer is not None else None, "//")
     if lit.lexer is None:
         print(f"######## {lit.format()} from {lit.source_location.format()}")

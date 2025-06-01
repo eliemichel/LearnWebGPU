@@ -353,7 +353,7 @@ assert(m_vertexCount == static_cast<uint32_t>(colorData.size() / 3));
 ````{note}
 I check that the two arrays have consistent sizes with an assertion. We need to include the dedicated header in `Application.cpp`:
 
-```{lit} C++, Includes in Application.cpp (append)
+```{lit} C++, Includes in Application.cpp (append, also for tangle root "Vanilla")
 #include <cassert>
 ```
 ````

@@ -79,7 +79,7 @@ def parse_option(raw_option: str) -> str|Tuple[str]:
     else:
         return raw_option.upper()
 
-def parse_block_title_options(raw_options: str) -> Set[str|Tuple[str]]:
+def parse_block_title_options(raw_options: str) -> List[str|Tuple[str]]:
     if raw_options is None:
         return set()
     raw_options = raw_options[1:-1]
@@ -129,10 +129,10 @@ def parse_block_title_options(raw_options: str) -> Set[str|Tuple[str]]:
             pass
     all_tokens.append(token)
 
-    return {
+    return [
         parse_option(opt)
         for opt in all_tokens
-    }
+    ]
 
 def parse_block_title(raw_title: str) -> ParsedBlockTitle:
     """
