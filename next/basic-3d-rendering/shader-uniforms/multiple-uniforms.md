@@ -1,4 +1,4 @@
-More uniforms <span class="bullet">🟠</span>
+More uniforms <span class="bullet">🟢</span>
 =============
 
 ```{lit-setup}
@@ -20,20 +20,22 @@ More uniforms <span class="bullet">🟠</span>
 *Resulting code:* [`step043-next-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step043-next-vanilla)
 ````
 
-In order to illustrate the flexibility of the uniform binding process, let us add a second uniform variable, this time controlling the overall color of our scene.
+In order to illustrate the **flexibility of the uniform binding process**, let us add a second uniform variable, this time **controlling the overall color** of our scene.
 
-There are multiple ways to add a second uniform:
+There are **multiple ways** to add a second uniform:
 
- - In a different bind group.
- - In the same bind group but different binding.
- - In the same binding, by replacing the type of the uniform with a custom struct.
+ - **Option A:** In a **different bind group**.
+ - **Option B:** In the same bind group but **different binding**.
+ - **Option C:** In the same binding, by replacing the type of the uniform with a **custom struct**.
 
-The interest of using a **different bind group** is to be able to call the render pipeline with multiple combinations of uniforms. For instance, a render engine typically uses a different bind group to store the camera and lighting information (that changes only between frames) and to store object information (location, orientation, etc.), which is different for each draw call within the same frame.
+The interest of using a **different bind group** (Option A) is to be able to call the render pipeline with multiple combinations of uniforms. For instance, a render engine typically uses a different bind group to store the camera and lighting information (that changes only between frames) and to store object information (location, orientation, etc.), which is different for each draw call within the same frame.
 
-The interest of using a **different binding** (within the same bind group) is to set a different `visibility` depending on the binding. In our case, the time is only used in the `Vertex` shader, while the color is only needed by the `Fragment` shader, so this could be beneficial. However, we may decide to use the time in the `Fragment` shader eventually, so we'll use the same binding.
+The interest of using a **different binding** within the same bind group (Option B) is to set a different `visibility` depending on the binding. In our case, the time is only used in the `Vertex` shader, while the color is only needed by the `Fragment` shader, so this could be beneficial. However, we may decide to use the time in the `Fragment` shader eventually, so we'll use the same binding.
+
+We hence see in this chapter the **Option C**, which also gives us the opportunity to **introduce structures** in WGSL.
 
 ```{note}
-Another reason is that different bindings should either point to different buffers, or point in the same buffer at **an offset that is at least** `deviceLimits.minUniformBufferOffsetAlignment`. By default, this value is set to 256 bytes for me, and the minimum supported by my adapter is 64. This would be a bit of a waste to add that much padding.
+Another reason to use Option C over Option B in our case is that different bindings should either point to different buffers, or point in the same buffer at **an offset that is at least** `deviceLimits.minUniformBufferOffsetAlignment`. By default, this value is set to 256 bytes, so it would be a bit of a waste to add that much padding.
 ```
 
 Shader side
@@ -51,7 +53,8 @@ struct MyUniforms {
 };
 
 // Instead of the simple uTime variable, our uniform variable is a struct
-@group(0) @binding(0) var<uniform> uMyUniforms: MyUniforms;
+@group(0) @binding(0)
+var<uniform> uMyUniforms: MyUniforms;
 ```
 
 In `vs_main`, we replace  `uTime` with `uMyUniforms.time`, then we use `uMyUniforms.color` in the fragment color.
@@ -63,7 +66,7 @@ fn vs_main(in: VertexInput) -> VertexOutput {
 
 	// We now move the scene depending on the time!
 	var offset = vec2f(-0.6875, -0.463);
-	let time = uMyUniforms.time;
+	let time = uMyUniforms.time; // <-- add this line
 	offset += 0.3 * vec2f(cos(time), sin(time));
 
 	out.position = vec4f(in.position.x + offset.x, (in.position.y + offset.y) * ratio, 0.0, 1.0);
@@ -76,18 +79,16 @@ fn vs_main(in: VertexInput) -> VertexOutput {
 fn fs_main(in: VertexOutput) -> @location(0) vec4f {
 	// We multiply the scene's color with our global uniform (this is one
 	// possible use of the color uniform, among many others).
-	let color = in.color * uMyUniforms.color.rgb;
-
-	// Gamma-correction
-	let linear_color = pow(color, vec3f(2.2));
-	return vec4f(linear_color, 1.0);
+	return vec4f(in.color, 1.0) * uMyUniforms.color;
 }
 ```
 
-Of course depending on your use case you will find a name more relevant than "MyUniforms", but let's stick to this for now.
+Of course depending on your use case you will find a name more relevant than "MyUniforms", but let's stick with this for now.
 
 Buffer
 ------
+
+### Creation
 
 On the CPU side, we define the very same struct:
 
@@ -104,12 +105,12 @@ struct MyUniforms {
 ````{note}
 We use the `std::array` type, that requires to include its header:
 
-```{lit} C++, Includes (append, also for tangle root "Vanilla")
+```{lit} C++, Includes in Application.h (append, also for tangle root "Vanilla")
 #include <array>
 ```
 ````
 
-We place this struct definition in the `Application` class definition, at the beginning of the private section, where we'll place all internal structs:
+We place this struct definition in the `Application` class definition, at the beginning of the **private section**, where we will place all internal structs:
 
 ```{lit} C++, Application private structs (insert in {{Application class}} after "bool IsRunning();", also for tangle root "Vanilla")
 // After public methods, before private things
@@ -126,8 +127,7 @@ bufferDesc.size = sizeof(MyUniforms);
 //                ^^^^^^^^^^^^^^^^^^ This was 4 * sizeof(float)
 
 bufferDesc.usage = BufferUsage::CopyDst | BufferUsage::Uniform;
-bufferDesc.mappedAtCreation = false;
-uniformBuffer = device.createBuffer(bufferDesc);
+m_uniformBuffer = m_device.createBuffer(bufferDesc);
 ```
 ````
 
@@ -137,8 +137,7 @@ bufferDesc.size = sizeof(MyUniforms);
 //                ^^^^^^^^^^^^^^^^^^ This was 4 * sizeof(float)
 
 bufferDesc.usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_Uniform;
-bufferDesc.mappedAtCreation = false;
-uniformBuffer = wgpuDeviceCreateBuffer(device, &bufferDesc);
+m_uniformBuffer = wgpuDeviceCreateBuffer(m_device, &bufferDesc);
 ```
 ````
 
@@ -150,7 +149,7 @@ The initial buffer upload thus becomes:
 MyUniforms uniforms;
 uniforms.time = 1.0f;
 uniforms.color = { 0.0f, 1.0f, 0.4f, 1.0f };
-queue.writeBuffer(uniformBuffer, 0, &uniforms, sizeof(MyUniforms));
+m_queue.writeBuffer(m_uniformBuffer, 0, &uniforms, sizeof(uniforms));
 ```
 ````
 
@@ -160,9 +159,11 @@ queue.writeBuffer(uniformBuffer, 0, &uniforms, sizeof(MyUniforms));
 MyUniforms uniforms;
 uniforms.time = 1.0f;
 uniforms.color = { 0.0f, 1.0f, 0.4f, 1.0f };
-wgpuQueueWriteBuffer(queue, uniformBuffer, 0, &uniforms, sizeof(MyUniforms));
+wgpuQueueWriteBuffer(m_queue, m_uniformBuffer, 0, &uniforms, sizeof(uniforms));
 ```
 ````
+
+### Update
 
 Updating the value of the buffer now looks like this:
 
@@ -171,7 +172,7 @@ Updating the value of the buffer now looks like this:
 // Update uniform buffer
 MyUniforms uniforms;
 uniforms.time = static_cast<float>(glfwGetTime());
-queue.writeBuffer(uniformBuffer, 0, &uniforms, sizeof(MyUniforms));
+m_queue.writeBuffer(m_uniformBuffer, 0, &uniforms, sizeof(uniforms));
 ```
 ````
 
@@ -180,7 +181,7 @@ queue.writeBuffer(uniformBuffer, 0, &uniforms, sizeof(MyUniforms));
 // Update uniform buffer
 MyUniforms uniforms;
 uniforms.time = static_cast<float>(glfwGetTime());
-wgpuQueueWriteBuffer(queue, uniformBuffer, 0, &uniforms, sizeof(MyUniforms));
+wgpuQueueWriteBuffer(m_queue, m_uniformBuffer, 0, &uniforms, sizeof(uniforms));
 ```
 ````
 
@@ -190,7 +191,7 @@ And actually we can be more subtle, to only upload the bytes related to the `tim
 ```{lit} C++, Update uniform buffer (replace)
 float time = static_cast<float>(glfwGetTime());
 // Only update the 1-st float of the buffer
-queue.writeBuffer(uniformBuffer, 0, &time, sizeof(float));
+m_queue.writeBuffer(m_uniformBuffer, 0, &time, sizeof(uniforms.time));
 ```
 ````
 
@@ -198,7 +199,7 @@ queue.writeBuffer(uniformBuffer, 0, &time, sizeof(float));
 ```{lit} C++, Update uniform buffer (replace, for tangle root "Vanilla")
 float time = static_cast<float>(glfwGetTime());
 // Only update the 1-st float of the buffer
-wgpuQueueWriteBuffer(queue, uniformBuffer, 0, &time, sizeof(float));
+wgpuQueueWriteBuffer(m_queue, m_uniformBuffer, 0, &time, sizeof(uniforms.time));
 ```
 ````
 
@@ -208,8 +209,8 @@ Similarly we can update only the color bytes:
 ```C++
 // Update uniform buffer
 uniforms.color = { 1.0f, 0.5f, 0.0f, 1.0f };
-queue.writeBuffer(uniformBuffer, sizeof(float), &uniforms.color, sizeof(Color));
-//                               ^^^^^^^^^^^^^ offset of `color` in the uniform struct
+m_queue.writeBuffer(m_uniformBuffer, sizeof(float), &uniforms.color, sizeof(uniforms.color));
+//                                   ^^^^^^^^^^^^^ offset of `color` in the uniform struct
 ```
 ````
 
@@ -217,8 +218,8 @@ queue.writeBuffer(uniformBuffer, sizeof(float), &uniforms.color, sizeof(Color));
 ```C++
 // Update uniform buffer
 uniforms.color = { 1.0f, 0.5f, 0.0f, 1.0f };
-wgpuQueueWriteBuffer(queue, uniformBuffer, sizeof(float), &uniforms.color, sizeof(Color));
-//                                         ^^^^^^^^^^^^^ offset of `color` in the uniform struct
+wgpuQueueWriteBuffer(m_queue, m_uniformBuffer, sizeof(float), &uniforms.color, sizeof(uniforms.color));
+//                                             ^^^^^^^^^^^^^ offset of `color` in the uniform struct
 ```
 ````
 
@@ -228,7 +229,7 @@ Better yet, if we forget the offset, or want to be flexible to the addition of n
 ```{lit} C++, Update uniform buffer (replace)
 float time = static_cast<float>(glfwGetTime());
 // Upload only the time, whichever its order in the struct
-queue.writeBuffer(uniformBuffer, offsetof(MyUniforms, time), &time, sizeof(float));
+m_queue.writeBuffer(m_uniformBuffer, offsetof(MyUniforms, time), &time, sizeof(time));
 ```
 ````
 
@@ -236,7 +237,7 @@ queue.writeBuffer(uniformBuffer, offsetof(MyUniforms, time), &time, sizeof(float
 ```{lit} C++, Update uniform buffer (replace, for tangle root "Vanilla")
 float time = static_cast<float>(glfwGetTime());
 // Upload only the time, whichever its order in the struct
-wgpuQueueWriteBuffer(queue, uniformBuffer, offsetof(MyUniforms, time), &time, sizeof(float));
+wgpuQueueWriteBuffer(m_queue, m_uniformBuffer, offsetof(MyUniforms, time), &time, sizeof(time));
 ```
 ````
 
@@ -245,21 +246,19 @@ And if we would update the color:
 ````{tab} With webgpu.hpp
 ```C++
 // Upload only the color, whichever its order in the struct
-queue.writeBuffer(uniformBuffer, offsetof(MyUniforms, color), &uniforms.color, sizeof(MyUniforms::color));
+m_queue.writeBuffer(m_uniformBuffer, offsetof(MyUniforms, color), &uniforms.color, sizeof(uniforms.color));
 ```
 ````
 
 ````{tab} Vanilla webgpu.h
 ```C++
 // Upload only the color, whichever its order in the struct
-wgpuQueueWriteBuffer(queue, uniformBuffer, offsetof(MyUniforms, color), &uniforms.color, sizeof(MyUniforms::color));
+wgpuQueueWriteBuffer(m_queue, m_uniformBuffer, offsetof(MyUniforms, color), &uniforms.color, sizeof(uniforms.color));
 ```
 ````
 
-
 Binding layout
 --------------
-
 
 We increase the expected size of the buffer, first in the **layout**:
 
@@ -272,7 +271,6 @@ And in the **binding** itself:
 ```{lit} C++, Setup binding (append, also for tangle root "Vanilla")
 binding.size = sizeof(MyUniforms);
 ```
-
 
 We also need to change in the binding layout the visibility, so that both `Vertex` and `Fragment` shaders can access the uniforms:
 
@@ -288,7 +286,6 @@ bindingLayout.visibility = WGPUShaderStage_Vertex | WGPUShaderStage_Fragment;
 ```
 ````
 
-
 Memory Layout Constraints
 -------------------------
 
@@ -298,7 +295,7 @@ There is one thing I have omitted until now: the architecture of the GPU imposes
 
 If we look at [the uniform layout constraints](https://gpuweb.github.io/gpuweb/wgsl/#address-space-layout-constraints), we can see that **the offset** (as returned by `offsetof`) of a field of type `vec4f` **must be a multiple** of the size of `vec4f`, namely 16 bytes. We say that the field is **aligned** to 16 bytes.
 
-In our current `MyUniforms` struct, this property is **not verified** because `color` as an offset of 4 bytes (`sizeof(float)`), which is obviously not a multiple of 16 bytes! An easy fix is simply to swap the `color` and `time` fields:
+In our current `MyUniforms` struct, this property is **not verified** because `color` as an offset of 4 bytes (`sizeof(float)`), which is obviously not a multiple of 16 bytes! An easy fix is simply to **swap the `color` and `time` fields**:
 
 ```C++
 // Don't
@@ -321,7 +318,7 @@ struct MyUniforms {
 ```
 
 ```{warning}
-If you used the `offsetof` macro to perform partial update of the uniform buffer, you are good to go. But if you did not, make sure to reflect this reordering of the fields of `MyUniforms` everywhere you relied on it!
+If you did not use the `offsetof` macro to perform partial update of the uniform buffer, make sure to **reflect this reordering of the fields** of `MyUniforms` everywhere you relied on it!
 ```
 
 And **don't forget** to apply the same change to the struct defined in the shader code!
@@ -332,7 +329,8 @@ struct MyUniforms {
 	time: f32,
 };
 
-@group(0) @binding(0) var<uniform> uMyUniforms: MyUniforms;
+@group(0) @binding(0)
+var<uniform> uMyUniforms: MyUniforms;
 ```
 
 ### Padding

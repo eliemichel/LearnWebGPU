@@ -83,7 +83,12 @@ Now we need to tell to which **buffer** the uniform is **bound**. Like we did wi
 
 ```{lit} rust, Declare uniforms (replace, also for tangle root "Vanilla")
 // The memory location of the uniform is given by a pair of a *bind group* and a *binding*
-@group(0) @binding(0) var<uniform> uTime: f32;
+@group(0) @binding(0)
+var<uniform> uTime: f32;
+```
+
+```{note}
+The line break after attributes is optional, we could write `@group(0) @binding(0) var<uniform> uTime: f32;` on a single line.
 ```
 
 We are now done with the declaration of the uniform variable, we can use it like any other variable in our shader:
@@ -145,7 +150,6 @@ bufferDesc.size = 4 * sizeof(float);
 // Make sure to flag the buffer as BufferUsage::Uniform
 bufferDesc.usage = BufferUsage::CopyDst | BufferUsage::Uniform;
 
-bufferDesc.mappedAtCreation = false;
 m_uniformBuffer = m_device.createBuffer(bufferDesc);
 ```
 ````
@@ -160,7 +164,6 @@ bufferDesc.size = 4 * sizeof(float);
 // Make sure to flag the buffer as BufferUsage::Uniform
 bufferDesc.usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_Uniform;
 
-bufferDesc.mappedAtCreation = false;
 m_uniformBuffer = wgpuDeviceCreateBuffer(m_device, &bufferDesc);
 ```
 ````
