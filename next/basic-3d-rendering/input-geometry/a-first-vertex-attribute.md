@@ -1,4 +1,4 @@
-A first Vertex Attribute <span class="bullet">🟠</span>
+A first Vertex Attribute <span class="bullet">🟢</span>
 ========================
 
 ```{lit-setup}
@@ -409,17 +409,10 @@ m_vertexCount = static_cast<uint32_t>(vertexData.size() / 2);
 Triangles rendered using a vertex attribute
 ```
 
-Device capabilities
--------------------
-
-> 🤓 Hey what is the **maximum number** of location attributes?
-
-**TODO**
-
 Conclusion
 ----------
 
-We have seen in this chapter how to use **GPU buffers** to feed data as **input** to the vertex shader, and thus to the whole rasterization pipeline. We will refine this in the next chapter by adding **additional attributes**.
+We have seen in this chapter how to use **GPU buffers** to feed data as **input** to the vertex shader, and thus to the whole rasterization pipeline. We will refine this in the next chapter by adding an **additional attribute** for the color.
 
 ````{tab} With webgpu.hpp
 *Resulting code:* [`step032-next`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step032-next)

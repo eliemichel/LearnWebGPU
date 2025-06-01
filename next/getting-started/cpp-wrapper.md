@@ -89,6 +89,10 @@ using namespace wgpu;
 Instance instance = createInstance();
 ```
 
+```{caution}
+In the next chapters, I will add `using namespace wgpu;` in **implementation** files like `Application.cpp`, but **never do this in header files** like `Application.h`, otherwise it "invades" the namespace of all files that include you header. I this precise for instance `wgpu::Device` when defining Application attributes.
+```
+
 ### Objects
 
 Beyond namespace, most functions are also **prefixed by the type of their first argument**, for instance:
