@@ -9,4 +9,5 @@ Contents
 
 hello-triangle
 input-geometry/index
+shader-uniforms/index
 ```

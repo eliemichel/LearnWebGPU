@@ -155,7 +155,6 @@ We can replace the definition of the `pointData` and `indexData` vectors by a ca
 bool Application::InitializeBuffers() {
 	// 1. Load from disk into CPU-side vectors pointData and indexData
 	{{Load geometry data from file}}
-	m_indexCount = static_cast<uint32_t>(indexData.size());
 
 	// 2. Create GPU buffers and upload data to them
 	{{Create point buffer}}
@@ -172,6 +171,8 @@ std::vector<uint16_t> indexData;
 // Here we use the new 'loadGeometry' function:
 bool success = loadGeometry("resources/webgpu.txt", pointData, indexData);
 if (!success) return false;
+
+m_indexCount = static_cast<uint32_t>(indexData.size());
 ```
 
 A **problem** we have with this hard-coded relative path is that its interpretation depends on the directory from which you run your executable:
@@ -501,6 +502,8 @@ std::vector<uint16_t> indexData;
 // Here we use the new 'loadGeometry' function:
 bool success = ResourceManager::loadGeometry(RESOURCE_DIR  "/webgpu.txt", pointData, indexData);
 if (!success) return false;
+
+m_indexCount = static_cast<uint32_t>(indexData.size());
 ```
 
 ### Loading shaders
