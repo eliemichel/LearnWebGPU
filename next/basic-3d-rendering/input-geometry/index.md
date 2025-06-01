@@ -9,4 +9,5 @@ Contents
 
 a-first-vertex-attribute
 multiple-attributes
+index-buffer
 ```

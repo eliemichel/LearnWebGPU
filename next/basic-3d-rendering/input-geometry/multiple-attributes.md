@@ -10,7 +10,6 @@ Multiple Attributes <span class="bullet">🟢</span>
 ```{lit-setup}
 :tangle-root: 033 - Multiple Attributes - Option A - Next
 :parent: 032 - A first Vertex Attribute - Next
-:debug:
 ```
 
 ````{tab} With webgpu.hpp
@@ -351,6 +350,14 @@ m_vertexCount = static_cast<uint32_t>(positionData.size() / 2);
 assert(m_vertexCount == static_cast<uint32_t>(colorData.size() / 3));
 ```
 
+````{note}
+I check that the two arrays have consistent sizes with an assertion. We need to include the dedicated header in `Application.cpp`:
+
+```{lit} C++, Includes in Application.cpp (append)
+#include <cassert>
+```
+````
+
 #### Buffers
 
 This leads to two creating two GPU buffers `positionBuffer` and `colorBuffer`:
@@ -362,12 +369,12 @@ BufferDescriptor bufferDesc;
 bufferDesc.usage = BufferUsage::CopyDst | BufferUsage::Vertex;
 bufferDesc.mappedAtCreation = false;
 
-bufferDesc.label = "Vertex Position";
+bufferDesc.label = StringView("Vertex Position");
 bufferDesc.size = positionData.size() * sizeof(float);
 m_positionBuffer = m_device.createBuffer(bufferDesc);
 m_queue.writeBuffer(m_positionBuffer, 0, positionData.data(), bufferDesc.size);
 
-bufferDesc.label = "Vertex Color";
+bufferDesc.label = StringView("Vertex Color");
 bufferDesc.size = colorData.size() * sizeof(float);
 m_colorBuffer = m_device.createBuffer(bufferDesc);
 m_queue.writeBuffer(m_colorBuffer, 0, colorData.data(), bufferDesc.size);
@@ -382,12 +389,12 @@ bufferDesc.nextInChain = nullptr;
 bufferDesc.usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_Vertex;
 bufferDesc.mappedAtCreation = false;
 
-bufferDesc.label = "Vertex Position";
+bufferDesc.label = toWgpuStringView("Vertex Position");
 bufferDesc.size = positionData.size() * sizeof(float);
 m_positionBuffer = wgpuDeviceCreateBuffer(m_device, &bufferDesc);
 wgpuQueueWriteBuffer(m_queue, m_positionBuffer, 0, positionData.data(), bufferDesc.size);
 
-bufferDesc.label = "Vertex Color";
+bufferDesc.label = toWgpuStringView("Vertex Color");
 bufferDesc.size = colorData.size() * sizeof(float);
 m_colorBuffer = wgpuDeviceCreateBuffer(m_device, &bufferDesc);
 wgpuQueueWriteBuffer(m_queue, m_colorBuffer, 0, colorData.data(), bufferDesc.size);
@@ -579,14 +586,26 @@ Triangles with a color attribute (same result for both options).
 ````{tip}
 I changed the background color (`clearValue`) to `Color{ 0.05, 0.05, 0.05, 1.0 }` to better appreciate the colors of the triangles.
 
-```{lit} C++, Describe the attachment (hidden, replace)
+```{lit-setup}
+:tangle-root: 033 - Multiple Attributes - Option A - Next - vanilla
+:parent: 032 - A first Vertex Attribute - Next - vanilla
+:alias: Option A - Vanilla
+```
+
+```{lit-setup}
+:tangle-root: 033 - Multiple Attributes - Option A - Next
+:parent: 032 - A first Vertex Attribute - Next
+:alias: Option A
+```
+
+```{lit} C++, Describe the attachment (hidden, replace, also for tangle root "Option A")
 renderPassColorAttachment.view = targetView;
 renderPassColorAttachment.loadOp = LoadOp::Clear; // NEW
 renderPassColorAttachment.storeOp = StoreOp::Store; // NEW
 renderPassColorAttachment.clearValue = Color{ 0.25, 0.25, 0.25, 1.0 }; // NEW
 ```
 
-```{lit} C++, Describe the attachment (hidden, replace, for tangle root "Vanilla")
+```{lit} C++, Describe the attachment (hidden, replace, for tangle root "Vanilla", also for tangle root "Option A - Vanilla")
 renderPassColorAttachment.view = targetView;
 renderPassColorAttachment.loadOp = WGPULoadOp_Clear;
 renderPassColorAttachment.storeOp = WGPUStoreOp_Store;
