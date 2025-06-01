@@ -245,6 +245,22 @@ If you do not interrupt your program at the first error, you can see that **it a
  - While finishing [CommandEncoder "My command encoder"].
 ```
 
+```{note}
+What we have done in the previous chapter is subject to many device limits. Some are related to the use of **bindings and stage buffers**:
+
+- `maxBindGroups` is the maximum number of bind groups that can be used within the same pipeline (default: **4**).
+- `maxBindingsPerBindGroup` gives the maximum binding index that we can use within a bind group (default: **1000**).
+- `maxStorageBuffersPerShaderStage` is the maximum number of storage buffers that can be bound within the same shader stage (default: **8**).
+- `maxStorageBufferBindingSize` is the maximum byte size of a storage buffer (default: **128 MiB**).
+- `maxBufferSize` is the maximum byte size of a buffer in general (default: **256 MiB**).
+
+Some others are related to the maximum dimensions of the **compute shader grid**:
+
+- `maxComputeInvocationsPerWorkgroup` is the maximum number of thread in a workgroup (default: **256**).
+- `maxComputeWorkgroupSizeX` (and same for `Y` and `Z`) limits this number in a given dimension (default: **256** for `X` and `Y`, **64** for `Z`).
+- `maxComputeWorkgroupsPerDimension` is the maximum number of workgroups that can be invoked along each dimension, i.e., the arguments of `wgpuComputePassEncoderDispatchWorkgroups()` (default: **65535**).
+```
+
 Conclusion
 ----------
 

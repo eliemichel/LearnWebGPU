@@ -1,4 +1,4 @@
-Multiple Attributes <span class="bullet">🟠</span>
+Multiple Attributes <span class="bullet">🟢</span>
 ===================
 
 ```{lit-setup}
@@ -364,12 +364,12 @@ bufferDesc.mappedAtCreation = false;
 
 bufferDesc.label = "Vertex Position";
 bufferDesc.size = positionData.size() * sizeof(float);
-m_positionBuffer = device.createBuffer(bufferDesc);
+m_positionBuffer = m_device.createBuffer(bufferDesc);
 m_queue.writeBuffer(m_positionBuffer, 0, positionData.data(), bufferDesc.size);
 
 bufferDesc.label = "Vertex Color";
 bufferDesc.size = colorData.size() * sizeof(float);
-m_colorBuffer = device.createBuffer(bufferDesc);
+m_colorBuffer = m_device.createBuffer(bufferDesc);
 m_queue.writeBuffer(m_colorBuffer, 0, colorData.data(), bufferDesc.size);
 ```
 ````
@@ -384,12 +384,12 @@ bufferDesc.mappedAtCreation = false;
 
 bufferDesc.label = "Vertex Position";
 bufferDesc.size = positionData.size() * sizeof(float);
-m_positionBuffer = wgpuDeviceCreateBuffer(device, &bufferDesc);
+m_positionBuffer = wgpuDeviceCreateBuffer(m_device, &bufferDesc);
 wgpuQueueWriteBuffer(m_queue, m_positionBuffer, 0, positionData.data(), bufferDesc.size);
 
 bufferDesc.label = "Vertex Color";
 bufferDesc.size = colorData.size() * sizeof(float);
-m_colorBuffer = wgpuDeviceCreateBuffer(device, &bufferDesc);
+m_colorBuffer = wgpuDeviceCreateBuffer(m_device, &bufferDesc);
 wgpuQueueWriteBuffer(m_queue, m_colorBuffer, 0, colorData.data(), bufferDesc.size);
 ```
 ````
@@ -544,7 +544,7 @@ And finally in the render pass we have to **set both vertex buffers** by calling
 
 ````{tab} With webgpu.hpp
 ```{lit} C++, Draw a triangle (replace)
-renderPass.setPipeline(pipeline);
+renderPass.setPipeline(m_pipeline);
 
 // Set vertex buffers while encoding the render pass
 renderPass.setVertexBuffer(0, m_positionBuffer, 0, m_positionBuffer.getSize());
@@ -558,7 +558,7 @@ renderPass.draw(m_vertexCount, 1, 0, 0);
 
 ````{tab} Vanilla webgpu.h
 ```{lit} C++, Draw a triangle (replace, for tangle root "Vanilla")
-wgpuRenderPassEncoderSetPipeline(renderPass, pipeline);
+wgpuRenderPassEncoderSetPipeline(renderPass, m_pipeline);
 
 // Set vertex buffers while encoding the render pass
 wgpuRenderPassEncoderSetVertexBuffer(renderPass, 0, m_positionBuffer, 0, wgpuBufferGetSize(m_positionBuffer));
@@ -599,12 +599,42 @@ Device capabilities
 
 > 🤓 Hey what is the **maximum number** of location attributes?
 
-**TODO**
+Good question! As a reminder, when creating our `WGPUDevice` objects, we have specified a list of required **device limits**. We let it to its default value but there are **multiple limits** related to what we explored in this chapter:
+
+### Maximum vertex attributes
+
+The `maxVertexAttributes` limit tells how many attributes we can use at most as **input of the vertex shader**. Its default value is **16** but we could ask for less just for the sake of the exercise:
+
+```C++
+// In block "Specify required limits"
+requiredLimits.maxVertexAttributes = 1;
+//                                   ^ Intentionally use a limit that is too low
+```
+
+### Maximum vertex buffers
+
+There is a different limit for the maximum number of vertex buffers, namely `maxVertexBuffers`. We just saw how the number of buffers may or may not correspond to the number of attributes. This time the default value is **8**.
+
+Note that the total number of vertex buffers combined with the bind groups also has a dedicated limit, namely `maxBindGroupsPlusVertexBuffers` (default to **24**).
+
+### Maximum byte stride
+
+We can put many attributes in the same vertex buffers, but may eventually hit the `maxVertexBufferArrayStride` limit. It is set by default at **2048 bytes**, which corresponds for instance to **512 floats**.
+
+It's probably **more than enough** for a lot of use cases (especially if we are limited to 16 attributes anyways) but there could be edge cases where the attribute data is lost in the middle of something else.
+
+### Maximum inter-stage shader variables
+
+The maximum number of vertex attributes does not say anything about the maximum `@location` available **between the vertex and the fragment stages**. For this, we look at a different limit, namely `maxInterStageShaderVariables`. Its default value is **16** as well, which means the `@location` index can go up to **15**.
+
+### Maximum color attachments
+
+And at the end of the pipeline, we also have a **maximum number of output locations** imposed to the **fragment shader**. In fact, the output locations of the fragment shader must correspond to the **color attachments** of the render pass, which are limited to `maxColorAttachments`, defaulting to **8**.
 
 Conclusion
 ----------
 
-**TODO**
+All right, we know all about **vertex attributes**! In the next chapter, we will talk about **indexed drawing**, so that we do not have to repeat all vertex attributes when the same vertex is used in two different triangles.
 
 ````{tab} With webgpu.hpp
 *Resulting code:* [`step033-next`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step033-next)

@@ -79,7 +79,13 @@ Let me reuse this figure from chapter [*The Adapter*](../getting-started/adapter
 In an advanced use of the adapter/device duality, we can set up multiple limit presets and select one depending on the adapter.
 ```
 
-The "low quality tier" here should correspond to the **default limits and features**, so that there is at least a valid code path. The you can have as many quality tiers as you want. What matters is that if you disable a feature of your application, it is really because the device cannot support it, and not just because you did not have time to treat that case: **treat the default case first**.
+The "low quality tier" here should correspond at most to the **default limits and features**, so that there is at least a valid code path. In fact, there is even the possibility to get a **compatibility adapter** for devices that don't support the standard default limits.
+
+You can have as many quality tiers as you want. What matters is that if you disable a feature of your application, it is really because the device cannot support it, and not just because you did not have time to treat that case: **treat the default case first**.
+
+```{note}
+Dawn unofficially defines several quality tiers that we can find in [`src/dawn/native/Limits.cpp`](https://github.com/google/dawn/blob/main/src/dawn/native/Limits.cpp).
+```
 
 ### Test on older devices
 
