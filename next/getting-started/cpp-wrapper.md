@@ -499,17 +499,17 @@ renderPass.release(); // NEW
 ```
 
 ```{lit} C++, Describe Render Pass (replace, hidden)
-RenderPassColorAttachment renderPassColorAttachment = Default; // NEW
+RenderPassColorAttachment colorAttachment = Default; // NEW
 {{Describe the attachment}}
 renderPassDesc.colorAttachmentCount = 1;
-renderPassDesc.colorAttachments = &renderPassColorAttachment;
+renderPassDesc.colorAttachments = &colorAttachment;
 ```
 
 ```{lit} C++, Describe the attachment (replace, hidden)
-renderPassColorAttachment.view = targetView;
-renderPassColorAttachment.loadOp = LoadOp::Clear; // NEW
-renderPassColorAttachment.storeOp = StoreOp::Store; // NEW
-renderPassColorAttachment.clearValue = Color{ 1.0, 0.8, 0.55, 1.0 }; // NEW
+colorAttachment.view = targetView;
+colorAttachment.loadOp = LoadOp::Clear; // NEW
+colorAttachment.storeOp = StoreOp::Store; // NEW
+colorAttachment.clearValue = Color{ 1.0, 0.8, 0.55, 1.0 }; // NEW
 ```
 
 ```{lit} C++, Finish encoding and submit (replace, hidden)
