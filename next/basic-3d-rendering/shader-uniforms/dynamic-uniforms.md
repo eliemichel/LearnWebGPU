@@ -136,7 +136,7 @@ Here the `m_uniformStride` gives the **byte distance** between the beginning of 
 
 ```{lit} C++, Application attributes (append, also for tangle root "Vanilla")
 private: // In Application.h
-	uint32_t m_uniformStride;
+	uint32_t m_uniformStride = 0;
 ```
 
 What we need now is to **adapt the size of the buffer** to contain multiple versions of the values.

@@ -337,12 +337,12 @@ A render pass leverages the 3D rendering circuits of the GPU to draw content int
 The number of attachment is variable, so the descriptor gets it through two fields: the number `colorAttachmentCount` of attachments and the address `colorAttachments` of the color attachment array. Since we **only use one** here, the address of the array is just the address of a single `WGPURenderPassColorAttachment` variable.
 
 ```{lit} C++, Describe Render Pass
-WGPURenderPassColorAttachment renderPassColorAttachment = WGPU_RENDER_PASS_COLOR_ATTACHMENT_INIT;
+WGPURenderPassColorAttachment colorAttachment = WGPU_RENDER_PASS_COLOR_ATTACHMENT_INIT;
 
 {{Describe the attachment}}
 
 renderPassDesc.colorAttachmentCount = 1;
-renderPassDesc.colorAttachments = &renderPassColorAttachment;
+renderPassDesc.colorAttachments = &colorAttachment;
 ```
 
 The first important setting of the attachment is the **texture view** it must draw in.
@@ -350,7 +350,7 @@ The first important setting of the attachment is the **texture view** it must dr
 In our case, this is simply the `targetView` that we got from the surface, because we want to **directly draw on screen**, but in advanced pipelines it is very common to draw on **intermediate textures**, which are then fed to post-processing passes for instance.
 
 ```{lit} C++, Describe the attachment
-renderPassColorAttachment.view = targetView;
+colorAttachment.view = targetView;
 ```
 
 The `loadOp` setting indicates the load operation to perform on the view **prior to executing** the render pass. It can be either read from the view or set to a default uniform color, namely the clear value. **When it does not matter**, use `WGPULoadOp_Clear` as it is likely more efficient.
@@ -360,9 +360,9 @@ The `storeOp` indicates the operation to perform on view **after executing** the
 And the `clearValue` is the value to **clear the screen** with, put anything you want in here! The 4 values are the **red**, **green**, **blue** and **alpha** channels, on a scale **from 0.0 to 1.0**.
 
 ```{lit} C++, Describe the attachment (append)
-renderPassColorAttachment.loadOp = WGPULoadOp_Clear;
-renderPassColorAttachment.storeOp = WGPUStoreOp_Store;
-renderPassColorAttachment.clearValue = WGPUColor{ 1.0, 0.8, 0.55, 1.0 };
+colorAttachment.loadOp = WGPULoadOp_Clear;
+colorAttachment.storeOp = WGPUStoreOp_Store;
+colorAttachment.clearValue = WGPUColor{ 1.0, 0.8, 0.55, 1.0 };
 ```
 
 Conclusion

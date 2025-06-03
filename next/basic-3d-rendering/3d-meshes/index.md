@@ -8,4 +8,5 @@ Contents
 :titlesonly:
 
 a-simple-example
+depth-buffer
 ```

@@ -414,16 +414,16 @@ We declare `m_positionBuffer` and `m_colorBuffer` as members of the `Application
 ````{tab} With webgpu.hpp
 ```{lit} C++, Application attributes (append)
 private: // Application attributes
-	wgpu::Buffer m_positionBuffer;
-	wgpu::Buffer m_colorBuffer;
+	wgpu::Buffer m_positionBuffer = nullptr;
+	wgpu::Buffer m_colorBuffer = nullptr;
 ```
 ````
 
 ````{tab} Vanilla webgpu.h
 ```{lit} C++, Application attributes (append, for tangle root "Vanilla")
 private: // Application attributes
-	WGPUBuffer m_positionBuffer;
-	WGPUBuffer m_colorBuffer;
+	WGPUBuffer m_positionBuffer = nullptr;
+	WGPUBuffer m_colorBuffer = nullptr;
 ```
 ````
 
@@ -599,17 +599,17 @@ I changed the background color (`clearValue`) to `Color{ 0.05, 0.05, 0.05, 1.0 }
 ```
 
 ```{lit} C++, Describe the attachment (hidden, replace, also for tangle root "Option A")
-renderPassColorAttachment.view = targetView;
-renderPassColorAttachment.loadOp = LoadOp::Clear; // NEW
-renderPassColorAttachment.storeOp = StoreOp::Store; // NEW
-renderPassColorAttachment.clearValue = Color{ 0.25, 0.25, 0.25, 1.0 }; // NEW
+colorAttachment.view = targetView;
+colorAttachment.loadOp = LoadOp::Clear; // NEW
+colorAttachment.storeOp = StoreOp::Store; // NEW
+colorAttachment.clearValue = Color{ 0.25, 0.25, 0.25, 1.0 }; // NEW
 ```
 
 ```{lit} C++, Describe the attachment (hidden, replace, for tangle root "Vanilla", also for tangle root "Option A - Vanilla")
-renderPassColorAttachment.view = targetView;
-renderPassColorAttachment.loadOp = WGPULoadOp_Clear;
-renderPassColorAttachment.storeOp = WGPUStoreOp_Store;
-renderPassColorAttachment.clearValue = WGPUColor{ 0.25, 0.25, 0.25, 1.0 };
+colorAttachment.view = targetView;
+colorAttachment.loadOp = WGPULoadOp_Clear;
+colorAttachment.storeOp = WGPUStoreOp_Store;
+colorAttachment.clearValue = WGPUColor{ 0.25, 0.25, 0.25, 1.0 };
 ```
 ````
 

@@ -281,8 +281,6 @@ I intentionally set a different color for the tip of the pyramid so that we can 
 Basic transform
 ---------------
 
-**WIP**
-
 *This is a gentle introduction to **trigonometry**. If you are familiar with the concept, you may jump ahead.*
 
 Seen from above, this pyramid boringly looks like an square. Could we **rotate** this? A very basic way to change the view angle is to **swap axes**:

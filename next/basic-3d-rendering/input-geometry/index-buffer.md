@@ -140,18 +140,18 @@ In the list of **application attributes**, we replace `m_vertexBuffer` with `m_p
 ````{tab} With webgpu.hpp
 ```{lit} C++, Application attributes (append)
 private: // Application attributes
-	wgpu::Buffer m_pointBuffer;
-	wgpu::Buffer m_indexBuffer;
-	uint32_t m_indexCount;
+	wgpu::Buffer m_pointBuffer = nullptr;
+	wgpu::Buffer m_indexBuffer = nullptr;
+	uint32_t m_indexCount = 0;
 ```
 ````
 
 ````{tab} Vanilla webgpu.h
 ```{lit} C++, Application attributes (append, for tangle root "Vanilla")
 private: // Application attributes
-	WGPUBuffer m_pointBuffer;
-	WGPUBuffer m_indexBuffer;
-	uint32_t m_indexCount;
+	WGPUBuffer m_pointBuffer = nullptr;
+	WGPUBuffer m_indexBuffer = nullptr;
+	uint32_t m_indexCount = 0;
 ```
 ````
 

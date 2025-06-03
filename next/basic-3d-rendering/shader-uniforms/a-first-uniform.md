@@ -127,14 +127,14 @@ We first declare our `m_uniformBuffer` in the `Application` class attributes:
 ````{tab} With webgpu.hpp
 ```{lit} C++, Application attributes (append)
 private: // Application attributes
-	wgpu::Buffer m_uniformBuffer;
+	wgpu::Buffer m_uniformBuffer = nullptr;
 ```
 ````
 
 ````{tab} Vanilla webgpu.h
 ```{lit} C++, Application attributes (append, for tangle root "Vanilla")
 private: // Application attributes
-	WGPUBuffer m_uniformBuffer;
+	WGPUBuffer m_uniformBuffer = nullptr;
 ```
 ````
 
@@ -295,16 +295,16 @@ Importantly, like any object created with a `createSomething` procedure, layouts
 ````{tab} With webgpu.hpp
 ```{lit} C++, Application attributes (append)
 private: // Application attributes
-	wgpu::PipelineLayout m_layout;
-	wgpu::BindGroupLayout m_bindGroupLayout;
+	wgpu::PipelineLayout m_layout = nullptr;
+	wgpu::BindGroupLayout m_bindGroupLayout = nullptr;
 ```
 ````
 
 ````{tab} Vanilla webgpu.h
 ```{lit} C++, Application attributes (append, for tangle root "Vanilla")
 private: // Application attributes
-	WGPUPipelineLayout m_layout;
-	WGPUBindGroupLayout m_bindGroupLayout;
+	WGPUPipelineLayout m_layout = nullptr;
+	WGPUBindGroupLayout m_bindGroupLayout = nullptr;
 ```
 ````
 
@@ -390,14 +390,14 @@ The bind group is again an object that we want to keep after initialization (we 
 ````{tab} With webgpu.hpp
 ```{lit} C++, Application attributes (append)
 private: // Application attributes
-	wgpu::BindGroup m_bindGroup;
+	wgpu::BindGroup m_bindGroup = nullptr;
 ```
 ````
 
 ````{tab} Vanilla webgpu.h
 ```{lit} C++, Application attributes (append, for tangle root "Vanilla")
 private: // Application attributes
-	WGPUBindGroup m_bindGroup;
+	WGPUBindGroup m_bindGroup = nullptr;
 ```
 ````
 
