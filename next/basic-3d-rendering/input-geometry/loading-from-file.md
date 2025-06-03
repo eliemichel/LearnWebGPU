@@ -405,7 +405,7 @@ bool ResourceManager::loadGeometry(
 #include "ResourceManager.h"
 {{Other ResourceManager.cpp includes}}
 
-{{ResourceManager member definitions}}
+{{ResourceManager member implementations}}
 ```
 
 ```{lit} C++, Other ResourceManager.cpp includes (hidden, also for tangle root "Vanilla")
@@ -416,7 +416,11 @@ bool ResourceManager::loadGeometry(
 #include <iostream>
 ```
 
-```{lit} C++, ResourceManager member definitions (hidden, also for tangle root "Vanilla")
+```{lit} C++, ResourceManager member implementations (hidden, also for tangle root "Vanilla")
+{{Implementation of ResourceManager::loadGeometry}}
+```
+
+```{lit} C++, Implementation of ResourceManager::loadGeometry (hidden, also for tangle root "Vanilla")
 bool ResourceManager::loadGeometry(
 	const std::filesystem::path& path,
 	std::vector<float>& pointData,
@@ -562,8 +566,12 @@ using namespace wgpu;
 
 And we may now define it in `ResourceManager.cpp`:
 
+```{lit} C++, ResourceManager member implementations (hidden, append, also for tangle root "Vanilla")
+{{Implementation of ResourceManager::loadShaderModule}}
+```
+
 ````{tab} With webgpu.hpp
-```{lit} C++, ResourceManager member definitions (append)
+```{lit} C++, Implementation of ResourceManager::loadShaderModule
 ShaderModule ResourceManager::loadShaderModule(const std::filesystem::path& path, Device device) {
 	std::ifstream file(path);
 	if (!file.is_open()) {
@@ -587,7 +595,7 @@ ShaderModule ResourceManager::loadShaderModule(const std::filesystem::path& path
 ````
 
 ````{tab} Vanilla webgpu.h
-```{lit} C++, ResourceManager member definitions (append, for tangle root "Vanilla")
+```{lit} C++, Implementation of ResourceManager::loadShaderModule (for tangle root "Vanilla")
 WGPUShaderModule ResourceManager::loadShaderModule(const std::filesystem::path& path, WGPUDevice device) {
 	std::ifstream file(path);
 	if (!file.is_open()) {
