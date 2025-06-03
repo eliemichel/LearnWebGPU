@@ -354,7 +354,11 @@ We do not have any `private` member for now, but we will later on.
 
 We can declare in `public` members our `loadGeometry` function:
 
-```{lit} C++, Public ResourceManager members (also for tangle root "Vanilla")
+```{lit} C++, Public ResourceManager members (hidden, also for tangle root "Vanilla")
+{{Declaration of ResourceManager::loadGeometry}}
+```
+
+```{lit} C++, Declaration of ResourceManager::loadGeometry (also for tangle root "Vanilla")
 /**
  * Load a file from `path` using our ad-hoc format and populate the `pointData`
  * and `indexData` vectors.
@@ -516,8 +520,12 @@ Now that we have a basic resource management mechanism, I strongly suggest we al
 
 Let us first declare it in `ResourceManager.h`:
 
+```{lit} C++, Public ResourceManager members (append, also for tangle root "Vanilla")
+{{Declaration of ResourceManager::loadShaderModule}}
+```
+
 ````{tab} With webgpu.hpp
-```{lit} C++, Public ResourceManager members (append)
+```{lit} C++, Declaration of ResourceManager::loadShaderModule
 /**
  * Create a shader module for a given WebGPU `device` from a WGSL shader source
  * loaded from file `path`.
@@ -530,7 +538,7 @@ static wgpu::ShaderModule loadShaderModule(
 ````
 
 ````{tab} Vanilla webgpu.h
-```{lit} C++, Public ResourceManager members (append, for tangle root "Vanilla")
+```{lit} C++, Declaration of ResourceManager::loadShaderModule (for tangle root "Vanilla")
 /**
  * Create a shader module for a given WebGPU `device` from a WGSL shader source
  * loaded from file `path`.
