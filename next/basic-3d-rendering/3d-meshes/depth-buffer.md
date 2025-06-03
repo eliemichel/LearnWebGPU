@@ -113,7 +113,7 @@ Lastly, we must tell the pipeline how the depth values of the Z-Buffer are **enc
 ````{tab} With webgpu.hpp
 ```{lit} C++, Application attributes (append)
 private: // In Application.h
-	wgpu::TextureFormat m_depthTextureFormat = TextureFormat::Depth24Plus;
+	wgpu::TextureFormat m_depthTextureFormat = wgpu::TextureFormat::Depth24Plus;
 ```
 ````
 
