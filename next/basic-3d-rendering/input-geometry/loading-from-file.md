@@ -17,7 +17,7 @@ Loading from file <span class="bullet">🟢</span>
 ````
 
 ````{tab} Vanilla webgpu.h
-*Resulting code:* [`step037-next-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step037-next-vanilla)
+*Resulting code:* [`step037-vanilla-next`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step037-vanilla-next)
 ````
 
 Now that we are familiar with the representation of geometric data that the GPU expect, we can load it from a file instead of hard-coding it in the source code. This is the occasion to introduce some basic **resource file management** to our project (although this is not specific to WebGPU).
@@ -701,5 +701,5 @@ We are going to come back on these from time to time to refine them. We are now 
 ````
 
 ````{tab} Vanilla webgpu.h
-*Resulting code:* [`step037-next-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step037-next-vanilla)
+*Resulting code:* [`step037-vanilla-next`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step037-vanilla-next)
 ````

@@ -18,7 +18,7 @@ A first Vertex Attribute <span class="bullet">🟢</span>
 ````
 
 ````{tab} Vanilla webgpu.h
-*Resulting code:* [`step032-next-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step032-next-vanilla)
+*Resulting code:* [`step032-vanilla-next`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step032-vanilla-next)
 ````
 
 In the [Hello Triangle](../hello-triangle.md) chapter, we were **hardcoding** the 3 vertex positions directly in the shader, but this obviously does not scale well. In this chapter, we see the **proper way** to feed vertex attributes as **input to the *vertex shader***.
@@ -419,7 +419,7 @@ We have seen in this chapter how to use **GPU buffers** to feed data as **input*
 ````
 
 ````{tab} Vanilla webgpu.h
-*Resulting code:* [`step032-next-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step032-next-vanilla)
+*Resulting code:* [`step032-vanilla-next`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step032-vanilla-next)
 ````
 
 

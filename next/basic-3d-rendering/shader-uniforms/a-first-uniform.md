@@ -18,7 +18,7 @@ A first uniform <span class="bullet">🟢</span>
 ````
 
 ````{tab} Vanilla webgpu.h
-*Resulting code:* [`step039-next-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step039-next-vanilla)
+*Resulting code:* [`step039-vanilla-next`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step039-vanilla-next)
 ````
 
 Introduction
@@ -588,5 +588,5 @@ In the next chapter, we will generalize what we saw here by introducing **a seco
 ````
 
 ````{tab} Vanilla webgpu.h
-*Resulting code:* [`step039-next-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step039-next-vanilla)
+*Resulting code:* [`step039-vanilla-next`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step039-vanilla-next)
 ````

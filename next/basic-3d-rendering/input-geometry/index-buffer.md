@@ -17,7 +17,7 @@ Index Buffer <span class="bullet">🟢</span>
 ````
 
 ````{tab} Vanilla webgpu.h
-*Resulting code:* [`step034-next-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step034-next-vanilla)
+*Resulting code:* [`step034-vanilla-next`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step034-vanilla-next)
 ````
 
 The index buffer is used to **separate** the list of **vertex attributes** from the actual order in which they are **connected**. To illustrate its interest, let us draw a square, which is made of 2 triangles.
@@ -319,7 +319,7 @@ Note however that this only works when the common vertices **share all their att
 ````
 
 ````{tab} Vanilla webgpu.h
-*Resulting code:* [`step034-next-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step034-next-vanilla)
+*Resulting code:* [`step034-vanilla-next`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step034-vanilla-next)
 ````
 
 

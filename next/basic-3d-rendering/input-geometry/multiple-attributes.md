@@ -17,7 +17,7 @@ Multiple Attributes <span class="bullet">🟢</span>
 ````
 
 ````{tab} Vanilla webgpu.h
-*Resulting code:* [`step033-next-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step033-next-vanilla)
+*Resulting code:* [`step033-vanilla-next`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step033-vanilla-next)
 ````
 
 Vertices can contain **more than just a position attribute**. A typical example is to **add a color attribute** to each vertex. This will also show us how the rasterizer automatically interpolate vertex attributes across triangles.
@@ -660,7 +660,7 @@ All right, we know all about **vertex attributes**! In the next chapter, we will
 ````
 
 ````{tab} Vanilla webgpu.h
-*Resulting code:* [`step033-next-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step033-next-vanilla)
+*Resulting code:* [`step033-vanilla-next`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step033-vanilla-next)
 ````
 
 

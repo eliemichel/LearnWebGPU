@@ -18,7 +18,7 @@ Dynamic uniforms <span class="bullet">🟢</span>
 ````
 
 ````{tab} Vanilla webgpu.h
-*Resulting code:* [`step044-next-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step044-next-vanilla)
+*Resulting code:* [`step044-vanilla-next`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step044-vanilla-next)
 ````
 
 Imagine we want to issue **two calls** to the `draw` method of our render pipeline **with different values** of the uniforms, in order to draw two WebGPU logos with different colors. Naively we could try this:
@@ -309,5 +309,5 @@ We are now quite comfortable with uniforms, we are ready to move on to actual **
 ````
 
 ````{tab} Vanilla webgpu.h
-*Resulting code:* [`step044-next-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step044-next-vanilla)
+*Resulting code:* [`step044-vanilla-next`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step044-vanilla-next)
 ````

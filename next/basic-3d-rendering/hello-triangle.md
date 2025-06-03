@@ -17,7 +17,7 @@ Hello Triangle <span class="bullet">🟢</span>
 ````
 
 ````{tab} Vanilla webgpu.h
-*Resulting code:* [`step030-next-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step030-next-vanilla)
+*Resulting code:* [`step030-vanilla-next`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step030-vanilla-next)
 ````
 
 In this chapter, we finally see how to **draw something** on the screen! And by **something**, I mean triangles, because... all the GPU can draw is triangles. Rest assured, we can do **a lot** with triangles.
@@ -546,5 +546,5 @@ Storage textures, which are used the other way around, to get data out of the re
 ````
 
 ````{tab} Vanilla webgpu.h
-*Resulting code:* [`step030-next-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step030-next-vanilla)
+*Resulting code:* [`step030-vanilla-next`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step030-vanilla-next)
 ````

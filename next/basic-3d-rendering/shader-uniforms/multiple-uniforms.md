@@ -17,7 +17,7 @@ More uniforms <span class="bullet">🟢</span>
 ````
 
 ````{tab} Vanilla webgpu.h
-*Resulting code:* [`step043-next-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step043-next-vanilla)
+*Resulting code:* [`step043-vanilla-next`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step043-vanilla-next)
 ````
 
 In order to illustrate the **flexibility of the uniform binding process**, let us add a second uniform variable, this time **controlling the overall color** of our scene.
@@ -373,5 +373,5 @@ I started writing [an online utility tool](https://eliemichel.github.io/WebGPU-A
 ````
 
 ````{tab} Vanilla webgpu.h
-*Resulting code:* [`step043-next-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step043-next-vanilla)
+*Resulting code:* [`step043-vanilla-next`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step043-vanilla-next)
 ````
