@@ -207,7 +207,7 @@ The present example is so simple that `wgpu-native` actually completes the submi
 
 As can be seen in [`webgpu.h`](https://github.com/webgpu-native/webgpu-headers/blob/main/webgpu.h), the value `4` corresponds to `WGPUQueueWorkDoneStatus_DeviceLost`. Indeed, our program **terminates** right after submitting the commands, without waiting for it to complete, so **the device gets destroyed before** the submitted work is done!
 
-So, we need to wait a little bit, and **importantly** to call **tick**/**poll** the device so that it updates its awaiting tasks. This is a part of the API that is **not standard yet**, so we must adapt our implementation to the backend:
+So, we need to wait a little bit, and **importantly** we must call **tick**/**poll** on the device so that it updates its awaiting tasks. This is a part of the API that is **not standard yet**, so we must adapt our implementation to the backend:
 
 ```{lit} C++, Poll device
 for (int i = 0 ; i < 5 ; ++i) {
@@ -245,7 +245,7 @@ Tick/Poll device...
 Tick/Poll device...
 ```
 
-To avoid using an arbitrary number of ticks, we may set a **context boolean** to `true` in `onQueueWorkDone` and break the loop as soon as it is true. But we will quickly have this called in the main application loop anyways!
+To avoid using an arbitrary number of ticks, we may set a **context boolean** to `true` in `onQueueWorkDone` and break the loop as soon as it is true. But we will shortly call this in the main application loop anyway!
 
 Conclusion
 ----------
@@ -257,7 +257,7 @@ We have seen a few important notions in this chapter:
  - Queued command buffers must be encoded using a **command encoder**.
  - We must regularly **tick**/**poll** the device to updates its awaiting tasks.
 
-This was a bit abstract because we can queue operations but we did not see any yet. In the next chapters we open a graphics window and then use our queue to **finally display something**!
+This was a bit abstract because even though we can now queue operations, they do not let us see anything yet. In the next chapters we open a graphics window and then use our queue to **finally display something**!
 
 ```{note}
 If you are only interested in **compute shaders** and do not need to open a window, you may leave the *Getting Started* section right away and move on to [*Basic Compute*](../basic-compute/index.md), although some key concepts are still only introduced in the [*Basic 3D Rendering*](../basic-3d-rendering/index.md) part, like the [*Playing with buffers*](../basic-3d-rendering/input-geometry/playing-with-buffers.md) chapter.
