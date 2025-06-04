@@ -20,18 +20,18 @@ Playing with buffers <span class="bullet">🟢</span>
 *Resulting code:* [`step031-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step031-vanilla)
 ````
 
-Before feeding vertex data to the render pipeline, we need to get familiar with the notion of **buffer**. A buffer is "just" a **chunk of memory** allocated in the **VRAM** (the GPU's memory). Think of it as some kind of `new` or `malloc` for the GPU.
+Before feeding vertex data to the render pipeline, we need to get familiar with the notion of a **buffer**. A buffer is "just" a **chunk of memory** allocated in the **VRAM** (the GPU's memory). Think of it as some kind of `new` or `malloc` for the GPU.
 
-In this chapter, we see how to **create** (i.e., allocate), **write** from CPU, **copy** from GPU to GPU and **read back** to CPU.
+In this chapter, we will see how to **create** (i.e., allocate), **write** from CPU, **copy** from GPU to GPU and **read back** to CPU.
 
 ```{note}
-Note that textures are a special kind of memory (because of the way we usually sample them) that they live in a different kind of object.
+Note that textures are a special kind of memory (because of the way we usually sample them) so they live in a different kind of object.
 ```
 
 Since this is just an experiment, I suggest we temporarily write the whole code of this chapter at the end of the `Initialize()` function. The overall outline of our code is as follows:
 
 ```{lit} C++, Playing with buffers (insert in {{Initialize}} after "InitializePipeline()", also for tangle root "Vanilla")
-// Experimentation for the "Playing with buffer" chapter
+// Experimentation for the "Playing with buffers" chapter
 {{Create a first buffer}}
 {{Create a second buffer}}
 
@@ -177,7 +177,7 @@ And don't forget that commands sent through the **command encoder** are only sub
 Copying a buffer
 ----------------
 
-We can now submit a **buffer-buffer copy** operation to the command queue. This is not directly available from the queue object but rather requires to **create a command encoder**. We may use the same one as the render pass for our test and simply add the following:
+We can now submit a **buffer-buffer copy** operation to the command queue. This is not directly available from the queue object but rather requires us to **create a command encoder**. Once we have an encoder we may simply add the following:
 
 ````{tab} With webgpu.hpp
 ```{lit} C++, Copy buffer to buffer
@@ -228,7 +228,7 @@ Reading from a buffer
 
 The **command queue**, that we used to send data (`writeBuffer`) and instructions (`copyBufferToBuffer`), **only goes in one way**: from CPU host to GPU device. It is thus a "fire and forget" queue: functions do not return a value since they **run on a different timeline**.
 
-So, how do we read data back then? We use an **asynchronous operation**, like we did when using `wgpuQueueOnSubmittedWorkDone` in the [Command Queue](../../getting-started/the-command-queue.md) chapter. Instead of directly get a value back, we set up a **callback** that gets invoked whenever the requested data is ready. We then **poll the device** to check for incoming events.
+So, how do we read data back then? We use an **asynchronous operation**, like we did when using `wgpuQueueOnSubmittedWorkDone` in the [Command Queue](../../getting-started/the-command-queue.md) chapter. Instead of directly getting a value back, we set up a **callback** that gets invoked whenever the requested data is ready. We then **poll the device** to check for incoming events.
 
 **To read data from a buffer**, we use `buffer.mapAsync` (or `wgpuBufferMapAsync`). This operation **maps** the GPU buffer into CPU memory, and then whenever it is ready it executes the callback function it was provided. Once we are done, we can **unmap** the buffer.
 
@@ -353,7 +353,7 @@ while (!ready) {
 }
 ```
 
-You could now see `Buffer 2 mapped with status 1` (1 being the value of `BufferMapAsyncStatus::Success`) when running your program. **However**, we never change the `ready` variable to `true`! So the program then **hangs forever**... not great. That is why the next section shows how to pass some context to the callback.
+You could now see `Buffer 2 mapped with status 1` (1 being the value of `BufferMapAsyncStatus::Success` when using Dawn, it is 0 for WGPU) when running your program. **However**, we never change the `ready` variable to `true`! So the program then **hangs forever**... not great. That is why the next section shows how to pass some context to the callback.
 
 ### Mapping context
 
@@ -363,7 +363,7 @@ So, we need the callback to **access and mutate** the `ready` variable. But how 
 When defining `onBuffer2Mapped` as a regular function, it is clear that `ready` is not accessible. When using a lambda expression like we did above, one could be tempted to add `ready` in the **capture list** (the brackets before function arguments). But this **does not work** because a capturing lambda has a **different type**, that cannot be used as a regular callback. We see below that the C++ wrapper fixes this limitation.
 ```
 
-The **user pointer** is an argument that is provided to `wgpuBufferMapAsync`, when setting up the callback, and that is then fed **as is** to the callback `onBuffer2Mapped` when the map operation is ready. The buffer only forwards this pointer but never uses it: **only you** (the user of the API) interprets it.
+The **user pointer** is an argument that is provided to `wgpuBufferMapAsync`, when setting up the callback, and that is then fed **as is** to the callback `onBuffer2Mapped` when the map operation is ready. The buffer only forwards this pointer but never uses it: **only you** (the user of the API) interpret it.
 
 ````{tab} With webgpu.hpp
 ```C++
