@@ -40,7 +40,7 @@ wgpuRenderPassEncoderDraw(renderPass, 3, 1, 0, 0);
 ```
 ````
 
-What is a bit verbose is the configuration of the **render pipeline**, and the creation of **shaders**. Luckily, we already introduced a lot of key concepts in chapter [*Our first shader*](../getting-started/our-first-shader.md), the main new element here is the render pipeline
+What is a bit verbose is the configuration of the **render pipeline**, and the creation of **shaders**.
 
 Render Pipeline
 ---------------
