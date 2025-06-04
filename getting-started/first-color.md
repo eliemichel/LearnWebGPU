@@ -8,10 +8,10 @@ First Color <span class="bullet">🟢</span>
 
 *Resulting code:* [`step025`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step025)
 
-The goal of this chapter is to **draw a solid color** all over our window. To do so, we add the following steps:
+The goal of this chapter is to **draw a solid color** over our entire window. To do so, we add the following steps:
 
  1. We must first **configure** the *surface* of our window.
- 2. We then get at each frame the **Surface Texture** to draw onto.
+ 2. Then on each frame we get the **Surface Texture** to draw onto.
  3. And finally we create a **Render Pass** to effectively draw something.
 
 Surface configuration
@@ -25,7 +25,7 @@ However, this surface needs to be **configured** before we can draw on it. To un
 
 First, the render pipeline **does not draw directly on the texture that is currently displayed**, otherwise we would see pixels change all the time. A typical pipeline draws to an **off-screen texture**, which replaces the currently displayed one only once it is complete. We then say that the texture is **presented** to the surface.
 
-Second, drawing takes a **different time** than the frame rate required by your application, so the GPU may have to wait until the next frame is needed. There might be more than one off-screen texture waiting in the queue to be presented, so that fluctuations in the render time get amortized.
+Second, drawing takes a **different amount of time** than the frame rate required by your application, so the GPU may have to wait until the next frame is needed. There might be more than one off-screen texture waiting in the queue to be presented, so that fluctuations in the render time get amortized.
 
 Last, **these off-screen textures are reused** as much as possible. As soon as a new texture is presented, the previous one can be reused as a target for the next frame. This whole mechanism is called a **Swap Chain** and is handled under the hood by the **Surface** object.
 
@@ -285,7 +285,7 @@ Render Pass
 
 ### Render pass encoder
 
-We now hold the texture where to draw to display something in our window. Like any GPU-side operation, we trigger drawing operations from the **command queue**, using a command encoder as described in the [Command Queue](the-command-queue.md).
+We now hold the texture to draw to in order to display something in our window. Like any GPU-side operation, we trigger drawing operations from the **command queue**, using a command encoder as described in the [Command Queue](the-command-queue.md).
 
 We build a `WGPUCommandEncoder` called `encoder`, then submit it to the queue. In between we will add a command that clears the screen with a uniform color.
 
@@ -295,7 +295,7 @@ We build a `WGPUCommandEncoder` called `encoder`, then submit it to the queue. I
 {{Finish encoding and submit}}
 ```
 
-If you look in `webgpu.h` at the methods of the encoder (the procedures starting with `wgpuCommandEncoder`), most of them are related to copying buffers and textures around. Except **two special ones**: `wgpuCommandEncoderBeginComputePass` and `wgpuCommandEncoderBeginRenderPass`. These return **specialized encoder objects**, namely `WGPUComputePassEncoder` and `WGPURenderPassEncoder`, that give access to commands dedicated to respectively **computing** and **3D rendering**.
+If you look in `webgpu.h` at the methods of the encoder (the procedures starting with `wgpuCommandEncoder`), most of them are related to copying buffers and textures around. The exceptions are **two special methods**: `wgpuCommandEncoderBeginComputePass` and `wgpuCommandEncoderBeginRenderPass`. These return **specialized encoder objects**, namely `WGPUComputePassEncoder` and `WGPURenderPassEncoder`, that give access to commands dedicated respectively to **computing** and **3D rendering**.
 
 In our case, we use a **render pass**:
 
@@ -321,7 +321,7 @@ Note that we directly end the pass **without issuing** any other command. This i
 
 A render pass leverages the 3D rendering circuits of the GPU to draw content into one or multiple textures. So one important thing to set up is to tell **which textures are the target** of this process. These are the **attachments** of the render pass.
 
-The number of attachment is variable, so the descriptor gets it through two fields: the number `colorAttachmentCount` of attachments and the address `colorAttachments` of the color attachment array. Since we **only use one** here, the address of the array is just the address of a single `WGPURenderPassColorAttachment` variable.
+The number of attachments is variable, so the descriptor gets it through two fields: the number `colorAttachmentCount` of attachments and the address `colorAttachments` of the color attachment array. Since we **only use one** here, the address of the array is just the address of a single `WGPURenderPassColorAttachment` variable.
 
 ```{lit} C++, Describe Render Pass
 WGPURenderPassColorAttachment renderPassColorAttachment = {};
@@ -350,7 +350,7 @@ The `loadOp` setting indicates the load operation to perform on the view **prior
 
 The `storeOp` indicates the operation to perform on view **after executing** the render pass. It can be either stored or discarded (the latter only makes sense if the render pass has side-effects).
 
-And the `clearValue` is the value to **clear the screen** with, put anything you want in here! The 4 values are the **red**, **green**, **blue** and **alpha** channels, on a scale **from 0.0 to 1.0**.
+The `clearValue` is the value to **clear the screen** with, put anything you want in here! The 4 values are the **red**, **green**, **blue** and **alpha** channels, on a scale **from 0.0 to 1.0**.
 
 ```{lit} C++, Describe the attachment (append)
 renderPassColorAttachment.loadOp = WGPULoadOp_Clear;
@@ -400,6 +400,6 @@ Our first color!
 When using Dawn, the displayed color is potentially different because the surface color format uses another color space. More on this [later](../basic-3d-rendering/input-geometry/loading-from-file.md)!
 ```
 
-We are now **ready with the basic WebGPU setup**, and can dive more deeply in the 3D rendering pipeline! The next chapter is a **bonus** that introduces a **more comfortable API** that benefits from C++ idioms.
+We are now **ready with the basic WebGPU setup**, and can dive more deeply into the 3D rendering pipeline! The next chapter is a **bonus** that introduces a **more comfortable API** that benefits from C++ idioms.
 
 *Resulting code:* [`step025`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step025)
