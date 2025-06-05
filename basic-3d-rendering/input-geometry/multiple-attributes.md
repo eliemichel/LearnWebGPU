@@ -20,7 +20,7 @@ Multiple Attributes <span class="bullet">🟢</span>
 *Resulting code:* [`step033-vanilla`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step033-vanilla)
 ````
 
-Vertices can contain more than just a position attribute. A typical example is to **add a color attribute** to each vertex. This will also show us how the rasterizer automatically interpolate vertex attributes across triangles.
+Vertices can contain more than just a position attribute. A typical example is to **add a color attribute** to each vertex. This will also show us how the rasterizer automatically interpolates vertex attributes across triangles.
 
 Shader
 ------
@@ -50,7 +50,7 @@ struct VertexInput {
 };
 ```
 
-Our vertex shader thus only receive one single argument, whose type is `VertexInput`:
+Our vertex shader thus only receives one single argument, whose type is `VertexInput`:
 
 ```{lit} rust, Vertex shader (also for tangle root "Vanilla")
 fn vs_main(in: VertexInput) -> /* ... */ {
