@@ -10,7 +10,7 @@ The Device <span class="bullet">🟢</span>
 
 A WebGPU **device** represents a **context** of use of the API. All the objects that we create (geometry, textures, etc.) are owned by the device.
 
-The device is requested from an **adapter** by specifying the **subset of limits and features** that we are interesed in. Once the device is created, the adapter should no longer be used. **The only capabilities that matter** to the application are the one of the device.
+The device is requested from an **adapter** by specifying the **subset of limits and features** that we are interesed in. Once the device is created, the adapter should no longer be used. **The only capabilities that matter** to the application are the ones of the device.
 
 Device request
 --------------
@@ -221,7 +221,7 @@ deviceDesc.deviceLostCallback = nullptr;
 We will come back here and refine these options whenever we will need some more capabilities from the device.
 
 ```{note}
-The `label` is **used in error message** to help you debug where something went wrong, so it is good practice to use it as soon as you get multiple objects of the same type. Currently, this is only used by Dawn.
+The `label` is **used in error messages** to help you debug where something went wrong, so it is good practice to use it as soon as you get multiple objects of the same type. Currently, this is only used by Dawn.
 ```
 
 Inspecting the device
