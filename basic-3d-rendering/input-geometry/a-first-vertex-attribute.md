@@ -291,7 +291,7 @@ There are two limits that may cause issue even if set to `WGPU_LIMIT_U32_UNDEFIN
 
 ```{lit} C++, Other device limits (also for tangle root "Vanilla")
 // These two limits are different because they are "minimum" limits,
-// they are the only ones we are may forward from the adapter's supported
+// they are the only ones we may forward from the adapter's supported
 // limits.
 requiredLimits.limits.minUniformBufferOffsetAlignment = supportedLimits.limits.minUniformBufferOffsetAlignment;
 requiredLimits.limits.minStorageBufferOffsetAlignment = supportedLimits.limits.minStorageBufferOffsetAlignment;
@@ -384,7 +384,7 @@ private: // Application attributes
 ````
 
 ```{lit} C++, Private methods (append, also for tangle root "Vanilla")
-private: // APplication methods
+private: // Application methods
 	void InitializeBuffers();
 ```
 
