@@ -5,13 +5,11 @@ Transformation matrices <span class="bullet">🟢</span>
 :tangle-root: 054 - Transformation matrices - Next - vanilla
 :parent: 052 - Depth buffer - Next - vanilla
 :alias: Vanilla
-:debug:
 ```
 
 ```{lit-setup}
 :tangle-root: 054 - Transformation matrices - Next
 :parent: 052 - Depth buffer - Next
-:debug:
 ```
 
 ````{tab} With webgpu.hpp
