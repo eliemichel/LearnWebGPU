@@ -1,11 +1,10 @@
-Depth buffer <span class="bullet">🟠</span>
+Depth buffer <span class="bullet">🟢</span>
 ============
 
 ```{lit-setup}
 :tangle-root: 052 - Depth buffer - Next - vanilla
 :parent: 050 - A simple example - Next - vanilla
 :alias: Vanilla
-:debug:
 ```
 
 ```{lit-setup}
@@ -230,10 +229,6 @@ m_depthTextureView.release();
 wgpuTextureViewRelease(m_depthTextureView);
 ```
 ````
-
-```{admonition} TODO
-Check whether the render pass holds a reference to the texture view, in which case we can even release it right after. Then maybe define the depth texture in `InitializePipeline()` actually.
-```
 
 Depth attachment
 ----------------

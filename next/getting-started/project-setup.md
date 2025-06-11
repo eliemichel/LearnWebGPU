@@ -65,7 +65,7 @@ add_executable(App main.cpp)
 CMake also expects at the beginning of `CMakeLists.txt` to know the version of CMake the file is written for (minimum supported...your version) and some information about the project:
 
 ```{lit} CMake, file: CMakeLists.txt
-cmake_minimum_required(VERSION 3.21...3.30)
+cmake_minimum_required(VERSION 3.16...3.30)
 project(
 	LearnWebGPU # name of the project, which will also be the name of the visual studio solution if you use it
 	VERSION 0.1.0 # any version number
