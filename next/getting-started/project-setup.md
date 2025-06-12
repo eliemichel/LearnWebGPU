@@ -201,6 +201,26 @@ set_directory_properties(PROPERTIES
 No need to check that we are building with Visual Studio. **If we are not**, this directory property is just ignored.
 ```
 
+### VS Code
+
+When building with `make` or [`ninja`](https://ninja-build.org/) and editing the code with VS Code (and potentially some other text editors that rely on [LSP](https://microsoft.github.io/language-server-protocol/)), we can ask CMake to generate a `compile_commands.json` file that helps the text editor figure out how the project is organized:
+
+```CMake
+# In CMakeLists.txt before defining targets
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+```
+
+Instead of hardcoding it into the CMakeList, you may prefer to specify it through the command line:
+
+```bash
+# Alternatively, specify this when configuring
+cmake -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+```
+
+```{note}
+If you configure using the [CMake Tools](https://marketplace.visualstudio.com/items?itemName=ms-vscode.cmake-tools) extension for VS Code, it should automatically turn `CMAKE_EXPORT_COMPILE_COMMANDS` on.
+```
+
 ### Building for the Web
 
 One nice benefits of using WebGPU as our graphics API is that we can **build our application to run in a Web page**.
