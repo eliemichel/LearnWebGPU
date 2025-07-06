@@ -10,7 +10,7 @@ The Device <span class="bullet">🟢</span>
 
 A WebGPU **device** represents a **context** of use of the API. All the objects that we create (geometry, textures, etc.) are owned by the device.
 
-The device is requested from an **adapter** by specifying the **subset of limits and features** that we are interesed in. Once the device is created, the adapter is generally no longer used: **the only capabilities that matter** to the rest of the application are the one of the device.
+The device is requested from an **adapter** by specifying the **subset of limits and features** that we are interested in. Once the device is created, the adapter is generally no longer used: **the only capabilities that matter** to the rest of the application are the one of the device.
 
 Device request
 --------------
