@@ -134,7 +134,7 @@ endif()
 ```
 
 ```{note}
-In the accompanying code, I hid these details in the `target_treat_all_warnings_as_errors()` function defined in `utils.cmake` and included at the beginning of the `CMakeLists.txt`.
+In the accompanying code, I hide these details in the `target_treat_all_warnings_as_errors()` function defined in `utils.cmake` and included at the beginning of the `CMakeLists.txt`.
 ```
 
 On MacOS, CMake can generate XCode project files. However, by default, no *schemes* are
