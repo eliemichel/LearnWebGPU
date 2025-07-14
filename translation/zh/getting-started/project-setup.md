@@ -6,12 +6,12 @@
 ```
 
 ```{lit-setup}
-:tangle-root: 000 - 配置项目
+:tangle-root: zh/000 - 配置项目
 ```
 
 *结果代码:* [`step000`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step000)
 
-我们会在示例代码中使用 [CMake](https://cmake.org/) 来管理代码编译. 这是跨平台构建中很标准的处理方式，同时我们遵守 [modern cmake](https://cliutils.gitlab.io/modern-cmake/) 风格编写这些配置。
+我们会在配套代码中使用 [CMake](https://cmake.org/) 来管理代码编译. 这是跨平台构建中很标准的处理方式，同时我们遵守 [modern cmake](https://cliutils.gitlab.io/modern-cmake/) 风格编写这些配置。
 
 必要条件
 ------------
@@ -59,7 +59,7 @@ int main (int, char**) {
 
 在 `CMakeLists.txt` 中，我们指定我们想要创建一个类型为 *executable* 的 *target*（构建目标），名为 "App"（这将是可执行文件的名称），其源文件为 `main.cpp`：
 
-```{lit} CMake, Define app target
+```{lit} CMake, 定义应用构建目标
 add_executable(App main.cpp)
 ```
 
@@ -73,9 +73,9 @@ project(
 	LANGUAGES CXX C # 项目使用的编程语言
 )
 
-{{Define app target}}
+{{定义应用构建目标}}
 
-{{Recommended extras}}
+{{推荐的额外配置}}
 ```
 
 构建
@@ -115,7 +115,7 @@ build\Debug\App.exe  # Windows
 
 在调用 `add_executable` 之后的位置，我们可以通过调用 `set_target_properties` 命令来设置 `App` 目标的一些属性。
 
-```{lit} CMake, Recommended extras
+```{lit} CMake, 推荐的额外配置
 set_target_properties(App PROPERTIES
 	CXX_STANDARD 17
 	CXX_STANDARD_REQUIRED ON
@@ -130,7 +130,7 @@ set_target_properties(App PROPERTIES
 
 作为一个良好的实践，我们将 `COMPILE_WARNING_AS_ERROR` 打开，以确保没有警告被忽略。当我们学习一个新的语言/库时，警告尤其重要。因此为了确保有尽可能多的警告，我们添加下面这些编译选项：
 
-```{lit} CMake, Recommended extras (append)
+```{lit} CMake, 推荐的额外配置 (append)
 if (MSVC)
 	target_compile_options(App PRIVATE /W4)
 else()
@@ -144,7 +144,7 @@ endif()
 
 在 macOS 上，CMake 可以生成 XCode 项目文件，但是默认情况下不会创建 *schemes*。XCode 可以为每个 CMake 目标生成一个 scheme，通常我们只想要主目标的方案。因此我们设置 `XCODE_GENERATE_SCHEME` 属性。同时我们启用帧捕获以进行 GPU 调试。
 
-```{lit} CMake, Recommended extras (append)
+```{lit} CMake, 推荐的额外配置 (append)
 if (XCODE)
 	set_target_properties(App PROPERTIES
 		XCODE_GENERATE_SCHEME ON
