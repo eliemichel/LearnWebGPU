@@ -2,7 +2,7 @@
 ============
 
 ```{translation-warning} Outdated Translation, /introduction.md
-这是[原英文页面](%original%)的**社区翻译**，自翻译以来有已更新，因此可能不再同步。欢迎您的[贡献](%contribute%)！
+这是[原始英文页面](%original%)的**社区翻译版本**。由于原文页面在翻译后**已更新**，因此内容可能不再同步。欢迎您参与[贡献](%contribute%)！
 ```
 
 什么是图形API？
@@ -112,12 +112,12 @@ WebGPU是一个**渲染硬件接口**，建立在您平台的驱动程序/操作
 
 如果您遇到任何错别字或更严重的问题，您可以点击每个页面顶部的编辑按钮来修复它们！
 
-```{image} images/edit-light.png
+```{image} /images/edit-light.png
 :alt: 使用每个页面顶部的编辑按钮！
 :class: only-light
 ```
 
-```{image} images/edit-dark.png
+```{image} /images/edit-dark.png
 :alt: 使用每个页面顶部的编辑按钮！
 :class: only-dark
 ```
