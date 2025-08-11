@@ -309,7 +309,7 @@ Inspecting the adapter
 
 The adapter object provides **information about the underlying implementation** and hardware, and about what it is able or not to do. It advertises the following information:
 
- - **Limits** regroup all the **maximum and minimum** values that may limit the behavior of the underlying GPU and its driver. A typical examples is the maximum texture size. Supported limits are retrieved using `wgpuAdapterGetLimits`.
+ - **Limits** regroup all the **maximum and minimum** values that may limit the behavior of the underlying GPU and its driver. A typical example is the maximum texture size. Supported limits are retrieved using `wgpuAdapterGetLimits`.
  - **Features** are non-mandatory **extensions** of WebGPU, that adapters may or may not support. They can be listed using `wgpuAdapterEnumerateFeatures` or tested individually with `wgpuAdapterHasFeature`.
  - **Properties** are extra information about the adapter, like its name, vendor, etc. Properties are retrieved using `wgpuAdapterGetProperties`.
 
