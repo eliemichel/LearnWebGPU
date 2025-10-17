@@ -2,7 +2,7 @@ Learn WebGPU
 ============
 
 ```{translation-warning} Outdated Translation, /index.md
-这是[原英文页面](%original%)的**社区翻译**，自翻译以来有已更新，因此可能不再同步。欢迎您的[贡献](%contribute%)！
+这是[原始英文页面](%original%)的**社区翻译版本**。由于原文页面在翻译后**已更新**，因此内容可能不再同步。欢迎您参与[贡献](%contribute%)！
 ```
 
 *用于C++中的原生图形开发。*
@@ -78,10 +78,10 @@ Learn WebGPU
 ```{admonition}  🚧 施工中
 文档**仍在构建**，**WebGPU标准亦在不断发展**。为帮助读者跟踪本文档的最新进展，我们在各章标题中使用了如下标识：
 
-🟢 **最新版**：*使用最新版本的[WebGPU分发](https://github.com/eliemichel/WebGPU-distribution)*  
-🟡 **已完成**：*已完成，但用的是旧版WebGPU*  
-🟠 **施工中**：*足够可读，但不完整*  
-🔴 **待施工**：*只触及了表面*  
+🟢 **最新版**：*使用最新版本的[WebGPU分发](https://github.com/eliemichel/WebGPU-distribution)*
+🟡 **已完成**：*已完成，但用的是旧版WebGPU*
+🟠 **施工中**：*足够可读，但不完整*
+🔴 **待施工**：*只触及了表面*
 
 **请注意：**<span></span>当使用章节的伴随代码时，请确保使用的是与`webgpu/`**相同的版本**，以避免差异。
 ```
