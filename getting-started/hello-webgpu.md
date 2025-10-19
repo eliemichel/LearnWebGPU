@@ -71,7 +71,7 @@ Since `wgpu-native` is written in rust, we cannot easily build it from scratch s
 **WIP:** Use the "for any platform" link rather than the platform-specific ones, I haven't automated their generation yet so they are usually behind the main one.
 ```
 
- - [wgpu-native for any platform](https://github.com/eliemichel/WebGPU-distribution/archive/refs/tags/wgpu-v0.19.4.1.zip) (a bit heavier as it's a merge of all possible platforms)
+ - [wgpu-native for any platform](https://github.com/eliemichel/WebGPU-distribution/archive/refs/tags/wgpu-v24.0.0.2.zip) (a bit heavier as it's a merge of all possible platforms)
  - [wgpu-native for Linux](#)
  - [wgpu-native for Windows](#)
  - [wgpu-native for MacOS](#)
