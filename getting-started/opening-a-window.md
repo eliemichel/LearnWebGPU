@@ -9,16 +9,16 @@ Opening a window <span class="bullet">🟢</span>
 
 *Resulting code:* [`step020`](https://github.com/eliemichel/LearnWebGPU-Code/tree/step020)
 
-Before being able to render anything on screen, we need to ask the Operating System (OS) to hand us some place where to draw things, something commonly known as a **window**.
+Before being able to render anything on screen, we need to ask the Operating System (OS) to hand us a place on which to draw things, something commonly known as a **window**.
 
-The process to open a window **depends a lot on the OS**, so we use a little library called [GLFW](https://www.glfw.org/) which unifies the different window management APIs and enables our code to be **agnostic** in the OS.
+The process to open a window **depends a lot on the OS**, so we use a little library called [GLFW](https://www.glfw.org/) which unifies the different window management APIs and enables our code to be **agnostic** to the OS.
 
 ```{note}
 I try to use as few libraries as I can, but this one is required to **make our code cross-platform**, which feels even more important to me than writing code from scratch. GLFW is furthermore **a very common choice** and quite small in its design.
 ```
 
 ```{admonition} Headless mode
-WebGPU **does not require a window** to draw things actually, it may run headless and draw to **offscreen textures**. Since this is not a use case as common as drawing in a window, I leave the details of this option to [a dedicated chapter](../advanced-techniques/headless.md) of the advanced section.
+WebGPU **does not actually require a window** to draw things, it may run headless and draw to **offscreen textures**. Since this is not a use case as common as drawing in a window, I leave the details of this option to [a dedicated chapter](../advanced-techniques/headless.md) of the advanced section.
 ```
 
 ```{admonition} SDL
@@ -122,7 +122,7 @@ if (!window) {
 The `glfwCreateWindow` function has some optional **extra arguments** that are passed through calls of `glfwWindowHint` **before** invoking `glfwCreateWindow`. We add two hints in our case:
 
  - Setting `GLFW_CLIENT_API` to `GLFW_NO_API` tells GLFW **not to care about the graphics API**, as it does not know WebGPU and we won't use what it could set up by default for other APIs.
- - Setting `GLFW_RESIZABLE` to `GLFW_FALSE` prevents the user from **resizing the window**. We will release this constraint later on, but for now it avoids some inconvenient crash.
+ - Setting `GLFW_RESIZABLE` to `GLFW_FALSE` prevents the user from **resizing the window**. We will release this constraint later on, but for now it avoids some inconvenient crashes.
 
 ```{lit} C++, Create window
 glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API); // <-- extra info for glfwCreateWindow
@@ -131,12 +131,12 @@ GLFWwindow* window = glfwCreateWindow(640, 480, "Learn WebGPU", nullptr, nullptr
 ```
 
 ```{tip}
-I invite you to look at the documentation of GLFW to know more about [`glfwCreateWindow`](https://www.glfw.org/docs/latest/group__window.html#ga3555a418df92ad53f917597fe2f64aeb) and other related functions.
+I invite you to look at the documentation of GLFW to learn more about [`glfwCreateWindow`](https://www.glfw.org/docs/latest/group__window.html#ga3555a418df92ad53f917597fe2f64aeb) and other related functions.
 ```
 
 ### Main loop
 
-At this point, the window opens and **closes immediately** after. To address this, we add the application's **main loop** just before all the release/destroy/terminate calls:
+At this point, the window opens and **closes immediately** afterward. To address this, we add the application's **main loop** just before all the release/destroy/terminate calls:
 
 ```{lit} C++, Main loop
 while (!glfwWindowShouldClose(window)) {
@@ -185,7 +185,7 @@ public:
 	bool IsRunning();
 
 private:
-	// We put here all the variables that are shared between init and main loop
+	// All the variables that are shared between init and main loop are placed here
 	{{Application attributes}}
 };
 ```
@@ -335,7 +335,7 @@ glfwTerminate();
 ```
 
 ```{important}
-So **do not** move the `emscripten_sleep(100)` line to `MainLoop()`. This line is no longer needed once we **let the browser handle** the main loop, because the browser ticks its WebGPU backend itself.
+**Do not** move the `emscripten_sleep(100)` line to `MainLoop()`. This line is no longer needed once we **let the browser handle** the main loop, because the browser ticks its WebGPU backend itself.
 ```
 
 Once you have moved everything, you should end up with the following class attributes shared across init/main:
@@ -395,7 +395,7 @@ void emscripten_set_main_loop_arg(
 )
 ```
 
-We can recognize the **callback pattern** that we used already when requesting the adapter and device, or setting error callbacks. What is called `arg` here is what WebGPU calls `userdata`: it is a pointer that is **blindly passed to the callback** function.
+Notice the **callback pattern** that we used already when requesting the adapter and device, or setting error callbacks. What is called `arg` here is what WebGPU calls `userdata`: it is a pointer that is **blindly passed to the callback** function.
 
 ```{lit} C++, Emscripten main loop
 // Equivalent of the main loop when using Emscripten:
@@ -431,7 +431,7 @@ adapterOpts.compatibleSurface = surface;
 WGPUAdapter adapter = requestAdapterSync(instance, &adapterOpts);
 ```
 
-**How do we get the surface?** This depends on the OS, and GLFW does not handle this for us, for it does not know WebGPU ([yet?](https://github.com/glfw/glfw/pull/2333)). So I provide you this function, in a little extension to GLFW3 called [`glfw3webgpu`](https://github.com/eliemichel/glfw3webgpu).
+**How do we get the surface?** This depends on the OS, and GLFW does not handle this for us, since it does not know about WebGPU ([yet?](https://github.com/glfw/glfw/pull/2333)). So I provide you this function, in a little extension to GLFW3 called [`glfw3webgpu`](https://github.com/eliemichel/glfw3webgpu).
 
 ### GLFW3 WebGPU Extension
 
