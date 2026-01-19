@@ -35,15 +35,13 @@ endif()
 
 Other dependencies (`webgpu`, `glfw3webgpu` and `imgui`) are not affected or already handle Emscripten internally.
 
-However, in order to have Emscripten use its own GLFW when **linking** the application, we must tell it to use the `-sUSE_GLFW=3` argument. We also use `-sUSE_WEBGPU` to tell the linker that it must **handle WebGPU symbols** (and replace them with calls to the JavaScript API):
-
+However, in order to have Emscripten use its own GLFW when **linking** the application, we must tell it to use the `-sUSE_GLFW=3` argument.
 ```CMake
 # At the end of the CMakeLists.txt
 if (EMSCRIPTEN)
 	# Add Emscripten-specific link options
 	target_link_options(App PRIVATE
 		-sUSE_GLFW=3 # Use Emscripten-provided GLFW
-		-sUSE_WEBGPU # Handle WebGPU symbols
 		-sASYNCIFY # Required by WebGPU-C++
 	)
 endif()
