@@ -200,4 +200,5 @@ translation_languages = [
     ("it", "🇮🇹", "Italiano", "Italian"),
     ("ru", "🇷🇺", "Русский", "Russian"),
     ("zh", "🇨🇳", "中文", "Chinese"),
+    ("uk", "🇺🇦", "Українська", "Ukrainian"),
 ]
