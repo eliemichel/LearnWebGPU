@@ -80,7 +80,7 @@ A GPU buffer is **mapped** when it is connected to a specific part of the CPU-si
 
 For our little exercise, let us **create a second buffer**, called `buffer2`. We will load data in the first buffer, issue a **copy** command so that the GPU copies data from one to another, then **read** the destination buffer back.
 
-We can reuse the descriptor, only changing teh label for now:
+We can reuse the descriptor, only changing the label for now:
 
 ````{tab} With webgpu.hpp
 ```{lit} C++, Create a second buffer
