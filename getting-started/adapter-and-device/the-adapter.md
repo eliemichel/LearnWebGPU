@@ -86,7 +86,7 @@ typedef void (*WGPURequestAdapterCallback)(
 
 The callback is a **function** that receives the **requested adapter** as an argument, together with **status** information (that tells whether the request failed and why), as well as this mysterious `userdata` **pointer**.
 
-This `userdata` pointer can be anything, it is not interpreted by WebGPU, but only **forwarded** from the initial call to `wgpuInstanceRequestAdapter` to the callback, as a mean to **share some context information**:
+This `userdata` pointer can be anything, it is not interpreted by WebGPU, but only **forwarded** from the initial call to `wgpuInstanceRequestAdapter` to the callback, as a means to **share some context information**:
 
 ```C++
 void onAdapterRequestEnded(
