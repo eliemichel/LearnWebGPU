@@ -13,13 +13,13 @@ The CPU and GPU are two different processors. We program the CPU so that it inst
 
 If one wants the application to execute instructions on the GPU (e.g., to render 3D images), the CPU code must **send instructions to the driver** of the GPU. A graphics API is a programming interface used by the CPU code to dialog with the GPU.
 
-There exists many such APIs, for instance you may have heard of OpenGL, DirectX, Vulkan or Metal.
+There exist many such APIs; for instance, you may have heard of OpenGL, DirectX, Vulkan or Metal.
 
 ```{tip}
-In theory anyone can invent their own graphics API. Each GPU vendor has its own low-level protocol for their driver to dialog with the hardware, on top of which the more common APIs are implemented (often provided with the driver).
+In theory, anyone can invent their own graphics API. Each GPU vendor has its own low-level protocol for their driver to dialog with the hardware, on top of which the more common APIs are implemented (often provided with the driver).
 ```
 
-In this documentation, we learn a graphics API called [WebGPU](https://www.w3.org/TR/webgpu/). This API has been designed to provide a **unified access** to GPUs whichever the GPU vendor and operating system the application runs with.
+In this documentation, we learn a graphics API called [WebGPU](https://www.w3.org/TR/webgpu/). This API has been designed to provide **unified access** to GPUs, regardless of GPU vendor or operating system.
 
 ```{figure} /images/rhi.png
 :align: center
@@ -38,7 +38,7 @@ Why WebGPU?
 
 > 🤔 Yeah, why in the world would I use a **web API** to develop a **desktop application**?
 
-Glad you asked, the short answer is:
+Glad you asked! The short answer is:
 
  - Reasonable level of abstraction
  - Good performance
@@ -57,11 +57,11 @@ When designing an API for the Web, the two key constraints are **portability** a
 Why C++ then?
 -------------
 
-Shouldn't we use **JavaScript** since it is the initial target of WebGPU? Or **C** because it is the language of the `webgpu.h` header we'll be using? Or **Rust** since this is the language in which one of the WebGPU backend is written? All of these are valid languages to use WebGPU with, but I chose C++ because:
+Shouldn't we use **JavaScript** since it is the initial target of WebGPU? Or **C** because it is the language of the `webgpu.h` header we'll be using? Or **Rust** since this is the language in which one of the WebGPU backends is written? All of these are valid languages to use with WebGPU, but I chose C++ because:
 
  - C++ is still the primary language used for high performance graphics application (video games, render engines, modeling tools, etc.).
  - The level of abstraction and control of C++ is well suited for interacting with graphics APIs in general.
- - Graphics programming is a very good occasion to really learn C++. I will only assume a very shallow knowledge of this language in the beginning.
+ - Graphics programming is a very good opportunity to really learn C++. I will only assume a very shallow knowledge of this language in the beginning.
 
 ```{seealso}
 For an equivalent of this documentation for Rust, I recommend you to have a look at Sotrh's [Learn WGPU](https://sotrh.github.io/learn-wgpu).
@@ -80,7 +80,7 @@ It is possible to **go straight to part 2** on [Basic 3D Rendering](basic-3d-ren
 
 Rendering is far from being the only use of GPUs nowadays; part 3 introduces [Basic Compute](basic-compute/index.md), i.e., non-rendering use of WebGPU.
 
-The fourth part [Advanced Techniques](advanced-techniques/index.md) is made of focus points on various computer graphics techniques, which can be read more independently on each others.
+The fourth part, [Advanced Techniques](advanced-techniques/index.md), contains focus points on various computer graphics techniques, which can be read independently.
 
 ### Literate Programming
 
@@ -88,9 +88,9 @@ The fourth part [Advanced Techniques](advanced-techniques/index.md) is made of f
 This guide is in an early phase; it is only available for the first few chapters.
 ```
 
-This guide follows the principle of **Literate Programming**: the documentation you read is annotated such that one can **automatically combine its code blocks** into a fully working code. This is a way to ensure that the guide truly contains everything you need to **reproduce the results**.
+This guide follows the principle of **Literate Programming**: the documentation you read is annotated such that one can **automatically combine its code blocks** into fully working code. This is a way to ensure that the guide truly contains everything you need to **reproduce the results**.
 
-On the right-hand sidebar of the chapters that support it, you can enable/disable the display of these information:
+On the right-hand sidebar of the chapters that support it, you can enable/disable the display of this information:
 
 ```{image} /images/literate-light.png
 :align: center
@@ -102,11 +102,11 @@ On the right-hand sidebar of the chapters that support it, you can enable/disabl
 :class: only-dark
 ```
 
-Everything is turned off by default to avoid visual clutter, but if you feel you don't know where exactly to include in particular code snippet, you can turn them on.
+Everything is turned off by default to avoid visual clutter, but if you feel you don't know where exactly to include a particular code snippet, you can turn these on.
 
 ### Contributing
 
-If you encounter any typo or more important issue, feel free of fixing it by clicking the edit button present on top of each page!
+If you encounter any typo or other more important issue, feel free to fix it by clicking the edit button present on top of each page!
 
 ```{image} images/edit-light.png
 :alt: Use the edit button present on top of each page!
@@ -122,10 +122,10 @@ More generally, you can discuss any technical or organizational choice through [
 
 ### Work In Progress
 
-This guide is still under construction, and the WebGPU API itself is as well. I am trying to follow as tightly as I can the changes, but until the API gets stable this inherently leads to slight inconsistencies.
+This guide is still under construction, as is the WebGPU API itself. I am trying to follow changes as tightly as I can, but until the API gets stable, this will inherently lead to slight inconsistencies.
 
 Always pay attention to the date of last modification of a page and of the accompanying code (using [git](https://github.com/eliemichel/LearnWebGPU)). They may not be perfectly in sync; usually I first update the code, then the content of the guide.
 
 <!--
-    Cross-platform is not optional. It never really was, but since the global pandemic of 2020 it is even more important: students follow the lecture from a wide variety of devices and a teacher cannot rely on them using all the same machine from the university's lab room.
+    Cross-platform is not optional. It never really was, but since the global pandemic of 2020 it's become even more important. Students follow lectures from a wide variety of devices and a teacher cannot rely on them all using the same machine from the university's lab room.
 -->
